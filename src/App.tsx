@@ -1,34 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
+import {useEffect, useState} from 'react'
 import './App.css'
+import {ConferenceHallEvent, getConferenceHallEvents} from './conferencehall/getConferenceHallEvents'
+import {
+    conferenceHallGoogleLogin,
+    getConferenceHallAuth,
+    listenConferenceHallAuth, logoutConferenceHall
+} from './conferencehall/authConferenceHall'
+import {FirebaseOptions} from '@firebase/app'
+
+const ENV: FirebaseOptions = {
+    apiKey: import.meta.env.VITE_FIREBASE_CONFERENCE_HALL_API_KEY,
+    projectId: import.meta.env.VITE_FIREBASE_CONFERENCE_HALL_PROJECT_ID,
+    authDomain: import.meta.env.VITE_FIREBASE_CONFERENCE_HALL_DOMAIN
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [eventList, setEventList] = useState<string[]>([])
+    const [isCHLogin, setIsCHLogin] = useState(false)
+    const [conferenceHallEvents, setConferenceHallEvents] = useState<ConferenceHallEvent[]>([])
 
-  return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
+
+    useEffect(() => {
+        listenConferenceHallAuth(ENV, (user) => {
+            if(user) {
+                console.log("Auth changed, user: ", user.uid)
+                setIsCHLogin(true)
+                setEventList([...eventList, 'ConferenceHall Logged In'])
+            } else {
+                setEventList([...eventList, 'ConferenceHall Login but no user'])
+            }
+
+            getConferenceHallEvents(ENV).then(events => {
+                setConferenceHallEvents(events)
+            })
+        })
+    }, [])
+
+    return (
+        <div className="App">
+            <div className="card">
+
+                {isCHLogin ? "Conference Hall Logged In" : <button onClick={() => {
+                    conferenceHallGoogleLogin(ENV)
+                }}>
+                    Login in Conference Hall
+                </button>}
+
+                {isCHLogin && <button onClick={() => {
+                    logoutConferenceHall(ENV).then(() => {
+                        setIsCHLogin(false)
+                    }).catch(error => {
+                        console.log("Failed to log out", error)
+                    })
+                }}>
+                   Logout
+                </button>}
+
+                <br/>
+                <br/>
+                <br/>
+                {isCHLogin && <button onClick={() => {
+                    getConferenceHallEvents(ENV).then((data: any) => {
+                        console.log(data)
+                    })
+                }}>
+                    Get Conference Hall Events
+                </button>}
+
+                {conferenceHallEvents.length > 0 && <ul>
+                    {conferenceHallEvents.map((e) => <li key={e.id}>{e.name}</li>)}
+                </ul>}
+
+            </div>
+        </div>
+    )
 }
 
 export default App
