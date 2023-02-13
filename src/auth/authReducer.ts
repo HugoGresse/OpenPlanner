@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { RootState } from '../reduxStore'
 
 export interface UserState {
     email: string
@@ -10,7 +11,9 @@ interface AuthState {
     isLoggedIn: boolean
 }
 
-const user: UserState | null = JSON.parse(localStorage.getItem('user') || '')
+const user: UserState | null = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '') : null
+
+console.log(localStorage.getItem('user'))
 
 const initialState: AuthState = user ? { isLoggedIn: true, user } : ({ isLoggedIn: false, user: null } as AuthState)
 
@@ -37,15 +40,20 @@ const initialState: AuthState = user ? { isLoggedIn: true, user } : ({ isLoggedI
 export const login = createAsyncThunk(
     'auth/login',
     async ({ email, password }: { email: string; password: string }) => {
-        return Promise.resolve({
-            displayName: 'Hugo',
-            email: email,
-        })
+        return (await new Promise((resolve) => {
+            localStorage.setItem('user', JSON.stringify({ email, password }))
+
+            resolve({
+                displayName: 'Hugo',
+                email: email,
+            })
+        })) as UserState
     }
 )
 
 export const logout = createAsyncThunk('auth/logout', async () => {
     // await AuthService.logout();
+    localStorage.removeItem('user')
     return Promise.resolve()
 })
 
@@ -76,3 +84,6 @@ export const authSlice = createSlice({
             })
     },
 })
+
+export const selectIsUserLoggedInToConferenceCenter = (state: RootState) => state.auth.isLoggedIn
+export const selectUserConferenceCenter = (state: RootState) => state.auth.user

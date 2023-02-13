@@ -48,3 +48,4 @@ React guidelines:
 
 -   only named export: `export const MyFunctionOrComponent`
 -   form: [react-hook-form](https://react-hook-form.com/) & [yup](https://github.com/jquense/yup) & [react-hook-form-mui](https://github.com/dohomi/react-hook-form-mui)
+-   routing: [wouter](https://github.com/molefrog/wouter) which mimics base feature of react-router with 10% of it's size

@@ -4,6 +4,8 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { FormContainer, TextFieldElement } from 'react-hook-form-mui'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { login } from './authReducer'
+import { useAppDispatch } from '../reduxStore'
 
 const schema = yup
     .object({
@@ -13,12 +15,16 @@ const schema = yup
     .required()
 
 export const LoginForm = ({}) => {
+    const dispatch = useAppDispatch()
     return (
         <Container component="main" maxWidth="xs">
             <FormContainer
-                defaultValues={{ name: '' }}
+                defaultValues={{ email: '', password: '' }}
                 resolver={yupResolver(schema)}
-                onSuccess={(data) => console.log(data)}>
+                onSuccess={(data) => {
+                    console.log(data)
+                    dispatch(login({ email: data.email, password: data.password }))
+                }}>
                 <Box
                     sx={{
                         marginTop: 8,
