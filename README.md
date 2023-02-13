@@ -40,5 +40,11 @@ Project use:
 Core concepts:
 
 -   write clear and readable codes without too much abstractions to be read by as many as possible.
--   use any library necessary to speed up devs
+-   use any library necessary to speed up devs BUT
+-   try to minimize bundle size at all cost: prefer lightweight dependencies rather than big one, prefer tree-shaking js libs
 -   have fun
+
+React guidelines:
+
+-   only named export: `export const MyFunctionOrComponent`
+-   form: [react-hook-form](https://react-hook-form.com/) & [yup](https://github.com/jquense/yup) & [react-hook-form-mui](https://github.com/dohomi/react-hook-form-mui)
