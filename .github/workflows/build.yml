@@ -3,17 +3,22 @@ name: Build project
 on: [push]
 
 jobs:
-  build:
+    build:
+        name: Build project
+        runs-on: ubuntu-latest
 
-    name: Build project
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-          cache: 'npm'
-      - run: git config --global url."git@github.com:".insteadOf git://github.com/ && npm ci
-      - run: npm run build --if-present
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v3
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+            - run: git config --global url."git@github.com:".insteadOf git://github.com/ && npm ci
+            - run: npm run build --if-present
+            - uses: sarthak-saxena/JSBundleSize@master
+              with:
+                  bootstrap: npm ci
+                  build_command: npm run build
+                  dist_path: 'dist'
+                  token: ${{ secrets.GITHUB_TOKEN }}
