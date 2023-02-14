@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { Avatar, Box, Container, Grid, Link, Typography } from '@mui/material'
+import { Avatar, Box, Button, Container, Grid, Link, Typography } from '@mui/material'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import LoadingButton from '@mui/lab/LoadingButton'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -75,15 +74,14 @@ export const LoginForm = ({}) => {
                         autoComplete="current-password"
                         disabled={formState.isSubmitting}
                     />
-                    <LoadingButton
+                    <Button
                         type="submit"
                         disabled={formState.isSubmitting}
-                        loading={formState.isSubmitting}
                         fullWidth
                         variant="contained"
                         sx={{ mt: 3, mb: 2 }}>
                         Sign In
-                    </LoadingButton>
+                    </Button>
 
                     {error && error?.error === 'auth/user-not-found' && (
                         <Box display="flex" flexDirection="column" mb={2} color="red">
@@ -91,10 +89,9 @@ export const LoginForm = ({}) => {
                                 No user found matching this email, do you want to signup now using this email and
                                 password?
                             </Typography>
-                            <LoadingButton
+                            <Button
                                 title="Sign up"
                                 disabled={formState.isSubmitting}
-                                loading={formState.isSubmitting}
                                 onClick={() => {
                                     const email = watch('email')
                                     const password = watch('password')
@@ -103,7 +100,7 @@ export const LoginForm = ({}) => {
                                 variant="outlined"
                                 color="secondary">
                                 Sign up now
-                            </LoadingButton>
+                            </Button>
                         </Box>
                     )}
                     {error && error?.error !== 'auth/user-not-found' && (
