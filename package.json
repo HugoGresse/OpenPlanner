@@ -16,6 +16,7 @@
         "@fontsource/roboto": "^4.5.8",
         "@hookform/resolvers": "^2.9.11",
         "@mui/icons-material": "^5.11.0",
+        "@mui/lab": "^5.0.0-alpha.120",
         "@mui/material": "^5.11.8",
         "@mui/x-date-pickers": "^5.0.18",
         "@react-query-firebase/firestore": "^1.0.0-dev.7",
@@ -32,7 +33,7 @@
         "yup": "^1.0.0"
     },
     "devDependencies": {
-        "@types/react": "^18.0.17",
+        "@types/react": "^18.0.28",
         "@types/react-dom": "^18.0.6",
         "@types/react-redux": "^7.1.25",
         "@vitejs/plugin-react": "^3.1.0",

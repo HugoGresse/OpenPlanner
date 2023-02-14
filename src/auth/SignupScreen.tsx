@@ -1,13 +1,12 @@
 import * as React from 'react'
-import { Avatar, Box, Container, Grid, Link, Typography } from '@mui/material'
+import { Avatar, Box, Button, Container, Grid, Link, Typography } from '@mui/material'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { FormContainer, TextFieldElement } from 'react-hook-form-mui'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { login, register, selectAuthCCError } from './authReducer'
+import { login, selectAuthCCError } from './authReducer'
 import { useAppDispatch } from '../reduxStore'
 import { useSelector } from 'react-redux'
-import LoadingButton from '@mui/lab/LoadingButton'
 
 const schema = yup
     .object({
@@ -16,25 +15,21 @@ const schema = yup
     })
     .required()
 
-export const LoginForm = ({}) => {
+export const SignupScreen = ({}) => {
     const dispatch = useAppDispatch()
-    const formContext = useForm({
-        defaultValues: {
-            email: 'hugo@example.com',
-            password: 'azerty',
-        },
-    })
     const error = useSelector(selectAuthCCError)
 
-    const { watch, formState } = formContext
+    if (error?.error === 'auth/user-not-found') {
+    }
 
     return (
         <Container component="main" maxWidth="xs">
             <FormContainer
-                formContext={formContext}
+                defaultValues={{ email: 'hugo.gresse@gmail.com', password: 'azerty' }}
                 resolver={yupResolver(schema)}
                 onSuccess={async (data) => {
-                    await dispatch(login({ email: data.email, password: data.password }))
+                    console.log(data)
+                    dispatch(login({ email: data.email, password: data.password }))
                 }}>
                 <Box
                     sx={{
@@ -47,7 +42,7 @@ export const LoginForm = ({}) => {
                         <LockOutlinedIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
-                        Sign in
+                        Sign up!
                     </Typography>
                     <Typography component="p" variant="body1">
                         Use a single account per event or organization as ConferenceCenter don't have a role system yet.
@@ -61,7 +56,6 @@ export const LoginForm = ({}) => {
                         name="email"
                         autoComplete="email"
                         autoFocus
-                        disabled={formState.isSubmitting}
                         sx={{ mt: 6 }}
                     />
                     <TextFieldElement
@@ -73,49 +67,29 @@ export const LoginForm = ({}) => {
                         type="password"
                         id="password"
                         autoComplete="current-password"
-                        disabled={formState.isSubmitting}
                     />
-                    <LoadingButton
-                        type="submit"
-                        disabled={formState.isSubmitting}
-                        loading={formState.isSubmitting}
-                        fullWidth
-                        variant="contained"
-                        sx={{ mt: 3, mb: 2 }}>
+                    <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
                         Sign In
-                    </LoadingButton>
+                    </Button>
 
                     {error && error?.error === 'auth/user-not-found' && (
                         <Box display="flex" flexDirection="column" mb={2} color="red">
-                            <Typography>
-                                No user found matching this email, do you want to signup now using this email and
-                                password?
-                            </Typography>
-                            <LoadingButton
-                                title="Sign up"
-                                disabled={formState.isSubmitting}
-                                loading={formState.isSubmitting}
-                                onClick={() => {
-                                    const email = watch('email')
-                                    const password = watch('password')
-                                    dispatch(register({ email: email, password: password }))
-                                }}
-                                variant="outlined"
-                                color="secondary">
+                            <Typography>No user found matching this email, try to signup before?</Typography>
+                            <Button href="/signup" title="Sign up" variant="outlined" color="secondary">
                                 Sign up now
-                            </LoadingButton>
-                        </Box>
-                    )}
-                    {error && error?.error !== 'auth/user-not-found' && (
-                        <Box display="flex" flexDirection="column" mb={2} color="red">
-                            <Typography>Error: error?.error, error?.message</Typography>
+                            </Button>
                         </Box>
                     )}
 
                     <Grid container>
                         <Grid item xs>
                             <Link href="#" variant="body2">
-                                Forgot password? (not implemented, ask Hugo)
+                                Forgot password?
+                            </Link>
+                        </Grid>
+                        <Grid item>
+                            <Link href="#" variant="body2">
+                                {"Don't have an account? Sign Up"}
                             </Link>
                         </Grid>
                     </Grid>
