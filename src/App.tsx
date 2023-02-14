@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { createTheme, ThemeProvider } from '@mui/material'
+import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
 import { Route, Switch } from 'wouter'
-import CssBaseline from '@mui/material/CssBaseline'
 import { RequireLogin } from './auth/RequireLogin'
 import { Provider } from 'react-redux'
 import { reduxStore } from './reduxStore'
