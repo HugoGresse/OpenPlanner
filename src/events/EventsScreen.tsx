@@ -1,8 +1,12 @@
 import * as React from 'react'
-import { logout } from '../auth/authReducer'
 import { useAppDispatch } from '../reduxStore'
+import { EventsLayout } from './EventsLayout'
 
 export const EventsScreen = ({}) => {
     const dispatch = useAppDispatch()
-    return <button onClick={() => dispatch(logout())}>Logout</button>
+    return (
+        <EventsLayout>
+            <>Events</>
+        </EventsLayout>
+    )
 }

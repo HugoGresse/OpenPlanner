@@ -2,10 +2,12 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { RootState } from '../reduxStore'
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { getConferenceCenterAuth } from '../services/firebase'
+import { MD5 } from '../utils/MD5'
 
 export interface UserState {
     email: string
     displayName: string
+    avatarURL: string
 }
 
 export interface AuthError {
@@ -38,8 +40,9 @@ export const register = createAsyncThunk(
             .then(() => {
                 localStorage.setItem('user', JSON.stringify({ email }))
                 return {
-                    displayName: 'Hugo',
+                    displayName: email.split('@')[0],
                     email: email,
+                    avatarURL: `https://www.gravatar.com/avatar/${MD5(email)}`,
                 } as UserState
             })
             .catch((error) => {
@@ -61,8 +64,9 @@ export const login = createAsyncThunk(
                 const user = userCredential.user
                 localStorage.setItem('user', JSON.stringify({ email }))
                 return {
-                    displayName: 'Hugo',
+                    displayName: email.split('@')[0],
                     email: email,
+                    avatarURL: `https://www.gravatar.com/avatar/${MD5(email)}`,
                 } as UserState
             })
             .catch((error) => {
