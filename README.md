@@ -18,14 +18,12 @@ Specs:
 -   a way to connect to ConferenceHall Firestore
 -   for the API: the idea would be to use statically generated file to serve the API rather than a severless API
 -   Login & role management
+-   mockups on [figma](https://www.figma.com/proto/3zfbwvOAP5GPVkOjxeiOlF/ConferenceCenter?node-id=1%3A189&scaling=scale-down&page-id=0%3A1&starting-point-node-id=1%3A189)
 
-## POC
+## Roadmap
 
-A basic poc a been validated [here](https://github.com/HugoGresse/ConferenceCenter/tree/58419d8a16e1b334a9c8589f90bc517aace8cde2)
-It can:
-
--   login to ConferenceHall and get events using a second Firebase JS project (not the default one)
--   that's all, let's move from the POC to a real project
+- v1: basic conference-hall manual sync plus github hook and schedule edition/creation
+- v2: other features listed above
 
 ## Dev guidelines
 
