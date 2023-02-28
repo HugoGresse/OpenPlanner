@@ -11,5 +11,6 @@ export const LinkBehavior = React.forwardRef<
 >((props, ref) => {
     const { href, ...other } = props
     // Map href (MUI) -> to (react-router)
+    // @ts-ignore
     return <RouterLink ref={ref} to={href} {...other} />
 })
