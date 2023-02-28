@@ -24,6 +24,7 @@ export const EventsLayout = ({ children }: EventsLayoutProps) => {
 
             <Typography variant="h1">ConferenceCenter</Typography>
             <Typography variant="h2">Your events</Typography>
+            <Box marginTop={4} width="100%"></Box>
 
             {children}
         </Container>

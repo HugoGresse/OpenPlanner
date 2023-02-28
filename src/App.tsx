@@ -7,6 +7,7 @@ import { reduxStore } from './reduxStore'
 import { EventsScreen } from './events/EventsScreen'
 import { LinkBehavior } from './components/CCLink'
 import { LinkProps } from '@mui/material/Link'
+import { QueryClient, QueryClientProvider } from 'react-query'
 
 const theme = createTheme({
     components: {
@@ -23,21 +24,25 @@ const theme = createTheme({
     },
 })
 
+const queryClient = new QueryClient()
+
 export const App = ({}) => {
     return (
         <Provider store={reduxStore}>
-            <ThemeProvider theme={theme}>
-                <CssBaseline enableColorScheme />
+            <QueryClientProvider client={queryClient}>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline enableColorScheme />
 
-                <RequireLogin>
-                    <Switch>
-                        <Route path="/">
-                            <EventsScreen />
-                        </Route>
-                        <Route>404, Not Found!</Route>
-                    </Switch>
-                </RequireLogin>
-            </ThemeProvider>
+                    <RequireLogin>
+                        <Switch>
+                            <Route path="/">
+                                <EventsScreen />
+                            </Route>
+                            <Route>404, Not Found!</Route>
+                        </Switch>
+                    </RequireLogin>
+                </ThemeProvider>
+            </QueryClientProvider>
         </Provider>
     )
 }

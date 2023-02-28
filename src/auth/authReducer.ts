@@ -11,11 +11,13 @@ import { getConferenceCenterAuth } from '../services/firebase'
 import { MD5 } from '../utils/MD5'
 import { browserLocalPersistence } from '@firebase/auth'
 
+export type UserId = string
+
 export interface UserState {
     email: string
     displayName: string
     avatarURL: string
-    uid: string
+    uid: UserId
 }
 
 export interface AuthError {
@@ -153,5 +155,5 @@ export const authSlice = createSlice({
 
 export const selectIsUserLoggedInToConferenceCenter = (state: RootState) => state.auth.isLoggedIn
 export const selectUserConferenceCenter = (state: RootState) => state.auth.user
-export const selectUserIdConferenceCenter = (state: RootState) => state.auth.user?.uid
+export const selectUserIdConferenceCenter = (state: RootState) => state.auth.user!.uid
 export const selectAuthCCError = (state: RootState) => state.auth.error
