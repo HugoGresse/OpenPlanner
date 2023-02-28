@@ -1,8 +1,15 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { RootState } from '../reduxStore'
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import {
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    setPersistence,
+    signInWithEmailAndPassword,
+    signOut,
+} from 'firebase/auth'
 import { getConferenceCenterAuth } from '../services/firebase'
 import { MD5 } from '../utils/MD5'
+import { browserLocalPersistence } from '@firebase/auth'
 
 export interface UserState {
     email: string
@@ -31,12 +38,31 @@ const initialState: AuthState = user
       }
     : ({ isLoggedIn: false, error: null, user: null } as AuthState)
 
+export const listenAuthChange = (callback: (isLoggedIn: boolean) => void) => (dispatch: (object: any) => void) => {
+    const auth = getConferenceCenterAuth()
+    return onAuthStateChanged(auth, (user) => {
+        callback(!!user)
+        if (user) {
+            console.log('user', user)
+            const email = user.email as string
+            dispatch({
+                type: 'auth/login/fulfilled',
+                payload: {
+                    displayName: email.split('@')[0],
+                    email: email,
+                    avatarURL: `https://www.gravatar.com/avatar/${MD5(email)}`,
+                } as UserState,
+            })
+        }
+    })
+}
+
 export const register = createAsyncThunk(
     'auth/register',
     async ({ email, password }: { email: string; password: string }, thunkAPI) => {
         const auth = getConferenceCenterAuth()
-
-        return createUserWithEmailAndPassword(auth, email, password)
+        return setPersistence(auth, browserLocalPersistence)
+            .then(() => createUserWithEmailAndPassword(auth, email, password))
             .then(() => {
                 localStorage.setItem('user', JSON.stringify({ email }))
                 return {
@@ -59,7 +85,8 @@ export const login = createAsyncThunk(
     async ({ email, password }: { email: string; password: string }, thunkAPI) => {
         const auth = getConferenceCenterAuth()
 
-        return signInWithEmailAndPassword(auth, email, password)
+        return setPersistence(auth, browserLocalPersistence)
+            .then(() => signInWithEmailAndPassword(auth, email, password))
             .then((userCredential) => {
                 const user = userCredential.user
                 localStorage.setItem('user', JSON.stringify({ email }))
