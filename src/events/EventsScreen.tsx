@@ -11,8 +11,6 @@ export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdConferenceCenter)
     const events = useEvents(userId)
 
-    console.log(events)
-
     return (
         <EventsLayout>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={events} />

@@ -17,8 +17,6 @@ const config = {
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)
 
-console.log('ff', config)
-
 export const collections = {
     events: collection(instanceFirestore, 'events'),
     sponsors: collection(instanceFirestore, 'sponsors'),
