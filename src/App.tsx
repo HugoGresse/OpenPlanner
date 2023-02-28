@@ -5,8 +5,23 @@ import { RequireLogin } from './auth/RequireLogin'
 import { Provider } from 'react-redux'
 import { reduxStore } from './reduxStore'
 import { EventsScreen } from './events/EventsScreen'
+import { LinkBehavior } from './components/CCLink'
+import { LinkProps } from '@mui/material/Link'
 
-const theme = createTheme()
+const theme = createTheme({
+    components: {
+        MuiLink: {
+            defaultProps: {
+                component: LinkBehavior,
+            } as LinkProps,
+        },
+        MuiButtonBase: {
+            defaultProps: {
+                LinkComponent: LinkBehavior,
+            },
+        },
+    },
+})
 
 export const App = ({}) => {
     return (
