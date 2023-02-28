@@ -9,7 +9,12 @@ jobs:
         runs-on: ubuntu-latest
         environment: 'GitHub Action PR'
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v3
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
             - run: npm ci && npm run build
               env:
                   VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID }}
