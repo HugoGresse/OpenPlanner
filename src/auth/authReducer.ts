@@ -15,6 +15,7 @@ export interface UserState {
     email: string
     displayName: string
     avatarURL: string
+    uid: string
 }
 
 export interface AuthError {
@@ -43,11 +44,11 @@ export const listenAuthChange = (callback: (isLoggedIn: boolean) => void) => (di
     return onAuthStateChanged(auth, (user) => {
         callback(!!user)
         if (user) {
-            console.log('user', user)
             const email = user.email as string
             dispatch({
                 type: 'auth/login/fulfilled',
                 payload: {
+                    uid: user.uid,
                     displayName: email.split('@')[0],
                     email: email,
                     avatarURL: `https://www.gravatar.com/avatar/${MD5(email)}`,
@@ -63,9 +64,10 @@ export const register = createAsyncThunk(
         const auth = getConferenceCenterAuth()
         return setPersistence(auth, browserLocalPersistence)
             .then(() => createUserWithEmailAndPassword(auth, email, password))
-            .then(() => {
+            .then((userCredential) => {
                 localStorage.setItem('user', JSON.stringify({ email }))
                 return {
+                    uid: userCredential.user.uid,
                     displayName: email.split('@')[0],
                     email: email,
                     avatarURL: `https://www.gravatar.com/avatar/${MD5(email)}`,
@@ -91,6 +93,7 @@ export const login = createAsyncThunk(
                 const user = userCredential.user
                 localStorage.setItem('user', JSON.stringify({ email }))
                 return {
+                    uid: user.uid,
                     displayName: email.split('@')[0],
                     email: email,
                     avatarURL: `https://www.gravatar.com/avatar/${MD5(email)}`,
@@ -150,4 +153,5 @@ export const authSlice = createSlice({
 
 export const selectIsUserLoggedInToConferenceCenter = (state: RootState) => state.auth.isLoggedIn
 export const selectUserConferenceCenter = (state: RootState) => state.auth.user
+export const selectUserIdConferenceCenter = (state: RootState) => state.auth.user?.uid
 export const selectAuthCCError = (state: RootState) => state.auth.error

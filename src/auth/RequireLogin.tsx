@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { listenAuthChange, selectIsUserLoggedInToConferenceCenter } from './authReducer'
 import { LoginScreen } from './LoginScreen'
-import { CircularProgress } from '@mui/material'
+import { Box, CircularProgress } from '@mui/material'
 import { useAppDispatch } from '../reduxStore'
 
 export type RequireLoginProps = {
@@ -25,7 +25,11 @@ export const RequireLogin = ({ children }: RequireLoginProps) => {
     }, [])
 
     if (!authInit) {
-        return <CircularProgress />
+        return (
+            <Box display="flex" alignItems="center" justifyContent="center" minHeight="80vh">
+                <CircularProgress />
+            </Box>
+        )
     }
 
     if (isLoggedIn) {
