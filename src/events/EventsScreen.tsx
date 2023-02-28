@@ -1,8 +1,23 @@
 import * as React from 'react'
-import { logout } from '../auth/authReducer'
-import { useAppDispatch } from '../reduxStore'
+import { EventsLayout } from './EventsLayout'
+import { useEvents } from '../services/hooks/useEvents'
+import { useSelector } from 'react-redux'
+import { selectUserIdConferenceCenter } from '../auth/authReducer'
+import { FirestoreQueryLoaderAndErrorDisplay } from '../components/FirestoreQueryLoaderAndErrorDisplay'
+import { EventsListItem } from './EventsListItem'
+import { Event } from '../types'
 
 export const EventsScreen = ({}) => {
-    const dispatch = useAppDispatch()
-    return <button onClick={() => dispatch(logout())}>Logout</button>
+    const userId = useSelector(selectUserIdConferenceCenter)
+    const events = useEvents(userId)
+
+    return (
+        <EventsLayout>
+            <FirestoreQueryLoaderAndErrorDisplay hookResult={events} />
+
+            {(events.data || []).map((event: Event) => (
+                <EventsListItem event={event} />
+            ))}
+        </EventsLayout>
+    )
 }

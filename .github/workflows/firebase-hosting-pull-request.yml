@@ -7,11 +7,24 @@ jobs:
     build_and_preview:
         if: '${{ github.event.pull_request.head.repo.full_name == github.repository }}'
         runs-on: ubuntu-latest
+        environment: 'GitHub Action PR'
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v3
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
             - run: npm ci && npm run build
+              env:
+                  VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID }}
+                  VITE_FIREBASE_CONFERENCE_CENTER_API_KEY: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_API_KEY }}
+                  VITE_FIREBASE_CONFERENCE_CENTER_DOMAIN: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_DOMAIN }}
+                  VITE_FIREBASE_CONFERENCE_CENTER_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_STORAGE_BUCKET }}
+                  VITE_FIREBASE_CONFERENCE_CENTER_APP_ID: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_APP_ID }}
+                  VITE_FIREBASE_CONFERENCE_CENTER_MEASUREMENT_ID: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_MEASUREMENT_ID }}
             - uses: FirebaseExtended/action-hosting-deploy@v0
               with:
                   repoToken: '${{ secrets.GITHUB_TOKEN }}'
                   firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CONFERENCECENTERR }}'
-                  projectId: conferencecenterr
+                  projectId: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID }}
