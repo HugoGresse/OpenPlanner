@@ -6,6 +6,7 @@ import { selectUserIdConferenceCenter } from '../auth/authReducer'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventsListItem } from './EventsListItem'
 import { Event } from '../types'
+import { Box, Button } from '@mui/material'
 
 export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdConferenceCenter)
@@ -15,9 +16,18 @@ export const EventsScreen = ({}) => {
         <EventsLayout>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={events} />
 
-            {(events.data || []).map((event: Event) => (
-                <EventsListItem event={event} />
-            ))}
+            <Box component="ul" display="flex" flexWrap="wrap" padding={0}>
+                <Box key="import" component="li" marginRight={1} marginBottom={1} sx={{ listStyle: 'none' }}>
+                    <Button variant="outlined" size="large">
+                        Import from Conference Center
+                    </Button>
+                </Box>
+                {(events.data || []).map((event: Event) => (
+                    <>
+                        <EventsListItem event={event} />
+                    </>
+                ))}
+            </Box>
         </EventsLayout>
     )
 }
