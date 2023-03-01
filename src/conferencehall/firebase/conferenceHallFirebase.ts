@@ -15,4 +15,5 @@ export const conferenceHallCollections = {
     events: collection(conferenceHallFirestore, 'events'),
     proposals: (eventId: string): CollectionReference =>
         collection(conferenceHallFirestore, 'events', eventId, 'proposals'),
+    users: collection(conferenceHallFirestore, 'users'),
 }

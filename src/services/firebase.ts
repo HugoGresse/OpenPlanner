@@ -8,7 +8,7 @@ import { eventConverter } from './converters'
 const config = {
     apiKey: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_DOMAIN,
-    // databaseURL: `https://${import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID}.firebaseio.com`,
+    databaseURL: `https://${import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID}.firebaseio.com`,
     projectId: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID,
     storageBucket: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_STORAGE_BUCKET,
     appId: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_APP_ID,
@@ -20,9 +20,9 @@ export const instanceFirestore: Firestore = getFirestore(instanceApp)
 
 export const collections = {
     events: collection(instanceFirestore, 'events').withConverter(eventConverter),
-    sponsors: collection(instanceFirestore, 'sponsors'),
-    sessions: collection(instanceFirestore, 'sessions'),
-    speakers: collection(instanceFirestore, 'speakers'),
+    sponsors: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'sponsors'),
+    sessions: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'sessions'),
+    speakers: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'speakers'),
 }
 
 export const getConferenceCenterAuth = (): Auth => {

@@ -1,3 +1,5 @@
+import { FieldValue } from 'firebase/firestore'
+
 export interface Track {
     id: string
     name: string
@@ -20,6 +22,7 @@ export interface SpeakerSocial {
 
 export interface Speaker {
     id: string
+    conferenceHallId: string | null
     name: string
     jobTitle: string | null
     bio: string | null
@@ -58,6 +61,13 @@ export interface Event {
     dates: DateType
     tracks: Track[]
     webhooks: Webhooks[]
+    createdAt: Date
+    updatedAt: Date
+}
+
+export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {
+    createdAt: FieldValue
+    updatedAt: FieldValue
 }
 
 export interface ConferenceHallEvent {

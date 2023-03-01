@@ -9,11 +9,13 @@ import { EventsListItem } from './EventsListItem'
 import { Event } from '../types'
 import { Box, Button } from '@mui/material'
 import { NewEventDialog } from './NewEventDialog'
+import { NewEventCreatedDialog } from './NewEventCreatedDialog'
 
 export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdConferenceCenter)
     const events = useEvents(userId)
     const [newEventOpen, setNewEventOpen] = useState(false)
+    const [newEventId, setNewEventId] = useState<null | string>(null)
 
     return (
         <EventsLayout>
@@ -31,7 +33,24 @@ export const EventsScreen = ({}) => {
                 ))}
             </Box>
 
-            <NewEventDialog isOpen={newEventOpen} onClose={() => setNewEventOpen(false)} />
+            <NewEventDialog
+                isOpen={newEventOpen}
+                onClose={(eventId: string | null) => {
+                    if (eventId) {
+                        console.log('newEvent received')
+
+                        setTimeout(() => {
+                            // I have no idea by we need to wait some time, if you know why please kindly explain to me. Hugo.
+                            events.refetch()
+                        }, 500)
+
+                        setNewEventId(eventId)
+                    }
+                    setNewEventOpen(false)
+                }}
+            />
+
+            {newEventId && <NewEventCreatedDialog eventId={newEventId} onClose={() => setNewEventId(null)} />}
         </EventsLayout>
     )
 }

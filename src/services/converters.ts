@@ -1,7 +1,7 @@
-import { Event } from '../types'
+import { Event, NewEvent } from '../types'
 import { FirestoreDataConverter } from '@firebase/firestore'
 
-export const eventConverter: FirestoreDataConverter<Event> = {
+export const eventConverter: FirestoreDataConverter<Event | NewEvent> = {
     fromFirestore(snapshot): Event {
         const data = snapshot.data()
 
@@ -10,7 +10,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             ...data,
         } as Event
     },
-    toFirestore(): Event {
-        throw new Error('Client does not support updating event.')
+    toFirestore(event: NewEvent) {
+        return event
     },
 }
