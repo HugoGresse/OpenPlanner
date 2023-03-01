@@ -37,13 +37,10 @@ export const EventsScreen = ({}) => {
                 isOpen={newEventOpen}
                 onClose={(eventId: string | null) => {
                     if (eventId) {
-                        console.log('newEvent received')
-
                         setTimeout(() => {
                             // I have no idea by we need to wait some time, if you know why please kindly explain to me. Hugo.
                             events.refetch()
                         }, 500)
-
                         setNewEventId(eventId)
                     }
                     setNewEventOpen(false)
