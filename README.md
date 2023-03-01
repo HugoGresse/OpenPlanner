@@ -40,7 +40,7 @@ Core concepts:
 -   write clear and readable codes without too much abstractions to be read by as many as possible.
 -   use any library necessary to speed up devs BUT
 -   try to minimize bundle size at all cost: prefer lightweight dependencies rather than big one, prefer tree-shaking js libs
--   have fun
+-   have fun!
 
 React guidelines:
 
