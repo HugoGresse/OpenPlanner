@@ -8,9 +8,7 @@ This service should allow, when finished, users to:
 -   manually add new talk or speakers manually
 -   a manual sync button to synchronise a speaker or a talk from ConferenceHall
 -   something to display the data within a Google Sheet (read only)
--   some APIs to use the service outside:
-    -   list speakers
-    -   list talks
+-   some APIs to use the service outside
 
 Specs:
 
