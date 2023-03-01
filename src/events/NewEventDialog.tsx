@@ -43,7 +43,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
 
                 <Box display="flex" alignItems="center" marginY={2}>
                     <Typography variant="h4">1. Login with Conference-Hall.io</Typography>
-                    <img src="/public/logos/conference-hall.png" alt="conference hall logo" width={70} />
+                    <img src="/logos/conference-hall.png" alt="conference hall logo" width={70} />
                 </Box>
 
                 {(!newResult || hasErrors) && (
