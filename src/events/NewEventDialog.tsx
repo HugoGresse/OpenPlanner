@@ -56,7 +56,23 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                                     />
                                 )}
                                 {selectedConferenceHallEvent && (
-                                    <ConferenceHallProposalsPicker eventId={selectedConferenceHallEvent.id} />
+                                    <>
+                                        <Box display="flex" alignItems="center" marginY={2}>
+                                            <Typography variant="h4">
+                                                3. Select the proposals to import (optional)
+                                            </Typography>
+                                        </Box>
+                                        <ConferenceHallProposalsPicker
+                                            eventId={selectedConferenceHallEvent.id}
+                                            onSubmit={async (proposals) => {
+                                                console.log('proposals selected', proposals)
+
+                                                return new Promise((resolve) => {
+                                                    setTimeout(resolve, 3000)
+                                                })
+                                            }}
+                                        />
+                                    </>
                                 )}
                             </>
                         )

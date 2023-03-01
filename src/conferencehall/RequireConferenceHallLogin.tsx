@@ -39,7 +39,7 @@ export const RequireConferenceHallLogin = (props: RequireConferenceHallLoginProp
         return (
             <>
                 <Typography variant="body1" sx={{ display: 'flex' }}>
-                    <CheckCircleOutlineIcon color="success" /> You are log in to Conference-Hall.io as{' '}
+                    <CheckCircleOutlineIcon color="success" /> You are logged in to Conference-Hall.io as{' '}
                     {user.displayName}
                 </Typography>
                 {props.children(user.uid)}
