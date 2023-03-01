@@ -7,7 +7,7 @@ export type EventsListItemProps = {
 }
 export const EventsListItem = ({ event }: EventsListItemProps) => {
     return (
-        <Box key={event.id} component="li" marginRight={1} marginBottom={1} sx={{ listStyle: 'none' }}>
+        <Box component="li" marginRight={1} marginBottom={1} sx={{ listStyle: 'none' }}>
             <Button component={Link} variant="contained" href={`/events/${event.id}`} size="large">
                 {event.name}
             </Button>

@@ -25,12 +25,6 @@ export const collections = {
     speakers: collection(instanceFirestore, 'speakers'),
 }
 
-export const getConferenceCenterFirebaseApp = (): FirebaseApp => {
-    return instanceApp
-}
-export const getConferenceCenterFirestore = () => {
-    return instanceFirestore
-}
 export const getConferenceCenterAuth = (): Auth => {
     return getAuth(instanceApp)
 }
