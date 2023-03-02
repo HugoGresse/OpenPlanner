@@ -76,7 +76,7 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
         setOpen(!open)
     }
 
-    console.log('aa')
+    console.log('vvvv')
     return (
         <Box sx={{ display: 'flex' }}>
             <AppBar position="absolute" open={open}>
