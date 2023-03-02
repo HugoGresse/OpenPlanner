@@ -3,15 +3,12 @@ import { useState } from 'react'
 import {
     AppBar as MuiAppBar,
     AppBarProps as MuiAppBarProps,
-    Avatar,
     Box,
+    Container,
     Divider,
     Drawer as MuiDrawer,
     IconButton,
     List,
-    ListItem,
-    ListItemAvatar,
-    ListItemText,
     styled,
     Toolbar,
     Typography,
@@ -20,10 +17,6 @@ import { EventScreenMenuItems, Menu } from './EventScreenMenuItems'
 import MenuIcon from '@mui/icons-material/Menu'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useRoute } from 'wouter'
-import { useSelector } from 'react-redux'
-import { logout, selectUserConferenceCenter } from '../../auth/authReducer'
-import LogoutIcon from '@mui/icons-material/Logout'
-import { useAppDispatch } from '../../reduxStore'
 
 const drawerWidth: number = 240
 
@@ -78,10 +71,8 @@ export type EventLayoutProps = {
 }
 
 export const EventLayout = ({ children }: EventLayoutProps) => {
-    const dispatch = useAppDispatch()
     const [_, params] = useRoute('/:routeName')
     const [open, setOpen] = useState(true)
-    const user = useSelector(selectUserConferenceCenter)
     const toggleDrawer = () => {
         setOpen(!open)
     }
@@ -128,21 +119,6 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                 <List component="nav">
                     <EventScreenMenuItems />
                 </List>
-                <Box marginTop="auto">
-                    <List>
-                        <ListItem
-                            secondaryAction={
-                                <IconButton edge="end" aria-label="logout" onClick={() => dispatch(logout())}>
-                                    <LogoutIcon />
-                                </IconButton>
-                            }>
-                            <ListItemAvatar>
-                                <Avatar alt={user?.avatarURL} src={user?.displayName}></Avatar>
-                            </ListItemAvatar>
-                            <ListItemText primary={user?.displayName} />
-                        </ListItem>
-                    </List>
-                </Box>
             </Drawer>
             <Box
                 component="main"
@@ -154,6 +130,9 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     overflow: 'auto',
                 }}>
                 <Toolbar />
+                <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+                    {children}
+                </Container>
             </Box>
         </Box>
     )
