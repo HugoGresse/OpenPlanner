@@ -5,12 +5,11 @@ export type EventSponsorsProps = {}
 export const EventSponsors = (props: EventSponsorsProps) => {
     const [match, params] = useRoute('/events/:eventId')
 
+    console.log('render sponsors')
+
     return (
         <>
-            <div>
-                Sponsors!
-                {params?.eventId}
-            </div>
+            <div>Sponsors!</div>
         </>
     )
 }

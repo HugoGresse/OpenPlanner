@@ -19,6 +19,8 @@ export const EventRouter = () => {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={event} />
     }
 
+    console.log('render routes')
+
     return (
         <NestedRoutes base={`/events/${params?.eventId}`}>
             <Redirect to="/sponsors" />
