@@ -1,9 +1,6 @@
 import * as React from 'react'
 import { useEffect } from 'react'
-import { Redirect, Route, useRoute } from 'wouter'
-import { NestedRoutes } from '../../components/NestedRoutes'
-import { EventLayout } from './EventLayout'
-import { EventSponsors } from './EventSponsors'
+import { useRoute } from 'wouter'
 import { useEvent } from '../../services/hooks/useEvent'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 
@@ -21,19 +18,5 @@ export const EventRouter = () => {
 
     console.log('render routes')
 
-    return (
-        <NestedRoutes base={`/events/${params?.eventId}`}>
-            <Redirect to="/sponsors" />
-            <EventLayout>
-                <Route path="/sponsors">
-                    <EventSponsors />
-                </Route>
-                <Route path="/sessions">// sessions</Route>
-                <Route path="/speakers">// speakers</Route>
-                <Route path="/schedule">// schedule</Route>
-                <Route path="/settings">// settings</Route>
-                <Route path="/">// root</Route>
-            </EventLayout>
-        </NestedRoutes>
-    )
+    return null
 }
