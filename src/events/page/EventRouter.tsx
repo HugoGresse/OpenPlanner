@@ -11,8 +11,6 @@ export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
     const event = useEvent(params?.eventId)
 
-    console.log(event)
-
     useEffect(() => {
         document.title = `ConferenceCenter | ${event.data?.name}`
     }, [params])
