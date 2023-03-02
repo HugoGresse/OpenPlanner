@@ -1,16 +1,17 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { ConferenceHallProposal, ConferenceHallProposalState } from '../../types'
-import { useConferenceHallProposals } from '../hooks/useConferenceHallProposals'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { Box, Typography } from '@mui/material'
 import { CheckboxButtonGroup, FormContainer, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup/dist/yup'
+import { UseQueryResult } from 'react-query'
+import { DocumentData } from '@firebase/firestore'
 
 export type ConferenceHallProposalsPickerProps = {
-    eventId: string
+    proposals: UseQueryResult<DocumentData>
     onSubmit: (proposals: ConferenceHallProposal[]) => void
 }
 
@@ -20,14 +21,12 @@ const schema = yup
     })
     .required()
 
-export const ConferenceHallProposalsPicker = ({ eventId, onSubmit }: ConferenceHallProposalsPickerProps) => {
+export const ConferenceHallProposalsPicker = ({ proposals, onSubmit }: ConferenceHallProposalsPickerProps) => {
     const formContext = useForm({
         defaultValues: {
             states: [],
         },
     })
-    const proposals = useConferenceHallProposals(eventId)
-
     const [stats, setState] = useState({
         submitted: 0,
         accepted: 0,

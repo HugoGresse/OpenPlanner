@@ -8,6 +8,7 @@ import { EventsScreen } from './events/EventsScreen'
 import { LinkBehavior } from './components/CCLink'
 import { LinkProps } from '@mui/material/Link'
 import { QueryClient, QueryClientProvider } from 'react-query'
+import { ReactQueryDevtools } from 'react-query/devtools'
 
 const theme = createTheme({
     components: {
@@ -42,6 +43,7 @@ export const App = ({}) => {
                         </Switch>
                     </RequireLogin>
                 </ThemeProvider>
+                <ReactQueryDevtools />
             </QueryClientProvider>
         </Provider>
     )
