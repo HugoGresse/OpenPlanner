@@ -10,14 +10,14 @@ import {
 } from '@mui/material'
 import * as React from 'react'
 import { useState } from 'react'
-import { RequireConferenceHallLogin } from '../conferencehall/RequireConferenceHallLogin'
-import { ConferenceHallEventsPicker } from '../conferencehall/ConferenceHallEventsPicker'
-import { ConferenceHallEvent } from '../types'
+import { RequireConferenceHallLogin } from '../../conferencehall/RequireConferenceHallLogin'
+import { ConferenceHallEventsPicker } from '../../conferencehall/ConferenceHallEventsPicker'
+import { ConferenceHallEvent } from '../../types'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
-import { addNewEvent } from './actions/addNewEvent'
+import { addNewEvent } from '../actions/addNewEvent'
 import { useSelector } from 'react-redux'
-import { selectUserIdConferenceCenter } from '../auth/authReducer'
-import { ConferenceHallProposalsPickerConnected } from '../conferencehall/components/ConferenceHallProposalsPickerConnected'
+import { selectUserIdConferenceCenter } from '../../auth/authReducer'
+import { ConferenceHallProposalsPickerConnected } from '../../conferencehall/components/ConferenceHallProposalsPickerConnected'
 
 export type NewEventDialogProps = {
     isOpen: boolean
