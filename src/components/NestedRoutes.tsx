@@ -11,8 +11,6 @@ export const NestedRoutes = (props: { children: React.ReactNode; base: string })
     // don't render anything outside of the scope
     if (!parentLocation.startsWith(nestedBase)) return null
 
-    console.log('render subroute')
-
     // we need key to make sure the router will remount when base changed
     return (
         <Router base={nestedBase} key={nestedBase}>

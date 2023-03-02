@@ -1,8 +1,7 @@
-import { ListItemButton, ListItemText } from '@mui/material'
+import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import * as React from 'react'
-import EuroIcon from '@mui/icons-material/Euro'
 import Icon from '@mdi/react'
-import { mdiAccountVoice, mdiCalendarWeekend, mdiCogBox, mdiPresentation } from '@mdi/js'
+import { mdiAccountVoice, mdiCalendarWeekend, mdiCashMultiple, mdiCogBox, mdiPresentation } from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
 
@@ -24,27 +23,27 @@ const CCListItemButton = ({ children, href }: CCListItemButton) => {
 export const Menu = [
     {
         href: '/sponsors',
-        icon: () => <EuroIcon />,
+        icon: mdiCashMultiple,
         name: 'Sponsors',
     },
     {
         href: '/sessions',
-        icon: () => <Icon path={mdiPresentation} size={1} />,
+        icon: mdiPresentation,
         name: 'Session',
     },
     {
         href: '/speakers',
-        icon: () => <Icon path={mdiAccountVoice} size={1} />,
+        icon: mdiAccountVoice,
         name: 'Speakers',
     },
     {
         href: '/schedule',
-        icon: () => <Icon path={mdiCalendarWeekend} size={1} />,
+        icon: mdiCalendarWeekend,
         name: 'Schedule',
     },
     {
         href: '/settings',
-        icon: () => <Icon path={mdiCogBox} size={1} />,
+        icon: mdiCogBox,
         name: 'Settings',
     },
 ]
@@ -54,6 +53,10 @@ export const EventScreenMenuItems = () => {
         <>
             {Menu.map((item) => (
                 <CCListItemButton href={item.href} key={item.href}>
+                    <ListItemIcon>
+                        {' '}
+                        <Icon path={item.icon} size={1} />
+                    </ListItemIcon>
                     <ListItemText primary={item.name} />
                 </CCListItemButton>
             ))}
