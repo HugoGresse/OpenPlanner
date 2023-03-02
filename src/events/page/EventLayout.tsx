@@ -13,7 +13,7 @@ import {
     Toolbar,
     Typography,
 } from '@mui/material'
-import { EventScreenMenuItems, Menu } from './EventScreenMenuItems'
+import { EventScreenMenuItems } from './EventScreenMenuItems'
 import MenuIcon from '@mui/icons-material/Menu'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useRoute } from 'wouter'
@@ -77,9 +77,7 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
         setOpen(!open)
     }
 
-    const menuItem = Menu.find((item) => item.href === `/${params?.routeName}`)
-    const routeName = menuItem ? menuItem.name : 'Loading...'
-
+    console.log('titi')
     return (
         <Box sx={{ display: 'flex' }}>
             <AppBar position="absolute" open={open}>
@@ -99,7 +97,7 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                         <MenuIcon />
                     </IconButton>
                     <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
-                        {routeName}
+                        "toto"
                     </Typography>
                 </Toolbar>
             </AppBar>
