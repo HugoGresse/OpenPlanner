@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useEffect } from 'react'
-import { Route, useRoute } from 'wouter'
+import { Redirect, Route, useRoute } from 'wouter'
 import { NestedRoutes } from '../../components/NestedRoutes'
 import { EventLayout } from './EventLayout'
 import { EventSponsors } from './EventSponsors'
@@ -23,6 +23,7 @@ export const EventRouter = () => {
 
     return (
         <NestedRoutes base={`/events/${params?.eventId}`}>
+            <Redirect to="/sponsors" />
             <EventLayout>
                 <Route path="/sponsors">
                     <EventSponsors />
