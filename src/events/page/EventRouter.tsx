@@ -5,6 +5,7 @@ import { NestedRoutes } from '../../components/NestedRoutes'
 import { EventLayout } from './EventLayout'
 import { useEvent } from '../../services/hooks/useEvent'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
+import { EventSponsors } from './EventSponsors'
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -22,7 +23,7 @@ export const EventRouter = () => {
         <NestedRoutes base={`/events/${params?.eventId}`}>
             <EventLayout>
                 <Route path="/sponsors">
-                    <>sponsors</>
+                    <EventSponsors />
                 </Route>
                 <Route path="/sessions">
                     <>sessions</>

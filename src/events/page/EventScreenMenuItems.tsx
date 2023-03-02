@@ -1,4 +1,4 @@
-import { ListItemButton } from '@mui/material'
+import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import * as React from 'react'
 import EuroIcon from '@mui/icons-material/Euro'
 import Icon from '@mdi/react'
@@ -24,31 +24,40 @@ const CCListItemButton = ({ children, href }: CCListItemButton) => {
 export const Menu = [
     {
         href: '/sponsors',
-        icon: <EuroIcon />,
+        icon: () => <EuroIcon />,
         name: 'Sponsors',
     },
     {
         href: '/sessions',
-        icon: <Icon path={mdiPresentation} size={1} />,
+        icon: () => <Icon path={mdiPresentation} size={1} />,
         name: 'Session',
     },
     {
         href: '/speakers',
-        icon: <Icon path={mdiAccountVoice} size={1} />,
+        icon: () => <Icon path={mdiAccountVoice} size={1} />,
         name: 'Speakers',
     },
     {
         href: '/schedule',
-        icon: <Icon path={mdiCalendarWeekend} size={1} />,
+        icon: () => <Icon path={mdiCalendarWeekend} size={1} />,
         name: 'Schedule',
     },
     {
         href: '/settings',
-        icon: <Icon path={mdiCogBox} size={1} />,
+        icon: () => <Icon path={mdiCogBox} size={1} />,
         name: 'Settings',
     },
 ]
 
 export const EventScreenMenuItems = () => {
-    return <></>
+    return (
+        <>
+            {Menu.map((item) => (
+                <CCListItemButton href={item.href} key={item.href}>
+                    <ListItemIcon>{item.icon()}</ListItemIcon>
+                    <ListItemText primary={item.name} />
+                </CCListItemButton>
+            ))}
+        </>
+    )
 }
