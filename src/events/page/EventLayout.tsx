@@ -1,5 +1,18 @@
 import * as React from 'react'
-import { AppBar as MuiAppBar, AppBarProps as MuiAppBarProps, Drawer as MuiDrawer, styled } from '@mui/material'
+import { useState } from 'react'
+import {
+    AppBar as MuiAppBar,
+    AppBarProps as MuiAppBarProps,
+    Box,
+    Drawer as MuiDrawer,
+    IconButton,
+    styled,
+    Toolbar,
+    Typography,
+} from '@mui/material'
+import { Menu } from './EventScreenMenuItems'
+import MenuIcon from '@mui/icons-material/Menu'
+import { useRoute } from 'wouter'
 
 const drawerWidth: number = 240
 
@@ -54,5 +67,38 @@ export type EventLayoutProps = {
 }
 
 export const EventLayout = ({ children }: EventLayoutProps) => {
-    return <>children </>
+    const [_, params] = useRoute('/:routeName')
+    const [open, setOpen] = useState(true)
+    const toggleDrawer = () => {
+        setOpen(!open)
+    }
+
+    const menuItem = Menu.find((item) => item.href === `/${params?.routeName}`)
+    const routeName = menuItem ? menuItem.name : 'Loading...'
+
+    return (
+        <Box sx={{ display: 'flex' }}>
+            <AppBar position="absolute" open={open}>
+                <Toolbar
+                    sx={{
+                        pr: '24px', // keep right padding when drawer closed
+                    }}>
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        aria-label="open drawer"
+                        onClick={toggleDrawer}
+                        sx={{
+                            marginRight: '36px',
+                            ...(open && { display: 'none' }),
+                        }}>
+                        <MenuIcon />
+                    </IconButton>
+                    <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
+                        {routeName}
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+        </Box>
+    )
 }
