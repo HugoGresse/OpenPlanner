@@ -14,10 +14,10 @@ import { RequireConferenceHallLogin } from '../conferencehall/RequireConferenceH
 import { ConferenceHallEventsPicker } from '../conferencehall/ConferenceHallEventsPicker'
 import { ConferenceHallEvent } from '../types'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
-import { ConferenceHallProposalsPicker } from '../conferencehall/components/ConferenceHallProposalsPicker'
 import { addNewEvent } from './actions/addNewEvent'
 import { useSelector } from 'react-redux'
 import { selectUserIdConferenceCenter } from '../auth/authReducer'
+import { ConferenceHallProposalsPickerConnected } from '../conferencehall/components/ConferenceHallProposalsPickerConnected'
 
 export type NewEventDialogProps = {
     isOpen: boolean
@@ -72,7 +72,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                                                     3. Select the proposals to import (optional)
                                                 </Typography>
                                             </Box>
-                                            <ConferenceHallProposalsPicker
+                                            <ConferenceHallProposalsPickerConnected
                                                 eventId={selectedConferenceHallEvent.id}
                                                 onSubmit={async (proposals) => {
                                                     setNewResults(null)
