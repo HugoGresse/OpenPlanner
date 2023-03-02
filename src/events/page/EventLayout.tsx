@@ -90,8 +90,6 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
     const menuItem = Menu.find((item) => item.href === `/${params?.routeName}`)
     const routeName = menuItem ? menuItem.name : 'Loading...'
 
-    console.log('vvvezfde')
-
     return (
         <Box sx={{ display: 'flex' }}>
             <AppBar position="absolute" open={open}>

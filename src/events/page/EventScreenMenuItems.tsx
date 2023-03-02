@@ -1,4 +1,4 @@
-import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
+import { ListItemButton, ListItemText } from '@mui/material'
 import * as React from 'react'
 import EuroIcon from '@mui/icons-material/Euro'
 import Icon from '@mdi/react'
@@ -54,7 +54,6 @@ export const EventScreenMenuItems = () => {
         <>
             {Menu.map((item) => (
                 <CCListItemButton href={item.href} key={item.href}>
-                    <ListItemIcon>{item.icon()}</ListItemIcon>
                     <ListItemText primary={item.name} />
                 </CCListItemButton>
             ))}
