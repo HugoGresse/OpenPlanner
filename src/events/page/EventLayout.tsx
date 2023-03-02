@@ -13,6 +13,9 @@ import {
 import { Menu } from './EventScreenMenuItems'
 import MenuIcon from '@mui/icons-material/Menu'
 import { useRoute } from 'wouter'
+import { useSelector } from 'react-redux'
+import { selectUserConferenceCenter } from '../../auth/authReducer'
+import { useAppDispatch } from '../../reduxStore'
 
 const drawerWidth: number = 240
 
@@ -67,8 +70,10 @@ export type EventLayoutProps = {
 }
 
 export const EventLayout = ({ children }: EventLayoutProps) => {
+    const dispatch = useAppDispatch()
     const [_, params] = useRoute('/:routeName')
     const [open, setOpen] = useState(true)
+    const user = useSelector(selectUserConferenceCenter)
     const toggleDrawer = () => {
         setOpen(!open)
     }
