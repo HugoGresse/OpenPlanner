@@ -5,7 +5,6 @@ import {
     AppBarProps as MuiAppBarProps,
     Avatar,
     Box,
-    Container,
     Divider,
     Drawer as MuiDrawer,
     IconButton,
@@ -155,9 +154,6 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     overflow: 'auto',
                 }}>
                 <Toolbar />
-                <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                    {children}
-                </Container>
             </Box>
         </Box>
     )
