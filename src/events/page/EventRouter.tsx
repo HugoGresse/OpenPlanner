@@ -6,6 +6,8 @@ import { EventLayout } from './EventLayout'
 import { useEvent } from '../../services/hooks/useEvent'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventSponsors } from './EventSponsors'
+import { EventSettings } from './EventSettings'
+import { Event } from '../../types'
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -17,6 +19,10 @@ export const EventRouter = () => {
 
     if (event.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={event} />
+    }
+
+    if (!event.data) {
+        return <>Error? {JSON.stringify(event, null, 4)}</>
     }
 
     return (
@@ -35,7 +41,7 @@ export const EventRouter = () => {
                     <>schedule</>
                 </Route>
                 <Route path="/settings">
-                    <>settings</>
+                    <EventSettings event={event.data as Event} />
                 </Route>
                 <Route path="/">
                     <Redirect to="/sponsors" />
