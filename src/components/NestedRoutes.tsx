@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Router, useLocation, useRouter } from 'wouter'
+import { useLocation, useRouter } from 'wouter'
 
 // from https://github.com/molefrog/wouter#are-relative-routes-and-links-supported
 export const NestedRoutes = (props: { children: React.ReactNode; base: string }) => {
@@ -14,9 +14,5 @@ export const NestedRoutes = (props: { children: React.ReactNode; base: string })
     console.log('render subroute')
 
     // we need key to make sure the router will remount when base changed
-    return (
-        <Router base={nestedBase} key={nestedBase}>
-            {props.children}
-        </Router>
-    )
+    return null
 }
