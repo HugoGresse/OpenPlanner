@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Event } from '../types'
+import { Event } from '../../types'
 import { Box, Button, Link } from '@mui/material'
 
 export type EventsListItemProps = {

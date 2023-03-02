@@ -1,15 +1,15 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { EventsLayout } from './EventsLayout'
-import { useEvents } from '../services/hooks/useEvents'
+import { useEvents } from '../../services/hooks/useEvents'
 import { useSelector } from 'react-redux'
-import { selectUserIdConferenceCenter } from '../auth/authReducer'
-import { FirestoreQueryLoaderAndErrorDisplay } from '../components/FirestoreQueryLoaderAndErrorDisplay'
+import { selectUserIdConferenceCenter } from '../../auth/authReducer'
+import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventsListItem } from './EventsListItem'
-import { Event } from '../types'
+import { Event } from '../../types'
 import { Box, Button } from '@mui/material'
-import { NewEventDialog } from './NewEventDialog'
-import { NewEventCreatedDialog } from './NewEventCreatedDialog'
+import { NewEventDialog } from '../new/NewEventDialog'
+import { NewEventCreatedDialog } from '../new/NewEventCreatedDialog'
 
 export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdConferenceCenter)

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Avatar, Box, Button, Container, Typography } from '@mui/material'
-import { useAppDispatch } from '../reduxStore'
-import { logout, selectUserConferenceCenter, UserState } from '../auth/authReducer'
+import { useAppDispatch } from '../../reduxStore'
+import { logout, selectUserConferenceCenter, UserState } from '../../auth/authReducer'
 import { useSelector } from 'react-redux'
 
 export type EventsLayoutProps = {
