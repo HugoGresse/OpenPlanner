@@ -1,6 +1,6 @@
-import { ListItemButton, ListItemText } from '@mui/material'
+import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import * as React from 'react'
-import Icon from '@mdi/react'
+import { Icon } from '@mdi/react'
 import { mdiAccountVoice, mdiCalendarWeekend, mdiCashMultiple, mdiCogBox, mdiPresentation } from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
@@ -51,9 +51,11 @@ export const Menu = [
 export const EventScreenMenuItems = () => {
     return (
         <>
-            <Icon path={mdiAccountVoice} size={1} />
             {Menu.map((item) => (
                 <CCListItemButton href={item.href} key={item.href}>
+                    <ListItemIcon>
+                        <Icon path={item.icon} size={1} />
+                    </ListItemIcon>
                     <ListItemText primary={item.name} />
                 </CCListItemButton>
             ))}
