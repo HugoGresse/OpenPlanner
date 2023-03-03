@@ -8,6 +8,10 @@ export const eventConverter: FirestoreDataConverter<Event | NewEvent> = {
         return {
             id: snapshot.id,
             ...data,
+            dates: {
+                start: data.dates.start ? data.dates.start.toDate() : null,
+                end: data.dates.end ? data.dates.end.toDate() : null,
+            },
         } as Event
     },
     toFirestore(event: NewEvent) {

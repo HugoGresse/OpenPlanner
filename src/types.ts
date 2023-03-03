@@ -10,8 +10,8 @@ export interface Webhooks {
 }
 
 export interface DateType {
-    start: Date
-    end: Date
+    start: Date | null
+    end: Date | null
 }
 
 export interface SpeakerSocial {
@@ -63,6 +63,13 @@ export interface Event {
     webhooks: Webhooks[]
     createdAt: Date
     updatedAt: Date
+}
+
+export type EventForForm = Omit<Event, 'dates'> & {
+    dates: {
+        start: string | null
+        end: string | null
+    }
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {
