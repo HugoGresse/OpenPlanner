@@ -2,10 +2,10 @@ import * as React from 'react'
 import { Box, IconButton, Typography } from '@mui/material'
 import { Control, TextFieldElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
-import { Event, Track } from '../../../../types'
+import { EventForForm, Track } from '../../../../types'
 
 export type TrackFieldsProps = {
-    control: Control<Event, any>
+    control: Control<EventForForm, any>
     isSubmitting: boolean
 }
 type TrackWithKey = Track & { key: string }
