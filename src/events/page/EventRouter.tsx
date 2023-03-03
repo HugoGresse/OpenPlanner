@@ -6,7 +6,7 @@ import { EventLayout } from './EventLayout'
 import { useEvent } from '../../services/hooks/useEvent'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventSponsors } from './EventSponsors'
-import { EventSettings } from './EventSettings'
+import { EventSettings } from './settings/EventSettings'
 import { Event } from '../../types'
 
 export const EventRouter = () => {
@@ -41,7 +41,12 @@ export const EventRouter = () => {
                     <>schedule</>
                 </Route>
                 <Route path="/settings">
-                    <EventSettings event={event.data as Event} />
+                    <EventSettings
+                        event={event.data as Event}
+                        eventUpdated={async () => {
+                            return event.refetch()
+                        }}
+                    />
                 </Route>
                 <Route path="/">
                     <Redirect to="/sponsors" />
