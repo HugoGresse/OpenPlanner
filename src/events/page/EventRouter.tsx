@@ -8,6 +8,7 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQ
 import { EventSponsors } from './EventSponsors'
 import { EventSettings } from './settings/EventSettings'
 import { Event } from '../../types'
+import { EventSchedule } from './settings/EventSchedule'
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -38,7 +39,7 @@ export const EventRouter = () => {
                     <>speakers</>
                 </Route>
                 <Route path="/schedule">
-                    <>schedule</>
+                    <EventSchedule event={event.data as Event} />
                 </Route>
                 <Route path="/settings">
                     <EventSettings

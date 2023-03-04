@@ -1,11 +1,11 @@
 import { DateTime } from 'luxon'
 
-export const diffDays = (start: string | null, end: string | null): number => {
+export const diffDays = (start: string | Date | null, end: string | Date | null): number => {
     if (!start || !end) {
         return 0
     }
-    const startTime = DateTime.fromISO(start)
-    const endTime = DateTime.fromISO(end)
+    const startTime = start instanceof Date ? DateTime.fromJSDate(start) : DateTime.fromISO(start)
+    const endTime = end instanceof Date ? DateTime.fromJSDate(end) : DateTime.fromISO(end)
 
     const diff = endTime.diff(startTime, 'days').toObject()
 
