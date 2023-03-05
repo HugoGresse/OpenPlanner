@@ -27,11 +27,13 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
                 borderRadius: 2,
             }}>
             <Typography sx={{ width: 80, marginRight: 2, wordBreak: 'break-word' }}>Sessions without times:</Typography>
-            {sessions.data.map((session: Session) => (
-                <Box key={session.id} mr={1} height={SessionCardMinHeight}>
-                    <SessionCard session={session} absolute={false} />
-                </Box>
-            ))}
+            {sessions.data
+                .filter((session: Session) => !session.trackId || !session.dates || !session.dates.start)
+                .map((session: Session) => (
+                    <Box key={session.id} mr={1} height={SessionCardMinHeight}>
+                        <SessionCard session={session} absolute={false} />
+                    </Box>
+                ))}
         </Box>
     )
 }

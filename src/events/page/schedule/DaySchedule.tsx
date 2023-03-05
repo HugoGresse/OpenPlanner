@@ -1,22 +1,17 @@
 import * as React from 'react'
 import { StartEndTime } from '../../../utils/diffDays'
-import { Box, Typography } from '@mui/material'
-import { Track } from '../../../types'
+import { Box } from '@mui/material'
+import { Session, Track } from '../../../types'
 import { generateTimeSlots } from '../../../utils/generateTimeSlots'
 import { CalendarSlot } from './components/CalendarSlot'
-import { SlotTimeWidth, SlotWidth } from './scheduleConstants'
+import { DayScheduleHeader } from './DayScheduleHeader'
 
 export type DayScheduleProps = {
     day: StartEndTime
     tracks: Track[]
+    sessions: Session[]
 }
-export const DaySchedule = ({ day, tracks }: DayScheduleProps) => {
-    const dayHuman = day.start.toLocaleString({
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long',
-    })
-
+export const DaySchedule = ({ day, tracks, sessions }: DayScheduleProps) => {
     const timeSlot = generateTimeSlots(day.start, day.end)
 
     return (
@@ -28,25 +23,18 @@ export const DaySchedule = ({ day, tracks }: DayScheduleProps) => {
                 display: 'flex',
                 flexDirection: 'column',
             }}>
-            <Typography>{dayHuman}</Typography>
-
-            <Box display="flex">
-                <Box width={SlotTimeWidth}></Box>
-                {tracks.map((track) => (
-                    <Box
-                        key={track.id}
-                        sx={{
-                            border: '1px dashed #ddd',
-                            minWidth: SlotWidth,
-                        }}>
-                        {track.name}
-                    </Box>
-                ))}
-            </Box>
+            <DayScheduleHeader tracks={tracks} startTime={day.start} />
 
             <Box display="flex" flexDirection="column">
                 {timeSlot.map((slot) => {
-                    return <CalendarSlot key={slot.start.valueOf()} tracks={tracks} startEndTime={slot} />
+                    return (
+                        <CalendarSlot
+                            key={slot.start.valueOf()}
+                            tracks={tracks}
+                            sessions={sessions}
+                            startEndTime={slot}
+                        />
+                    )
                 })}
             </Box>
         </Box>
