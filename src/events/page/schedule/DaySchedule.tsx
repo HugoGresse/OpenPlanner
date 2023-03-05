@@ -45,7 +45,7 @@ export const DaySchedule = ({ day, tracks }: DayScheduleProps) => {
 
             <Box display="flex" flexDirection="column">
                 {timeSlot.map((slot) => {
-                    return <CalendarSlot tracks={tracks} key={slot.start.valueOf()} startEndTime={slot} />
+                    return <CalendarSlot key={slot.start.valueOf()} tracks={tracks} startEndTime={slot} />
                 })}
             </Box>
         </Box>
