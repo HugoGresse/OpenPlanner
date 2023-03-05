@@ -5,12 +5,16 @@ import { Event } from '../../../types'
 import { getIndividualDays } from '../../../utils/diffDays'
 import { DaySchedule } from './DaySchedule'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import { useSessions } from '../../../services/hooks/useSessions'
+import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
+import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
 
 export type EventScheduleProps = {
     event: Event
 }
 export const EventSchedule = ({ event }: EventScheduleProps) => {
     const daysArray = getIndividualDays(event.dates.start, event.dates.end)
+    const sessions = useSessions(event.id)
 
     if (!daysArray.length) {
         return (
@@ -39,6 +43,8 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
 
     return (
         <DndProvider backend={HTML5Backend}>
+            <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
+            <NoDatesSessionsPicker sessions={sessions} />
             <Box height="100%">
                 <Box component="ul" display="flex" margin={0} padding={0}>
                     {daysArray.map((startEndTime) => (

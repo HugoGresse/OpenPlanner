@@ -10,9 +10,6 @@ export type CalendarSlotProps = {
     startEndTime: StartEndTime
 }
 
-export const SlotTimeWidth = 'calc(100vw * 0.05)'
-export const SlotWidth = 'calc(100vw * 0.1)'
-
 const fakeSession: Session = {
     title: 'session 1',
     id: 'i',

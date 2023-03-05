@@ -3,7 +3,8 @@ import { StartEndTime } from '../../../utils/diffDays'
 import { Box, Typography } from '@mui/material'
 import { Track } from '../../../types'
 import { generateTimeSlots } from '../../../utils/generateTimeSlots'
-import { CalendarSlot, SlotTimeWidth, SlotWidth } from './components/CalendarSlot'
+import { CalendarSlot } from './components/CalendarSlot'
+import { SlotTimeWidth, SlotWidth } from './scheduleConstants'
 
 export type DayScheduleProps = {
     day: StartEndTime

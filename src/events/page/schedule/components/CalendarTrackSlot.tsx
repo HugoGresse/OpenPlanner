@@ -2,8 +2,8 @@ import * as React from 'react'
 import { DragTypes, Session, Track } from '../../../../types'
 import { SessionCard } from './SessionCard'
 import { Box } from '@mui/material'
-import { SlotWidth } from './CalendarSlot'
 import { useDrop } from 'react-dnd'
+import { SlotWidth } from '../scheduleConstants'
 
 export type CalendarTrackSlotProps = {
     track: Track

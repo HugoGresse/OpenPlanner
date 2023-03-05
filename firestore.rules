@@ -14,19 +14,19 @@ service cloud.firestore {
             allow write: if authenticated() && isAdmin(resource.data);
 
             match /sessions/{sessionId} {
-                allow create: if authenticated();
+                allow read: if authenticated() && isAdmin(eventData(eventId));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /speakers/{speakerId} {
-                allow create: if authenticated();
+                allow read: if authenticated() && isAdmin(eventData(eventId));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /sponsors/{sponsorId} {
-                allow create: if authenticated();
+                allow read: if authenticated() && isAdmin(eventData(eventId));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /schedule/{scheduleId} {
-                allow create: if authenticated();
+                allow read: if authenticated() && isAdmin(eventData(eventId));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
 

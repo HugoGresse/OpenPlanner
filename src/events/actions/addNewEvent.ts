@@ -10,6 +10,7 @@ import {
 import { getConferenceHallSpeakers } from '../../conferencehall/firebase/getConferenceHallSpeakers'
 import { collections } from '../../services/firebase'
 import { addDoc, serverTimestamp } from 'firebase/firestore'
+import { slugify } from '../../utils/slugify'
 
 export const addNewEvent = async (
     chEvent: ConferenceHallEvent,
@@ -130,7 +131,7 @@ const mapConferenceHallSpeakerToConferenceCenter = (
             })
         }
         speakers.push({
-            id: 'todo',
+            id: slugify(chSpeaker.displayName),
             conferenceHallId: chSpeaker.uid || null,
             name: chSpeaker.displayName,
             bio: chSpeaker.bio || null,
@@ -165,7 +166,7 @@ const mapConferenceHallProposalsToConferenceCenter = (
             .filter((id) => !!id) as string[]
 
         sessions.push({
-            id: 'todo',
+            id: slugify(chProposal.title).slice(0, 15),
             conferenceHallId: chProposal.id,
             title: chProposal.title,
             abstract: chProposal.abstract || null,
