@@ -8,7 +8,7 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQ
 import { EventSponsors } from './EventSponsors'
 import { EventSettings } from './settings/EventSettings'
 import { Event } from '../../types'
-import { EventSchedule } from './settings/EventSchedule'
+import { EventSchedule } from './schedule/EventSchedule'
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
