@@ -4,12 +4,15 @@ import { SessionCard } from './SessionCard'
 import { Box } from '@mui/material'
 import { useDrop } from 'react-dnd'
 import { SlotWidth } from '../scheduleConstants'
+import { StartEndTime } from '../../../../utils/diffDays'
 
 export type CalendarTrackSlotProps = {
     track: Track
     session?: Session
+    startEndTime: StartEndTime
+    updateSession: (session: Session) => void
 }
-export const CalendarTrackSlot = ({ track, session }: CalendarTrackSlotProps) => {
+export const CalendarTrackSlot = ({ track, session, startEndTime, updateSession }: CalendarTrackSlotProps) => {
     const [{ isOver, canDrop }, drop] = useDrop(
         () => ({
             accept: DragTypes.Session,
@@ -17,14 +20,17 @@ export const CalendarTrackSlot = ({ track, session }: CalendarTrackSlotProps) =>
                 return !session
             },
             drop: () => {
-                console.log('dropped, todo')
+                return {
+                    track,
+                    startEndTime,
+                }
             },
             collect: (monitor) => ({
-                isOver: !!monitor.isOver(),
-                canDrop: !!monitor.canDrop(),
+                isOver: monitor.isOver(),
+                canDrop: monitor.canDrop(),
             }),
         }),
-        []
+        [session]
     )
 
     return (
@@ -35,9 +41,9 @@ export const CalendarTrackSlot = ({ track, session }: CalendarTrackSlotProps) =>
                 border: '1px dashed #ddd',
                 minWidth: SlotWidth,
                 position: 'relative',
-                background: isOver ? 'lightblue' : 'transparent',
+                background: isOver ? (canDrop ? 'lightblue' : 'red') : 'transparent',
             }}>
-            {session && <SessionCard session={session} />}
+            {session && <SessionCard session={session} updateSession={updateSession} />}
         </Box>
     )
 }

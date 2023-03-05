@@ -44,6 +44,7 @@ export interface Session {
     title: string
     abstract: string | null
     dates: DateTimeType | null
+    durationMinutes: number
     speakers: string[]
     trackId: string | null
     language: string | null

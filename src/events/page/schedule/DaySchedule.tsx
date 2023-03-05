@@ -10,8 +10,9 @@ export type DayScheduleProps = {
     day: StartEndTime
     tracks: Track[]
     sessions: Session[]
+    updateSession: (session: Session) => void
 }
-export const DaySchedule = ({ day, tracks, sessions }: DayScheduleProps) => {
+export const DaySchedule = ({ day, tracks, sessions, updateSession }: DayScheduleProps) => {
     const timeSlot = generateTimeSlots(day.start, day.end)
 
     return (
@@ -33,6 +34,7 @@ export const DaySchedule = ({ day, tracks, sessions }: DayScheduleProps) => {
                             tracks={tracks}
                             sessions={sessions}
                             startEndTime={slot}
+                            updateSession={updateSession}
                         />
                     )
                 })}

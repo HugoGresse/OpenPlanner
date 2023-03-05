@@ -172,6 +172,7 @@ const mapConferenceHallProposalsToConferenceCenter = (
             abstract: chProposal.abstract || null,
             speakers: speakerIds,
             dates: null,
+            durationMinutes: 0,
             format: null,
             hideTrackTitle: false,
             showInFeedback: true,

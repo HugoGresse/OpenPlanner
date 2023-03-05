@@ -8,6 +8,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
+import { updateSession } from '../../actions/updateSession'
 
 export type EventScheduleProps = {
     event: Event
@@ -41,10 +42,14 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
         )
     }
 
+    const updateSessionAndRefetch = (session: Session) => {
+        return updateSession(event.id, session).then(() => sessions.refetch())
+    }
+
     return (
         <DndProvider backend={HTML5Backend}>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
-            <NoDatesSessionsPicker sessions={sessions} />
+            <NoDatesSessionsPicker sessions={sessions} updateSession={updateSessionAndRefetch} />
             <Box height="100%">
                 <Box component="ul" display="flex" margin={0} padding={0}>
                     {daysArray.map((startEndTime) => (
@@ -53,6 +58,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                             day={startEndTime}
                             tracks={event.tracks}
                             sessions={(sessions.data as Session[]) || []}
+                            updateSession={updateSessionAndRefetch}
                         />
                     ))}
                 </Box>
