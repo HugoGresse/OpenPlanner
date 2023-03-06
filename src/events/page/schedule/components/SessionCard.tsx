@@ -94,20 +94,26 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                 display: 'flex',
                 flexDirection: 'column',
                 position: absolute ? 'absolute' : 'relative',
-                background: 'rgba(70,70,255,0.8)',
-                borderRadius: 6,
-                overflow: 'hidden',
                 cursor: 'grab',
                 zIndex: 1,
-                paddingTop: 8,
-                paddingLeft: 12,
-                paddingRight: 12,
             }}>
             <Box
                 ref={drag}
                 sx={{
-                    // width: SlotWidth,
+                    display: 'flex',
                     flex: 1,
+                    height: '100%',
+                    width: '100%',
+                    flexDirection: 'column',
+                    position: absolute ? 'absolute' : 'relative',
+                    background: 'rgba(70,70,255,0.8)',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    cursor: 'grab',
+                    zIndex: 1,
+                    paddingTop: 1,
+                    paddingLeft: 1,
+                    paddingRight: 1,
                 }}>
                 <Typography fontWeight={600} color="white">
                     {session.title}

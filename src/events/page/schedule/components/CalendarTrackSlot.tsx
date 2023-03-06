@@ -38,10 +38,10 @@ export const CalendarTrackSlot = ({ track, session, startEndTime, updateSession 
             key={track.id}
             ref={drop}
             sx={{
-                border: '1px dashed #ddd',
+                borderRight: '1px dashed #ddd',
                 width: SlotWidth,
                 position: 'relative',
-                background: isOver ? (canDrop ? 'lightblue' : 'red') : 'transparent',
+                background: isOver ? (canDrop ? '#AAF' : 'red') : 'transparent',
             }}>
             {session && <SessionCard session={session} updateSession={updateSession} />}
         </Box>
