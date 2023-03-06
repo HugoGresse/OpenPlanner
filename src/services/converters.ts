@@ -28,8 +28,12 @@ export const sessionConverter: FirestoreDataConverter<Session> = {
             id: snapshot.id,
             ...data,
             dates: {
-                start: data.dates?.start ? DateTime.fromJSDate(data.dates.start.toDate()) : null,
-                end: data.dates?.end ? DateTime.fromJSDate(data.dates.end.toDate()) : null,
+                start: data.dates?.start
+                    ? DateTime.fromJSDate(data.dates.start.toDate()).set({ second: 0, millisecond: 0 })
+                    : null,
+                end: data.dates?.end
+                    ? DateTime.fromJSDate(data.dates.end.toDate()).set({ second: 0, millisecond: 0 })
+                    : null,
             },
         } as Session
     },

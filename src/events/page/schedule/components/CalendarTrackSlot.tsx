@@ -39,7 +39,7 @@ export const CalendarTrackSlot = ({ track, session, startEndTime, updateSession 
             ref={drop}
             sx={{
                 border: '1px dashed #ddd',
-                minWidth: SlotWidth,
+                width: SlotWidth,
                 position: 'relative',
                 background: isOver ? (canDrop ? 'lightblue' : 'red') : 'transparent',
             }}>

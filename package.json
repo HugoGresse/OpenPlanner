@@ -33,6 +33,7 @@
         "react-hook-form-mui": "^5.14.0",
         "react-query": "^3.39.3",
         "react-redux": "^8.0.5",
+        "react-rnd": "^10.4.1",
         "use-firebase-auth": "^3.0.0",
         "wouter": "github:molefrog/wouter",
         "yup": "^1.0.0"

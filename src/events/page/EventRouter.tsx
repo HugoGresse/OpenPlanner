@@ -50,7 +50,7 @@ export const EventRouter = () => {
                     />
                 </Route>
                 <Route path="/">
-                    <Redirect to="/sponsors" />
+                    <Redirect to="/settings" />
                 </Route>
             </EventLayout>
         </NestedRoutes>
