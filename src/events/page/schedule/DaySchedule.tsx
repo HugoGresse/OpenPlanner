@@ -23,6 +23,8 @@ export const DaySchedule = ({ day, tracks, sessions, updateSession }: DaySchedul
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
+                marginRight: 4,
+                paddingTop: 2,
             }}>
             <DayScheduleHeader tracks={tracks} startTime={day.start} />
 

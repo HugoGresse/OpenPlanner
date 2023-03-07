@@ -17,7 +17,12 @@ export const DayScheduleHeader = ({ tracks, startTime }: DayScheduleHeaderProps)
 
     return (
         <>
-            <Typography>{dayHuman}</Typography>
+            <Typography
+                sx={{
+                    textAlign: 'center',
+                }}>
+                {dayHuman}
+            </Typography>
 
             <Box display="flex">
                 <Box width={SlotTimeWidth}></Box>
@@ -25,8 +30,9 @@ export const DayScheduleHeader = ({ tracks, startTime }: DayScheduleHeaderProps)
                     <Box
                         key={track.id}
                         sx={{
-                            border: '1px dashed #ddd',
+                            borderBottom: '3px solid #88F',
                             minWidth: SlotWidth,
+                            textAlign: 'center',
                         }}>
                         {track.name}
                     </Box>

@@ -17,6 +17,7 @@ export const CalendarSlot = ({ tracks, startEndTime, sessions, updateSession }: 
         hour: 'numeric',
         minute: '2-digit',
     })
+    const minutes = startEndTime.start.minute
 
     const findSession = (trackId: string) => {
         return sessions.find((session) => {
@@ -29,13 +30,27 @@ export const CalendarSlot = ({ tracks, startEndTime, sessions, updateSession }: 
         })
     }
 
+    const isEven = minutes % 10 === 0
+    const borderStyle = isEven ? (minutes === 0 ? '1px solid #BBB' : '1px solid #DDD') : ''
+
     return (
-        <Box display="flex" borderTop="1px solid #DDD" height={SlotHeight}>
+        <Box
+            display="flex"
+            borderTop={borderStyle}
+            height={SlotHeight}
+            width="fit-content"
+            sx={{
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                    background: '#DDD',
+                },
+            }}>
             <Box
                 sx={{
                     width: 'calc(100vw * 0.05)',
+                    marginTop: '-5px',
                 }}>
-                {time}
+                {minutes % 10 === 0 ? time : ''}
             </Box>
 
             {tracks.map((track) => (
