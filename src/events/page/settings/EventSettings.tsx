@@ -1,7 +1,8 @@
 import * as React from 'react'
+import { useState } from 'react'
 import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Card, Container, Grid, Typography } from '@mui/material'
+import { Box, Button, Card, Container, Grid, Typography } from '@mui/material'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
 import * as yup from 'yup'
@@ -9,10 +10,13 @@ import { slugify } from '../../../utils/slugify'
 import { TrackFields } from './components/TrackFields'
 import { WebhooksFields } from './components/WebhooksFields'
 import { collections } from '../../../services/firebase'
-import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
+import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
 import { diffDays } from '../../../utils/diffDays'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { useLocation } from 'wouter'
+import { queryClient } from '../../../App'
 
 const schema = yup
     .object({
@@ -35,6 +39,9 @@ export type EventSettingsProps = {
     eventUpdated: () => Promise<any>
 }
 export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
+    const [_, setLocation] = useLocation()
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id), {
         merge: true,
     })
@@ -149,6 +156,29 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                     </Grid>
                 </Card>
             </FormContainer>
+
+            <Box mt={2}>
+                <Button color="warning" onClick={() => setDeleteOpen(true)}>
+                    Delete event
+                </Button>
+
+                <ConfirmDialog
+                    open={deleteOpen}
+                    title="Delete the event?"
+                    acceptButton="Delete event"
+                    disabled={documentDeletion.isLoading}
+                    loading={documentDeletion.isLoading}
+                    cancelButton="cancel"
+                    handleClose={() => setDeleteOpen(false)}
+                    handleAccept={async () => {
+                        await documentDeletion.mutate()
+                        setLocation('../../')
+                        setDeleteOpen(false)
+                        await queryClient.invalidateQueries('events')
+                    }}>
+                    Delete event and all data within it. This is final and cannot be undone.
+                </ConfirmDialog>
+            </Box>
         </Container>
     )
 }
