@@ -32,6 +32,7 @@
         "react-query": "^3.39.3",
         "react-redux": "^8.0.5",
         "use-firebase-auth": "^3.0.0",
+        "uuid": "^9.0.0",
         "wouter": "github:molefrog/wouter",
         "yup": "^1.0.0"
     },
@@ -40,6 +41,7 @@
         "@types/react": "^18.0.28",
         "@types/react-dom": "^18.0.6",
         "@types/react-redux": "^7.1.25",
+        "@types/uuid": "^9.0.1",
         "@vitejs/plugin-react": "^3.1.0",
         "husky": "^8.0.3",
         "pretty-quick": "^3.1.3",

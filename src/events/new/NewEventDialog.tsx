@@ -89,6 +89,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                                                     if (result[1].length === 0) {
                                                         onClose(result[0])
                                                     }
+
                                                     return null
                                                 }}
                                             />

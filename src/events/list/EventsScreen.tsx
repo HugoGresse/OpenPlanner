@@ -10,6 +10,7 @@ import { Event } from '../../types'
 import { Box, Button } from '@mui/material'
 import { NewEventDialog } from '../new/NewEventDialog'
 import { NewEventCreatedDialog } from '../new/NewEventCreatedDialog'
+import { useNotification } from '../../hooks/notificationHook'
 
 export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdConferenceCenter)
@@ -17,6 +18,7 @@ export const EventsScreen = ({}) => {
     const [newEventOpen, setNewEventOpen] = useState(false)
     const [newEventId, setNewEventId] = useState<null | string>(null)
 
+    const { createNotification } = useNotification()
     return (
         <EventsLayout>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={events} />
@@ -38,6 +40,7 @@ export const EventsScreen = ({}) => {
                 onClose={(eventId: string | null) => {
                     if (eventId) {
                         setNewEventId(eventId)
+                        createNotification('Event created', { type: 'success' })
                     }
                     setNewEventOpen(false)
                 }}

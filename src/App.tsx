@@ -9,6 +9,7 @@ import { LinkBehavior } from './components/CCLink'
 import { LinkProps } from '@mui/material/Link'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { EventRouter } from './events/page/EventRouter'
+import { NotificationProvider } from './context/SnackBarProvider'
 
 const theme = createTheme({
     components: {
@@ -40,16 +41,17 @@ export const App = ({}) => {
                 <QueryClientProvider client={queryClient}>
                     <ThemeProvider theme={theme}>
                         <CssBaseline enableColorScheme />
-
-                        <RequireLogin>
-                            <Switch>
-                                <Route path="/">
-                                    <EventsScreen />
-                                </Route>
-                                <EventRouter />
-                                <Route>404, Not Found!</Route>
-                            </Switch>
-                        </RequireLogin>
+                        <NotificationProvider>
+                            <RequireLogin>
+                                <Switch>
+                                    <Route path="/">
+                                        <EventsScreen />
+                                    </Route>
+                                    <EventRouter />
+                                    <Route>404, Not Found!</Route>
+                                </Switch>
+                            </RequireLogin>
+                        </NotificationProvider>
                     </ThemeProvider>
                 </QueryClientProvider>
             </Provider>

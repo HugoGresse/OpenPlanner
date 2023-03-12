@@ -26,7 +26,6 @@ export const ConferenceHallEventsPicker = ({ userId, onEventPicked }: Conference
                         <ConferenceHallEventItem key={event.id} event={event} onClick={onEventPicked} />
                     ))}
             </Box>
-
             <FirestoreQueryLoaderAndErrorDisplay hookResult={organizations} />
             <Box component="ul" display="flex" flexWrap="wrap" padding={0}>
                 {(organizations.data || []).map((organization: ConferenceHallOrganization) => (
