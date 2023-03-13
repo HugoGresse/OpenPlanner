@@ -46,6 +46,7 @@ export interface Session {
     dates: DateTimeType | null
     durationMinutes: number
     speakers: string[]
+    speakersData?: Speaker[]
     trackId: string | null
     language: string | null
     presentationLink: string | null
@@ -88,6 +89,14 @@ export interface ConferenceHallEvent {
     name: string
     organization: string // orgId
     conferenceDates: DateType
+    tags: {
+        id: string
+        name: string
+    }
+    categories: {
+        id: string
+        name: string
+    }
 }
 export interface ConferenceHallOrganization {
     id: string

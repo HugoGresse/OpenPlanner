@@ -1,9 +1,12 @@
-import { Box, Typography } from '@mui/material'
+import { Box, IconButton, Typography } from '@mui/material'
 import * as React from 'react'
 import { DateTimeType, DragTypes, Session, Track } from '../../../../types'
 import { useDrag } from 'react-dnd'
 import { ScheduleSlotDurationMinutes, SlotHeight } from '../scheduleConstants'
 import { Rnd } from 'react-rnd'
+import EditIcon from '@mui/icons-material/Edit'
+import { useLocation } from 'wouter'
+import { dateTimeToHourMinutes } from '../../../../utils/timeFormats'
 
 export type SessionCardProps = {
     session: Session
@@ -11,6 +14,8 @@ export type SessionCardProps = {
     updateSession: (session: Session) => void
 }
 export const SessionCard = ({ session, updateSession, absolute = true }: SessionCardProps) => {
+    const [_, setLocation] = useLocation()
+
     const [{}, drag] = useDrag(
         () => ({
             type: DragTypes.Session,
@@ -105,18 +110,39 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                     height: '100%',
                     width: '100%',
                     flexDirection: 'column',
+                    justifyContent: 'space-between',
                     position: absolute ? 'absolute' : 'relative',
                     background: 'rgba(70,70,255,0.8)',
                     borderRadius: 2,
                     overflow: 'hidden',
                     cursor: 'grab',
                     zIndex: 1,
-                    paddingTop: 1,
-                    paddingLeft: 1,
-                    paddingRight: 1,
+                    paddingTop: 0.5,
+                    paddingLeft: 0.5,
+                    paddingRight: 0.5,
                 }}>
-                <Typography fontWeight={600} color="white">
-                    {session.title}
+                <Box display="flex" flexDirection="column" justifyContent="space-between">
+                    <Box display="flex" justifyContent="space-between">
+                        <Typography fontWeight={600} color="white">
+                            {session.title}
+                        </Typography>
+                        <IconButton
+                            onClick={() => {
+                                setLocation(`/sessions/${session.id}`)
+                            }}>
+                            <EditIcon color="action" fontSize="small" sx={{}} />
+                        </IconButton>
+                    </Box>
+                    <Typography color="white" variant="caption">
+                        Format: {session.format || '?'}
+                        <br />
+                        Speakers: {session.speakersData?.map((s) => s.name).join(', ')}
+                    </Typography>
+                </Box>
+                <Typography color="white" variant="caption">
+                    {`${dateTimeToHourMinutes(session.dates?.start)} - ${dateTimeToHourMinutes(session.dates?.end)}`}
+                    <br />
+                    Duration: {session.durationMinutes + 'm' || '?'}
                 </Typography>
             </Box>
         </Rnd>
