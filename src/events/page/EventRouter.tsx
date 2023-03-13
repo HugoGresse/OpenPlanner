@@ -9,6 +9,7 @@ import { EventSponsors } from './EventSponsors'
 import { EventSettings } from './settings/EventSettings'
 import { Event } from '../../types'
 import { EventSchedule } from './schedule/EventSchedule'
+import { EventSessions } from './sessions/EventSessions'
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -26,6 +27,10 @@ export const EventRouter = () => {
         return <>Error? {JSON.stringify(event, null, 4)}</>
     }
 
+    const eventUpdated = async () => {
+        return event.refetch()
+    }
+
     return (
         <NestedRoutes base={`/events/${params?.eventId}`}>
             <EventLayout>
@@ -33,7 +38,7 @@ export const EventRouter = () => {
                     <EventSponsors />
                 </Route>
                 <Route path="/sessions">
-                    <>sessions</>
+                    <EventSessions event={event.data as Event} eventUpdated={eventUpdated} />
                 </Route>
                 <Route path="/speakers">
                     <>speakers</>
@@ -42,12 +47,7 @@ export const EventRouter = () => {
                     <EventSchedule event={event.data as Event} />
                 </Route>
                 <Route path="/settings">
-                    <EventSettings
-                        event={event.data as Event}
-                        eventUpdated={async () => {
-                            return event.refetch()
-                        }}
-                    />
+                    <EventSettings event={event.data as Event} eventUpdated={eventUpdated} />
                 </Route>
                 <Route path="/">
                     <Redirect to="/settings" />
