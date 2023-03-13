@@ -1,4 +1,5 @@
 import { FieldValue } from 'firebase/firestore'
+import { DateTime } from 'luxon'
 
 export interface Track {
     id: string
@@ -12,6 +13,10 @@ export interface Webhooks {
 export interface DateType {
     start: Date | null
     end: Date | null
+}
+export interface DateTimeType {
+    start: DateTime | null
+    end: DateTime | null
 }
 
 export interface SpeakerSocial {
@@ -38,8 +43,10 @@ export interface Session {
     conferenceHallId: string | null
     title: string
     abstract: string | null
-    dates: DateType | null
+    dates: DateTimeType | null
+    durationMinutes: number
     speakers: string[]
+    speakersData?: Speaker[]
     trackId: string | null
     language: string | null
     presentationLink: string | null
@@ -82,6 +89,14 @@ export interface ConferenceHallEvent {
     name: string
     organization: string // orgId
     conferenceDates: DateType
+    tags: {
+        id: string
+        name: string
+    }
+    categories: {
+        id: string
+        name: string
+    }
 }
 export interface ConferenceHallOrganization {
     id: string
@@ -122,4 +137,8 @@ export interface ConferenceHallSpeaker {
     address: {
         formattedAddress: string
     } | null
+}
+
+export enum DragTypes {
+    Session = 'Session',
 }

@@ -5,10 +5,11 @@ import {
     AppBarProps as MuiAppBarProps,
     Avatar,
     Box,
-    Container,
+    Button,
     Divider,
     Drawer as MuiDrawer,
     IconButton,
+    Link,
     List,
     ListItem,
     ListItemAvatar,
@@ -118,9 +119,12 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'flex-end',
+                        justifyContent: 'space-between',
                         px: [1],
                     }}>
+                    <Button href="../../../" component={Link}>
+                        All events
+                    </Button>
                     <IconButton onClick={toggleDrawer}>
                         <ChevronLeftIcon />
                     </IconButton>
@@ -133,7 +137,14 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     <List>
                         <ListItem
                             secondaryAction={
-                                <IconButton edge="end" aria-label="logout" onClick={() => dispatch(logout())}>
+                                <IconButton
+                                    edge="end"
+                                    aria-label="logout"
+                                    component={Link}
+                                    href="../../../"
+                                    onClick={() => {
+                                        dispatch(logout())
+                                    }}>
                                     <LogoutIcon />
                                 </IconButton>
                             }>
@@ -155,9 +166,7 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     overflow: 'auto',
                 }}>
                 <Toolbar />
-                <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                    {children}
-                </Container>
+                {children}
             </Box>
         </Box>
     )
