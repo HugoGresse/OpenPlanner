@@ -62,7 +62,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
             }}
             size={{
                 width: vw * 0.1,
-                height: SlotHeight * (session.durationMinutes / ScheduleSlotDurationMinutes || 3),
+                height: SlotHeight * (session.durationMinutes / ScheduleSlotDurationMinutes || 9.5),
             }}
             dragGrid={[0, 0]}
             resizeGrid={[SlotHeight, SlotHeight]}
@@ -82,6 +82,11 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                     // Always snap so the nearest slot
                     endTime = endTime.set({
                         minute: Math.round(endTime.minute / ScheduleSlotDurationMinutes) * ScheduleSlotDurationMinutes,
+                        second: 0,
+                    })
+
+                    startTime.set({
+                        second: 0,
                     })
 
                     updateSession({
@@ -123,7 +128,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                 }}>
                 <Box display="flex" flexDirection="column" justifyContent="space-between">
                     <Box display="flex" justifyContent="space-between">
-                        <Typography fontWeight={600} color="white">
+                        <Typography fontWeight={600} color="white" lineHeight={1}>
                             {session.title}
                         </Typography>
                         <IconButton
@@ -133,13 +138,13 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                             <EditIcon color="action" fontSize="small" sx={{}} />
                         </IconButton>
                     </Box>
-                    <Typography color="white" variant="caption">
+                    <Typography color="white" variant="caption" lineHeight={1}>
                         Format: {session.format || '?'}
                         <br />
                         Speakers: {session.speakersData?.map((s) => s.name).join(', ')}
                     </Typography>
                 </Box>
-                <Typography color="white" variant="caption">
+                <Typography color="white" variant="caption" lineHeight={1}>
                     {`${dateTimeToHourMinutes(session.dates?.start)} - ${dateTimeToHourMinutes(session.dates?.end)}`}
                     <br />
                     Duration: {session.durationMinutes + 'm' || '?'}
