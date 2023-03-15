@@ -12,7 +12,13 @@ export const EventSessionItem = ({ session }: EventSessionItem) => {
     return (
         <Grid
             container
-            sx={{ justifyContent: 'space-between', alignItems: 'center', marginTop: 1, borderTop: '1px solid #ddd' }}>
+            sx={{
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: 1,
+                marginBottom: 1,
+                borderBottom: '1px solid #ddd',
+            }}>
             <Grid item xs={6}>
                 <Typography fontWeight="bold">{session.title}</Typography>
 
