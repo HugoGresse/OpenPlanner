@@ -39,8 +39,10 @@ export const NoDatesSessionsPicker = ({ sessions, updateSession }: NoDatesSessio
                 margin: 2,
                 border: '2px dashed #d8d8d8',
                 borderRadius: 2,
+                overflowX: 'auto',
+                overflowY: 'hidden',
             }}>
-            <Typography sx={{ width: 80, marginRight: 2, wordBreak: 'break-word' }}>Sessions without times:</Typography>
+            <Typography sx={{ width: 80, marginRight: 2 }}>Sessions without times:</Typography>
             {sessionsToDisplay.map((session: Session) => (
                 <Box key={session.id} mr={1} height={SessionCardMinHeight}>
                     <SessionCard session={session} absolute={false} updateSession={updateSession} />

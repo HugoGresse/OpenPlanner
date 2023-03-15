@@ -29,7 +29,7 @@ export const Menu = [
     {
         href: '/sessions',
         icon: mdiPresentation,
-        name: 'Session',
+        name: 'Sessions',
     },
     {
         href: '/speakers',

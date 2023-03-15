@@ -81,14 +81,17 @@ export type EventLayoutProps = {
 
 export const EventLayout = ({ children }: EventLayoutProps) => {
     const dispatch = useAppDispatch()
-    const [_, params] = useRoute('/:routeName')
+    const [_, firstParams] = useRoute('/:routeName')
+    const [__, subParams] = useRoute('/:routeName/:subRoute')
     const [open, setOpen] = useState(true)
     const user = useSelector(selectUserConferenceCenter)
     const toggleDrawer = () => {
         setOpen(!open)
     }
 
-    const menuItem = Menu.find((item) => item.href === `/${params?.routeName}`)
+    const menuItem = Menu.find((item) => {
+        return `/${firstParams?.routeName}`.startsWith(item.href) || `/${subParams?.routeName}`.startsWith(item.href)
+    })
     const routeName = menuItem ? menuItem.name : 'Loading...'
 
     return (

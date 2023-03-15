@@ -36,25 +36,27 @@ export const getIndividualDays = (start: string | Date | null, end: string | Dat
         },
     ]
 
-    Array.from(Array(numberOfDays - 2).keys()).map((d) => {
-        const date = startTime.plus({
-            days: 1,
+    if (numberOfDays > 1) {
+        Array.from(Array(numberOfDays - 2).keys()).map((d) => {
+            const date = startTime.plus({
+                days: 1,
+            })
+            days.push({
+                start: date,
+                end: date.set({
+                    minute: endTime.minute,
+                    hour: endTime.hour,
+                }),
+            })
         })
         days.push({
-            start: date,
-            end: date.set({
-                minute: endTime.minute,
-                hour: endTime.hour,
+            start: endTime.set({
+                minute: startTime.minute,
+                hour: startTime.hour,
             }),
+            end: endTime,
         })
-    })
+    }
 
-    days.push({
-        start: endTime.set({
-            minute: startTime.minute,
-            hour: startTime.hour,
-        }),
-        end: endTime,
-    })
     return days
 }
