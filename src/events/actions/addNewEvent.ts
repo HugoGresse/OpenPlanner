@@ -80,7 +80,7 @@ const addNewEventInternal = async (
     let countSpeakersAdded = 1
     for (const speaker of speakersToCreate) {
         await setDoc(doc(collections.speakers(newEventId), speaker.id), speaker)
-        progress(`Adding speakers: ${countSpeakersAdded}${speakersToCreate.length}`)
+        progress(`Adding speakers: ${countSpeakersAdded}/${speakersToCreate.length}`)
         countSpeakersAdded++
         speakersMappingFromConferenceHall[speaker.conferenceHallId || ''] = speaker.id
     }
@@ -96,7 +96,7 @@ const addNewEventInternal = async (
     for (const session of sessionsToCreate) {
         await setDoc(doc(collections.sessions(newEventId), session.id), session)
         createdSessionIds.push(session.id)
-        progress(`Adding sessions: ${countSessionsAdded}${sessionsToCreate.length}`)
+        progress(`Adding sessions: ${countSessionsAdded}/${sessionsToCreate.length}`)
         countSessionsAdded++
     }
 
