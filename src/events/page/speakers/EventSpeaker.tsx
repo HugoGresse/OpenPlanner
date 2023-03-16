@@ -36,7 +36,12 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
 
                 {Object.entries(speaker).map(([key, value]) => (
                     <Typography key={key}>
-                        {key}: {typeof value === 'object' ? JSON.stringify(value, null, 4) : `${value}`}
+                        {key}:{' '}
+                        {typeof value === 'object'
+                            ? !value
+                                ? ''
+                                : JSON.stringify(value, null, 4)
+                            : `${!value ? '' : value}`}
                     </Typography>
                 ))}
             </Card>
