@@ -8,9 +8,13 @@ export type SpeakersMap = {
     [speakerId: string]: Speaker
 }
 
+export const useSpeakers = (eventId: string): UseQueryResult<Speaker[]> => {
+    return useFirestoreQueryData(['speakers', eventId], collections.speakers(eventId))
+}
+
 // @ts-ignore
-export const useSpeakers = (eventId: string): UseQueryResult<SpeakersMap> => {
-    const sp = useFirestoreQueryData(['speakers', eventId], collections.speakers(eventId))
+export const useSpeakersMap = (eventId: string): UseQueryResult<SpeakersMap> => {
+    const sp = useSpeakers(eventId)
 
     if (sp.data && sp.data.length) {
         return {
