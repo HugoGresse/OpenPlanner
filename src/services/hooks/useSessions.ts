@@ -2,10 +2,10 @@ import { UseQueryResult } from 'react-query'
 import { useFirestoreQueryData } from '@react-query-firebase/firestore'
 import { collections } from '../firebase'
 import { DocumentData } from '@firebase/firestore'
-import { useSpeakers } from './useSpeakers'
+import { useSpeakersMap } from './useSpeakersMap'
 
 export const useSessions = (eventId: string): UseQueryResult<DocumentData> => {
-    const sp = useSpeakers(eventId)
+    const sp = useSpeakersMap(eventId)
 
     const s = useFirestoreQueryData(['sessions', eventId], collections.sessions(eventId))
 

@@ -36,7 +36,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
 
                 {Object.entries(session).map(([key, value]) => (
                     <Typography key={key}>
-                        {key}: {typeof value === 'object' ? JSON.stringify(value, null, 4) : `${value}`}
+                        {key}: {typeof value === 'object' ? (!value ? '' : JSON.stringify(value, null, 4)) : `${value}`}
                     </Typography>
                 ))}
             </Card>

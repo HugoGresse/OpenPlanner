@@ -132,6 +132,8 @@ const mapConferenceHallSpeakerToConferenceCenter = (
         }
         speakers.push({
             id: slugify(chSpeaker.displayName),
+            email: chSpeaker.email,
+            phone: chSpeaker.phone,
             conferenceHallId: chSpeaker.uid || null,
             name: chSpeaker.displayName,
             bio: chSpeaker.bio || null,

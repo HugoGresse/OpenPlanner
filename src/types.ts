@@ -27,6 +27,8 @@ export interface SpeakerSocial {
 
 export interface Speaker {
     id: string
+    email: string | null
+    phone: string | null
     conferenceHallId: string | null
     name: string
     jobTitle: string | null
