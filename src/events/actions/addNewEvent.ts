@@ -54,12 +54,11 @@ const addNewEventInternal = async (
         },
         members: [userId],
         owner: userId,
-        tracks: [
-            {
-                id: 'track1',
-                name: 'Track1',
-            },
-        ],
+        tracks: [],
+        formats: chEvent.formats.map((f) => ({
+            ...f,
+            durationMinutes: 0,
+        })),
         scheduleVisible: true,
         webhooks: [],
         createdAt: serverTimestamp(),
@@ -132,8 +131,8 @@ const mapConferenceHallSpeakerToConferenceCenter = (
         }
         speakers.push({
             id: slugify(chSpeaker.displayName),
-            email: chSpeaker.email,
-            phone: chSpeaker.phone,
+            email: chSpeaker.email || null,
+            phone: chSpeaker.phone || null,
             conferenceHallId: chSpeaker.uid || null,
             name: chSpeaker.displayName,
             bio: chSpeaker.bio || null,
@@ -174,7 +173,7 @@ const mapConferenceHallProposalsToConferenceCenter = (
             abstract: chProposal.abstract || null,
             speakers: speakerIds,
             dates: null,
-            durationMinutes: 0,
+            durationMinutes: 20,
             format: null,
             hideTrackTitle: false,
             showInFeedback: true,
