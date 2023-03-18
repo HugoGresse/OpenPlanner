@@ -9,7 +9,7 @@ name: Deploy to Firebase Hosting on merge
 jobs:
     build_and_deploy:
         runs-on: ubuntu-latest
-        environment: 'GitHub Action PR'
+        environment: 'GitHub Action Release'
         steps:
             - uses: actions/checkout@v3
             - name: Setup Node.js environment

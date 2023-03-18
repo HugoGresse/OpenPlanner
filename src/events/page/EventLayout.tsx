@@ -5,10 +5,11 @@ import {
     AppBarProps as MuiAppBarProps,
     Avatar,
     Box,
-    Container,
+    Button,
     Divider,
     Drawer as MuiDrawer,
     IconButton,
+    Link,
     List,
     ListItem,
     ListItemAvatar,
@@ -80,14 +81,17 @@ export type EventLayoutProps = {
 
 export const EventLayout = ({ children }: EventLayoutProps) => {
     const dispatch = useAppDispatch()
-    const [_, params] = useRoute('/:routeName')
+    const [_, firstParams] = useRoute('/:routeName')
+    const [__, subParams] = useRoute('/:routeName/:subRoute')
     const [open, setOpen] = useState(true)
     const user = useSelector(selectUserConferenceCenter)
     const toggleDrawer = () => {
         setOpen(!open)
     }
 
-    const menuItem = Menu.find((item) => item.href === `/${params?.routeName}`)
+    const menuItem = Menu.find((item) => {
+        return `/${firstParams?.routeName}`.startsWith(item.href) || `/${subParams?.routeName}`.startsWith(item.href)
+    })
     const routeName = menuItem ? menuItem.name : 'Loading...'
 
     return (
@@ -118,9 +122,12 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'flex-end',
+                        justifyContent: 'space-between',
                         px: [1],
                     }}>
+                    <Button href="../../../" component={Link}>
+                        All events
+                    </Button>
                     <IconButton onClick={toggleDrawer}>
                         <ChevronLeftIcon />
                     </IconButton>
@@ -133,7 +140,14 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     <List>
                         <ListItem
                             secondaryAction={
-                                <IconButton edge="end" aria-label="logout" onClick={() => dispatch(logout())}>
+                                <IconButton
+                                    edge="end"
+                                    aria-label="logout"
+                                    component={Link}
+                                    href="../../../"
+                                    onClick={() => {
+                                        dispatch(logout())
+                                    }}>
                                     <LogoutIcon />
                                 </IconButton>
                             }>
@@ -155,9 +169,7 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                     overflow: 'auto',
                 }}>
                 <Toolbar />
-                <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                    {children}
-                </Container>
+                {children}
             </Box>
         </Box>
     )

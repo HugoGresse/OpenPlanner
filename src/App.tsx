@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
-import { Route, Router, Switch } from 'wouter'
+import { Redirect, Route, Router, Switch } from 'wouter'
 import { RequireLogin } from './auth/RequireLogin'
 import { Provider } from 'react-redux'
 import { reduxStore } from './reduxStore'
@@ -32,7 +32,7 @@ const theme = createTheme({
     },
 })
 
-const queryClient = new QueryClient()
+export const queryClient = new QueryClient()
 
 export const App = ({}) => {
     return (
@@ -44,11 +44,14 @@ export const App = ({}) => {
                         <NotificationProvider>
                             <RequireLogin>
                                 <Switch>
-                                    <Route path="/">
-                                        <EventsScreen />
-                                    </Route>
-                                    <EventRouter />
-                                    <Route>404, Not Found!</Route>
+                                  <Route path="/">
+                                      <EventsScreen />
+                                  </Route>
+                                  <Route path="/events/">
+                                      <Redirect to="/" />
+                                  </Route>
+                                  <EventRouter />
+                                  <Route>404, Not Found!</Route>
                                 </Switch>
                             </RequireLogin>
                         </NotificationProvider>

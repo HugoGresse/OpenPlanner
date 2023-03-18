@@ -20,8 +20,8 @@ export const LoginForm = ({}) => {
     const dispatch = useAppDispatch()
     const formContext = useForm({
         defaultValues: {
-            email: 'hugo@example.com',
-            password: 'azerty',
+            email: '',
+            password: '',
         },
     })
     const error = useSelector(selectAuthCCError)

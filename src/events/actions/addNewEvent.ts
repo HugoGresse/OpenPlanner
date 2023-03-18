@@ -9,7 +9,8 @@ import {
 } from '../../types'
 import { getConferenceHallSpeakers } from '../../conferencehall/firebase/getConferenceHallSpeakers'
 import { collections } from '../../services/firebase'
-import { addDoc, serverTimestamp } from 'firebase/firestore'
+import { addDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { slugify } from '../../utils/slugify'
 
 export const addNewEvent = async (
     chEvent: ConferenceHallEvent,
@@ -78,10 +79,10 @@ const addNewEventInternal = async (
     errors.push(...speakerErrors)
     let countSpeakersAdded = 1
     for (const speaker of speakersToCreate) {
-        const speakerRef = await addDoc(collections.speakers(newEventId), speaker)
-        progress(`Adding speakers: ${countSpeakersAdded}${speakersToCreate.length}`)
+        await setDoc(doc(collections.speakers(newEventId), speaker.id), speaker)
+        progress(`Adding speakers: ${countSpeakersAdded}/${speakersToCreate.length}`)
         countSpeakersAdded++
-        speakersMappingFromConferenceHall[speaker.conferenceHallId || ''] = speakerRef.id
+        speakersMappingFromConferenceHall[speaker.conferenceHallId || ''] = speaker.id
     }
 
     // 3. Add the proposals
@@ -93,9 +94,9 @@ const addNewEventInternal = async (
     const createdSessionIds = []
     let countSessionsAdded = 1
     for (const session of sessionsToCreate) {
-        const sessionRef = await addDoc(collections.sessions(newEventId), session)
-        createdSessionIds.push(sessionRef.id)
-        progress(`Adding sessions: ${countSessionsAdded}${sessionsToCreate.length}`)
+        await setDoc(doc(collections.sessions(newEventId), session.id), session)
+        createdSessionIds.push(session.id)
+        progress(`Adding sessions: ${countSessionsAdded}/${sessionsToCreate.length}`)
         countSessionsAdded++
     }
 
@@ -130,7 +131,9 @@ const mapConferenceHallSpeakerToConferenceCenter = (
             })
         }
         speakers.push({
-            id: 'todo',
+            id: slugify(chSpeaker.displayName),
+            email: chSpeaker.email,
+            phone: chSpeaker.phone,
             conferenceHallId: chSpeaker.uid || null,
             name: chSpeaker.displayName,
             bio: chSpeaker.bio || null,
@@ -165,12 +168,13 @@ const mapConferenceHallProposalsToConferenceCenter = (
             .filter((id) => !!id) as string[]
 
         sessions.push({
-            id: 'todo',
+            id: slugify(chProposal.title).slice(0, 15),
             conferenceHallId: chProposal.id,
             title: chProposal.title,
             abstract: chProposal.abstract || null,
             speakers: speakerIds,
             dates: null,
+            durationMinutes: 0,
             format: null,
             hideTrackTitle: false,
             showInFeedback: true,

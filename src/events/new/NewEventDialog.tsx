@@ -107,11 +107,14 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         <Typography variant="h6">Error during creation: </Typography>
                         <ul>
                             {newResult.errors.map((error) => (
-                                <li>
+                                <li key={error}>
                                     <Typography>{error}</Typography>
                                 </li>
                             ))}
                         </ul>
+                        <Typography variant="h6">
+                            The event was still created though, you may want to close this dialog.
+                        </Typography>
                     </>
                 )}
             </DialogContent>
