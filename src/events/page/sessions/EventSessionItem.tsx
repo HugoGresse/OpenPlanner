@@ -1,44 +1,51 @@
 import * as React from 'react'
-import { Session } from '../../../types'
-import { Button, Grid, Link, Typography } from '@mui/material'
+import { Format, Session } from '../../../types'
+import { Button, Chip, Grid, Link, Typography } from '@mui/material'
 import { Edit } from '@mui/icons-material'
 import { dateTimeToDayMonthHours } from '../../../utils/timeFormats'
 
 type EventSessionItem = {
+    formats: Format[]
     session: Session
 }
 
-export const EventSessionItem = ({ session }: EventSessionItem) => {
+export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
+    let times = 'No start/end times'
+
+    if (session.dates && session.dates.start) {
+        times = dateTimeToDayMonthHours(session.dates.start) + ' • ' + dateTimeToDayMonthHours(session.dates?.end)
+    }
+
     return (
         <Grid
             container
+            spacing={2}
             sx={{
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: 1,
-                marginBottom: 1,
+                paddingY: 1,
                 borderBottom: '1px solid #ddd',
             }}>
-            <Grid item xs={6}>
+            <Grid item sm={12} md={6}>
                 <Typography fontWeight="bold">{session.title}</Typography>
 
                 <Typography variant="caption">
                     by {session.speakersData?.map((s) => s.name).join(', ')} • {session.format} •{' '}
-                    {session.tags.length ? 'tags: ' + session.tags.join(', ') : ''}
                 </Typography>
             </Grid>
 
-            <Grid item>
+            <Grid item sm={12} md={2}>
+                <Chip label={formats.find((f) => f.id === session.format)?.name} size="small" />
+                {session.tags.length ? 'tags: ' + session.tags.map((t) => <Chip label={t} size="small" />) : ''}
+            </Grid>
+            <Grid item sm={12} md={3}>
                 <Typography variant="caption">
-                    {dateTimeToDayMonthHours(session.dates?.start) +
-                        ' • ' +
-                        dateTimeToDayMonthHours(session.dates?.end)}{' '}
-                    <br />
+                    {times} <br />
                     {session.durationMinutes ? `${session.durationMinutes} minutes` : 'no set'}
                 </Typography>
             </Grid>
 
-            <Grid item xs={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <Grid item sm={12} md={1} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                 <Button href={`/sessions/${session.id}`} component={Link}>
                     <Edit />
                     Edit

@@ -16,11 +16,13 @@ export const EventSessions = ({ event, eventUpdated }: EventSessionsProps) => {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
     }
 
+    const formats = event.formats
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Card sx={{ paddingX: 2 }}>
                 {sessions.data?.map((session: Session) => (
-                    <EventSessionItem key={session.id} session={session} />
+                    <EventSessionItem key={session.id} session={session} formats={formats} />
                 ))}
             </Card>
         </Container>
