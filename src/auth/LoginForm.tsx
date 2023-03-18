@@ -108,7 +108,7 @@ export const LoginForm = ({}) => {
                     )}
                     {error && error?.error !== 'auth/user-not-found' && (
                         <Box display="flex" flexDirection="column" mb={2} color="red">
-                            <Typography>Error: error?.error, error?.message</Typography>
+                            <Typography>{`Error: ${error?.error}, ${error?.message}`}</Typography>
                         </Box>
                     )}
 

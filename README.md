@@ -20,8 +20,8 @@ Specs:
 
 ## Roadmap
 
-- v1: basic conference-hall manual sync plus github hook and schedule edition/creation
-- v2: other features listed above
+-   v1: basic conference-hall manual sync plus github hook and schedule edition/creation
+-   v2: other features listed above
 
 ## Dev guidelines
 
@@ -45,3 +45,31 @@ React guidelines:
 -   only named export: `export const MyFunctionOrComponent`
 -   form: [react-hook-form](https://react-hook-form.com/) & [yup](https://github.com/jquense/yup) & [react-hook-form-mui](https://github.com/dohomi/react-hook-form-mui)
 -   routing: [wouter](https://github.com/molefrog/wouter) which mimics base feature of react-router with 10% of it's size
+
+## Getting started
+
+### Requirements
+
+-   Tow firebase projects. One for **`conference center`** and the other for **`conference hall`**.
+-   Node.js **16+**
+
+### Installation
+
+1. Create a **`.env`** with **`.env.example`** as a template.
+2. Create a web app in your firebase project for **`conference hall`** and **`conference center`**. then copy the config and fill **`.env`** with it.
+
+Inside conference center's firebase project:
+
+1. Create a Cloud firestore database and copy path the rules from `firestore.rules` to the rules tab of your database.
+2. Create an authentification provider (email/password) and enable it.
+
+### Development
+
+In order to run the project locally, you need to run the following commands:
+
+```bash
+npm ci     # install dependencies
+npm start  # start the dev server
+```
+
+**Enjoy 🚀**
