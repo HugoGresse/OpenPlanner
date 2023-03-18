@@ -122,6 +122,7 @@ export interface ConferenceHallProposal {
     level: string
     abstract: string
     state: ConferenceHallProposalState
+    formats: string
     owner: string
     speakers: {
         [key: string]: boolean

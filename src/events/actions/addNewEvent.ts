@@ -2,6 +2,7 @@ import {
     ConferenceHallEvent,
     ConferenceHallProposal,
     ConferenceHallSpeaker,
+    Format,
     NewEvent,
     Session,
     Speaker,
@@ -16,10 +17,11 @@ export const addNewEvent = async (
     chEvent: ConferenceHallEvent,
     userId: string,
     proposals: ConferenceHallProposal[] = [],
+    formats: Format[],
     progress: (progress: string) => void
 ): Promise<[eventId: string | null, errors: string[]]> => {
     try {
-        return addNewEventInternal(chEvent, userId, proposals, progress)
+        return addNewEventInternal(chEvent, userId, proposals, formats, progress)
     } catch (error) {
         return [null, [String(error)]]
     }
@@ -29,6 +31,7 @@ const addNewEventInternal = async (
     chEvent: ConferenceHallEvent,
     userId: string,
     proposals: ConferenceHallProposal[] = [],
+    formats: Format[],
     progress: (progress: string) => void
 ): Promise<[eventId: string, errors: string[]]> => {
     const errors: string[] = []
@@ -55,10 +58,7 @@ const addNewEventInternal = async (
         members: [userId],
         owner: userId,
         tracks: [],
-        formats: chEvent.formats.map((f) => ({
-            ...f,
-            durationMinutes: 0,
-        })),
+        formats: formats,
         scheduleVisible: true,
         webhooks: [],
         createdAt: serverTimestamp(),
@@ -87,6 +87,7 @@ const addNewEventInternal = async (
     // 3. Add the proposals
     const [sessionsToCreate, sessionsErrors] = mapConferenceHallProposalsToConferenceCenter(
         proposals,
+        formats,
         speakersMappingFromConferenceHall
     )
     errors.push(...sessionsErrors)
@@ -149,6 +150,7 @@ const mapConferenceHallSpeakerToConferenceCenter = (
 
 const mapConferenceHallProposalsToConferenceCenter = (
     proposals: ConferenceHallProposal[],
+    formats: Format[],
     speakersMapping: { [conferenceHallId: string]: string }
 ): [sessions: Session[], errors: string[]] => {
     const errors: string[] = []
@@ -166,6 +168,8 @@ const mapConferenceHallProposalsToConferenceCenter = (
             })
             .filter((id) => !!id) as string[]
 
+        const format = chProposal.formats ? formats.find((f) => f.id === chProposal.formats) : null
+
         sessions.push({
             id: slugify(chProposal.title).slice(0, 15),
             conferenceHallId: chProposal.id,
@@ -173,8 +177,8 @@ const mapConferenceHallProposalsToConferenceCenter = (
             abstract: chProposal.abstract || null,
             speakers: speakerIds,
             dates: null,
-            durationMinutes: 20,
-            format: null,
+            durationMinutes: format ? format.durationMinutes : 20,
+            format: format ? format.id : null,
             hideTrackTitle: false,
             showInFeedback: true,
             image: null,
