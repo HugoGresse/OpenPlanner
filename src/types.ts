@@ -10,6 +10,12 @@ export interface Webhooks {
     url: string
 }
 
+export interface Format {
+    id: string
+    name: string
+    durationMinutes: number
+}
+
 export interface DateType {
     start: Date | null
     end: Date | null
@@ -68,6 +74,7 @@ export interface Event {
     members: string[]
     conferenceHallId: string | null
     dates: DateType
+    formats: Format[]
     tracks: Track[]
     webhooks: Webhooks[]
     createdAt: Date
@@ -99,6 +106,10 @@ export interface ConferenceHallEvent {
         id: string
         name: string
     }
+    formats: {
+        id: string
+        name: string
+    }[]
 }
 export interface ConferenceHallOrganization {
     id: string
@@ -111,6 +122,7 @@ export interface ConferenceHallProposal {
     level: string
     abstract: string
     state: ConferenceHallProposalState
+    formats: string
     owner: string
     speakers: {
         [key: string]: boolean

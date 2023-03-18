@@ -6,7 +6,7 @@ export const generateTimeSlots = (start: DateTime, end: DateTime): StartEndTime[
     const diffMinutes =
         (end.diff(start, ['minutes']).toObject().minutes || ScheduleSlotDurationMinutes) + ScheduleSlotDurationMinutes
 
-    const slotCount = Array.from(Array(diffMinutes / ScheduleSlotDurationMinutes).keys())
+    const slotCount = Array.from(Array(Math.ceil(diffMinutes / ScheduleSlotDurationMinutes)).keys())
 
     return slotCount.map((_, index) => {
         if (index === 0) {

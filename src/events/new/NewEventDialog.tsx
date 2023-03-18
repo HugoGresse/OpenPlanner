@@ -73,13 +73,14 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                                                 </Typography>
                                             </Box>
                                             <ConferenceHallProposalsPickerConnected
-                                                eventId={selectedConferenceHallEvent.id}
-                                                onSubmit={async (proposals) => {
+                                                event={selectedConferenceHallEvent}
+                                                onSubmit={async ({ formats, proposals }) => {
                                                     setNewResults(null)
                                                     const result = await addNewEvent(
                                                         selectedConferenceHallEvent,
                                                         userId,
                                                         proposals,
+                                                        formats,
                                                         setStatus
                                                     )
                                                     setNewResults({
