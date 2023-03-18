@@ -1,4 +1,4 @@
-import { Event, NewEvent, Session } from '../types'
+import { Event, NewEvent, Session, Speaker } from '../types'
 import { FirestoreDataConverter } from '@firebase/firestore'
 import { DateTime } from 'luxon'
 
@@ -39,5 +39,19 @@ export const sessionConverter: FirestoreDataConverter<Session> = {
     },
     toFirestore(session: Session) {
         return session
+    },
+}
+
+export const speakerConverter: FirestoreDataConverter<Speaker> = {
+    fromFirestore(snapshot): Speaker {
+        const data = snapshot.data()
+
+        return {
+            id: snapshot.id,
+            ...data,
+        } as Speaker
+    },
+    toFirestore(speaker: Speaker) {
+        return speaker
     },
 }

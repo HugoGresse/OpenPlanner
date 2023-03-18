@@ -3,7 +3,7 @@ import { collection, Firestore, getFirestore } from '@firebase/firestore'
 import { FirebaseApp } from '@firebase/app'
 import { getAuth } from 'firebase/auth'
 import { Auth } from '@firebase/auth'
-import { eventConverter, sessionConverter } from './converters'
+import { eventConverter, sessionConverter, speakerConverter } from './converters'
 
 const config = {
     apiKey: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_API_KEY,
@@ -23,7 +23,8 @@ export const collections = {
     sponsors: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'sponsors'),
     sessions: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'sessions').withConverter(sessionConverter),
-    speakers: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'speakers'),
+    speakers: (eventId: string) =>
+        collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
 }
 
 export const getConferenceCenterAuth = (): Auth => {

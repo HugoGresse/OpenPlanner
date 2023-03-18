@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import * as React from 'react'
 import { LoadingButton } from '@mui/lab'
 
@@ -31,9 +31,7 @@ export const ConfirmDialog = ({
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description">
             <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-            <DialogContent>
-                <DialogContentText id="alert-dialog-description">{children}</DialogContentText>
-            </DialogContent>
+            <DialogContent>{children}</DialogContent>
             <DialogActions>
                 <Button onClick={handleClose}>{cancelButton}</Button>
                 <LoadingButton

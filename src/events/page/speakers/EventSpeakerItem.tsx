@@ -11,14 +11,14 @@ export const EventSpeakerItem = ({ speaker }: EventSpeakerItemProps) => {
     return (
         <Grid
             container
+            spacing={2}
             sx={{
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: 1,
-                marginBottom: 1,
+                paddingY: 1,
                 borderBottom: '1px solid #ddd',
             }}>
-            <Grid item xs={6}>
+            <Grid item xs={10}>
                 <Typography fontWeight="bold">{speaker.name}</Typography>
 
                 <Typography variant="caption">
