@@ -26,5 +26,8 @@
         "ui": {
             "enabled": true
         }
+    },
+    "storage": {
+        "rules": "firebase.storage.rules"
     }
 }

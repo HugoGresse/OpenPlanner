@@ -52,6 +52,7 @@ const addNewEventInternal = async (
         webhooks: [],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        files: null,
     }
     progress(`Creating the event...`)
     const newEventRef = await addDoc(collections.events, event)

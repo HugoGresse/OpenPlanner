@@ -66,6 +66,11 @@ export interface Session {
     hideTrackTitle: boolean
 }
 
+export interface EventFiles {
+    public: string
+    private: string
+}
+
 export interface Event {
     id: string
     name: string
@@ -79,6 +84,7 @@ export interface Event {
     webhooks: Webhooks[]
     createdAt: Date
     updatedAt: Date
+    files: EventFiles | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

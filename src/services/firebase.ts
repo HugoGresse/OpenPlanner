@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { collection, Firestore, getFirestore } from '@firebase/firestore'
 import { FirebaseApp } from '@firebase/app'
 import { getAuth } from 'firebase/auth'
+import { getStorage } from 'firebase/storage'
 import { Auth } from '@firebase/auth'
 import { eventConverter, sessionConverter, speakerConverter } from './converters'
 
@@ -17,6 +18,7 @@ const config = {
 
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)
+export const storage = getStorage()
 
 export const collections = {
     events: collection(instanceFirestore, 'events').withConverter(eventConverter),
