@@ -16,7 +16,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         }
         return {
             url: webhook.url.trim(),
-            lastAnswer: undefined,
+            lastAnswer: null,
         }
     })
     const formats: Format[] = data.formats
