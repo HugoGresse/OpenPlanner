@@ -6,7 +6,7 @@ export interface Track {
     name: string
 }
 export interface Webhooks {
-    lastAnswer?: string
+    lastAnswer: string | null
     url: string
 }
 
