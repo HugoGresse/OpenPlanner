@@ -30,6 +30,7 @@ import { useAppDispatch } from '../../reduxStore'
 import { LoadingButton } from '@mui/lab'
 import { Event } from '../../types'
 import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteTriggerWebhooksAction'
+import { useNotification } from '../../hooks/notificationHook'
 
 const drawerWidth: number = 240
 
@@ -91,6 +92,7 @@ export const EventLayout = ({ children, event }: EventLayoutProps) => {
     const [open, setOpen] = useState(true)
     const [loading, setLoading] = useState(false)
     const user = useSelector(selectUserConferenceCenter)
+    const { createNotification } = useNotification()
     const toggleDrawer = () => {
         setOpen(!open)
     }
@@ -148,7 +150,7 @@ export const EventLayout = ({ children, event }: EventLayoutProps) => {
                         disabled={loading}
                         onClick={async () => {
                             setLoading(true)
-                            await updateWebsiteTriggerWebhooksAction(event)
+                            await updateWebsiteTriggerWebhooksAction(event, createNotification)
                             setLoading(false)
                         }}
                         sx={{

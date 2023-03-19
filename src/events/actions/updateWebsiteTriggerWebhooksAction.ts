@@ -4,16 +4,18 @@ import { getSpeakers } from './getSpeakers.js'
 import { ref, uploadString } from 'firebase/storage'
 import { storage } from '../../services/firebase'
 import { getFilesNames } from './updateWebsiteActions/getFilesNames'
+import { CreateNotificationOption } from '../../context/SnackBarProvider'
 
-export const updateWebsiteTriggerWebhooksAction = async (event: Event) => {
+export const updateWebsiteTriggerWebhooksAction = async (
+    event: Event,
+    createNotification: (message: string, options?: CreateNotificationOption) => void
+) => {
     try {
         await updateWebsiteTriggerWebhooksActionInternal(event)
-
-        // TODO : notif success
+        createNotification('APIs and webhooks triggered', { type: 'success' })
     } catch (error) {
-        console.log('update failed')
-        // TODO : notif error
-        return false
+        console.error(error)
+        createNotification('Failed to update... ' + String(error), { type: 'success' })
     }
 }
 
@@ -62,19 +64,24 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
             socials: s.social,
         })),
         sessions: outputSessions,
+        generatedAt: new Date().toISOString(),
     }
     const outputPrivate = {
         event: outputEvent,
         speakers: speakers,
         sessions: outputSessions,
+        generatedAt: new Date().toISOString(),
     }
 
     const fileNames = await getFilesNames(event)
 
+    const metadata = {
+        contentType: 'application/json',
+    }
+
     const outputRefPublic = ref(storage, fileNames.public)
     const outputRefPrivate = ref(storage, fileNames.private)
 
-    const result = await uploadString(outputRefPublic, JSON.stringify(outputPublic))
-    console.log(result)
-    // const result = uploadString(outputRefPrivate, JSON.stringify(outputPrivate))
+    await uploadString(outputRefPublic, JSON.stringify(outputPublic), undefined, metadata)
+    await uploadString(outputRefPrivate, JSON.stringify(outputPrivate), undefined, metadata)
 }

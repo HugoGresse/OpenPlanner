@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react'
 import { Event } from '../../../../types'
 import { Box, CircularProgress, Typography } from '@mui/material'
 import { getFilesNames } from '../../../actions/updateWebsiteActions/getFilesNames'
-import { storage } from '../../../../services/firebase'
-import { getDownloadURL, ref } from 'firebase/storage'
+import { storageBucket } from '../../../../services/firebase'
 
 export type EventApiFilePathsProps = {
     event: Event
@@ -17,15 +16,10 @@ export const EventApiFilePaths = ({ event }: EventApiFilePathsProps) => {
 
     const update = async () => {
         const files = await getFilesNames(event)
-        const publicRef = ref(storage, files.public)
-        const privateRef = ref(storage, files.public)
-
-        const publicUrl = await getDownloadURL(publicRef)
-        const privateUrl = await getDownloadURL(privateRef)
 
         setFilesPaths({
-            public: publicUrl,
-            private: privateUrl,
+            public: `https://storage.googleapis.com/${storageBucket}/${files.public}`,
+            private: `https://storage.googleapis.com/${storageBucket}/${files.private}`,
         })
     }
 

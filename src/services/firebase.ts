@@ -16,6 +16,8 @@ const config = {
     measurementId: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_MEASUREMENT_ID,
 }
 
+export const storageBucket = config.storageBucket
+
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)
 export const storage = getStorage()
