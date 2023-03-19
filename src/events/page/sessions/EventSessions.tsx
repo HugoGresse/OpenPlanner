@@ -1,4 +1,4 @@
-import { Card, Container } from '@mui/material'
+import { Box, Button, Card, Container } from '@mui/material'
 import * as React from 'react'
 import { Event, Session } from '../../../types'
 import { useSessions } from '../../../services/hooks/useSessions'
@@ -20,6 +20,9 @@ export const EventSessions = ({ event, eventUpdated }: EventSessionsProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Box display="flex" justifyContent="flex-end">
+                <Button onClick={() => {}}>Import proposals from ConferenceHall</Button>
+            </Box>
             <Card sx={{ paddingX: 2 }}>
                 {sessions.data?.map((session: Session) => (
                     <EventSessionItem key={session.id} session={session} formats={formats} />
