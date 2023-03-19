@@ -9,7 +9,7 @@ interface Notification {
     dismissDelay?: number
 }
 
-interface CreateNotificationOption {
+export interface CreateNotificationOption {
     type?: AppSnackbarType
     dismissDelay?: number
 }

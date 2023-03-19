@@ -38,7 +38,7 @@ export const EventRouter = () => {
 
     return (
         <NestedRoutes base={`/events/${params?.eventId}`}>
-            <EventLayout>
+            <EventLayout event={eventData}>
                 <Route path="/sponsors">
                     <EventSponsors />
                 </Route>

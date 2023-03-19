@@ -13,6 +13,7 @@ import {
     List,
     ListItem,
     ListItemAvatar,
+    ListItemButton,
     ListItemText,
     styled,
     Toolbar,
@@ -26,6 +27,10 @@ import { useSelector } from 'react-redux'
 import { logout, selectUserConferenceCenter } from '../../auth/authReducer'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { useAppDispatch } from '../../reduxStore'
+import { LoadingButton } from '@mui/lab'
+import { Event } from '../../types'
+import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteTriggerWebhooksAction'
+import { useNotification } from '../../hooks/notificationHook'
 
 const drawerWidth: number = 240
 
@@ -77,14 +82,17 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 export type EventLayoutProps = {
     children: React.ReactNode
+    event: Event
 }
 
-export const EventLayout = ({ children }: EventLayoutProps) => {
+export const EventLayout = ({ children, event }: EventLayoutProps) => {
     const dispatch = useAppDispatch()
     const [_, firstParams] = useRoute('/:routeName')
     const [__, subParams] = useRoute('/:routeName/:subRoute')
     const [open, setOpen] = useState(true)
+    const [loading, setLoading] = useState(false)
     const user = useSelector(selectUserConferenceCenter)
+    const { createNotification } = useNotification()
     const toggleDrawer = () => {
         setOpen(!open)
     }
@@ -135,6 +143,22 @@ export const EventLayout = ({ children }: EventLayoutProps) => {
                 <Divider />
                 <List component="nav">
                     <EventScreenMenuItems />
+                    <ListItemButton
+                        component={LoadingButton}
+                        variant="contained"
+                        loading={loading}
+                        disabled={loading}
+                        onClick={async () => {
+                            setLoading(true)
+                            await updateWebsiteTriggerWebhooksAction(event, createNotification)
+                            setLoading(false)
+                        }}
+                        sx={{
+                            margin: 1,
+                            whiteSpace: 'break-spaces',
+                        }}>
+                        <ListItemText primary={'Update website & trigger webhooks'} />
+                    </ListItemButton>
                 </List>
                 <Box marginTop="auto">
                     <List>

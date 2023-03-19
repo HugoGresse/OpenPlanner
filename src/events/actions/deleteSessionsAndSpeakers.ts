@@ -1,21 +1,8 @@
-import { doc, getDocs, writeBatch } from 'firebase/firestore'
-import { Event, Session, Speaker } from '../../types'
+import { doc, writeBatch } from 'firebase/firestore'
+import { Event } from '../../types'
 import { collections, instanceFirestore } from '../../services/firebase'
-
-const getSession = async (eventId: string): Promise<Session[]> => {
-    const snapshots = await getDocs(collections.sessions(eventId))
-
-    return snapshots.docs.map((snapshot) => ({
-        ...snapshot.data(),
-    }))
-}
-const getSpeakers = async (eventId: string): Promise<Speaker[]> => {
-    const snapshots = await getDocs(collections.speakers(eventId))
-
-    return snapshots.docs.map((snapshot) => ({
-        ...snapshot.data(),
-    }))
-}
+import { getSession } from './getSessions'
+import { getSpeakers } from './getSpeakers'
 
 export const deleteSessionsAndSpeakers = async (event: Event, onlyConferenceHallOne = true) => {
     const sessions = await getSession(event.id)

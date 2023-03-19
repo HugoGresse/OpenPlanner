@@ -22,6 +22,7 @@ import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImpo
 import { RequireConferenceHallLogin } from '../../../conferencehall/RequireConferenceHallLogin'
 import { useNotification } from '../../../hooks/notificationHook'
 import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
+import { EventApiFilePaths } from './components/EventAPIFilePaths'
 
 const schema = yup
     .object({
@@ -120,6 +121,8 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                                 disabled={formState.isSubmitting}
                             />
                             {days ? days + ' day(s)' : ''}
+
+                            <EventApiFilePaths event={event} />
                         </Grid>
 
                         <Grid item xs={12}>
