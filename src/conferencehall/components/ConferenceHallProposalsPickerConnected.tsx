@@ -1,43 +1,48 @@
 import { ConferenceHallProposalsPicker } from './ConferenceHallProposalsPicker'
-import { useConferenceHallProposals } from '../hooks/useConferenceHallProposals'
 import React, { useState } from 'react'
-import { ConferenceHallEvent, ConferenceHallProposal, Format } from '../../types'
+import { ConferenceHallProposal, Format } from '../../types'
 import { ConferenceHallFormatsMapping } from './ConferenceHallFormatsMapping'
-import { Grid } from '@mui/material'
+import { useConferenceHallProposals } from '../hooks/useConferenceHallProposals'
 
-export type ConferenceHallProposalsPickerConnectedProps = {
-    event: ConferenceHallEvent
+type ConferenceHallProposalsPickerConnectedProps = {
+    conferenceHallEventId: string
+    chFormats: {
+        id: string
+        name: string
+    }[]
     onSubmit: ({ proposals, formats }: { proposals: ConferenceHallProposal[]; formats: Format[] }) => void
 }
 
+/**
+ *
+ * @param eventId: conference hall event id
+ * @param onSubmit
+ * @constructor
+ */
 export const ConferenceHallProposalsPickerConnected = ({
-    event,
+    conferenceHallEventId,
+    chFormats,
     onSubmit,
 }: ConferenceHallProposalsPickerConnectedProps) => {
-    const eventId = event.id
-    const proposals = useConferenceHallProposals(eventId)
+    const proposals = useConferenceHallProposals(conferenceHallEventId)
     const [formats, setFormatDurations] = useState<Format[]>(
-        event.formats.map((f) => ({
+        (chFormats || []).map((f) => ({
             ...f,
             durationMinutes: 20,
         }))
     )
 
     const submitSelectedProposalsAndFormats = (proposals: ConferenceHallProposal[]) => {
-        onSubmit({
+        return onSubmit({
             proposals,
             formats: formats,
         })
     }
 
     return (
-        <Grid container>
-            <Grid item xs={12} sm={6}>
-                <ConferenceHallProposalsPicker onSubmit={submitSelectedProposalsAndFormats} proposals={proposals} />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-                <ConferenceHallFormatsMapping formats={formats} setFormatDurations={setFormatDurations} />
-            </Grid>
-        </Grid>
+        <>
+            <ConferenceHallFormatsMapping formats={formats} setFormatDurations={setFormatDurations} />
+            <ConferenceHallProposalsPicker onSubmit={submitSelectedProposalsAndFormats} proposals={proposals} />
+        </>
     )
 }

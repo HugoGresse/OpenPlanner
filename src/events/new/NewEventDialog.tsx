@@ -33,7 +33,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
     const hasErrors = (newResult?.errors || []).length > 0
 
     return (
-        <Dialog open={isOpen} onClose={() => onClose(null)} maxWidth="md">
+        <Dialog open={isOpen} onClose={() => onClose(null)} maxWidth="md" fullWidth={true} scroll="body">
             <DialogTitle>Import a new event from Conference Hall</DialogTitle>
             <DialogContent>
                 <DialogContentText>
@@ -73,7 +73,8 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                                                 </Typography>
                                             </Box>
                                             <ConferenceHallProposalsPickerConnected
-                                                event={selectedConferenceHallEvent}
+                                                conferenceHallEventId={selectedConferenceHallEvent.id}
+                                                chFormats={selectedConferenceHallEvent.formats}
                                                 onSubmit={async ({ formats, proposals }) => {
                                                     setNewResults(null)
                                                     const result = await addNewEvent(
