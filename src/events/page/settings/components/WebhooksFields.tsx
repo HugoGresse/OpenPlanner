@@ -72,6 +72,7 @@ export const WebhooksFields = ({ control, isSubmitting }: WebhooksFieldsProps) =
                     onClick={() => {
                         append({
                             url: '',
+                            lastAnswer: null,
                         })
                     }}>
                     <Add />
