@@ -1,4 +1,4 @@
-import { Box, Button, Card, Container } from '@mui/material'
+import { Box, Button, Card, Container, Typography } from '@mui/material'
 import * as React from 'react'
 import { useState } from 'react'
 import { Event, Session } from '../../../types'
@@ -10,9 +10,8 @@ import { SessionsImporterFromConferenceHallDialog } from './components/SessionsI
 
 export type EventSessionsProps = {
     event: Event
-    eventUpdated: () => Promise<any>
 }
-export const EventSessions = ({ event, eventUpdated }: EventSessionsProps) => {
+export const EventSessions = ({ event }: EventSessionsProps) => {
     const sessions = useSessions(event)
     const [sessionsImportOpen, setSessionsImportOpen] = useState(false)
 
@@ -24,10 +23,14 @@ export const EventSessions = ({ event, eventUpdated }: EventSessionsProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Box display="flex" justifyContent="flex-end">
+            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+                <Typography>{sessions.data?.length} sessions</Typography>
                 <RequireConferenceHallConnections event={event}>
                     <Button onClick={() => setSessionsImportOpen(true)}>Import proposals from ConferenceHall</Button>
                 </RequireConferenceHallConnections>
+                <Button href="/sessions/new" variant="contained">
+                    Add session
+                </Button>
             </Box>
             <Card sx={{ paddingX: 2 }}>
                 {sessions.data?.map((session: Session) => (

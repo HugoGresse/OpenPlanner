@@ -12,41 +12,46 @@ import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/timeFormats'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import LoadingButton from '@mui/lab/LoadingButton'
-import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
-import { doc } from 'firebase/firestore'
-import { collections } from '../../../services/firebase'
 
 export type EventSessionFormProps = {
     event: Event
-    session: Session
+    session?: Session
+    onSubmit: (session: Session) => void
 }
-export const EventSessionForm = ({ event, session }: EventSessionFormProps) => {
+export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
-    const mutation = useFirestoreDocumentMutation(doc(collections.sessions(event.id), session.id), {
-        merge: true,
-    })
-    const track = event.tracks.find((t) => t.id === session.trackId)?.name || null
+    const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
-        defaultValues: {
-            ...session,
-            track: track,
-            category: session.category || undefined,
-        },
+        defaultValues: session
+            ? ({
+                  ...session,
+                  track: track,
+                  category: session.category || undefined,
+                  format: session.format || undefined,
+                  language: session.language || undefined,
+                  level: session.level || undefined,
+                  note: session.note || undefined,
+                  showInFeedback: session.showInFeedback,
+              } as Session)
+            : ({
+                  showInFeedback: true,
+                  hideTrackTitle: false,
+              } as Session),
     })
     const { formState } = formContext
 
     const isSubmitting = formState.isSubmitting
 
-    const startAt = session.dates?.start ? dateTimeToDayMonthHours(session.dates?.start) : 'not set'
-    const endAt = session.dates?.end ? dateTimeToDayMonthHours(session.dates?.end) : 'not set'
+    const startAt = session?.dates?.start ? dateTimeToDayMonthHours(session.dates?.start) : 'not set'
+    const endAt = session?.dates?.end ? dateTimeToDayMonthHours(session.dates?.end) : 'not set'
 
     return (
         <FormContainer
             formContext={formContext}
             onSuccess={async (data) => {
-                return mutation.mutateAsync({
+                return onSubmit({
                     title: data.title,
-                    speakers: data.speakers,
+                    speakers: data.speakers || [],
                     abstract: data.abstract,
                     format: data.format,
                     category: data.category,
@@ -63,7 +68,7 @@ export const EventSessionForm = ({ event, session }: EventSessionFormProps) => {
                 <Grid item xs={12} md={6}>
                     <TextFieldElement
                         margin="dense"
-                        required
+                        required={!!session}
                         fullWidth
                         label="ID"
                         name="id"
@@ -102,7 +107,6 @@ export const EventSessionForm = ({ event, session }: EventSessionFormProps) => {
 
                     <TextFieldElement
                         margin="dense"
-                        required
                         fullWidth
                         multiline
                         minRows={4}
@@ -131,7 +135,7 @@ export const EventSessionForm = ({ event, session }: EventSessionFormProps) => {
                         <br />
                         End at: {endAt}
                         <br />
-                        Last for <b>{session.durationMinutes}</b> minutes in track <b>{track ? track : 'not set'}</b>
+                        Last for <b>{session?.durationMinutes}</b> minutes in track <b>{track ? track : 'not set'}</b>
                     </Typography>
                     <br />
                     <Grid container spacing={4}>

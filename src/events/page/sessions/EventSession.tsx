@@ -7,6 +7,9 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/Firesto
 import { ArrowBack } from '@mui/icons-material'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 import { EventSessionForm } from './EventSessionForm'
+import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
+import { doc } from 'firebase/firestore'
+import { collections } from '../../../services/firebase'
 
 export type EventSessionProps = {
     event: Event
@@ -16,6 +19,10 @@ export const EventSession = ({ event }: EventSessionProps) => {
     const [_2, setLocation] = useLocation()
     const sessionId = params?.sessionId || ''
     const sessionResult = useSession(event.id, sessionId)
+
+    const mutation = useFirestoreDocumentMutation(doc(collections.sessions(event.id), sessionId), {
+        merge: true,
+    })
 
     if (sessionResult.isLoading || !sessionResult.data) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sessionResult} />
@@ -36,7 +43,14 @@ export const EventSession = ({ event }: EventSessionProps) => {
 
                 <Typography variant="h2">{session.title}</Typography>
 
-                <EventSessionForm event={event} session={session} />
+                <EventSessionForm
+                    event={event}
+                    session={session}
+                    onSubmit={(session) => mutation.mutateAsync(session)}
+                />
+                {mutation.isError && (
+                    <Typography color="error">Error while saving session: {mutation.error.message}</Typography>
+                )}
             </Card>
         </Container>
     )
