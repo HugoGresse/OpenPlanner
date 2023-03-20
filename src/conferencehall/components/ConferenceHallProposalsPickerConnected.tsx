@@ -11,6 +11,7 @@ type ConferenceHallProposalsPickerConnectedProps = {
         name: string
     }[]
     onSubmit: ({ proposals, formats }: { proposals: ConferenceHallProposal[]; formats: Format[] }) => void
+    submitText?: string
 }
 
 /**
@@ -23,6 +24,7 @@ export const ConferenceHallProposalsPickerConnected = ({
     conferenceHallEventId,
     chFormats,
     onSubmit,
+    submitText,
 }: ConferenceHallProposalsPickerConnectedProps) => {
     const proposals = useConferenceHallProposals(conferenceHallEventId)
     const [formats, setFormatDurations] = useState<Format[]>(
@@ -42,7 +44,11 @@ export const ConferenceHallProposalsPickerConnected = ({
     return (
         <>
             <ConferenceHallFormatsMapping formats={formats} setFormatDurations={setFormatDurations} />
-            <ConferenceHallProposalsPicker onSubmit={submitSelectedProposalsAndFormats} proposals={proposals} />
+            <ConferenceHallProposalsPicker
+                onSubmit={submitSelectedProposalsAndFormats}
+                proposals={proposals}
+                submitText={submitText}
+            />
         </>
     )
 }

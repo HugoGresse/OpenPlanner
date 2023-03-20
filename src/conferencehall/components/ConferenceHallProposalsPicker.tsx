@@ -8,17 +8,12 @@ import { DataGrid, GridColDef, GridToolbarQuickFilter, useGridApiContext } from 
 import { UseQueryResult } from 'react-query'
 import { DocumentData } from '@firebase/firestore'
 
-export type ConferenceHallProposalsPickerProps = {
-    proposals: UseQueryResult<DocumentData>
-    onSubmit: (proposals: ConferenceHallProposal[]) => void
-}
-
 const columns: GridColDef[] = [
     { field: 'title', headerName: 'Title', width: 350 },
     { field: 'state', headerName: 'State', width: 130 },
 ]
 
-const ToolBarBis = (props: any) => {
+const ToolBarBis = () => {
     const apiRef = useGridApiContext()
 
     const [selectedChip, setSelectedChip] = useState<ConferenceHallProposalState[]>([])
@@ -48,7 +43,7 @@ const ToolBarBis = (props: any) => {
 
     return (
         <Box display="flex" padding={1}>
-            <GridToolbarQuickFilter {...props} />
+            <GridToolbarQuickFilter debounceMs={120} />
             {Object.values(ConferenceHallProposalState).map((v) => (
                 <Chip
                     label={v}
@@ -61,7 +56,17 @@ const ToolBarBis = (props: any) => {
     )
 }
 
-export const ConferenceHallProposalsPicker = ({ proposals, onSubmit }: ConferenceHallProposalsPickerProps) => {
+export type ConferenceHallProposalsPickerProps = {
+    proposals: UseQueryResult<DocumentData>
+    onSubmit: (proposals: ConferenceHallProposal[]) => void
+    submitText?: string
+}
+
+export const ConferenceHallProposalsPicker = ({
+    proposals,
+    onSubmit,
+    submitText,
+}: ConferenceHallProposalsPickerProps) => {
     const [selectedRow, setSelectedRow] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
 
@@ -89,11 +94,6 @@ export const ConferenceHallProposalsPicker = ({ proposals, onSubmit }: Conferenc
                             },
                         }}
                         slots={{ toolbar: ToolBarBis }}
-                        slotProps={{
-                            toolbar: {
-                                quickFilterProps: { debounceMs: 500 },
-                            },
-                        }}
                         rowSelectionModel={selectedRow}
                         onRowSelectionModelChange={(rowSelectionModel) => {
                             setSelectedRow(rowSelectionModel as string[])
@@ -112,7 +112,9 @@ export const ConferenceHallProposalsPicker = ({ proposals, onSubmit }: Conferenc
                             await onSubmit(proposalsData.filter((p) => selectedRow.includes(p.id)))
                             setLoading(false)
                         }}>
-                        {selectedRow.length > 0
+                        {submitText
+                            ? `${submitText} (${selectedRow.length})`
+                            : selectedRow.length > 0
                             ? `Import ${selectedRow.length} proposals & create Conference Center event`
                             : 'Create event without proposals'}
                     </LoadingButton>

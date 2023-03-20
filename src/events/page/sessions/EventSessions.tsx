@@ -38,7 +38,11 @@ export const EventSessions = ({ event, eventUpdated }: EventSessionsProps) => {
                 <SessionsImporterFromConferenceHallDialog
                     event={event}
                     isOpen={sessionsImportOpen}
-                    onClose={() => setSessionsImportOpen(false)}
+                    onClose={() => {
+                        setSessionsImportOpen(false)
+                        // noinspection JSIgnoredPromiseFromCall
+                        sessions.refetch()
+                    }}
                 />
             )}
         </Container>
