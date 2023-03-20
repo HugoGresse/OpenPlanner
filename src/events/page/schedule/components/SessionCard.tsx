@@ -141,7 +141,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                         </Typography>
                         <IconButton
                             onClick={() => {
-                                setLocation(`/sessions/${session.id}`)
+                                setLocation(`/sessions/${session.id}?schedule=true`)
                             }}
                             sx={{ position: 'absolute', top: 0, right: 0 }}>
                             <EditIcon color="action" fontSize="small" sx={{}} />
