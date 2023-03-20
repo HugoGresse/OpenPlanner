@@ -30,6 +30,7 @@ export const EventSessionForm = ({ event, session }: EventSessionFormProps) => {
         defaultValues: {
             ...session,
             track: track,
+            category: session.category || undefined,
         },
     })
     const { formState } = formContext

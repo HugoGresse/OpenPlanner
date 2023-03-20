@@ -27,7 +27,7 @@ export const sessionConverter: FirestoreDataConverter<Session> = {
         return {
             id: snapshot.id,
             ...data,
-            category: data.category || undefined,
+            category: data.category || null,
             dates: {
                 start: data.dates?.start
                     ? DateTime.fromJSDate(data.dates.start.toDate()).set({ second: 0, millisecond: 0 })
