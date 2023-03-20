@@ -56,6 +56,7 @@ export interface Session {
     speakers: string[]
     trackId: string | null
     language: string | null
+    level: string | null
     presentationLink: string | null
     videoLink: string | null
     tags: string[]
@@ -132,6 +133,7 @@ export interface ConferenceHallProposal {
     state: ConferenceHallProposalState
     formats: string
     owner: string
+    language?: string
     speakers: {
         [key: string]: boolean
     }

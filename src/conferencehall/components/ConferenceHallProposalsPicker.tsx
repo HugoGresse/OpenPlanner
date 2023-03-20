@@ -76,7 +76,7 @@ export const ConferenceHallProposalsPicker = ({
         <>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={proposals} />
 
-            {proposalsData.length && (
+            {proposalsData.length ? (
                 <Box>
                     <Typography>Total proposals: {proposalsData.length}</Typography>
 
@@ -119,7 +119,7 @@ export const ConferenceHallProposalsPicker = ({
                             : 'Create event without proposals'}
                     </LoadingButton>
                 </Box>
-            )}
+            ) : null}
         </>
     )
 }
