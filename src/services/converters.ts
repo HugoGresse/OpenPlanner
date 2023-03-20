@@ -27,6 +27,7 @@ export const sessionConverter: FirestoreDataConverter<Session> = {
         return {
             id: snapshot.id,
             ...data,
+            category: data.category || undefined,
             dates: {
                 start: data.dates?.start
                     ? DateTime.fromJSDate(data.dates.start.toDate()).set({ second: 0, millisecond: 0 })
@@ -38,7 +39,12 @@ export const sessionConverter: FirestoreDataConverter<Session> = {
         } as Session
     },
     toFirestore(session: Session) {
-        return session
+        return Object.keys(session).reduce((acc, key) => {
+            // @ts-ignore
+            acc[key] = session[key] === undefined ? null : session[key]
+
+            return acc
+        }, {})
     },
 }
 

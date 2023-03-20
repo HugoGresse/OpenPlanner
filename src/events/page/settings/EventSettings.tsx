@@ -23,6 +23,7 @@ import { RequireConferenceHallLogin } from '../../../conferencehall/RequireConfe
 import { useNotification } from '../../../hooks/notificationHook'
 import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
 import { EventApiFilePaths } from './components/EventAPIFilePaths'
+import { CategoriesFields } from './components/CategoriesFields'
 
 const schema = yup
     .object({
@@ -94,6 +95,8 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                             <TrackFields control={control} isSubmitting={formState.isSubmitting} />
 
                             <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
+
+                            <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
 
                             <WebhooksFields control={control} isSubmitting={formState.isSubmitting} />
                         </Grid>

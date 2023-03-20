@@ -69,7 +69,7 @@ export const mapConferenceHallProposalsToConferenceCenter = (
         const format = chProposal.formats ? formats.find((f) => f.id === chProposal.formats) : null
 
         sessions.push({
-            id: slugify(chProposal.title).slice(0, 15),
+            id: slugify(chProposal.title).slice(0, 30),
             conferenceHallId: chProposal.id,
             title: chProposal.title,
             abstract: chProposal.abstract || null,
@@ -82,8 +82,10 @@ export const mapConferenceHallProposalsToConferenceCenter = (
             image: null,
             language: chProposal.language || null,
             level: chProposal.level || null,
+            category: chProposal.categories || null,
             presentationLink: null,
             tags: [],
+            note: null,
             trackId: null,
             videoLink: null,
         })

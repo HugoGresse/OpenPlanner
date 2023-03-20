@@ -6,6 +6,7 @@ import { useLocation, useRoute } from 'wouter'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ArrowBack } from '@mui/icons-material'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
+import { EventSessionForm } from './EventSessionForm'
 
 export type EventSessionProps = {
     event: Event
@@ -13,12 +14,7 @@ export type EventSessionProps = {
 export const EventSession = ({ event }: EventSessionProps) => {
     const [_, params] = useRoute('/:routeName/:sessionId*')
     const [_2, setLocation] = useLocation()
-    const sessionId = params?.sessionId
-
-    if (!sessionId) {
-        return null
-    }
-
+    const sessionId = params?.sessionId || ''
     const sessionResult = useSession(event.id, sessionId)
 
     if (sessionResult.isLoading || !sessionResult.data) {
@@ -40,11 +36,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
 
                 <Typography variant="h2">{session.title}</Typography>
 
-                {Object.entries(session).map(([key, value]) => (
-                    <Typography key={key}>
-                        {key}: {typeof value === 'object' ? (!value ? '' : JSON.stringify(value, null, 4)) : `${value}`}
-                    </Typography>
-                ))}
+                <EventSessionForm event={event} session={session} />
             </Card>
         </Container>
     )

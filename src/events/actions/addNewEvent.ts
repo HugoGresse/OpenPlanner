@@ -48,6 +48,7 @@ const addNewEventInternal = async (
         owner: userId,
         tracks: [],
         formats: formats,
+        categories: chEvent.categories,
         scheduleVisible: true,
         webhooks: [],
         createdAt: serverTimestamp(),
