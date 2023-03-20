@@ -10,6 +10,11 @@ export interface Webhooks {
     url: string
 }
 
+export interface Category {
+    id: string
+    name: string
+}
+
 export interface Format {
     id: string
     name: string
@@ -54,16 +59,22 @@ export interface Session {
     dates: DateTimeType | null
     durationMinutes: number
     speakers: string[]
-    speakersData?: Speaker[]
     trackId: string | null
     language: string | null
+    level: string | null
     presentationLink: string | null
     videoLink: string | null
     tags: string[]
     format: string | null
+    category: string | null
     image: string | null
     showInFeedback: boolean
     hideTrackTitle: boolean
+    note: string | null
+    // Hydrated data during load
+    speakersData?: Speaker[]
+    formatText?: string
+    categoryText?: string
 }
 
 export interface EventFiles {
@@ -80,6 +91,7 @@ export interface Event {
     conferenceHallId: string | null
     dates: DateType
     formats: Format[]
+    categories: Category[]
     tracks: Track[]
     webhooks: Webhooks[]
     createdAt: Date
@@ -111,7 +123,7 @@ export interface ConferenceHallEvent {
     categories: {
         id: string
         name: string
-    }
+    }[]
     formats: {
         id: string
         name: string
@@ -128,8 +140,10 @@ export interface ConferenceHallProposal {
     level: string
     abstract: string
     state: ConferenceHallProposalState
-    formats: string
     owner: string
+    formats?: string
+    categories?: string
+    language?: string
     speakers: {
         [key: string]: boolean
     }

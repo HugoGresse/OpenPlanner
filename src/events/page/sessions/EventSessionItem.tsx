@@ -35,7 +35,7 @@ export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
             </Grid>
 
             <Grid item sm={12} md={2}>
-                <Chip label={formats.find((f) => f.id === session.format)?.name} size="small" />
+                <Chip label={session.formatText || 'no format'} size="small" />
                 {session.tags.length ? 'tags: ' + session.tags.map((t) => <Chip label={t} size="small" />) : ''}
             </Grid>
             <Grid item sm={12} md={3}>
