@@ -54,7 +54,6 @@ export interface Session {
     dates: DateTimeType | null
     durationMinutes: number
     speakers: string[]
-    speakersData?: Speaker[]
     trackId: string | null
     language: string | null
     presentationLink: string | null
@@ -64,6 +63,9 @@ export interface Session {
     image: string | null
     showInFeedback: boolean
     hideTrackTitle: boolean
+    // Hydrated data during load
+    speakersData?: Speaker[]
+    formatText?: string
 }
 
 export interface EventFiles {

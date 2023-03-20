@@ -47,6 +47,8 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
     )
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
 
+    const cardHeight = SlotHeight * (session.durationMinutes / ScheduleSlotDurationMinutes || 120)
+
     return (
         <Rnd
             disableDragging={true}
@@ -62,7 +64,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
             }}
             size={{
                 width: vw * 0.1,
-                height: SlotHeight * (session.durationMinutes / ScheduleSlotDurationMinutes || 9.5),
+                height: cardHeight,
             }}
             dragGrid={[0, 0]}
             resizeGrid={[SlotHeight, SlotHeight]}
@@ -106,7 +108,8 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                 position: absolute ? 'absolute' : 'relative',
                 cursor: 'grab',
                 zIndex: 1,
-            }}>
+            }}
+            className="session-card-rnd">
             <Box
                 ref={drag}
                 sx={{
@@ -125,21 +128,27 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                     paddingTop: 0.5,
                     paddingLeft: 0.5,
                     paddingRight: 0.5,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                        backgroundColor: 'red',
+                        width: vw * 0.15,
+                    },
                 }}>
                 <Box display="flex" flexDirection="column" justifyContent="space-between">
                     <Box display="flex" justifyContent="space-between">
                         <Typography fontWeight={600} color="white" lineHeight={1}>
-                            {session.title}
+                            {session.title.slice(0, 50)}
                         </Typography>
                         <IconButton
                             onClick={() => {
                                 setLocation(`/sessions/${session.id}`)
-                            }}>
+                            }}
+                            sx={{ position: 'absolute', top: 0, right: 0 }}>
                             <EditIcon color="action" fontSize="small" sx={{}} />
                         </IconButton>
                     </Box>
                     <Typography color="white" variant="caption" lineHeight={1}>
-                        Format: {session.format || '?'}
+                        Format: {session.formatText || '?'}
                         <br />
                         Speakers: {session.speakersData?.map((s) => s.name).join(', ')}
                     </Typography>

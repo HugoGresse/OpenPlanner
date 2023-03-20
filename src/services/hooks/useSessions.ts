@@ -3,8 +3,10 @@ import { useFirestoreQueryData } from '@react-query-firebase/firestore'
 import { collections } from '../firebase'
 import { DocumentData } from '@firebase/firestore'
 import { useSpeakersMap } from './useSpeakersMap'
+import { Event } from '../../types'
 
-export const useSessions = (eventId: string): UseQueryResult<DocumentData> => {
+export const useSessions = (event: Event): UseQueryResult<DocumentData> => {
+    const eventId = event.id
     const sp = useSpeakersMap(eventId)
 
     const s = useFirestoreQueryData(['sessions', eventId], collections.sessions(eventId))
@@ -14,6 +16,7 @@ export const useSessions = (eventId: string): UseQueryResult<DocumentData> => {
             return {
                 ...session,
                 speakersData: session.speakers.map((speakerId) => sp.data[speakerId]),
+                formatText: event.formats ? event.formats.find((f) => session.format === f.id)?.name : undefined,
             }
         })
     }

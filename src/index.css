@@ -1,0 +1,4 @@
+/* SessionCard.tsx */
+.session-card-rnd:hover {
+    z-index: 10 !important;
+}

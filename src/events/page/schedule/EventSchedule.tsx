@@ -15,7 +15,7 @@ export type EventScheduleProps = {
 }
 export const EventSchedule = ({ event }: EventScheduleProps) => {
     const daysArray = getIndividualDays(event.dates.start, event.dates.end)
-    const sessions = useSessions(event.id)
+    const sessions = useSessions(event)
 
     if (!daysArray.length) {
         return (

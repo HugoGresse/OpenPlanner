@@ -13,7 +13,7 @@ export type EventSessionsProps = {
     eventUpdated: () => Promise<any>
 }
 export const EventSessions = ({ event, eventUpdated }: EventSessionsProps) => {
-    const sessions = useSessions(event.id)
+    const sessions = useSessions(event)
     const [sessionsImportOpen, setSessionsImportOpen] = useState(false)
 
     if (sessions.isLoading) {
