@@ -1,10 +1,10 @@
-import { Event } from '../../types'
-import { getSession } from './getSessions.js'
-import { getSpeakers } from './getSpeakers.js'
+import { Event } from '../../../types'
+import { getSession } from '../sessions/getSessions'
+import { getSpeakers } from '../getSpeakers'
 import { ref, uploadString } from 'firebase/storage'
-import { storage } from '../../services/firebase'
-import { getFilesNames } from './updateWebsiteActions/getFilesNames'
-import { CreateNotificationOption } from '../../context/SnackBarProvider'
+import { storage } from '../../../services/firebase'
+import { getFilesNames } from './getFilesNames'
+import { CreateNotificationOption } from '../../../context/SnackBarProvider'
 
 export const updateWebsiteTriggerWebhooksAction = async (
     event: Event,

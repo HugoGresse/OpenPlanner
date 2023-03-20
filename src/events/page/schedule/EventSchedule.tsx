@@ -8,7 +8,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
-import { updateSession } from '../../actions/updateSession'
+import { updateSession } from '../../actions/sessions/updateSession'
 
 export type EventScheduleProps = {
     event: Event

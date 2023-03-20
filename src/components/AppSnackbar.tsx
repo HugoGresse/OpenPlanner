@@ -1,6 +1,5 @@
-import { CloseOutlined } from '@mui/icons-material'
-import { AlertColor, Button, Grow, IconButton, Snackbar, SnackbarProps } from '@mui/material'
-import { forwardRef, PropsWithChildren, SyntheticEvent } from 'react'
+import { AlertColor, Grow, Snackbar, SnackbarProps } from '@mui/material'
+import { forwardRef, SyntheticEvent } from 'react'
 import MuiAlert, { AlertProps } from '@mui/material/Alert'
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(props, ref) {

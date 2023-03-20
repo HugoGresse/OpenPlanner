@@ -29,7 +29,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import { useAppDispatch } from '../../reduxStore'
 import { LoadingButton } from '@mui/lab'
 import { Event } from '../../types'
-import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteTriggerWebhooksAction'
+import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
 import { useNotification } from '../../hooks/notificationHook'
 
 const drawerWidth: number = 240

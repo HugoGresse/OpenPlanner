@@ -1,6 +1,6 @@
 import { doc, updateDoc } from 'firebase/firestore'
-import { Session } from '../../types'
-import { collections } from '../../services/firebase'
+import { Session } from '../../../types'
+import { collections } from '../../../services/firebase'
 
 export const updateSession = async (eventId: string, session: Session): Promise<void> => {
     const ref = doc(collections.sessions(eventId), session.id)
