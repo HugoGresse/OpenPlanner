@@ -40,6 +40,24 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
         showInFeedback: s.showInFeedback,
         hideTrackTitle: s.hideTrackTitle,
     }))
+    const outputSessionsPrivate = sessions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        abstract: s.abstract,
+        dateStart: s.dates?.start?.toISODate(),
+        dateEnd: s.dates?.end?.toISODate(),
+        durationMinutes: s.durationMinutes,
+        speakerIds: s.speakers,
+        trackId: s.trackId,
+        language: s.language,
+        presentationLink: s.presentationLink,
+        videoLink: s.videoLink,
+        tags: s.tags,
+        formatId: s.format,
+        showInFeedback: s.showInFeedback,
+        hideTrackTitle: s.hideTrackTitle,
+        note: s.note,
+    }))
 
     const outputEvent = {
         id: event.id,
@@ -69,7 +87,7 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
     const outputPrivate = {
         event: outputEvent,
         speakers: speakers,
-        sessions: outputSessions,
+        sessions: outputSessionsPrivate,
         generatedAt: new Date().toISOString(),
     }
 
