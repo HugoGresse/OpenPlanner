@@ -79,7 +79,7 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
             bio: s.bio,
             company: s.companyLogoUrl,
             photoUrl: s.photoUrl,
-            socials: s.social,
+            socials: s.socials,
         })),
         sessions: outputSessions,
         generatedAt: new Date().toISOString(),

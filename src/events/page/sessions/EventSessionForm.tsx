@@ -222,7 +222,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                         fullWidth
                         variant="contained"
                         sx={{ mt: 2, mb: 2 }}>
-                        Save
+                        {session ? 'Save' : 'Add session'}
                     </LoadingButton>
                 </Grid>
             </Grid>

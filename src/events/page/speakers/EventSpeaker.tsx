@@ -5,6 +5,10 @@ import { useSpeaker } from '../../../services/hooks/useSpeaker'
 import { useRoute } from 'wouter'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ArrowBack } from '@mui/icons-material'
+import { EventSpeakerForm } from './EventSpeakerForm'
+import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
+import { doc } from 'firebase/firestore'
+import { collections } from '../../../services/firebase'
 
 export type EventSpeakerProps = {
     event: Event
@@ -12,6 +16,10 @@ export type EventSpeakerProps = {
 export const EventSpeaker = ({ event }: EventSpeakerProps) => {
     const [_, params] = useRoute('/:routeName/:speakerId*')
     const speakerId = params?.speakerId
+
+    const mutation = useFirestoreDocumentMutation(doc(collections.speakers(event.id), speakerId), {
+        merge: true,
+    })
 
     if (!speakerId) {
         return null
@@ -34,16 +42,15 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
 
                 <Typography variant="h2">{speaker.name}</Typography>
 
-                {Object.entries(speaker).map(([key, value]) => (
-                    <Typography key={key}>
-                        {key}:{' '}
-                        {typeof value === 'object'
-                            ? !value
-                                ? ''
-                                : JSON.stringify(value, null, 4)
-                            : `${!value ? '' : value}`}
-                    </Typography>
-                ))}
+                <EventSpeakerForm
+                    speaker={speaker}
+                    onSubmit={(data) => {
+                        return mutation.mutateAsync(data)
+                    }}
+                />
+                {mutation.isError && (
+                    <Typography color="error">Error while saving speaker: {mutation.error.message}</Typography>
+                )}
             </Card>
         </Container>
     )
