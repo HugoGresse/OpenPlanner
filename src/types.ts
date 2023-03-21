@@ -48,7 +48,7 @@ export interface Speaker {
     companyLogoUrl: string | null
     geolocation: string | null
     photoUrl: string | null
-    social: SpeakerSocial[]
+    socials: SpeakerSocial[]
 }
 
 export interface Session {
