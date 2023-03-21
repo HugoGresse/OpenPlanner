@@ -29,16 +29,18 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
             }}>
             <Grid container spacing={4}>
                 <Grid item xs={12} md={6}>
-                    <TextFieldElement
-                        margin="dense"
-                        required={!!speaker}
-                        fullWidth
-                        label="ID"
-                        name="id"
-                        variant="filled"
-                        disabled={true}
-                        size="small"
-                    />
+                    {speaker && (
+                        <TextFieldElement
+                            margin="dense"
+                            required={!!speaker}
+                            fullWidth
+                            label="ID"
+                            name="id"
+                            variant="filled"
+                            disabled={true}
+                            size="small"
+                        />
+                    )}
                     <TextFieldElement
                         margin="dense"
                         required={true}
@@ -106,6 +108,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         disabled={isSubmitting}
                         size="small"
                     />
+                    <SpeakerSocialFields control={control} isSubmitting={isSubmitting} />
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <TextFieldElement
@@ -128,8 +131,18 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         size="small"
                         type="phone"
                     />
-                    <br />
-                    <SpeakerSocialFields control={control} isSubmitting={isSubmitting} />
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        maxRows={40}
+                        label="Note (private, for organiser)"
+                        name="note"
+                        variant="filled"
+                        disabled={isSubmitting}
+                        size="small"
+                    />
                 </Grid>
 
                 <Grid item xs={12}>
@@ -140,7 +153,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         fullWidth
                         variant="contained"
                         sx={{ mt: 2, mb: 2 }}>
-                        Save
+                        {speaker ? 'Save' : 'Add speaker'}
                     </LoadingButton>
                 </Grid>
             </Grid>

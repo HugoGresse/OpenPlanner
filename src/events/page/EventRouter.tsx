@@ -14,6 +14,7 @@ import { EventSession } from './sessions/EventSession'
 import { EventSpeakers } from './speakers/EventSpeakers'
 import { EventSpeaker } from './speakers/EventSpeaker'
 import { NewSession } from './sessions/NewSession'
+import { NewSpeaker } from './speakers/NewSpeaker'
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -43,6 +44,7 @@ export const EventRouter = () => {
                 <Route path="/sponsors">
                     <EventSponsors />
                 </Route>
+
                 <Route path="/sessions">
                     <EventSessions event={eventData} />
                 </Route>
@@ -52,12 +54,17 @@ export const EventRouter = () => {
                 <Route path="/sessions/:id">
                     <EventSession event={eventData} />
                 </Route>
+
                 <Route path="/speakers">
                     <EventSpeakers event={eventData} eventUpdated={eventUpdated} />
+                </Route>
+                <Route path="/speakers/new">
+                    <NewSpeaker event={eventData} />
                 </Route>
                 <Route path="/speakers/:id">
                     <EventSpeaker event={eventData} />
                 </Route>
+
                 <Route path="/schedule">
                     <EventSchedule event={eventData} />
                 </Route>

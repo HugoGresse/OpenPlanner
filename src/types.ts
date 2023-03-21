@@ -49,6 +49,7 @@ export interface Speaker {
     geolocation: string | null
     photoUrl: string | null
     socials: SpeakerSocial[]
+    note: string | null
 }
 
 export interface Session {

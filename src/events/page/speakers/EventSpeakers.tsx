@@ -1,4 +1,4 @@
-import { Box, Card, Container, Typography } from '@mui/material'
+import { Box, Button, Card, Container, Typography } from '@mui/material'
 import * as React from 'react'
 import { Event, Speaker } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -20,6 +20,9 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
                 <Typography>{speakers.data?.length} speakers</Typography>
+                <Button href="/speakers/new" variant="contained">
+                    Add speaker
+                </Button>
             </Box>
             <Card sx={{ paddingX: 2 }}>
                 {speakers.data?.map((speaker: Speaker) => (

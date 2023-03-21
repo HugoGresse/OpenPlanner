@@ -41,6 +41,7 @@ export const mapConferenceHallSpeakerToConferenceCenter = (
             socials: socials,
             companyLogoUrl: null,
             jobTitle: null,
+            note: null,
         })
     }
     return [speakers, errors]
