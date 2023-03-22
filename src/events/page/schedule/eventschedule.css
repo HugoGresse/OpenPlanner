@@ -1,0 +1,15 @@
+.fc table {
+    font-size: 10px;
+}
+
+.fc-event {
+    font-size: 16px;
+}
+
+.fc .fc-timegrid-slot {
+    height: 12px;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+    /*position: absolute;*/
+}
