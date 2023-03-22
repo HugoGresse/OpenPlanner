@@ -1,9 +1,7 @@
 import { Box, Button, Card, Link, Typography } from '@mui/material'
 import * as React from 'react'
-import { DndProvider } from 'react-dnd'
 import { Event, Session } from '../../../types'
 import { diffDays } from '../../../utils/diffDays'
-import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
@@ -57,7 +55,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     // Time still in AM/PM even if not displayed
 
     return (
-        <DndProvider backend={HTML5Backend}>
+        <>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
             <NoDatesSessionsPicker sessions={sessions} updateSession={updateSessionAndRefetch} />
             <Box>
@@ -103,6 +101,6 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                     }))}
                 />
             </Box>
-        </DndProvider>
+        </>
     )
 }
