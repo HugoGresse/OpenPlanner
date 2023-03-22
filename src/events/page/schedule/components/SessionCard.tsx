@@ -125,9 +125,9 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                     overflow: 'hidden',
                     cursor: 'grab',
                     zIndex: 1,
-                    paddingTop: 0.5,
+                    paddingTop: 0.2,
                     paddingLeft: 0.5,
-                    paddingRight: 0.5,
+                    paddingRight: 0.2,
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
                         backgroundColor: 'red',
@@ -136,7 +136,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                 }}>
                 <Box display="flex" flexDirection="column" justifyContent="space-between">
                     <Box display="flex" justifyContent="space-between">
-                        <Typography fontWeight={600} color="white" lineHeight={1}>
+                        <Typography fontWeight={600} color="white" lineHeight={1} variant="body2" whiteSpace="nowrap">
                             {session.title.slice(0, 50)}
                         </Typography>
                         <IconButton
@@ -148,15 +148,24 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                         </IconButton>
                     </Box>
                     <Typography color="white" variant="caption" lineHeight={1}>
-                        Format: {session.formatText || '?'}
+                        {`${session.formatText} • ${session.categoryText}`}
                         <br />
-                        Speakers: {session.speakersData?.map((s) => s.name).join(', ')}
+                        <Box
+                            sx={{
+                                backgroundColor: 'white',
+                                width: 'fit-content',
+                                color: '#000',
+                                borderRadius: 1,
+                                paddingX: 0.4,
+                            }}>
+                            {session.speakersData?.map((s) => s.name).join(', ')}
+                        </Box>
                     </Typography>
                 </Box>
                 <Typography color="white" variant="caption" lineHeight={1}>
-                    {`${dateTimeToHourMinutes(session.dates?.start)} - ${dateTimeToHourMinutes(session.dates?.end)}`}
-                    <br />
-                    Duration: {session.durationMinutes + 'm' || '?'}
+                    {`${session.durationMinutes + 'm' || '?m'} • ${dateTimeToHourMinutes(
+                        session.dates?.start
+                    )} - ${dateTimeToHourMinutes(session.dates?.end)}`}
                 </Typography>
             </Box>
         </Rnd>
