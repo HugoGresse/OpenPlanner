@@ -2,7 +2,6 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { Session } from '../../../types'
-import { SessionCard } from './components/SessionCard'
 import { UseQueryResult } from 'react-query'
 import { SessionCardMinHeight } from './scheduleConstants'
 import { DocumentData } from '@firebase/firestore'
@@ -45,7 +44,7 @@ export const NoDatesSessionsPicker = ({ sessions, updateSession }: NoDatesSessio
             <Typography sx={{ width: 80, marginRight: 2 }}>Sessions without times:</Typography>
             {sessionsToDisplay.map((session: Session) => (
                 <Box key={session.id} mr={1} height={SessionCardMinHeight}>
-                    <SessionCard session={session} absolute={false} updateSession={updateSession} />
+                    {session.title}
                 </Box>
             ))}
         </Box>
