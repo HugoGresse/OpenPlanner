@@ -4,6 +4,7 @@ import { addDoc, serverTimestamp } from 'firebase/firestore'
 import { loadConferenceHallSpeakers } from '../../conferencehall/firebase/loadFromConferenceHallUtils'
 import { importSpeakers } from './conferenceHallUtils/importSpeakers'
 import { importSessions } from './conferenceHallUtils/importSessions'
+import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../page/schedule/components/SessionCard'
 
 export const addNewEvent = async (
     chEvent: ConferenceHallEvent,
@@ -48,7 +49,11 @@ const addNewEventInternal = async (
         owner: userId,
         tracks: [],
         formats: formats,
-        categories: chEvent.categories,
+        categories: chEvent.categories.map((e) => ({
+            name: e.name,
+            id: e.id,
+            color: DEFAULT_SESSION_CARD_BACKGROUND_COLOR,
+        })),
         scheduleVisible: true,
         webhooks: [],
         createdAt: serverTimestamp(),
