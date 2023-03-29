@@ -13,6 +13,7 @@ export type SessionCardProps = {
     absolute?: boolean
     updateSession: (session: Session) => void
 }
+export const DEFAULT_SESSION_CARD_BACKGROUND_COLOR = '#6A64F9'
 export const SessionCard = ({ session, updateSession, absolute = true }: SessionCardProps) => {
     const [_, setLocation] = useLocation()
 
@@ -120,7 +121,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     position: absolute ? 'absolute' : 'relative',
-                    background: 'rgba(70,70,255,0.8)',
+                    background: session.categoryObject?.color || DEFAULT_SESSION_CARD_BACKGROUND_COLOR,
                     borderRadius: 2,
                     overflow: 'hidden',
                     cursor: 'grab',
@@ -148,11 +149,11 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                         </IconButton>
                     </Box>
                     <Typography color="white" variant="caption" lineHeight={1}>
-                        {`${session.formatText} • ${session.categoryText}`}
+                        {`${session.formatText} • ${session.categoryObject?.name}`}
                         <br />
                         <Box
                             sx={{
-                                backgroundColor: 'white',
+                                backgroundColor: 'rgba(255,255,255, 0.7)',
                                 width: 'fit-content',
                                 color: '#000',
                                 borderRadius: 1,

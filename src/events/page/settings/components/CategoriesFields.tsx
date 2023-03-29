@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Box, IconButton, Typography } from '@mui/material'
+import { Box, Grid, IconButton, Typography } from '@mui/material'
 import { Control, TextFieldElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
 import { Category, EventForForm } from '../../../../types'
@@ -25,25 +25,44 @@ export const CategoriesFields = ({ control, isSubmitting }: CategoriesFieldsProp
             <Box paddingLeft={2}>
                 {fields.map((category: CategoryWithKey, index) => (
                     <Box display="flex" key={category.key}>
-                        <TextFieldElement
-                            id={category.key}
-                            label={`id: ${category.id}`}
-                            name={`categories.${index}.name`}
-                            control={control}
-                            variant="filled"
-                            size="small"
-                            margin="dense"
-                            disabled={isSubmitting}
-                        />
-
-                        <IconButton
-                            aria-label="Remove category"
-                            onClick={() => {
-                                remove(index)
-                            }}
-                            edge="end">
-                            <Delete />
-                        </IconButton>
+                        <Grid container sx={{ alignItems: 'center' }}>
+                            <Grid item sm={12} md={6}>
+                                <TextFieldElement
+                                    id={category.key}
+                                    label={`id: ${category.id}`}
+                                    name={`categories.${index}.name`}
+                                    control={control}
+                                    variant="filled"
+                                    size="small"
+                                    margin="dense"
+                                    disabled={isSubmitting}
+                                />
+                            </Grid>
+                            <Grid item sm={10} md={4}>
+                                <TextFieldElement
+                                    id={category.key + 'color'}
+                                    label="Color"
+                                    name={`categories.${index}.color`}
+                                    control={control}
+                                    variant="filled"
+                                    size="small"
+                                    margin="dense"
+                                    type="color"
+                                    disabled={isSubmitting}
+                                    sx={{ minWidth: 100 }}
+                                />
+                            </Grid>
+                            <Grid item sm={2} md={2}>
+                                <IconButton
+                                    aria-label="Remove category"
+                                    onClick={() => {
+                                        remove(index)
+                                    }}
+                                    edge="end">
+                                    <Delete />
+                                </IconButton>
+                            </Grid>
+                        </Grid>
                     </Box>
                 ))}
                 <IconButton

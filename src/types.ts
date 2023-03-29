@@ -13,6 +13,7 @@ export interface Webhooks {
 export interface Category {
     id: string
     name: string
+    color?: string
 }
 
 export interface Format {
@@ -75,7 +76,7 @@ export interface Session {
     // Hydrated data during load
     speakersData?: Speaker[]
     formatText?: string
-    categoryText?: string
+    categoryObject?: Category
 }
 
 export interface EventFiles {
