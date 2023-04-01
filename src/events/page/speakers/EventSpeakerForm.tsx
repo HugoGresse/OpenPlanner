@@ -4,6 +4,7 @@ import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SpeakerSocialFields } from './SpeakerSocials'
+import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 
 export type EventSpeakerFormProps = {
     speaker?: Speaker
@@ -69,7 +70,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         disabled={isSubmitting}
                         size="small"
                     />
-                    <TextFieldElement
+                    <ImageTextFieldElement
                         margin="dense"
                         fullWidth
                         label="Company Logo Url"
