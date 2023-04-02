@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { StartEndTime } from '../../../utils/diffDays'
+import { StartEndTime } from '../../../utils/dates/diffDays'
 import { Box } from '@mui/material'
 import { Session, Track } from '../../../types'
-import { generateTimeSlots } from '../../../utils/generateTimeSlots'
+import { generateTimeSlots } from '../../../utils/dates/generateTimeSlots'
 import { CalendarSlot } from './components/CalendarSlot'
 import { DayScheduleHeader } from './DayScheduleHeader'
 

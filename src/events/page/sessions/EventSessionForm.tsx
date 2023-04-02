@@ -9,7 +9,7 @@ import {
 } from 'react-hook-form-mui'
 import { CircularProgress, Grid, Typography } from '@mui/material'
 import { Event, Session } from '../../../types'
-import { dateTimeToDayMonthHours } from '../../../utils/timeFormats'
+import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import LoadingButton from '@mui/lab/LoadingButton'
 

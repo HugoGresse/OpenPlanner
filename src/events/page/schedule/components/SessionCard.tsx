@@ -6,7 +6,7 @@ import { ScheduleSlotDurationMinutes, SlotHeight } from '../scheduleConstants'
 import { Rnd } from 'react-rnd'
 import EditIcon from '@mui/icons-material/Edit'
 import { useLocation } from 'wouter'
-import { dateTimeToHourMinutes } from '../../../../utils/timeFormats'
+import { dateTimeToHourMinutes } from '../../../../utils/dates/timeFormats'
 
 export type SessionCardProps = {
     session: Session

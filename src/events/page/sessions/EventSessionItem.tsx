@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Format, Session } from '../../../types'
 import { Button, Chip, Grid, Link, Typography } from '@mui/material'
 import { Edit } from '@mui/icons-material'
-import { dateTimeToDayMonthHours } from '../../../utils/timeFormats'
+import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 
 type EventSessionItem = {
     formats: Format[]

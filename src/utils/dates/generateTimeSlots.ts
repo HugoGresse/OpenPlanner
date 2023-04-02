@@ -1,6 +1,6 @@
 import { StartEndTime } from './diffDays'
 import { DateTime } from 'luxon'
-import { ScheduleSlotDurationMinutes } from '../events/page/schedule/scheduleConstants'
+import { ScheduleSlotDurationMinutes } from '../../events/page/schedule/scheduleConstants'
 
 export const generateTimeSlots = (start: DateTime, end: DateTime): StartEndTime[] => {
     const diffMinutes =

@@ -37,6 +37,7 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
         videoLink: s.videoLink,
         tags: s.tags,
         formatId: s.format,
+        categoryId: s.category,
         showInFeedback: s.showInFeedback,
         hideTrackTitle: s.hideTrackTitle,
     }))
@@ -54,6 +55,7 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
         videoLink: s.videoLink,
         tags: s.tags,
         formatId: s.format,
+        categoryId: s.category,
         showInFeedback: s.showInFeedback,
         hideTrackTitle: s.hideTrackTitle,
         note: s.note,
@@ -66,6 +68,7 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
         dateStart: event.dates.start?.toISOString(),
         dateEnd: event.dates.end?.toISOString(),
         formats: event.formats,
+        categories: event.categories,
         tracks: event.tracks,
         updatedAt: event.updatedAt,
     }
