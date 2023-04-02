@@ -81,7 +81,8 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                         disabled={isSubmitting}
                         size="small"
                     />
-                    <TextFieldElement
+                    <ImageTextFieldElement
+                        event={event}
                         margin="dense"
                         fullWidth
                         label="Photo URL"
@@ -117,7 +118,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                     <TextFieldElement
                         margin="dense"
                         fullWidth
-                        label="Email"
+                        label="Email (private)"
                         name="email"
                         variant="filled"
                         disabled={isSubmitting}
@@ -127,7 +128,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                     <TextFieldElement
                         margin="dense"
                         fullWidth
-                        label="Phone"
+                        label="Phone (private)"
                         name="phone"
                         variant="filled"
                         disabled={isSubmitting}
@@ -140,7 +141,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                         multiline
                         minRows={4}
                         maxRows={40}
-                        label="Note (private, for organiser)"
+                        label="Note (private)"
                         name="note"
                         variant="filled"
                         disabled={isSubmitting}

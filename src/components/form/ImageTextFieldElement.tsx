@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { FieldValues } from 'react-hook-form/dist/types/fields'
-import { TextFieldElement, TextFieldElementProps } from 'react-hook-form-mui'
-import { IconButton, InputAdornment } from '@mui/material'
+import { TextFieldElement, TextFieldElementProps, useWatch } from 'react-hook-form-mui'
+import { Box, IconButton, InputAdornment } from '@mui/material'
 import { Image } from '@mui/icons-material'
 import { SidePanelImageUpload } from '../sidepanel/SidePanelImageUpload'
 import { Event } from '../../types'
@@ -10,6 +10,7 @@ import { Event } from '../../types'
 export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldValues>(
     props: TextFieldElementProps<TFieldValues> & { event: Event }
 ) => {
+    const fieldValue = useWatch({ name: props.name })
     const [isSidePanelOpen, setSidePanelOpen] = useState(false)
 
     const openSidePanel = () => {
@@ -22,15 +23,18 @@ export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldVa
                 {...props}
                 InputProps={{
                     endAdornment: (
-                        <InputAdornment position="end">
-                            <IconButton
-                                aria-label="add image"
-                                onClick={openSidePanel}
-                                onMouseDown={openSidePanel}
-                                edge="end">
-                                <Image />
-                            </IconButton>
-                        </InputAdornment>
+                        <Box display="flex" alignItems="center" ml={1} sx={{ cursor: 'pointer' }}>
+                            {fieldValue && <img src={fieldValue} width={30} onClick={openSidePanel} alt="Preview" />}
+                            <InputAdornment position="end">
+                                <IconButton
+                                    aria-label="add image"
+                                    onClick={openSidePanel}
+                                    onMouseDown={openSidePanel}
+                                    edge="end">
+                                    <Image />
+                                </IconButton>
+                            </InputAdornment>
+                        </Box>
                     ),
                 }}
             />
