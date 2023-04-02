@@ -5,9 +5,9 @@ import { v4 as uuidv4 } from 'uuid'
 
 export const getFilesNames = async (event: Event): Promise<EventFiles> => {
     if (!event.files || !event.files.imageFolder) {
-        const publicFile = `events/${event.id}/${uuidv4()}.json`
-        const privateFile = `events/${event.id}/${uuidv4()}-private.json`
-        const imageFolder = `events/${event.id}/`
+        const publicFile = event.files?.public || `events/${event.id}/${uuidv4()}.json`
+        const privateFile = event.files?.private || `events/${event.id}/${uuidv4()}-private.json`
+        const imageFolder = event.files?.imageFolder || `events/${event.id}/`
 
         // update event to add file path
         await updateDoc(doc(collections.events, event.id), {
