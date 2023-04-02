@@ -169,7 +169,7 @@ export interface ConferenceHallSpeaker {
     twitter: string | null
     language: string | null
     phone: string | null
-    photoUrl: string | null
+    photoURL: string | null
     speakerReferences: string | null
     address: {
         formattedAddress: string

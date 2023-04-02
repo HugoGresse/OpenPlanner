@@ -37,7 +37,7 @@ export const mapConferenceHallSpeakerToConferenceCenter = (
             bio: chSpeaker.bio || null,
             company: chSpeaker.company || null,
             geolocation: chSpeaker.address?.formattedAddress || null,
-            photoUrl: chSpeaker.photoUrl || null,
+            photoUrl: chSpeaker.photoURL || null,
             socials: socials,
             companyLogoUrl: null,
             jobTitle: null,
