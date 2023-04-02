@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Speaker } from '../../../types'
+import { Event, Speaker } from '../../../types'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
@@ -7,10 +7,11 @@ import { SpeakerSocialFields } from './SpeakerSocials'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 
 export type EventSpeakerFormProps = {
+    event: Event
     speaker?: Speaker
     onSubmit: (speaker: Speaker) => void
 }
-export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) => {
+export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormProps) => {
     const formContext = useForm({
         defaultValues: speaker
             ? ({
@@ -71,6 +72,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         size="small"
                     />
                     <ImageTextFieldElement
+                        event={event}
                         margin="dense"
                         fullWidth
                         label="Company Logo Url"

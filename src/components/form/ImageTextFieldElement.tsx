@@ -5,9 +5,10 @@ import { TextFieldElement, TextFieldElementProps } from 'react-hook-form-mui'
 import { IconButton, InputAdornment } from '@mui/material'
 import { Image } from '@mui/icons-material'
 import { SidePanelImageUpload } from '../sidepanel/SidePanelImageUpload'
+import { Event } from '../../types'
 
 export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldValues>(
-    props: TextFieldElementProps<TFieldValues>
+    props: TextFieldElementProps<TFieldValues> & { event: Event }
 ) => {
     const [isSidePanelOpen, setSidePanelOpen] = useState(false)
 
@@ -34,6 +35,7 @@ export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldVa
                 }}
             />
             <SidePanelImageUpload
+                event={props.event}
                 isOpen={isSidePanelOpen}
                 onClose={() => setSidePanelOpen(false)}
                 title={'Add image'}

@@ -33,7 +33,7 @@ export const SidePanelImageUploadForm = ({
 
             <Box
                 sx={{
-                    border: `2px dashed ${isDragActive ? '#F00' : '#999'}`,
+                    border: `2px dashed ${isDragActive ? '#55F' : '#999'}`,
                     color: '#666',
                     background: 'rgba(0,0,0,0.04)',
                     transition: 'all 300ms',
@@ -60,7 +60,7 @@ export const SidePanelImageUploadForm = ({
                 sx={{
                     borderTop: '1px solid #DDD',
                     lineHeight: 0,
-                    marginTop: 4,
+                    marginY: 2,
                     textAlign: 'center',
                     '& span': {
                         backgroundColor: 'white',
@@ -79,13 +79,6 @@ export const SidePanelImageUploadForm = ({
                 variant="filled"
                 size="small"
             />
-
-            {/*<OFFormControlInputFormiked*/}
-            {/*    name={t('baseComponents.imageUrl')}*/}
-            {/*    fieldName={fieldName}*/}
-            {/*    type="text"*/}
-            {/*    isSubmitting={!!file}*/}
-            {/*/>*/}
 
             {previewImage && (
                 <Box

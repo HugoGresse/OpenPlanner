@@ -43,6 +43,7 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                 <Typography variant="h2">{speaker.name}</Typography>
 
                 <EventSpeakerForm
+                    event={event}
                     speaker={speaker}
                     onSubmit={(data) => {
                         return mutation.mutateAsync(data)

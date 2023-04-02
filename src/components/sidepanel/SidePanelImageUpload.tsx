@@ -3,15 +3,22 @@ import { useCallback, useState } from 'react'
 import { SidePanel } from './SidePanel'
 import { useDropzone } from 'react-dropzone'
 import { SidePanelImageUploadForm } from './SidePanelImageUploadForm'
-import pica from 'pica'
+import { resizeImage } from '../../utils/images/resizeImage'
+import { uploadImage } from '../../utils/images/uploadImage'
+import { Event } from '../../types'
+import { useController } from 'react-hook-form'
+import { useNotification } from '../../hooks/notificationHook'
 
 export type SidePanelImageUploadProps = {
+    event: Event
     isOpen: boolean
     onClose: () => void
     title: string
     fieldName: string
 }
-export const SidePanelImageUpload = ({ isOpen, onClose, title, fieldName }: SidePanelImageUploadProps) => {
+export const SidePanelImageUpload = ({ event, isOpen, onClose, title, fieldName }: SidePanelImageUploadProps) => {
+    const { field } = useController({ name: fieldName })
+    const { createNotification } = useNotification()
     const [upload, setUpload] = useState<{
         file: File
         preview: any
@@ -23,17 +30,16 @@ export const SidePanelImageUpload = ({ isOpen, onClose, title, fieldName }: Side
 
         try {
             if (upload) {
-                const resizedCanvas = document.createElement('canvas')
-                resizedCanvas.height = 500
-                resizedCanvas.width = 500
-                await pica().resize(upload.file, resizedCanvas)
-                // .then(result => pica.toBlob(result, 'image/jpeg', 0.90))
-
-                console.log(upload)
+                const resizedImage = await resizeImage(upload.file)
+                const imagePath = await uploadImage(event, resizedImage)
+                field.onChange(imagePath)
             }
 
             onClose()
-        } catch (error) {}
+        } catch (error) {
+            createNotification('Error while resizing image or uploading it (check JS console?)', { type: 'error' })
+            console.log(error)
+        }
 
         setUploading(false)
     }

@@ -4,7 +4,7 @@ import { SessionCard } from './SessionCard'
 import { Box } from '@mui/material'
 import { useDrop } from 'react-dnd'
 import { SlotWidth } from '../scheduleConstants'
-import { StartEndTime } from '../../../../utils/diffDays'
+import { StartEndTime } from '../../../../utils/dates/diffDays'
 
 export type CalendarTrackSlotProps = {
     track: Track

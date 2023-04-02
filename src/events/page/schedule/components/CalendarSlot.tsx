@@ -1,7 +1,7 @@
 import { Box } from '@mui/material'
 import * as React from 'react'
 import { Session, Track } from '../../../../types'
-import { StartEndTime } from '../../../../utils/diffDays'
+import { StartEndTime } from '../../../../utils/dates/diffDays'
 import { CalendarTrackSlot } from './CalendarTrackSlot'
 import { SlotHeight } from '../scheduleConstants'
 
