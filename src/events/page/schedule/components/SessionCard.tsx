@@ -37,7 +37,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                             trackId: track.id,
                             dates: {
                                 start: time.start,
-                                end: time.end ? time.end.plus({ minutes: session.durationMinutes }) : time.start,
+                                end: time.start ? time.start.plus({ minutes: session.durationMinutes }) : time.start,
                             },
                         })
                     }
