@@ -55,7 +55,7 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
     const [prevLink, nextLink] = goPrevOrNext()
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} key={speakerId}>
             <Box display="flex" justifyContent="space-between" mt={2}>
                 <Button href="/speakers" component={Link} startIcon={<ArrowBack />}>
                     All speaker
@@ -76,7 +76,7 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                     event={event}
                     speaker={speaker}
                     onSubmit={(data) => {
-                        return mutation.mutateAsync(data)
+                        return mutation.mutateAsync(data).then(() => speakerResult.refetch())
                     }}
                 />
                 {mutation.isError && (
