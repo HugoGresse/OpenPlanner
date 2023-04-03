@@ -40,6 +40,7 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
         categoryId: s.category,
         showInFeedback: s.showInFeedback,
         hideTrackTitle: s.hideTrackTitle,
+        extendHeight: s.extendHeight,
     }))
     const outputSessionsPrivate = sessions.map((s) => ({
         id: s.id,
@@ -58,6 +59,7 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
         categoryId: s.category,
         showInFeedback: s.showInFeedback,
         hideTrackTitle: s.hideTrackTitle,
+        extendHeight: s.extendHeight,
         note: s.note,
     }))
 

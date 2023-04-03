@@ -73,6 +73,7 @@ export interface Session {
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
+    extendHeight?: number
     // Hydrated data during load
     speakersData?: Speaker[]
     formatText?: string
