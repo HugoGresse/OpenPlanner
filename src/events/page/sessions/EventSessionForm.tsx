@@ -62,6 +62,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     language: data.language,
                     level: data.level,
                     note: data.note,
+                    extendHeight: data.extendHeight,
                 } as Session)
             }}>
             <Grid container spacing={4}>
@@ -207,6 +208,19 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                 margin="dense"
                                 fullWidth
                                 disabled={isSubmitting}
+                            />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                            <TextFieldElement
+                                label="Extend height"
+                                name="extendHeight"
+                                variant="filled"
+                                margin="dense"
+                                fullWidth
+                                disabled={isSubmitting}
+                                type="number"
                             />
                         </Grid>
                     </Grid>
