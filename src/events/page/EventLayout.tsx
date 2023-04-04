@@ -6,6 +6,7 @@ import {
     Avatar,
     Box,
     Button,
+    CircularProgress,
     Divider,
     Drawer as MuiDrawer,
     IconButton,
@@ -29,8 +30,8 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import { useAppDispatch } from '../../reduxStore'
 import { LoadingButton } from '@mui/lab'
 import { Event } from '../../types'
-import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
 import { useNotification } from '../../hooks/notificationHook'
+import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
 
 const drawerWidth: number = 240
 
@@ -83,9 +84,10 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 export type EventLayoutProps = {
     children: React.ReactNode
     event: Event
+    eventUpdated: () => Promise<any>
 }
 
-export const EventLayout = ({ children, event }: EventLayoutProps) => {
+export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps) => {
     const dispatch = useAppDispatch()
     const [_, firstParams] = useRoute('/:routeName')
     const [__, subParams] = useRoute('/:routeName/:subRoute')
@@ -151,12 +153,14 @@ export const EventLayout = ({ children, event }: EventLayoutProps) => {
                         onClick={async () => {
                             setLoading(true)
                             await updateWebsiteTriggerWebhooksAction(event, createNotification)
+                            await eventUpdated()
                             setLoading(false)
                         }}
                         sx={{
                             margin: 1,
                             whiteSpace: 'break-spaces',
-                        }}>
+                        }}
+                        loadingIndicator={<CircularProgress color="secondary" size={16} />}>
                         <ListItemText primary={'Update website & trigger webhooks'} />
                     </ListItemButton>
                 </List>

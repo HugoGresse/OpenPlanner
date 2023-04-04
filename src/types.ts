@@ -8,6 +8,7 @@ export interface Track {
 export interface Webhooks {
     lastAnswer: string | null
     url: string
+    token?: string
 }
 
 export interface Category {

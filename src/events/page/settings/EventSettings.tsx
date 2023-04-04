@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
@@ -57,9 +57,13 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
     })
 
     const formContext = useForm({
-        defaultValues: convertInputEvent(event),
+        defaultValues: useMemo(() => convertInputEvent(event), [event]),
     })
     const { control, formState, reset, watch } = formContext
+
+    useEffect(() => {
+        reset(convertInputEvent(event))
+    }, [event])
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
 
@@ -80,7 +84,7 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                 </Typography>
                 <Card sx={{ paddingX: 2 }}>
                     <Grid container spacing={4}>
-                        <Grid item xs={6}>
+                        <Grid item xs={12} md={6}>
                             <TextFieldElement
                                 margin="normal"
                                 required
@@ -95,12 +99,8 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                             <TrackFields control={control} isSubmitting={formState.isSubmitting} />
 
                             <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
-
-                            <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
-
-                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} />
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid item xs={12} md={6}>
                             <TextFieldElement
                                 margin="normal"
                                 required
@@ -125,6 +125,18 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                             />
                             {days ? days + ' day(s)' : ''}
 
+                            <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Typography variant="h6" margin={0}>
+                                Deployments
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
                             <EventApiFilePaths event={event} />
                         </Grid>
 
