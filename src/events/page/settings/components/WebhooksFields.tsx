@@ -39,12 +39,24 @@ export const WebhooksFields = ({ control, isSubmitting }: WebhooksFieldsProps) =
                         <Box display="flex">
                             <TextFieldElement
                                 id={webhook.id}
-                                hiddenLabel
+                                label="Endpoint (url)"
                                 name={`webhooks.${index}.url`}
                                 control={control}
                                 variant="filled"
                                 size="small"
                                 margin="dense"
+                                fullWidth
+                                disabled={isSubmitting}
+                            />
+                            <TextFieldElement
+                                id={webhook.id}
+                                label="Token (optional)"
+                                name={`webhooks.${index}.token`}
+                                control={control}
+                                variant="filled"
+                                size="small"
+                                margin="dense"
+                                type="password"
                                 fullWidth
                                 disabled={isSubmitting}
                             />
@@ -82,9 +94,7 @@ export const WebhooksFields = ({ control, isSubmitting }: WebhooksFieldsProps) =
             <Dialog open={!!selectedWebhook} onClose={() => setSelectedWebhook(null)}>
                 <DialogTitle>Webhook last answer</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        <Typography>Url: {selectedWebhook?.url}</Typography>
-                    </DialogContentText>
+                    <DialogContentText>Url: {selectedWebhook?.url}</DialogContentText>
                     <pre>{JSON.stringify(selectedWebhook?.lastAnswer, null, 4)}</pre>
                 </DialogContent>
                 <DialogActions>

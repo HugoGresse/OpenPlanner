@@ -1,6 +1,7 @@
 import { Event } from '../../../types'
 import { CreateNotificationOption } from '../../../context/SnackBarProvider'
 import { generateStaticJson } from './generateStaticJson'
+import { triggerWebhooks } from './triggerWebhooks'
 import { updateStaticJson } from './updateStaticJson'
 
 export const updateWebsiteTriggerWebhooksAction = async (
@@ -19,5 +20,8 @@ export const updateWebsiteTriggerWebhooksAction = async (
 const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
     const { outputPrivate, outputPublic } = await generateStaticJson(event)
 
-    await updateStaticJson(event, outputPublic, outputPrivate)
+    return Promise.all([
+        updateStaticJson(event, outputPublic, outputPrivate),
+        triggerWebhooks(event, outputPublic, outputPrivate),
+    ])
 }
