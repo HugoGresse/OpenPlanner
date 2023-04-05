@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
@@ -57,13 +57,9 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
     })
 
     const formContext = useForm({
-        defaultValues: useMemo(() => convertInputEvent(event), [event]),
+        defaultValues: convertInputEvent(event),
     })
     const { control, formState, reset, watch } = formContext
-
-    useEffect(() => {
-        reset(convertInputEvent(event))
-    }, [event])
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
 
@@ -134,7 +130,7 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                             </Typography>
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} />
+                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <EventApiFilePaths event={event} />
