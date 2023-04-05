@@ -1,11 +1,12 @@
 import { Event, EventFiles } from '../../../types'
 import { doc, updateDoc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
+import { getUploadFilePath } from './getFilesNames'
 
 export const triggerWebhooks = async (event: Event, files: EventFiles) => {
     const updatedWebhooks = [...event.webhooks]
 
-    const fileUrl = files.public + '?t=' + Date.now()
+    const fullyQualifiedUrls = getUploadFilePath(files).public + '?t=' + Date.now()
 
     for (const [index, webhook] of event.webhooks.entries()) {
         let response = null
@@ -15,7 +16,7 @@ export const triggerWebhooks = async (event: Event, files: EventFiles) => {
                 body: JSON.stringify({
                     event_type: 'conferencecenter',
                     client_payload: {
-                        url: fileUrl,
+                        url: fullyQualifiedUrls,
                     },
                 }),
                 headers: {
@@ -27,7 +28,7 @@ export const triggerWebhooks = async (event: Event, files: EventFiles) => {
             response = await fetch(webhook.url, {
                 method: 'POST',
                 body: JSON.stringify({
-                    url: fileUrl,
+                    url: fullyQualifiedUrls,
                 }),
                 headers: {
                     authorization: `Bearer ${webhook.token}`,

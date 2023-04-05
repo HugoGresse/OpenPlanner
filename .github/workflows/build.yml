@@ -16,9 +16,3 @@ jobs:
                   cache: 'npm'
             - run: git config --global url."git@github.com:".insteadOf git://github.com/ && npm ci
             - run: npm run build --if-present
-            - uses: sarthak-saxena/JSBundleSize@master
-              with:
-                  bootstrap: npm ci
-                  build_command: npm run build
-                  dist_path: 'dist'
-                  token: ${{ secrets.GITHUB_TOKEN }}

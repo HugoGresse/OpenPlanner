@@ -31,7 +31,7 @@ export const getUploadFilePathFromEvent = async (event: Event) => {
     return getUploadFilePath(files)
 }
 
-export const getUploadFilePath = async (files: EventFiles) => {
+export const getUploadFilePath = (files: EventFiles) => {
     const base = 'https://storage.googleapis.com/'
     return {
         public: `${base}${storageBucket}/${files.public}`,
