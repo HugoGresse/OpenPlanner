@@ -26,8 +26,12 @@ export const getFilesNames = async (event: Event): Promise<EventFiles> => {
     return event.files
 }
 
-export const getUploadFilePath = async (event: Event) => {
+export const getUploadFilePathFromEvent = async (event: Event) => {
     const files = await getFilesNames(event)
+    return getUploadFilePath(files)
+}
+
+export const getUploadFilePath = async (files: EventFiles) => {
     const base = 'https://storage.googleapis.com/'
     return {
         public: `${base}${storageBucket}/${files.public}`,

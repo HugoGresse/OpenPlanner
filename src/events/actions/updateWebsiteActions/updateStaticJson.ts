@@ -15,4 +15,6 @@ export const updateStaticJson = async (event: Event, outputPublic: {}, outputPri
 
     await uploadString(outputRefPublic, JSON.stringify(outputPublic), undefined, metadata)
     await uploadString(outputRefPrivate, JSON.stringify(outputPrivate), undefined, metadata)
+
+    return fileNames
 }

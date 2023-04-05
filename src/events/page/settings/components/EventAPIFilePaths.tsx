@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Event } from '../../../../types'
 import { Box, CircularProgress, Typography } from '@mui/material'
-import { getUploadFilePath } from '../../../actions/updateWebsiteActions/getFilesNames'
+import { getUploadFilePathFromEvent } from '../../../actions/updateWebsiteActions/getFilesNames'
 
 export type EventApiFilePathsProps = {
     event: Event
@@ -14,7 +14,7 @@ export const EventApiFilePaths = ({ event }: EventApiFilePathsProps) => {
     })
 
     const update = async () => {
-        const filesPaths = await getUploadFilePath(event)
+        const filesPaths = await getUploadFilePathFromEvent(event)
         setFilesPaths(filesPaths)
     }
 

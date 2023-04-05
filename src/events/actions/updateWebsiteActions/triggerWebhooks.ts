@@ -1,16 +1,23 @@
-import { Event } from '../../../types'
+import { Event, EventFiles } from '../../../types'
 import { doc, updateDoc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 
-export const triggerWebhooks = async (event: Event, outputPublic: {}, outputPrivate: {}) => {
+export const triggerWebhooks = async (event: Event, files: EventFiles) => {
     const updatedWebhooks = [...event.webhooks]
+
+    const fileUrl = files.public + '?t=' + Date.now()
 
     for (const [index, webhook] of event.webhooks.entries()) {
         let response = null
         if (webhook.url.startsWith('https://api.github.com')) {
             response = await fetch(webhook.url, {
                 method: 'POST',
-                body: JSON.stringify({ event_type: 'conferencecenter', client_payload: outputPublic }),
+                body: JSON.stringify({
+                    event_type: 'conferencecenter',
+                    client_payload: {
+                        url: fileUrl,
+                    },
+                }),
                 headers: {
                     accept: 'application/vnd.github.v3+json',
                     authorization: `Bearer ${webhook.token}`,
@@ -19,7 +26,9 @@ export const triggerWebhooks = async (event: Event, outputPublic: {}, outputPriv
         } else {
             response = await fetch(webhook.url, {
                 method: 'POST',
-                body: JSON.stringify(outputPublic),
+                body: JSON.stringify({
+                    url: fileUrl,
+                }),
                 headers: {
                     authorization: `Bearer ${webhook.token}`,
                 },

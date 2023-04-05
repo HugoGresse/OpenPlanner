@@ -20,8 +20,7 @@ export const updateWebsiteTriggerWebhooksAction = async (
 const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
     const { outputPrivate, outputPublic } = await generateStaticJson(event)
 
-    return Promise.all([
-        updateStaticJson(event, outputPublic, outputPrivate),
-        triggerWebhooks(event, outputPublic, outputPrivate),
-    ])
+    const fileNames = await updateStaticJson(event, outputPublic, outputPrivate)
+
+    return await triggerWebhooks(event, fileNames)
 }
