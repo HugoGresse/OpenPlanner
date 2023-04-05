@@ -32,6 +32,7 @@ import { LoadingButton } from '@mui/lab'
 import { Event } from '../../types'
 import { useNotification } from '../../hooks/notificationHook'
 import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
+import { AutoUpdateImage } from '../../components/AutoupdateImage'
 
 const drawerWidth: number = 240
 
@@ -161,8 +162,13 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
                             whiteSpace: 'break-spaces',
                         }}
                         loadingIndicator={<CircularProgress color="secondary" size={16} />}>
-                        <ListItemText primary={'Update website & trigger webhooks'} />
+                        <ListItemText primary={'Update website'} />
                     </ListItemButton>
+                    {event.statusBadgeUrl && (
+                        <Box m={1}>
+                            <AutoUpdateImage src={event.statusBadgeUrl} />
+                        </Box>
+                    )}
                 </List>
                 <Box marginTop="auto">
                     <List>

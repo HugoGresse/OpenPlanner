@@ -13,11 +13,15 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         }))
     const webhooks = data.webhooks.map((webhook) => {
         if (event.webhooks.find((w) => w.url === webhook.url)) {
-            return webhook
+            return {
+                ...webhook,
+                token: webhook.token || null,
+            }
         }
         return {
             url: webhook.url.trim(),
             lastAnswer: null,
+            token: webhook.token || null,
         }
     })
     const formats: Format[] = data.formats
@@ -40,9 +44,12 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         end: data.dates.end ? (DateTime.fromISO(data.dates.end).toJSDate() as Date) : null,
     }
 
+    console.log(data)
+
     return {
         ...event,
         name: eventName,
+        statusBadgeUrl: data.statusBadgeUrl || null,
         dates,
         tracks,
         webhooks,

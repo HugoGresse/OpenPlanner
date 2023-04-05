@@ -8,7 +8,7 @@ export interface Track {
 export interface Webhooks {
     lastAnswer: string | null
     url: string
-    token?: string
+    token: string | null
 }
 
 export interface Category {
@@ -102,6 +102,7 @@ export interface Event {
     createdAt: Date
     updatedAt: Date
     files: EventFiles | null
+    statusBadgeUrl?: string
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

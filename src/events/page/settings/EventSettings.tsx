@@ -131,6 +131,17 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
+
+                            <TextFieldElement
+                                margin="normal"
+                                fullWidth
+                                id="statusBadgeUrl"
+                                label="Status Badge Url"
+                                name="statusBadgeUrl"
+                                variant="filled"
+                                type="url"
+                                disabled={formState.isSubmitting}
+                            />
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <EventApiFilePaths event={event} />
