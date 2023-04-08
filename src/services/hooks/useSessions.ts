@@ -16,8 +16,8 @@ export const useSessions = (event: Event): UseQueryResult<DocumentData> => {
             return {
                 ...session,
                 speakersData: session.speakers.map((speakerId) => sp.data[speakerId]),
-                formatText: event.formats ? event.formats.find((f) => session.format === f.id)?.name : undefined,
-                categoryObject: event.categories ? event.categories.find((c) => session.category === c.id) : undefined,
+                formatText: event.formats ? event.formats.find((f) => session.format === f.id)?.name : null,
+                categoryObject: event.categories ? event.categories.find((c) => session.category === c.id) : null,
             }
         })
     }

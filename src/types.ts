@@ -77,8 +77,8 @@ export interface Session {
     extendHeight?: number
     // Hydrated data during load
     speakersData?: Speaker[]
-    formatText?: string
-    categoryObject?: Category
+    formatText?: string | null
+    categoryObject?: Category | null
 }
 
 export interface EventFiles {
@@ -102,7 +102,8 @@ export interface Event {
     createdAt: Date
     updatedAt: Date
     files: EventFiles | null
-    statusBadgeUrl?: string
+    statusBadgeImage: string | null
+    statusBadgeLink: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

@@ -44,12 +44,11 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         end: data.dates.end ? (DateTime.fromISO(data.dates.end).toJSDate() as Date) : null,
     }
 
-    console.log(data)
-
     return {
         ...event,
         name: eventName,
-        statusBadgeUrl: data.statusBadgeUrl || null,
+        statusBadgeImage: data.statusBadgeImage || null,
+        statusBadgeLink: data.statusBadgeLink || null,
         dates,
         tracks,
         webhooks,

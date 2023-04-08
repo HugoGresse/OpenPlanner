@@ -59,6 +59,8 @@ const addNewEventInternal = async (
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         files: null,
+        statusBadgeLink: null,
+        statusBadgeImage: null,
     }
     progress(`Creating the event...`)
     const newEventRef = await addDoc(collections.events, event)
