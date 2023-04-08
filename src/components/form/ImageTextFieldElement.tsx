@@ -7,10 +7,12 @@ import { Image } from '@mui/icons-material'
 import { SidePanelImageUpload } from '../sidepanel/SidePanelImageUpload'
 import { Event } from '../../types'
 
-export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldValues>(
-    props: TextFieldElementProps<TFieldValues> & { event: Event }
-) => {
-    const fieldValue = useWatch({ name: props.name })
+export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldValues>({
+    event,
+    maxImageSize,
+    ...otherProps
+}: TextFieldElementProps<TFieldValues> & { event: Event; maxImageSize: number }) => {
+    const fieldValue = useWatch({ name: otherProps.name })
     const [isSidePanelOpen, setSidePanelOpen] = useState(false)
 
     const openSidePanel = () => {
@@ -20,7 +22,7 @@ export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldVa
     return (
         <>
             <TextFieldElement
-                {...props}
+                {...otherProps}
                 InputProps={{
                     endAdornment: (
                         <Box display="flex" alignItems="center" ml={1} sx={{ cursor: 'pointer' }}>
@@ -39,11 +41,12 @@ export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldVa
                 }}
             />
             <SidePanelImageUpload
-                event={props.event}
+                event={event}
                 isOpen={isSidePanelOpen}
                 onClose={() => setSidePanelOpen(false)}
                 title={'Add image'}
-                fieldName={props.name}
+                fieldName={otherProps.name}
+                maxImageSize={maxImageSize}
             />
         </>
     )
