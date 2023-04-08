@@ -32,7 +32,10 @@ export const NoDatesSessionsPicker = ({ sessions, updateSession }: NoDatesSessio
         <Box
             sx={{
                 display: 'flex',
-                position: 'relative',
+                position: 'sticky',
+                top: 60,
+                zIndex: 100,
+                backgroundColor: '#EEE',
                 height: SessionCardMinHeight,
                 minHeight: 150,
                 padding: 2,

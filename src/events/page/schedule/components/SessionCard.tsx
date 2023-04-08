@@ -39,7 +39,9 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                             trackId: track.id,
                             dates: {
                                 start: time.start,
-                                end: time.start ? time.start.plus({ minutes: session.durationMinutes }) : time.start,
+                                end: time.start
+                                    ? time.start.plus({ minutes: session.durationMinutes || 20 })
+                                    : time.start,
                             },
                         }
 
@@ -52,7 +54,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
     )
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
 
-    const cardHeight = SlotHeight * (session.durationMinutes / ScheduleSlotDurationMinutes || 120)
+    const cardHeight = SlotHeight * ((session.durationMinutes || 20) / ScheduleSlotDurationMinutes || 120)
 
     return (
         <Rnd
