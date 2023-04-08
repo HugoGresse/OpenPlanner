@@ -76,6 +76,7 @@ export interface Session {
     hideTrackTitle: boolean
     note: string | null
     extendHeight?: number
+    extendWidth?: number
     // Hydrated data during load, removed in mapSessionToFirestoreSession.ts
     speakersData?: Speaker[]
     formatText?: string | null

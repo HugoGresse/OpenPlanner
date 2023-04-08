@@ -26,6 +26,7 @@ export const generateStaticJson = async (event: Event) => {
         showInFeedback: s.showInFeedback,
         hideTrackTitle: s.hideTrackTitle,
         extendHeight: s.extendHeight,
+        extendWidth: s.extendWidth,
     }))
     const outputSessionsPrivate = sessions.map((s) => ({
         id: s.id,
@@ -47,6 +48,7 @@ export const generateStaticJson = async (event: Event) => {
         showInFeedback: s.showInFeedback,
         hideTrackTitle: s.hideTrackTitle,
         extendHeight: s.extendHeight,
+        extendWidth: s.extendWidth,
         note: s.note,
     }))
 

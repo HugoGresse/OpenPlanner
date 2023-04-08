@@ -22,7 +22,7 @@ export const UpdateImage = ({ src }: UpdateImageProps) => {
                         variant="contained"
                         size="small"
                         endIcon={<Refresh />}>
-                        Update image
+                        Update status
                     </Button>
                     <Button
                         href="https://google.com"
