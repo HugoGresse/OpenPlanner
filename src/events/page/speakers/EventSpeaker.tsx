@@ -1,15 +1,18 @@
 import * as React from 'react'
+import { useState } from 'react'
 import { Event } from '../../../types'
-import { Box, Button, Card, Container, IconButton, Link, Typography } from '@mui/material'
+import { Box, Button, Card, Container, DialogContentText, IconButton, Link, Typography } from '@mui/material'
 import { useSpeaker } from '../../../services/hooks/useSpeaker'
-import { useRoute } from 'wouter'
+import { useLocation, useRoute } from 'wouter'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ArrowBack, ChevronLeft, ChevronRight } from '@mui/icons-material'
 import { EventSpeakerForm } from './EventSpeakerForm'
-import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
+import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { queryClient } from '../../../App'
 
 export type EventSpeakerProps = {
     event: Event
@@ -17,7 +20,10 @@ export type EventSpeakerProps = {
 export const EventSpeaker = ({ event }: EventSpeakerProps) => {
     const [_, params] = useRoute('/:routeName/:speakerId*')
     const speakers = useSpeakers(event.id)
+    const [_2, setLocation] = useLocation()
     const speakerId = params?.speakerId
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const documentDeletion = useFirestoreDocumentDeletion(doc(collections.speakers(event.id), speakerId))
 
     const mutation = useFirestoreDocumentMutation(doc(collections.speakers(event.id), speakerId), {
         merge: true,
@@ -83,6 +89,31 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                     <Typography color="error">Error while saving speaker: {mutation.error.message}</Typography>
                 )}
             </Card>
+            <Box mt={2}>
+                <Button color="warning" onClick={() => setDeleteOpen(true)}>
+                    Delete speaker
+                </Button>
+            </Box>
+
+            <ConfirmDialog
+                open={deleteOpen}
+                title="Delete this speaker?"
+                acceptButton="Delete speaker"
+                disabled={documentDeletion.isLoading}
+                loading={documentDeletion.isLoading}
+                cancelButton="cancel"
+                handleClose={() => setDeleteOpen(false)}
+                handleAccept={async () => {
+                    await documentDeletion.mutate()
+                    setDeleteOpen(false)
+                    await queryClient.invalidateQueries(['speakers', event.id])
+                    setLocation('/speakers')
+                }}>
+                <DialogContentText id="alert-dialog-description">
+                    {' '}
+                    Delete the speaker {speaker.name} from this event (not the speaker's session(s))
+                </DialogContentText>
+            </ConfirmDialog>
         </Container>
     )
 }

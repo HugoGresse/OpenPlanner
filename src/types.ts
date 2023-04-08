@@ -67,6 +67,7 @@ export interface Session {
     level: string | null
     presentationLink: string | null
     videoLink: string | null
+    imageUrl: string | null
     tags: string[]
     format: string | null
     category: string | null

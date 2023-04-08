@@ -78,6 +78,7 @@ export const mapConferenceHallProposalsToConferenceCenter = (
             dates: null,
             durationMinutes: format ? format.durationMinutes : 20,
             format: format ? format.id : null,
+            imageUrl: null,
             hideTrackTitle: false,
             showInFeedback: true,
             image: null,

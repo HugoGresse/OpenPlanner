@@ -15,8 +15,16 @@ export type SidePanelImageUploadProps = {
     onClose: () => void
     title: string
     fieldName: string
+    maxImageSize: number
 }
-export const SidePanelImageUpload = ({ event, isOpen, onClose, title, fieldName }: SidePanelImageUploadProps) => {
+export const SidePanelImageUpload = ({
+    event,
+    isOpen,
+    onClose,
+    title,
+    fieldName,
+    maxImageSize = 500,
+}: SidePanelImageUploadProps) => {
     const { field } = useController({ name: fieldName })
     const { createNotification } = useNotification()
     const [upload, setUpload] = useState<{
@@ -30,7 +38,7 @@ export const SidePanelImageUpload = ({ event, isOpen, onClose, title, fieldName 
 
         try {
             if (upload) {
-                const resizedImage = await resizeImage(upload.file)
+                const resizedImage = await resizeImage(upload.file, maxImageSize)
                 const imagePath = await uploadImage(event, resizedImage)
                 field.onChange(imagePath)
             }

@@ -12,6 +12,7 @@ import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import LoadingButton from '@mui/lab/LoadingButton'
+import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 
 export type EventSessionFormProps = {
     event: Event
@@ -57,6 +58,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     category: data.category,
                     hideTrackTitle: data.hideTrackTitle,
                     showInFeedback: data.showInFeedback,
+                    imageUrl: data.imageUrl,
                     videoLink: data.videoLink,
                     presentationLink: data.presentationLink,
                     language: data.language,
@@ -212,6 +214,18 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                         </Grid>
                     </Grid>
                     <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                            <ImageTextFieldElement
+                                event={event}
+                                margin="dense"
+                                fullWidth
+                                label="Image URL"
+                                name="imageUrl"
+                                variant="filled"
+                                disabled={isSubmitting}
+                                maxImageSize={1500}
+                            />
+                        </Grid>
                         <Grid item xs={12} md={6}>
                             <TextFieldElement
                                 label="Extend height"
