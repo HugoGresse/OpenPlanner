@@ -8,7 +8,7 @@ export interface Track {
 export interface Webhooks {
     lastAnswer: string | null
     url: string
-    token?: string
+    token: string | null
 }
 
 export interface Category {
@@ -75,10 +75,10 @@ export interface Session {
     hideTrackTitle: boolean
     note: string | null
     extendHeight?: number
-    // Hydrated data during load
+    // Hydrated data during load, removed in mapSessionToFirestoreSession.ts
     speakersData?: Speaker[]
-    formatText?: string
-    categoryObject?: Category
+    formatText?: string | null
+    categoryObject?: Category | null
 }
 
 export interface EventFiles {
@@ -102,6 +102,8 @@ export interface Event {
     createdAt: Date
     updatedAt: Date
     files: EventFiles | null
+    statusBadgeImage: string | null
+    statusBadgeLink: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
