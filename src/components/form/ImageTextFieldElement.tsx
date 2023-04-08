@@ -9,9 +9,9 @@ import { Event } from '../../types'
 
 export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldValues>({
     event,
-    maxImageSize,
+    maxImageSize = 500,
     ...otherProps
-}: TextFieldElementProps<TFieldValues> & { event: Event; maxImageSize?: number }) => {
+}: TextFieldElementProps<TFieldValues> & { event: Event; maxImageSize: number }) => {
     const fieldValue = useWatch({ name: otherProps.name })
     const [isSidePanelOpen, setSidePanelOpen] = useState(false)
 
