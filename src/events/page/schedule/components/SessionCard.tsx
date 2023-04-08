@@ -7,6 +7,7 @@ import { Rnd } from 'react-rnd'
 import EditIcon from '@mui/icons-material/Edit'
 import { useLocation } from 'wouter'
 import { dateTimeToHourMinutes } from '../../../../utils/dates/timeFormats'
+import { mapSessionToFirestoreSession } from '../../../actions/sessions/mapSessionToFirestoreSession'
 
 export type SessionCardProps = {
     session: Session
@@ -32,14 +33,17 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                     if (result?.startEndTime && result.track) {
                         const track = result.track
                         const time = result.startEndTime
-                        updateSession({
+
+                        const updateDocument = {
                             ...session,
                             trackId: track.id,
                             dates: {
                                 start: time.start,
                                 end: time.start ? time.start.plus({ minutes: session.durationMinutes }) : time.start,
                             },
-                        })
+                        }
+
+                        updateSession(mapSessionToFirestoreSession(updateDocument))
                     }
                 }
             },
@@ -92,15 +96,17 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                         second: 0,
                     })
 
-                    updateSession({
-                        ...session,
-                        dates: {
-                            start: startTime,
-                            end: endTime,
-                        },
-                        durationMinutes:
-                            endTime.diff(startTime, 'minutes').toObject().minutes || ScheduleSlotDurationMinutes,
-                    })
+                    updateSession(
+                        mapSessionToFirestoreSession({
+                            ...session,
+                            dates: {
+                                start: startTime,
+                                end: endTime,
+                            },
+                            durationMinutes:
+                                endTime.diff(startTime, 'minutes').toObject().minutes || ScheduleSlotDurationMinutes,
+                        })
+                    )
                 }
             }}
             style={{
