@@ -16,6 +16,10 @@ export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
         times = dateTimeToDayMonthHours(session.dates.start) + ' • ' + dateTimeToDayMonthHours(session.dates?.end)
     }
 
+    const speakersNames = session.speakersData
+        ? session.speakersData.map((s) => (s ? s.name : 'deleted')).join(', ')
+        : null
+
     return (
         <Grid
             container
@@ -30,7 +34,7 @@ export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
                 <Typography fontWeight="bold">{session.title}</Typography>
 
                 <Typography variant="caption">
-                    by {session.speakersData?.map((s) => s.name).join(', ')} • {session.format} •{' '}
+                    {speakersNames ? `by ${speakersNames} • ` : ''} {session.categoryObject?.name} •{' '}
                 </Typography>
             </Grid>
 
