@@ -167,7 +167,7 @@ export const SessionCard = ({ session, updateSession, absolute = true }: Session
                                 borderRadius: 1,
                                 paddingX: 0.4,
                             }}>
-                            {session.speakersData?.map((s) => s.name).join(', ')}
+                            {session.speakersData?.map((s) => s?.name).join(', ')}
                         </Box>
                     </Typography>
                 </Box>
