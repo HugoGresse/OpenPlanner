@@ -13,6 +13,7 @@ import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { queryClient } from '../../../App'
+import { sessionsKeys } from '../../../services/hooks/queriesKeys'
 
 export type EventSessionProps = {
     event: Event
@@ -73,7 +74,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 handleAccept={async () => {
                     await documentDeletion.mutate()
                     setDeleteOpen(false)
-                    await queryClient.invalidateQueries(['sessions', event.id])
+                    await queryClient.invalidateQueries(sessionsKeys.all(event.id))
                     goBack()
                 }}>
                 <DialogContentText id="alert-dialog-description">

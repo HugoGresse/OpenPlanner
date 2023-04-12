@@ -33,7 +33,8 @@ export const NoDatesSessionsPicker = ({ sessions, updateSession }: NoDatesSessio
             sx={{
                 display: 'flex',
                 position: 'sticky',
-                top: 60,
+                top: 68,
+                left: 12,
                 zIndex: 100,
                 backgroundColor: '#EEE',
                 height: SessionCardMinHeight,
