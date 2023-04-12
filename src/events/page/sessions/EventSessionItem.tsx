@@ -1,15 +1,15 @@
 import * as React from 'react'
-import { Format, Session } from '../../../types'
+import { Session } from '../../../types'
 import { Button, Chip, Grid, Link, Typography } from '@mui/material'
 import { Edit } from '@mui/icons-material'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 
 type EventSessionItem = {
-    formats: Format[]
+    selectFormat: (formatId: string) => void
     session: Session
 }
 
-export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
+export const EventSessionItem = ({ selectFormat, session }: EventSessionItem) => {
     let times = 'No start/end times'
 
     if (session.dates && session.dates.start) {
@@ -39,7 +39,11 @@ export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
             </Grid>
 
             <Grid item sm={12} md={2}>
-                <Chip label={session.formatText || 'no format'} size="small" />
+                <Chip
+                    label={session.formatText || 'no format'}
+                    size="small"
+                    onClick={() => selectFormat(session.format || '')}
+                />
                 {session.tags.length ? 'tags: ' + session.tags.map((t) => <Chip label={t} size="small" />) : ''}
             </Grid>
             <Grid item sm={12} md={3}>
