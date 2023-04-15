@@ -4,12 +4,14 @@ import { Event, Session } from '../../../types'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
-import { updateSession } from '../../actions/sessions/updateSession'
 import FullCalendar from '@fullcalendar/react'
 import resourceTimeGrid from '@fullcalendar/resource-timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import './eventschedule.css'
 import { diffDays } from '../../../utils/dates/diffDays'
+import { DateTime } from 'luxon'
+import { EventSourceInput } from '@fullcalendar/core'
+import { onFullCalendarEventChange } from './eventScheduleFunctions'
 
 export type EventScheduleProps = {
     event: Event
@@ -18,7 +20,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const numberOfDays = diffDays(event.dates.start, event.dates.end)
     const sessions = useSessions(event)
 
-    if (numberOfDays <= 0) {
+    if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
         return (
             <Card sx={{ paddingX: 2 }}>
                 <Typography fontWeight="600" mt={2}>
@@ -43,62 +45,98 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
         )
     }
 
-    const updateSessionAndRefetch = (session: Session) => {
-        return updateSession(event.id, session).then(() => sessions.refetch())
-    }
+    const sessionsArray = sessions.data || []
+    const sessionsWithDates = sessionsArray.filter((s: Session) => s.dates)
 
-    const sessionsWithDates = (sessions.data || []).filter((s: Session) => s.dates)
+    // TODO : Add colors
+    // TODO : adjust text inside
 
-    // TODO : manage callbacks from https://fullcalendar.io/docs/editable
-    // TODO change slot height
-    // TODO : implement draggable like https://fullcalendar.io/docs/external-dragging-demo
-    // Time still in AM/PM even if not displayed
+    const startTime = DateTime.fromJSDate(event.dates.start).toFormat('HH:mm')
+
+    console.log('render')
 
     return (
         <>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
-            <NoDatesSessionsPicker sessions={sessions} updateSession={updateSessionAndRefetch} />
-            <Box>
+            <NoDatesSessionsPicker sessions={sessions} />
+            <Box paddingBottom={6}>
                 <FullCalendar
                     schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
                     plugins={[resourceTimeGrid, interactionPlugin]}
-                    initialView="resourceTimeGridFourDay"
                     allDaySlot={false}
                     datesAboveResources={true}
                     droppable
                     editable
                     nowIndicator
                     headerToolbar={{
-                        left: '',
-                        center: '',
                         right: 'prev,next',
                     }}
-                    initialDate={event.dates.start?.toISOString()}
+                    initialView="resourceTimeGridDay"
+                    initialDate={event.dates.start.toISOString()}
+                    validRange={{
+                        start: event.dates.start.toISOString(),
+                        end: event.dates.end.toISOString(),
+                    }}
                     views={{
                         resourceTimeGridFourDay: {
                             type: 'resourceTimeGrid',
-                            duration: { days: numberOfDays },
-                            titleFormat: { month: '2-digit', day: '2-digit', weekday: 'long' },
+                            duration: { days: 1 },
                         },
                     }}
+                    slotMinTime={startTime}
                     slotLabelFormat={{
                         hour: '2-digit',
                         minute: '2-digit',
-                        omitZeroMinute: false,
-                        meridiem: false,
                     }}
+                    locale={'fr'}
                     slotDuration="00:05:00"
-                    slotLabelInterval="00:10"
+                    slotLabelInterval="00:15"
+                    height="auto"
                     resources={event.tracks.map((t) => ({
                         id: t.id,
                         title: t.name,
                     }))}
-                    events={sessionsWithDates.map((s: Session) => ({
-                        title: s.title,
-                        start: s.dates?.start?.toISO(),
-                        end: s.dates?.end?.toISO(),
-                        resourceId: s.trackId,
-                    }))}
+                    events={
+                        sessionsWithDates.map((s: Session) => ({
+                            title: s.title,
+                            id: s.id,
+                            start: s.dates?.start?.toISO(),
+                            end: s.dates?.end?.toISO(),
+                            resourceId: s.trackId,
+                        })) as EventSourceInput
+                    }
+                    drop={(info) => {
+                        const sessionId = info.draggedEl.getAttribute('data-id')
+                        const trackId = info.resource?.id
+
+                        onFullCalendarEventChange(event.id, sessions, sessionId, trackId, info.date, null)
+                    }}
+                    eventDrop={(info) => {
+                        const sessionId = info.event._def.publicId
+                        const trackId = info.event._def.resourceIds ? info.event._def.resourceIds[0] : undefined
+
+                        onFullCalendarEventChange(
+                            event.id,
+                            sessions,
+                            sessionId,
+                            trackId,
+                            info.event.start,
+                            info.event.end
+                        )
+                    }}
+                    eventResize={(info) => {
+                        const sessionId = info.event._def.publicId
+                        const trackId = info.event._def.resourceIds ? info.event._def.resourceIds[0] : undefined
+
+                        onFullCalendarEventChange(
+                            event.id,
+                            sessions,
+                            sessionId,
+                            trackId,
+                            info.event.start,
+                            info.event.end
+                        )
+                    }}
                 />
             </Box>
         </>
