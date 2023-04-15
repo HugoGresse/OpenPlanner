@@ -4,7 +4,7 @@ import { addDoc, serverTimestamp } from 'firebase/firestore'
 import { loadConferenceHallSpeakers } from '../../conferencehall/firebase/loadFromConferenceHallUtils'
 import { importSpeakers } from './conferenceHallUtils/importSpeakers'
 import { importSessions } from './conferenceHallUtils/importSessions'
-import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../page/schedule/components/SessionCard'
+import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../page/schedule/scheduleConstants'
 
 export const addNewEvent = async (
     chEvent: ConferenceHallEvent,

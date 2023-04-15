@@ -1,7 +1,6 @@
 import { Box, Button, Card, Link, Typography } from '@mui/material'
 import * as React from 'react'
 import { Event, Session } from '../../../types'
-import { diffDays } from '../../../utils/diffDays'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
@@ -10,6 +9,7 @@ import FullCalendar from '@fullcalendar/react'
 import resourceTimeGrid from '@fullcalendar/resource-timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import './eventschedule.css'
+import { diffDays } from '../../../utils/dates/diffDays'
 
 export type EventScheduleProps = {
     event: Event
