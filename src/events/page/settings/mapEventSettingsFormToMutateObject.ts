@@ -1,7 +1,7 @@
 import { Category, Event, EventForForm, Format, Track } from '../../../types'
 import { slugify } from '../../../utils/slugify'
 import { DateTime } from 'luxon'
-import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../schedule/components/SessionCard'
+import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../schedule/scheduleConstants'
 
 export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForForm) => {
     const eventName = data.name

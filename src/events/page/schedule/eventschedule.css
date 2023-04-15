@@ -1,0 +1,27 @@
+.fc table {
+    font-size: 6px;
+}
+
+.fc-event {
+    font-size: 16px;
+}
+
+.fc .fc-timegrid-slot {
+    height: 10px;
+}
+
+.fc .fc-timegrid-slot-label-frame {
+    position: relative;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+    position: absolute;
+    font-size: 16px;
+    line-height: 5px;
+    top: 0;
+    left: 0;
+}
+
+.fc thead[role='presentation'] {
+    font-size: 16px;
+}

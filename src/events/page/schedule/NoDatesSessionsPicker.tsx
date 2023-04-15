@@ -1,18 +1,21 @@
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { Session } from '../../../types'
-import { SessionCard } from './components/SessionCard'
 import { UseQueryResult } from 'react-query'
 import { SessionCardMinHeight } from './scheduleConstants'
 import { DocumentData } from '@firebase/firestore'
+import { SessionDraggable } from './components/SessionDraggable'
+import { Draggable } from '@fullcalendar/interaction'
+import { useLocation } from 'wouter'
 
 export type NoDatesSessionsPickerProps = {
     sessions: UseQueryResult<DocumentData>
-    updateSession: (session: Session) => void
 }
-export const NoDatesSessionsPicker = ({ sessions, updateSession }: NoDatesSessionsPickerProps) => {
+export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) => {
     const [sessionsToDisplay, setSessionsToDisplay] = useState<Session[]>([])
+    const [_, setLocation] = useLocation()
+    const [isDragInit, setIsDragInit] = useState(false)
 
     useEffect(() => {
         if (sessions.data) {
@@ -24,16 +27,41 @@ export const NoDatesSessionsPicker = ({ sessions, updateSession }: NoDatesSessio
         }
     }, [sessions])
 
+    const initDraggable = useCallback((node: HTMLElement) => {
+        if (!node || isDragInit) {
+            return
+        }
+        new Draggable(node, {
+            itemSelector: '.noDateSession',
+            eventData: function (eventEl) {
+                let id = eventEl.dataset.id
+                let title = eventEl.getAttribute('title')
+                let color = eventEl.dataset.color
+                let custom = eventEl.dataset.custom
+                return {
+                    id: id,
+                    title: title,
+                    color: color,
+                    custom: custom,
+                    create: true,
+                }
+            },
+        })
+        setIsDragInit(true)
+    }, [])
+
     if (!sessionsToDisplay.length) {
         return null
     }
 
     return (
         <Box
+            ref={initDraggable}
+            id="external-events"
             sx={{
                 display: 'flex',
                 position: 'sticky',
-                top: 68,
+                top: 0,
                 left: 12,
                 zIndex: 100,
                 backgroundColor: '#EEE',
@@ -48,9 +76,7 @@ export const NoDatesSessionsPicker = ({ sessions, updateSession }: NoDatesSessio
             }}>
             <Typography sx={{ width: 80, marginRight: 2 }}>Sessions without times:</Typography>
             {sessionsToDisplay.map((session: Session) => (
-                <Box key={session.id} mr={1} height={SessionCardMinHeight}>
-                    <SessionCard session={session} absolute={false} updateSession={updateSession} />
-                </Box>
+                <SessionDraggable key={session.id} session={session} setLocation={setLocation} />
             ))}
         </Box>
     )
