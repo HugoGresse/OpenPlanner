@@ -9,6 +9,9 @@ export type SessionCardContentProps = {
     setLocation: (to: string) => void
 }
 export const SessionCardContent = ({ session, setLocation }: SessionCardContentProps) => {
+    if (!session.id) {
+        return null
+    }
     return (
         <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
             <Box display="flex" justifyContent="space-between">

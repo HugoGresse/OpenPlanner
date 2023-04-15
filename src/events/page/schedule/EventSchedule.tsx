@@ -1,5 +1,6 @@
 import { Box, Button, Card, Link, Typography } from '@mui/material'
 import * as React from 'react'
+import { useState } from 'react'
 import { Event, Session } from '../../../types'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -23,6 +24,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const numberOfDays = diffDays(event.dates.start, event.dates.end)
     const [_, setLocation] = useLocation()
     const sessions = useSessions(event)
+    const [daysToDisplay, setDaysToDisplay] = useState<number>(1)
 
     if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
         return (
@@ -69,8 +71,18 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                     nowIndicator
                     headerToolbar={{
                         right: 'prev,next',
+                        left: 'allDays',
+                        center: 'title',
                     }}
-                    initialView="resourceTimeGridDay"
+                    customButtons={{
+                        allDays: {
+                            text: 'Display all days',
+                            click: () => {
+                                setDaysToDisplay(numberOfDays === daysToDisplay ? 1 : numberOfDays)
+                            },
+                        },
+                    }}
+                    initialView="resourceTimeGridFourDay"
                     initialDate={event.dates.start.toISOString()}
                     validRange={{
                         start: event.dates.start.toISOString(),
@@ -79,7 +91,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                     views={{
                         resourceTimeGridFourDay: {
                             type: 'resourceTimeGrid',
-                            duration: { days: 1 },
+                            duration: { days: daysToDisplay },
                         },
                     }}
                     slotMinTime={startTime}
@@ -91,9 +103,11 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                     slotDuration="00:05:00"
                     slotLabelInterval="00:15"
                     height="auto"
-                    resources={event.tracks.map((t) => ({
+                    resourceOrder="order"
+                    resources={event.tracks.map((t, index) => ({
                         id: t.id,
                         title: t.name,
+                        order: index,
                     }))}
                     events={
                         sessionsWithDates.map((s: Session) => ({

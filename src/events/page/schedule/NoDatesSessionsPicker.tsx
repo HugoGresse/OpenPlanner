@@ -29,10 +29,8 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
 
     const initDraggable = useCallback((node: HTMLElement) => {
         if (!node || isDragInit) {
-            console.log('not mounted')
             return
         }
-        console.log('init')
         new Draggable(node, {
             itemSelector: '.noDateSession',
             eventData: function (eventEl) {
@@ -63,7 +61,7 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
             sx={{
                 display: 'flex',
                 position: 'sticky',
-                top: 68,
+                top: 0,
                 left: 12,
                 zIndex: 100,
                 backgroundColor: '#EEE',

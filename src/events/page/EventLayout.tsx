@@ -104,30 +104,33 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
         return `/${firstParams?.routeName}`.startsWith(item.href) || `/${subParams?.routeName}`.startsWith(item.href)
     })
     const routeName = menuItem ? menuItem.name : 'Loading...'
+    const hideAppBar = menuItem?.href === '/schedule'
 
     return (
         <Box sx={{ display: 'flex' }}>
-            <AppBar position="absolute" open={open}>
-                <Toolbar
-                    sx={{
-                        pr: '24px', // keep right padding when drawer closed
-                    }}>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        aria-label="open drawer"
-                        onClick={toggleDrawer}
+            {!hideAppBar && (
+                <AppBar position="absolute" open={open}>
+                    <Toolbar
                         sx={{
-                            marginRight: '36px',
-                            ...(open && { display: 'none' }),
+                            pr: '24px', // keep right padding when drawer closed
                         }}>
-                        <MenuIcon />
-                    </IconButton>
-                    <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
-                        {routeName}
-                    </Typography>
-                </Toolbar>
-            </AppBar>
+                        <IconButton
+                            edge="start"
+                            color="inherit"
+                            aria-label="open drawer"
+                            onClick={toggleDrawer}
+                            sx={{
+                                marginRight: '36px',
+                                ...(open && { display: 'none' }),
+                            }}>
+                            <MenuIcon />
+                        </IconButton>
+                        <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
+                            {routeName}
+                        </Typography>
+                    </Toolbar>
+                </AppBar>
+            )}
             <Drawer variant="permanent" open={open}>
                 <Toolbar
                     sx={{
@@ -202,7 +205,7 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
                     height: '100vh',
                     overflow: 'auto',
                 }}>
-                <Toolbar />
+                {!hideAppBar && <Toolbar />}
                 {children}
             </Box>
         </Box>
