@@ -14,8 +14,9 @@ export const addNewEvent = async (
     progress: (progress: string) => void
 ): Promise<[eventId: string | null, errors: string[]]> => {
     try {
-        return addNewEventInternal(chEvent, userId, proposals, formats, progress)
+        return await addNewEventInternal(chEvent, userId, proposals, formats, progress)
     } catch (error) {
+        console.error(error)
         return [null, [String(error)]]
     }
 }
@@ -49,7 +50,7 @@ const addNewEventInternal = async (
         owner: userId,
         tracks: [],
         formats: formats,
-        categories: chEvent.categories.map((e) => ({
+        categories: (chEvent.categories || []).map((e) => ({
             name: e.name,
             id: e.id,
             color: DEFAULT_SESSION_CARD_BACKGROUND_COLOR,

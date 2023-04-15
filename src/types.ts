@@ -129,7 +129,7 @@ export interface ConferenceHallEvent {
         id: string
         name: string
     }
-    categories: {
+    categories?: {
         id: string
         name: string
     }[]

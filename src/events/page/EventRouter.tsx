@@ -37,6 +37,7 @@ export const EventRouter = () => {
     }
 
     const eventData = event.data as Event
+    const defaultRedirect = eventData.dates.start && eventData.tracks.length ? '/schedule' : '/settings'
 
     return (
         <NestedRoutes base={`/events/${params?.eventId}`}>
@@ -44,7 +45,6 @@ export const EventRouter = () => {
                 <Route path="/sponsors">
                     <EventSponsors />
                 </Route>
-
                 <Route path="/sessions">
                     <EventSessions event={eventData} />
                 </Route>
@@ -54,7 +54,6 @@ export const EventRouter = () => {
                 <Route path="/sessions/:id">
                     <EventSession event={eventData} />
                 </Route>
-
                 <Route path="/speakers">
                     <EventSpeakers event={eventData} eventUpdated={eventUpdated} />
                 </Route>
@@ -64,7 +63,6 @@ export const EventRouter = () => {
                 <Route path="/speakers/:id">
                     <EventSpeaker event={eventData} />
                 </Route>
-
                 <Route path="/schedule">
                     <EventSchedule event={eventData} />
                 </Route>
@@ -72,8 +70,9 @@ export const EventRouter = () => {
                     <EventSettings event={eventData} eventUpdated={eventUpdated} />
                 </Route>
                 <Route path="/">
-                    <Redirect to="/settings" />
-                </Route>
+                    <Redirect to={defaultRedirect} />
+                </Route>{' '}
+                :
             </EventLayout>
         </NestedRoutes>
     )
