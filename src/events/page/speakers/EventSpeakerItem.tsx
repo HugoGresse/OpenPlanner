@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Speaker } from '../../../types'
-import { Button, Grid, Link, Typography } from '@mui/material'
+import { Avatar, Button, Grid, Link, Typography } from '@mui/material'
 import { Edit } from '@mui/icons-material'
 
 type EventSpeakerItemProps = {
@@ -18,7 +18,10 @@ export const EventSpeakerItem = ({ speaker }: EventSpeakerItemProps) => {
                 paddingY: 1,
                 borderBottom: '1px solid #ddd',
             }}>
-            <Grid item xs={10}>
+            <Grid item xs={1}>
+                <Avatar src={speaker?.photoUrl || undefined} alt={speaker.name} />
+            </Grid>
+            <Grid item xs={9}>
                 <Typography fontWeight="bold">{speaker.name}</Typography>
 
                 <Typography variant="caption">

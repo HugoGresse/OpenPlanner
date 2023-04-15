@@ -1,20 +1,24 @@
 import * as React from 'react'
-import { Format, Session } from '../../../types'
+import { Session } from '../../../types'
 import { Button, Chip, Grid, Link, Typography } from '@mui/material'
 import { Edit } from '@mui/icons-material'
-import { dateTimeToDayMonthHours } from '../../../utils/timeFormats'
+import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 
 type EventSessionItem = {
-    formats: Format[]
+    selectFormat: (formatId: string) => void
     session: Session
 }
 
-export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
+export const EventSessionItem = ({ selectFormat, session }: EventSessionItem) => {
     let times = 'No start/end times'
 
     if (session.dates && session.dates.start) {
         times = dateTimeToDayMonthHours(session.dates.start) + ' • ' + dateTimeToDayMonthHours(session.dates?.end)
     }
+
+    const speakersNames = session.speakersData
+        ? session.speakersData.map((s) => (s ? s.name : 'deleted')).join(', ')
+        : null
 
     return (
         <Grid
@@ -30,12 +34,16 @@ export const EventSessionItem = ({ formats, session }: EventSessionItem) => {
                 <Typography fontWeight="bold">{session.title}</Typography>
 
                 <Typography variant="caption">
-                    by {session.speakersData?.map((s) => s.name).join(', ')} • {session.format} •{' '}
+                    {speakersNames ? `by ${speakersNames} • ` : ''} {session.categoryObject?.name} •{' '}
                 </Typography>
             </Grid>
 
             <Grid item sm={12} md={2}>
-                <Chip label={session.formatText || 'no format'} size="small" />
+                <Chip
+                    label={session.formatText || 'no format'}
+                    size="small"
+                    onClick={() => selectFormat(session.format || '')}
+                />
                 {session.tags.length ? 'tags: ' + session.tags.map((t) => <Chip label={t} size="small" />) : ''}
             </Grid>
             <Grid item sm={12} md={3}>

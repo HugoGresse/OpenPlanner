@@ -24,6 +24,7 @@ export const NewSpeaker = ({ event }: NewSpeakerProps) => {
                 <Typography variant="h2">New speaker</Typography>
 
                 <EventSpeakerForm
+                    event={event}
                     onSubmit={(speaker) => {
                         return mutation
                             .mutateAsync({

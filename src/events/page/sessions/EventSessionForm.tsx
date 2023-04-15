@@ -9,9 +9,10 @@ import {
 } from 'react-hook-form-mui'
 import { CircularProgress, Grid, Typography } from '@mui/material'
 import { Event, Session } from '../../../types'
-import { dateTimeToDayMonthHours } from '../../../utils/timeFormats'
+import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import LoadingButton from '@mui/lab/LoadingButton'
+import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 
 export type EventSessionFormProps = {
     event: Event
@@ -57,11 +58,14 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     category: data.category,
                     hideTrackTitle: data.hideTrackTitle,
                     showInFeedback: data.showInFeedback,
+                    imageUrl: data.imageUrl,
                     videoLink: data.videoLink,
                     presentationLink: data.presentationLink,
                     language: data.language,
                     level: data.level,
                     note: data.note,
+                    extendHeight: data.extendHeight,
+                    extendWidth: data.extendWidth,
                 } as Session)
             }}>
             <Grid container spacing={4}>
@@ -207,6 +211,44 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                 margin="dense"
                                 fullWidth
                                 disabled={isSubmitting}
+                            />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                            <ImageTextFieldElement
+                                event={event}
+                                margin="dense"
+                                fullWidth
+                                label="Image URL"
+                                name="imageUrl"
+                                variant="filled"
+                                disabled={isSubmitting}
+                                maxImageSize={1500}
+                            />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                            <TextFieldElement
+                                margin="dense"
+                                fullWidth
+                                label="Extend Width"
+                                name="extendWidth"
+                                variant="filled"
+                                disabled={isSubmitting}
+                                type="number"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextFieldElement
+                                label="Extend height"
+                                name="extendHeight"
+                                variant="filled"
+                                margin="dense"
+                                fullWidth
+                                disabled={isSubmitting}
+                                type="number"
                             />
                         </Grid>
                     </Grid>

@@ -1,15 +1,17 @@
 import * as React from 'react'
-import { Speaker } from '../../../types'
+import { Event, Speaker } from '../../../types'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SpeakerSocialFields } from './SpeakerSocials'
+import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 
 export type EventSpeakerFormProps = {
+    event: Event
     speaker?: Speaker
     onSubmit: (speaker: Speaker) => void
 }
-export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) => {
+export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormProps) => {
     const formContext = useForm({
         defaultValues: speaker
             ? ({
@@ -25,7 +27,11 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
         <FormContainer
             formContext={formContext}
             onSuccess={async (data) => {
-                return onSubmit(data as Speaker)
+                return onSubmit({
+                    ...data,
+                    photoUrl: speaker?.photoUrl || null,
+                    note: speaker?.note || null,
+                })
             }}>
             <Grid container spacing={4}>
                 <Grid item xs={12} md={6}>
@@ -69,7 +75,8 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         disabled={isSubmitting}
                         size="small"
                     />
-                    <TextFieldElement
+                    <ImageTextFieldElement
+                        event={event}
                         margin="dense"
                         fullWidth
                         label="Company Logo Url"
@@ -78,7 +85,8 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         disabled={isSubmitting}
                         size="small"
                     />
-                    <TextFieldElement
+                    <ImageTextFieldElement
+                        event={event}
                         margin="dense"
                         fullWidth
                         label="Photo URL"
@@ -114,7 +122,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                     <TextFieldElement
                         margin="dense"
                         fullWidth
-                        label="Email"
+                        label="Email (private)"
                         name="email"
                         variant="filled"
                         disabled={isSubmitting}
@@ -124,7 +132,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                     <TextFieldElement
                         margin="dense"
                         fullWidth
-                        label="Phone"
+                        label="Phone (private)"
                         name="phone"
                         variant="filled"
                         disabled={isSubmitting}
@@ -137,7 +145,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit }: EventSpeakerFormProps) =
                         multiline
                         minRows={4}
                         maxRows={40}
-                        label="Note (private, for organiser)"
+                        label="Note (private)"
                         name="note"
                         variant="filled"
                         disabled={isSubmitting}

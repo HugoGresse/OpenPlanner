@@ -9,7 +9,7 @@ import { EventSponsors } from './EventSponsors'
 import { EventSettings } from './settings/EventSettings'
 import { Event } from '../../types'
 import { EventSchedule } from './schedule/EventSchedule'
-import { EventSessions } from './sessions/EventSessions'
+import { EventSessions } from './sessions/list/EventSessions'
 import { EventSession } from './sessions/EventSession'
 import { EventSpeakers } from './speakers/EventSpeakers'
 import { EventSpeaker } from './speakers/EventSpeaker'
@@ -40,7 +40,7 @@ export const EventRouter = () => {
 
     return (
         <NestedRoutes base={`/events/${params?.eventId}`}>
-            <EventLayout event={eventData}>
+            <EventLayout event={eventData} eventUpdated={eventUpdated}>
                 <Route path="/sponsors">
                     <EventSponsors />
                 </Route>

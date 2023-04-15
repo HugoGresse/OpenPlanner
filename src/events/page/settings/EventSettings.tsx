@@ -12,7 +12,7 @@ import { collections } from '../../../services/firebase'
 import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
-import { diffDays } from '../../../utils/diffDays'
+import { diffDays } from '../../../utils/dates/diffDays'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { useLocation } from 'wouter'
 import { queryClient } from '../../../App'
@@ -80,7 +80,7 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                 </Typography>
                 <Card sx={{ paddingX: 2 }}>
                     <Grid container spacing={4}>
-                        <Grid item xs={6}>
+                        <Grid item xs={12} md={6}>
                             <TextFieldElement
                                 margin="normal"
                                 required
@@ -95,12 +95,8 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                             <TrackFields control={control} isSubmitting={formState.isSubmitting} />
 
                             <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
-
-                            <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
-
-                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} />
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid item xs={12} md={6}>
                             <TextFieldElement
                                 margin="normal"
                                 required
@@ -125,6 +121,41 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                             />
                             {days ? days + ' day(s)' : ''}
 
+                            <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Typography variant="h6" margin={0}>
+                                Deployments
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
+
+                            <TextFieldElement
+                                margin="dense"
+                                size="small"
+                                fullWidth
+                                id="statusBadgeImage"
+                                label="Status Badge Image (URL)"
+                                name="statusBadgeImage"
+                                variant="filled"
+                                type="url"
+                                disabled={formState.isSubmitting}
+                            />
+                            <TextFieldElement
+                                margin="dense"
+                                size="small"
+                                fullWidth
+                                id="statusBadgeLink"
+                                label="Status Badge Link (job)"
+                                name="statusBadgeLink"
+                                variant="filled"
+                                type="url"
+                                disabled={formState.isSubmitting}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
                             <EventApiFilePaths event={event} />
                         </Grid>
 

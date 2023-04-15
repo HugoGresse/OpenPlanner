@@ -8,11 +8,13 @@ export interface Track {
 export interface Webhooks {
     lastAnswer: string | null
     url: string
+    token: string | null
 }
 
 export interface Category {
     id: string
     name: string
+    color?: string
 }
 
 export interface Format {
@@ -65,6 +67,7 @@ export interface Session {
     level: string | null
     presentationLink: string | null
     videoLink: string | null
+    imageUrl: string | null
     tags: string[]
     format: string | null
     category: string | null
@@ -72,15 +75,18 @@ export interface Session {
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
-    // Hydrated data during load
+    extendHeight?: number
+    extendWidth?: number
+    // Hydrated data during load, removed in mapSessionToFirestoreSession.ts
     speakersData?: Speaker[]
-    formatText?: string
-    categoryText?: string
+    formatText?: string | null
+    categoryObject?: Category | null
 }
 
 export interface EventFiles {
     public: string
     private: string
+    imageFolder: string
 }
 
 export interface Event {
@@ -98,6 +104,8 @@ export interface Event {
     createdAt: Date
     updatedAt: Date
     files: EventFiles | null
+    statusBadgeImage: string | null
+    statusBadgeLink: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -167,7 +175,7 @@ export interface ConferenceHallSpeaker {
     twitter: string | null
     language: string | null
     phone: string | null
-    photoUrl: string | null
+    photoURL: string | null
     speakerReferences: string | null
     address: {
         formattedAddress: string
