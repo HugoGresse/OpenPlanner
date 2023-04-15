@@ -12,12 +12,16 @@ import { diffDays } from '../../../utils/dates/diffDays'
 import { DateTime } from 'luxon'
 import { EventSourceInput } from '@fullcalendar/core'
 import { onFullCalendarEventChange } from './eventScheduleFunctions'
+import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from './scheduleConstants'
+import { SessionCardContent } from './components/SessionCardContent'
+import { useLocation } from 'wouter'
 
 export type EventScheduleProps = {
     event: Event
 }
 export const EventSchedule = ({ event }: EventScheduleProps) => {
     const numberOfDays = diffDays(event.dates.start, event.dates.end)
+    const [_, setLocation] = useLocation()
     const sessions = useSessions(event)
 
     if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
@@ -48,12 +52,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const sessionsArray = sessions.data || []
     const sessionsWithDates = sessionsArray.filter((s: Session) => s.dates)
 
-    // TODO : Add colors
-    // TODO : adjust text inside
-
     const startTime = DateTime.fromJSDate(event.dates.start).toFormat('HH:mm')
-
-    console.log('render')
 
     return (
         <>
@@ -103,8 +102,18 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                             start: s.dates?.start?.toISO(),
                             end: s.dates?.end?.toISO(),
                             resourceId: s.trackId,
+                            extendedProps: s,
+                            backgroundColor: s.categoryObject?.color || DEFAULT_SESSION_CARD_BACKGROUND_COLOR,
                         })) as EventSourceInput
                     }
+                    eventContent={(info) => {
+                        return (
+                            <SessionCardContent
+                                session={info.event._def.extendedProps as Session}
+                                setLocation={setLocation}
+                            />
+                        )
+                    }}
                     drop={(info) => {
                         const sessionId = info.draggedEl.getAttribute('data-id')
                         const trackId = info.resource?.id
