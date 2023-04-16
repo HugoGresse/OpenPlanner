@@ -114,15 +114,14 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                     value.map((option, index) => {
                                         return (
                                             <Chip
-                                                avatar={<Avatar alt={option.label} src={option.photoUrl} />}
-                                                label={option.label}
+                                                avatar={<Avatar alt={option?.label} src={option?.photoUrl} />}
+                                                label={option?.label || 'Deleted'}
                                                 onClick={() => {
-                                                    setLocation(`/speakers/${option.id}?fromSession=true`)
+                                                    setLocation(`/speakers/${option?.id}?fromSession=true`)
                                                 }}
                                                 sx={{ cursor: 'pointer' }}
-                                                {...getTagProps({ index })}>
-                                                {option.label}
-                                            </Chip>
+                                                {...getTagProps({ index })}
+                                            />
                                         )
                                     }),
                             }}

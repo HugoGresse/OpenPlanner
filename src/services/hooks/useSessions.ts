@@ -15,6 +15,9 @@ const hydrateSession = (event: Event, sp: UseQueryResult<SpeakersMap>, data: Ses
     }))
 }
 
+export const useSessionsRaw = (eventId: string): UseQueryResult<Session[]> => {
+    return useFirestoreQueryData(sessionsKeys.all(eventId), collections.sessions(eventId))
+}
 export const useSessions = (event: Event): UseQueryResult<Session[]> => {
     const eventId = event.id
     const sp = useSpeakersMap(eventId)
