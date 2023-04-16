@@ -14,6 +14,7 @@ import { collections } from '../../../services/firebase'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { queryClient } from '../../../App'
 import { sessionsKeys } from '../../../services/hooks/queriesKeys'
+import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
 
 export type EventSessionProps = {
     event: Event
@@ -36,15 +37,14 @@ export const EventSession = ({ event }: EventSessionProps) => {
 
     const session = sessionResult.data
 
-    const goBack = () => setLocation(getQueryParams().schedule ? '/schedule' : '/sessions')
+    const goBack = () => navigateBackOrFallbackTo('/sessions', setLocation)
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Button onClick={goBack} startIcon={<ArrowBack />}>
+                {getQueryParams().backTo ? getQueryParams().backTo : 'All sessions'}
+            </Button>
             <Card sx={{ paddingX: 2 }}>
-                <Button onClick={goBack} startIcon={<ArrowBack />}>
-                    All sessions
-                </Button>
-
                 <Typography variant="h2">{session.title}</Typography>
 
                 <EventSessionForm
@@ -75,6 +75,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
                     await documentDeletion.mutate()
                     setDeleteOpen(false)
                     await queryClient.invalidateQueries(sessionsKeys.all(event.id))
+                    await queryClient.invalidateQueries(sessionsKeys.allWithSpeakers(event.id))
                     goBack()
                 }}>
                 <DialogContentText id="alert-dialog-description">

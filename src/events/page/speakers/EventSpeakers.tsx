@@ -1,4 +1,4 @@
-import { Box, Button, Card, Container, IconButton, InputAdornment, TextField, Typography } from '@mui/material'
+import { Box, Button, Card, Container, Grid, IconButton, InputAdornment, TextField, Typography } from '@mui/material'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Event, Speaker } from '../../../types'
@@ -8,6 +8,7 @@ import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { RequireConferenceHallConnections } from '../../../components/RequireConferenceHallConnections'
 import { SpeakersFromConferenceHallUpdaterDialog } from './components/SpeakersFromConferenceHallUpdaterDialog'
 import { Clear } from '@mui/icons-material'
+import { useSessionsRaw } from '../../../services/hooks/useSessions'
 
 export type EventSpeakersProps = {
     event: Event
@@ -15,6 +16,7 @@ export type EventSpeakersProps = {
 }
 export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const speakers = useSpeakers(event.id)
+    const sessions = useSessionsRaw(event.id)
     const [updaterDialogOpen, setUpdaterDialogOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
@@ -57,28 +59,33 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                 </Button>
             </Box>
             <Card sx={{ paddingX: 2 }}>
-                <TextField
-                    placeholder="Search"
-                    fullWidth
-                    size="small"
-                    margin="normal"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    InputProps={{
-                        endAdornment: isFiltered ? (
-                            <InputAdornment position="start">
-                                <IconButton
-                                    aria-label="Clear filters"
-                                    onClick={() => setDisplayedSpeakers(speakersData)}
-                                    edge="end">
-                                    <Clear />
-                                </IconButton>
-                            </InputAdornment>
-                        ) : null,
-                    }}
-                />
+                <Grid container>
+                    <Grid item xs={12} md={12}>
+                        <TextField
+                            placeholder="Search"
+                            fullWidth
+                            size="small"
+                            margin="normal"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            InputProps={{
+                                endAdornment: isFiltered ? (
+                                    <InputAdornment position="start">
+                                        <IconButton
+                                            aria-label="Clear filters"
+                                            onClick={() => setDisplayedSpeakers(speakersData)}
+                                            edge="end">
+                                            <Clear />
+                                        </IconButton>
+                                    </InputAdornment>
+                                ) : null,
+                            }}
+                        />
+                    </Grid>
+                </Grid>
+
                 {displayedSpeakers.map((speaker: Speaker) => (
-                    <EventSpeakerItem key={speaker.id} speaker={speaker} />
+                    <EventSpeakerItem key={speaker.id} speaker={speaker} sessions={sessions.data || []} />
                 ))}
             </Card>
             {updaterDialogOpen && (

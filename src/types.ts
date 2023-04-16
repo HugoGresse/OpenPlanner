@@ -1,4 +1,4 @@
-import { FieldValue } from 'firebase/firestore'
+import { FieldValue, Timestamp } from 'firebase/firestore'
 import { DateTime } from 'luxon'
 
 export interface Track {
@@ -124,12 +124,15 @@ export interface ConferenceHallEvent {
     id: string
     name: string
     organization: string // orgId
-    conferenceDates: DateType
+    conferenceDates?: {
+        start: Timestamp | null
+        end: Timestamp | null
+    }
     tags: {
         id: string
         name: string
     }
-    categories: {
+    categories?: {
         id: string
         name: string
     }[]

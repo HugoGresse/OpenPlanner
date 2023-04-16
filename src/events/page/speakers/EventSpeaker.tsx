@@ -14,14 +14,16 @@ import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { queryClient } from '../../../App'
 import { speakersKeys } from '../../../services/hooks/queriesKeys'
+import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
+import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 
 export type EventSpeakerProps = {
     event: Event
 }
 export const EventSpeaker = ({ event }: EventSpeakerProps) => {
     const [_, params] = useRoute('/:routeName/:speakerId*')
-    const speakers = useSpeakers(event.id)
     const [_2, setLocation] = useLocation()
+    const speakers = useSpeakers(event.id)
     const speakerId = params?.speakerId
     const [deleteOpen, setDeleteOpen] = useState(false)
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.speakers(event.id), speakerId))
@@ -64,8 +66,8 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} key={speakerId}>
             <Box display="flex" justifyContent="space-between" mt={2}>
-                <Button href="/speakers" component={Link} startIcon={<ArrowBack />}>
-                    All speaker
+                <Button onClick={() => navigateBackOrFallbackTo('/speakers', setLocation)} startIcon={<ArrowBack />}>
+                    {getQueryParams().fromSession ? 'To session' : 'All speaker'}
                 </Button>
                 <Box display="flex">
                     <IconButton href={prevLink || ''} component={Link} disabled={!prevLink}>

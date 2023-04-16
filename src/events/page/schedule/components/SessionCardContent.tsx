@@ -30,7 +30,7 @@ export const SessionCardContent = ({ session, setLocation }: SessionCardContentP
                 </Typography>
                 <IconButton
                     onClick={() => {
-                        setLocation(`/sessions/${session.id}?schedule=true`)
+                        setLocation(`/sessions/${session.id}?backTo=Schedule`)
                     }}
                     sx={{ position: 'absolute', top: 0, right: 0 }}>
                     <EditIcon color="action" fontSize="small" />

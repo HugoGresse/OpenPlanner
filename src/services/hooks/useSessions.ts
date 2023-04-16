@@ -15,11 +15,21 @@ const hydrateSession = (event: Event, sp: UseQueryResult<SpeakersMap>, data: Ses
     }))
 }
 
+export const useSessionsRaw = (eventId: string): UseQueryResult<Session[]> => {
+    return useFirestoreQueryData(sessionsKeys.all(eventId), collections.sessions(eventId))
+}
 export const useSessions = (event: Event): UseQueryResult<Session[]> => {
     const eventId = event.id
     const sp = useSpeakersMap(eventId)
 
-    return useFirestoreQueryData(sessionsKeys.allWithSpeakers(eventId), collections.sessions(eventId), undefined, {
-        select: useCallback((data: Session[]) => hydrateSession(event, sp, data), [sp, event]),
-    })
+    return useFirestoreQueryData(
+        sessionsKeys.allWithSpeakers(eventId),
+        collections.sessions(eventId),
+        {
+            subscribe: true,
+        },
+        {
+            select: useCallback((data: Session[]) => hydrateSession(event, sp, data), [sp, event]),
+        }
+    )
 }

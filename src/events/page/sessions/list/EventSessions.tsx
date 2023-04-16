@@ -96,6 +96,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     <Grid item xs={6} md={3}>
                         <FilterCategory
                             event={event}
+                            sessions={sessionsData}
                             selectedCategory={selectedCategory}
                             setSelectedCategory={setSelectedCategory}
                         />
@@ -103,6 +104,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     <Grid item xs={6} md={3}>
                         <FilterFormat
                             event={event}
+                            sessions={sessionsData}
                             selectedFormat={selectedFormat}
                             setSelectedFormat={setSelectedFormat}
                         />
