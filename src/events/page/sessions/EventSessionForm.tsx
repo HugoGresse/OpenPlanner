@@ -7,12 +7,13 @@ import {
     TextFieldElement,
     useForm,
 } from 'react-hook-form-mui'
-import { CircularProgress, Grid, Typography } from '@mui/material'
+import { Avatar, Chip, CircularProgress, Grid, Typography } from '@mui/material'
 import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
+import { useLocation } from 'wouter'
 
 export type EventSessionFormProps = {
     event: Event
@@ -21,6 +22,7 @@ export type EventSessionFormProps = {
 }
 export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
+    const [_2, setLocation] = useLocation()
     const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
         defaultValues: session
@@ -101,10 +103,28 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                             options={speakers.data.map((s) => ({
                                 id: s.id,
                                 label: s.name,
+                                photoUrl: s.photoUrl,
                             }))}
                             textFieldProps={{
                                 variant: 'filled',
                                 margin: 'dense',
+                            }}
+                            autocompleteProps={{
+                                renderTags: (value, getTagProps) =>
+                                    value.map((option, index) => {
+                                        return (
+                                            <Chip
+                                                avatar={<Avatar alt={option.label} src={option.photoUrl} />}
+                                                label={option.label}
+                                                onClick={() => {
+                                                    setLocation(`/speakers/${option.id}?fromSession=true`)
+                                                }}
+                                                sx={{ cursor: 'pointer' }}
+                                                {...getTagProps({ index })}>
+                                                {option.label}
+                                            </Chip>
+                                        )
+                                    }),
                             }}
                         />
                     )}

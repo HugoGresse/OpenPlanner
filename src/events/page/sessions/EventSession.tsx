@@ -40,11 +40,10 @@ export const EventSession = ({ event }: EventSessionProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Button onClick={goBack} startIcon={<ArrowBack />}>
+                All sessions
+            </Button>
             <Card sx={{ paddingX: 2 }}>
-                <Button onClick={goBack} startIcon={<ArrowBack />}>
-                    All sessions
-                </Button>
-
                 <Typography variant="h2">{session.title}</Typography>
 
                 <EventSessionForm

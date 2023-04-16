@@ -16,7 +16,6 @@ export const FilterFormat = ({ selectedFormat, setSelectedFormat, event, session
     const [formats, setFormats] = React.useState<FormatWithCount[]>([])
 
     useEffect(() => {
-        console.log(sessions, event.formats)
         setFormats(
             event.formats.map((format) => {
                 return {

@@ -29,8 +29,8 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
             onSuccess={async (data) => {
                 return onSubmit({
                     ...data,
-                    photoUrl: speaker?.photoUrl || null,
-                    note: speaker?.note || null,
+                    photoUrl: data.photoUrl || speaker?.photoUrl || null,
+                    note: data.note || speaker?.note || null,
                 })
             }}>
             <Grid container spacing={4}>
