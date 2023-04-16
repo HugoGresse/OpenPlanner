@@ -120,6 +120,19 @@ export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> &
     updatedAt: FieldValue
 }
 
+export interface Sponsor {
+    id: string
+    name: string
+    logo: string
+    link: string | null
+}
+
+export interface SponsorCategory {
+    id: string
+    name: string
+    sponsors: Sponsor[]
+}
+
 export interface ConferenceHallEvent {
     id: string
     name: string
@@ -183,8 +196,4 @@ export interface ConferenceHallSpeaker {
     address: {
         formattedAddress: string
     } | null
-}
-
-export enum DragTypes {
-    Session = 'Session',
 }
