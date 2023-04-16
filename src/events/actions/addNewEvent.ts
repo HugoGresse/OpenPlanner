@@ -5,6 +5,7 @@ import { loadConferenceHallSpeakers } from '../../conferencehall/firebase/loadFr
 import { importSpeakers } from './conferenceHallUtils/importSpeakers'
 import { importSessions } from './conferenceHallUtils/importSessions'
 import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../page/schedule/scheduleConstants'
+import { getNewEventDates } from './conferenceHallUtils/addNewEventDateUtils'
 
 export const addNewEvent = async (
     chEvent: ConferenceHallEvent,
@@ -42,10 +43,7 @@ const addNewEventInternal = async (
     const event: NewEvent = {
         conferenceHallId: chEvent.id,
         name: chEvent.name,
-        dates: {
-            start: chEvent.conferenceDates.start || null,
-            end: chEvent.conferenceDates.end || null,
-        },
+        dates: getNewEventDates(chEvent),
         members: [userId],
         owner: userId,
         tracks: [],
