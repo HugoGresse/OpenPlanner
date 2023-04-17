@@ -20,8 +20,6 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
     }
 
-    console.log(sponsorsData)
-
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
@@ -29,7 +27,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
             </Box>
             <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
                 {sponsorsData.map((category: SponsorCategory) => (
-                    <SponsorCategoryItem key={category.id} category={category} />
+                    <SponsorCategoryItem key={category.id} category={category} eventId={event.id} />
                 ))}
 
                 <Box marginY={2}>

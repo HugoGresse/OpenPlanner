@@ -123,8 +123,8 @@ export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> &
 export interface Sponsor {
     id: string
     name: string
-    logo: string
-    link: string | null
+    logoUrl: string
+    website: string | null
 }
 
 export interface SponsorCategory {
