@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { useEffect } from 'react'
-import { Redirect, Route, useRoute } from 'wouter'
+import { Redirect, Route, Switch, useRoute } from 'wouter'
 import { NestedRoutes } from '../../components/NestedRoutes'
 import { EventLayout } from './EventLayout'
 import { useEvent } from '../../services/hooks/useEvent'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { EventSponsors } from './EventSponsors'
+import { EventSponsors } from './sponsors/EventSponsors'
 import { EventSettings } from './settings/EventSettings'
 import { Event } from '../../types'
 import { EventSchedule } from './schedule/EventSchedule'
@@ -15,6 +15,8 @@ import { EventSpeakers } from './speakers/EventSpeakers'
 import { EventSpeaker } from './speakers/EventSpeaker'
 import { NewSession } from './sessions/NewSession'
 import { NewSpeaker } from './speakers/NewSpeaker'
+import { NewSponsor } from './sponsors/NewSponsor'
+import { Sponsor } from './sponsors/Sponsor'
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -43,17 +45,30 @@ export const EventRouter = () => {
         <NestedRoutes base={`/events/${params?.eventId}`}>
             <EventLayout event={eventData} eventUpdated={eventUpdated}>
                 <Route path="/sponsors">
-                    <EventSponsors />
+                    <EventSponsors event={eventData} />
                 </Route>
+
+                <Switch>
+                    <Route path="/sponsors/new">
+                        <NewSponsor event={eventData} />
+                    </Route>
+                    <Route path="/sponsors/:id">
+                        <Sponsor event={eventData} />
+                    </Route>
+                </Switch>
+
                 <Route path="/sessions">
                     <EventSessions event={eventData} />
                 </Route>
-                <Route path="/sessions/new">
-                    <NewSession event={eventData} />
-                </Route>
-                <Route path="/sessions/:id">
-                    <EventSession event={eventData} />
-                </Route>
+                <Switch>
+                    <Route path="/sessions/new">
+                        <NewSession event={eventData} />
+                    </Route>
+                    <Route path="/sessions/:id">
+                        <EventSession event={eventData} />
+                    </Route>
+                </Switch>
+
                 <Route path="/speakers">
                     <EventSpeakers event={eventData} eventUpdated={eventUpdated} />
                 </Route>
@@ -71,8 +86,7 @@ export const EventRouter = () => {
                 </Route>
                 <Route path="/">
                     <Redirect to={defaultRedirect} />
-                </Route>{' '}
-                :
+                </Route>
             </EventLayout>
         </NestedRoutes>
     )

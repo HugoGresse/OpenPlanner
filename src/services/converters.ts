@@ -1,4 +1,4 @@
-import { Event, NewEvent, Session, Speaker } from '../types'
+import { Event, NewEvent, Session, Speaker, SponsorCategory } from '../types'
 import { FirestoreDataConverter } from '@firebase/firestore'
 import { DateTime } from 'luxon'
 
@@ -59,5 +59,19 @@ export const speakerConverter: FirestoreDataConverter<Speaker> = {
     },
     toFirestore(speaker: Speaker) {
         return speaker
+    },
+}
+
+export const sponsorsConverter: FirestoreDataConverter<SponsorCategory | Omit<SponsorCategory, 'id'>> = {
+    fromFirestore(snapshot): SponsorCategory {
+        const data = snapshot.data()
+
+        return {
+            id: snapshot.id,
+            ...data,
+        } as SponsorCategory
+    },
+    toFirestore(category: Omit<SponsorCategory, 'id'>) {
+        return category
     },
 }

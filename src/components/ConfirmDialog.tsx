@@ -12,6 +12,7 @@ export type ConfirmDialogProps = {
     disabled?: boolean
     loading?: boolean
     children: React.ReactNode
+    autoFocus?: boolean
 }
 export const ConfirmDialog = ({
     open,

@@ -1,10 +1,12 @@
 import { Event } from '../../../types'
 import { getSession } from '../sessions/getSessions'
 import { getSpeakers } from '../getSpeakers'
+import { getSponsors } from '../getSponsors'
 
 export const generateStaticJson = async (event: Event) => {
     const sessions = await getSession(event.id)
     const speakers = await getSpeakers(event.id)
+    const sponsors = await getSponsors(event.id)
 
     const outputSessions = sessions.map((s) => ({
         id: s.id,
@@ -52,6 +54,8 @@ export const generateStaticJson = async (event: Event) => {
         note: s.note,
     }))
 
+    const outputSponsor = sponsors
+
     const outputEvent = {
         id: event.id,
         name: event.name,
@@ -77,12 +81,14 @@ export const generateStaticJson = async (event: Event) => {
             socials: s.socials,
         })),
         sessions: outputSessions,
+        sponsors: outputSponsor,
         generatedAt: new Date().toISOString(),
     }
     const outputPrivate = {
         event: outputEvent,
         speakers: speakers,
         sessions: outputSessionsPrivate,
+        sponsors: outputSponsor,
         generatedAt: new Date().toISOString(),
     }
 
