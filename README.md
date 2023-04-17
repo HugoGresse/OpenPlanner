@@ -1,27 +1,19 @@
-# Conference Center
+# OpenPlanner
 
-This is currently in development.
-This service should allow, when finished, users to:
+A website to
 
 -   schedule accepted talks from [ConferenceHall](https://conference-hall.io/): pick date & time
--   edit talk details and speakers details
--   manually add new talk or speakers manually
--   a manual sync button to synchronise a speaker or a talk from ConferenceHall
--   something to display the data within a Google Sheet (read only)
--   some APIs to use the service outside
-
-Specs:
-
--   a database, probably Firestore
--   a way to connect to ConferenceHall Firestore
--   for the API: the idea would be to use statically generated file to serve the API rather than a severless API
--   Login & role management
--   mockups on [figma](https://www.figma.com/proto/3zfbwvOAP5GPVkOjxeiOlF/ConferenceCenter?node-id=1%3A189&scaling=scale-down&page-id=0%3A1&starting-point-node-id=1%3A189)
-
-## Roadmap
-
--   v1: basic conference-hall manual sync plus github hook and schedule edition/creation
--   v2: other features listed above
+-   talks and speakers:
+    - manually add talks and speakers
+    - pick specific talks from ConferenceHall afterward
+    - edit talk or speaker, add profil picture, company logo, without editing data from ConferenceHall
+-   a schedule calendar to arrange talks and duration 
+-   additionals fields: 
+    - categories and formats for sessions
+    - private notes for speaker, email, phone
+    - tracks / rooms
+-   manage sponsors & categories
+-   API & webhooks
 
 ## Dev guidelines
 
