@@ -50,7 +50,7 @@ export const LoginForm = ({}) => {
                         Sign in
                     </Typography>
                     <Typography component="p" variant="body1">
-                        Use a single account per event or organization as ConferenceCenter don't have a role system yet.
+                        Use a single account per event or organization as OpenPlanner don't have a role system yet.
                     </Typography>
                     <TextFieldElement
                         margin="normal"
@@ -82,7 +82,7 @@ export const LoginForm = ({}) => {
                         fullWidth
                         variant="contained"
                         sx={{ mt: 3, mb: 2 }}>
-                        Sign In
+                        Sign In (or sign up)
                     </LoadingButton>
 
                     {error && error?.error === 'auth/user-not-found' && (

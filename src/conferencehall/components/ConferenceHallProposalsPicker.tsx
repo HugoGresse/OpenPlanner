@@ -102,7 +102,7 @@ export const ConferenceHallProposalsPicker = ({
 
                     <LoadingButton
                         type="submit"
-                        title="Import proposals & create ConferenceCenter event"
+                        title="Import proposals & create OpenPlanner event"
                         disabled={loading}
                         loading={loading}
                         variant="contained"

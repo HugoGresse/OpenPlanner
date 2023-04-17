@@ -1,6 +1,6 @@
 import { doc, setDoc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
-import { mapConferenceHallProposalsToConferenceCenter } from './mapFromConferenceHallToConferenceCenter'
+import { mapConferenceHallProposalsToOpenPlanner } from './mapFromConferenceHallToOpenPlanner'
 import { ConferenceHallProposal, Format } from '../../../types'
 
 export const importSessions = async (
@@ -11,7 +11,7 @@ export const importSessions = async (
     progress: (progress: string) => void
 ): Promise<[sessionIds: string[], error: string[]]> => {
     const errors = []
-    const [sessionsToCreate, sessionsErrors] = mapConferenceHallProposalsToConferenceCenter(
+    const [sessionsToCreate, sessionsErrors] = mapConferenceHallProposalsToOpenPlanner(
         proposals,
         formats,
         speakersMappingFromConferenceHall

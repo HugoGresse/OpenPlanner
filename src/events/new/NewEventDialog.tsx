@@ -16,7 +16,7 @@ import { ConferenceHallEvent } from '../../types'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import { addNewEvent } from '../actions/addNewEvent'
 import { useSelector } from 'react-redux'
-import { selectUserIdConferenceCenter } from '../../auth/authReducer'
+import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { ConferenceHallProposalsPickerConnected } from '../../conferencehall/components/ConferenceHallProposalsPickerConnected'
 
 export type NewEventDialogProps = {
@@ -25,7 +25,7 @@ export type NewEventDialogProps = {
 }
 
 export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
-    const userId = useSelector(selectUserIdConferenceCenter)
+    const userId = useSelector(selectUserIdOpenPlanner)
     const [selectedConferenceHallEvent, setSelectedConferenceHallEvent] = useState<ConferenceHallEvent | null>(null)
     const [status, setStatus] = useState('')
     const [newResult, setNewResults] = useState<null | { eventId: string | null; errors: string[] }>(null)

@@ -1,7 +1,7 @@
 import { ConferenceHallSpeaker } from '../../../types'
 import { doc, setDoc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
-import { mapConferenceHallSpeakerToConferenceCenter } from './mapFromConferenceHallToConferenceCenter'
+import { mapConferenceHallSpeakerToOpenPlanner } from './mapFromConferenceHallToOpenPlanner'
 
 export const importSpeakers = async (
     eventId: string,
@@ -12,7 +12,7 @@ export const importSpeakers = async (
     const errors = []
     progress(`Adding speakers...`)
     const speakersMappingFromConferenceHall: { [id: string]: string } = {}
-    const [speakersToCreate, speakerErrors] = mapConferenceHallSpeakerToConferenceCenter(chSpeakerIds, speakersMap)
+    const [speakersToCreate, speakerErrors] = mapConferenceHallSpeakerToOpenPlanner(chSpeakerIds, speakersMap)
     errors.push(...speakerErrors)
     let countSpeakersAdded = 1
     for (const speaker of speakersToCreate) {

@@ -7,13 +7,13 @@ import { Auth } from '@firebase/auth'
 import { eventConverter, sessionConverter, speakerConverter, sponsorsConverter } from './converters'
 
 const config = {
-    apiKey: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_DOMAIN,
-    databaseURL: `https://${import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID}.firebaseio.com`,
-    projectId: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_STORAGE_BUCKET,
-    appId: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_CONFERENCE_CENTER_MEASUREMENT_ID,
+    apiKey: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_DOMAIN,
+    databaseURL: `https://${import.meta.env.VITE_FIREBASE_OPEN_PLANNER_PROJECT_ID}.firebaseio.com`,
+    projectId: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_STORAGE_BUCKET,
+    appId: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_MEASUREMENT_ID,
 }
 
 export const storageBucket = config.storageBucket
@@ -32,6 +32,6 @@ export const collections = {
         collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
 }
 
-export const getConferenceCenterAuth = (): Auth => {
+export const getOpenPlannerAuth = (): Auth => {
     return getAuth(instanceApp)
 }

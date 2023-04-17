@@ -7,7 +7,7 @@ import {
     signInWithEmailAndPassword,
     signOut,
 } from 'firebase/auth'
-import { getConferenceCenterAuth } from '../services/firebase'
+import { getOpenPlannerAuth } from '../services/firebase'
 import { MD5 } from '../utils/MD5'
 import { browserLocalPersistence } from '@firebase/auth'
 
@@ -42,7 +42,7 @@ const initialState: AuthState = user
     : ({ isLoggedIn: false, error: null, user: null } as AuthState)
 
 export const listenAuthChange = (callback: (isLoggedIn: boolean) => void) => (dispatch: (object: any) => void) => {
-    const auth = getConferenceCenterAuth()
+    const auth = getOpenPlannerAuth()
     return onAuthStateChanged(auth, (user) => {
         callback(!!user)
         if (user) {
@@ -63,7 +63,7 @@ export const listenAuthChange = (callback: (isLoggedIn: boolean) => void) => (di
 export const register = createAsyncThunk(
     'auth/register',
     async ({ email, password }: { email: string; password: string }, thunkAPI) => {
-        const auth = getConferenceCenterAuth()
+        const auth = getOpenPlannerAuth()
         return setPersistence(auth, browserLocalPersistence)
             .then(() => createUserWithEmailAndPassword(auth, email, password))
             .then((userCredential) => {
@@ -87,7 +87,7 @@ export const register = createAsyncThunk(
 export const login = createAsyncThunk(
     'auth/login',
     async ({ email, password }: { email: string; password: string }, thunkAPI) => {
-        const auth = getConferenceCenterAuth()
+        const auth = getOpenPlannerAuth()
 
         return setPersistence(auth, browserLocalPersistence)
             .then(() => signInWithEmailAndPassword(auth, email, password))
@@ -111,7 +111,7 @@ export const login = createAsyncThunk(
 )
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-    await signOut(getConferenceCenterAuth())
+    await signOut(getOpenPlannerAuth())
     localStorage.removeItem('user')
     return Promise.resolve()
 })
@@ -153,7 +153,7 @@ export const authSlice = createSlice({
     },
 })
 
-export const selectIsUserLoggedInToConferenceCenter = (state: RootState) => state.auth.isLoggedIn
-export const selectUserConferenceCenter = (state: RootState) => state.auth.user
-export const selectUserIdConferenceCenter = (state: RootState) => state.auth.user!.uid
+export const selectIsUserLoggedInToOpenPlanner = (state: RootState) => state.auth.isLoggedIn
+export const selectUserOpenPlanner = (state: RootState) => state.auth.user
+export const selectUserIdOpenPlanner = (state: RootState) => state.auth.user!.uid
 export const selectAuthCCError = (state: RootState) => state.auth.error

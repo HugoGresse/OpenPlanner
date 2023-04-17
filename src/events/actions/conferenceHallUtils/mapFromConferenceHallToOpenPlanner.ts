@@ -1,7 +1,7 @@
 import { ConferenceHallProposal, ConferenceHallSpeaker, Format, Session, Speaker, SpeakerSocial } from '../../../types'
 import { slugify } from '../../../utils/slugify'
 
-export const mapConferenceHallSpeakerToConferenceCenter = (
+export const mapConferenceHallSpeakerToOpenPlanner = (
     speakerIds: string[],
     chSpeakers: { [id: string]: ConferenceHallSpeaker }
 ): [speakers: Speaker[], error: string[]] => {
@@ -47,7 +47,7 @@ export const mapConferenceHallSpeakerToConferenceCenter = (
     return [speakers, errors]
 }
 
-export const mapConferenceHallProposalsToConferenceCenter = (
+export const mapConferenceHallProposalsToOpenPlanner = (
     proposals: ConferenceHallProposal[],
     formats: Format[],
     speakersMapping: { [conferenceHallId: string]: string }

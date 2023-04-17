@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Avatar, Box, Button, Container, Typography } from '@mui/material'
 import { useAppDispatch } from '../../reduxStore'
-import { logout, selectUserConferenceCenter, UserState } from '../../auth/authReducer'
+import { logout, selectUserOpenPlanner, UserState } from '../../auth/authReducer'
 import { useSelector } from 'react-redux'
 
 export type EventsLayoutProps = {
@@ -9,7 +9,7 @@ export type EventsLayoutProps = {
 }
 export const EventsLayout = ({ children }: EventsLayoutProps) => {
     const dispatch = useAppDispatch()
-    const user = useSelector(selectUserConferenceCenter) as UserState
+    const user = useSelector(selectUserOpenPlanner) as UserState
     return (
         <Container component="main" maxWidth="md">
             <Box display="flex" justifyContent="flex-end" alignItems="flex-end" flexDirection="column" marginTop={1}>
@@ -22,7 +22,7 @@ export const EventsLayout = ({ children }: EventsLayoutProps) => {
                 </Box>
             </Box>
 
-            <Typography variant="h1">ConferenceCenter</Typography>
+            <Typography variant="h1">OpenPlanner</Typography>
             <Typography variant="h2">Your events</Typography>
             <Box marginTop={4} width="100%"></Box>
 

@@ -25,7 +25,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useRoute } from 'wouter'
 import { useSelector } from 'react-redux'
-import { logout, selectUserConferenceCenter } from '../../auth/authReducer'
+import { logout, selectUserOpenPlanner } from '../../auth/authReducer'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { useAppDispatch } from '../../reduxStore'
 import { LoadingButton } from '@mui/lab'
@@ -94,7 +94,7 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
     const [__, subParams] = useRoute('/:routeName/:subRoute')
     const [open, setOpen] = useState(true)
     const [loading, setLoading] = useState(false)
-    const user = useSelector(selectUserConferenceCenter)
+    const user = useSelector(selectUserOpenPlanner)
     const { createNotification } = useNotification()
     const toggleDrawer = () => {
         setOpen(!open)
