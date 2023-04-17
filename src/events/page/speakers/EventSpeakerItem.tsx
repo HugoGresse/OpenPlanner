@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Session, Speaker } from '../../../types'
-import { Avatar, Button, Chip, Grid, Link, Typography } from '@mui/material'
+import { Avatar, Button, Chip, Grid, Link, Typography, useTheme } from '@mui/material'
 import { Edit } from '@mui/icons-material'
 
 type EventSpeakerItemProps = {
@@ -9,6 +9,8 @@ type EventSpeakerItemProps = {
 }
 
 export const EventSpeakerItem = ({ speaker, sessions }: EventSpeakerItemProps) => {
+    const theme = useTheme()
+
     return (
         <Grid
             container
@@ -17,7 +19,7 @@ export const EventSpeakerItem = ({ speaker, sessions }: EventSpeakerItemProps) =
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 paddingY: 1,
-                borderBottom: '1px solid #ddd',
+                borderBottom: `1px solid ${theme.palette.divider}`,
             }}>
             <Grid item xs={2} md={1}>
                 <Avatar src={speaker?.photoUrl || undefined} alt={speaker.name} />
@@ -34,6 +36,7 @@ export const EventSpeakerItem = ({ speaker, sessions }: EventSpeakerItemProps) =
                     if (session.speakers.includes(speaker.id)) {
                         acc.push(
                             <Chip
+                                key={session.id}
                                 label={session.title}
                                 component={Link}
                                 href={`/sessions/${session.id}?backTo=Speakers`}

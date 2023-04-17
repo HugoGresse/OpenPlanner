@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Session } from '../../../types'
-import { Button, Chip, Grid, Link, Typography } from '@mui/material'
+import { Button, Chip, Grid, Link, Typography, useTheme } from '@mui/material'
 import { Edit } from '@mui/icons-material'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 
@@ -10,6 +10,7 @@ type EventSessionItem = {
 }
 
 export const EventSessionItem = ({ selectFormat, session }: EventSessionItem) => {
+    const theme = useTheme()
     let times = 'No start/end times'
 
     if (session.dates && session.dates.start) {
@@ -28,7 +29,7 @@ export const EventSessionItem = ({ selectFormat, session }: EventSessionItem) =>
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 paddingY: 1,
-                borderBottom: '1px solid #ddd',
+                borderBottom: `1px solid ${theme.palette.divider}`,
             }}>
             <Grid item sm={12} md={6}>
                 <Typography fontWeight="bold">{session.title}</Typography>
