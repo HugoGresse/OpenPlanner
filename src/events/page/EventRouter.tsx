@@ -23,7 +23,7 @@ export const EventRouter = () => {
     const event = useEvent(params?.eventId)
 
     useEffect(() => {
-        document.title = `ConferenceCenter | ${event.data?.name}`
+        document.title = `OpenPlanner | ${event.data?.name}`
     }, [params])
 
     if (event.isLoading) {

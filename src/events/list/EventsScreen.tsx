@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { EventsLayout } from './EventsLayout'
 import { useEvents } from '../../services/hooks/useEvents'
 import { useSelector } from 'react-redux'
-import { selectUserIdConferenceCenter } from '../../auth/authReducer'
+import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventsListItem } from './EventsListItem'
 import { Event } from '../../types'
@@ -13,7 +13,7 @@ import { NewEventCreatedDialog } from '../new/NewEventCreatedDialog'
 import { useNotification } from '../../hooks/notificationHook'
 
 export const EventsScreen = ({}) => {
-    const userId = useSelector(selectUserIdConferenceCenter)
+    const userId = useSelector(selectUserIdOpenPlanner)
     const events = useEvents(userId)
     const [newEventOpen, setNewEventOpen] = useState(false)
     const [newEventId, setNewEventId] = useState<null | string>(null)

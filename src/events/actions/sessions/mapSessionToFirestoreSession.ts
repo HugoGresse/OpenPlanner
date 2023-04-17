@@ -1,7 +1,7 @@
 import { Session } from '../../../types'
 
 /**
- * Remove extra optional field hydrated from ConferenceCenter
+ * Remove extra optional field hydrated from OpenPlanner
  * @param session
  */
 export const mapSessionToFirestoreSession = (session: Session) => {

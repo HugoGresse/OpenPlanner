@@ -132,28 +132,28 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                         <Grid item xs={12} md={6}>
                             <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
 
-                            <TextFieldElement
-                                margin="dense"
-                                size="small"
-                                fullWidth
-                                id="statusBadgeImage"
-                                label="Status Badge Image (URL)"
-                                name="statusBadgeImage"
-                                variant="filled"
-                                type="url"
-                                disabled={formState.isSubmitting}
-                            />
-                            <TextFieldElement
-                                margin="dense"
-                                size="small"
-                                fullWidth
-                                id="statusBadgeLink"
-                                label="Status Badge Link (job)"
-                                name="statusBadgeLink"
-                                variant="filled"
-                                type="url"
-                                disabled={formState.isSubmitting}
-                            />
+                            {/*<TextFieldElement*/}
+                            {/*    margin="dense"*/}
+                            {/*    size="small"*/}
+                            {/*    fullWidth*/}
+                            {/*    id="statusBadgeImage"*/}
+                            {/*    label="Status Badge Image (URL)"*/}
+                            {/*    name="statusBadgeImage"*/}
+                            {/*    variant="filled"*/}
+                            {/*    type="url"*/}
+                            {/*    disabled={formState.isSubmitting}*/}
+                            {/*/>*/}
+                            {/*<TextFieldElement*/}
+                            {/*    margin="dense"*/}
+                            {/*    size="small"*/}
+                            {/*    fullWidth*/}
+                            {/*    id="statusBadgeLink"*/}
+                            {/*    label="Status Badge Link (job)"*/}
+                            {/*    name="statusBadgeLink"*/}
+                            {/*    variant="filled"*/}
+                            {/*    type="url"*/}
+                            {/*    disabled={formState.isSubmitting}*/}
+                            {/*/>*/}
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <EventApiFilePaths event={event} />

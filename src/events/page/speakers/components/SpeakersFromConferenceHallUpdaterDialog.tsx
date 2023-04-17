@@ -61,8 +61,8 @@ export const SpeakersFromConferenceHallUpdaterDialog = ({
                             )}
                             <Typography margin={1}>
                                 ⚠️ it will only update existing speakers from their up to date data on ConferenceHall,
-                                but will also erase modifications made by you on ConferenceCenter (except specifics
-                                fields like "notes")
+                                but will also erase modifications made by you on OpenPlanner (except specifics fields
+                                like "notes")
                             </Typography>
                         </>
                     )}

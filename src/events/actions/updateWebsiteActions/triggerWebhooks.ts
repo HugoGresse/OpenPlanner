@@ -14,7 +14,7 @@ export const triggerWebhooks = async (event: Event, files: EventFiles) => {
             response = await fetch(webhook.url, {
                 method: 'POST',
                 body: JSON.stringify({
-                    event_type: 'conferencecenter',
+                    event_type: 'openplanner',
                     client_payload: {
                         url: fullyQualifiedUrls,
                     },

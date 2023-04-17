@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, Typography, useTheme } from '@mui/material'
 import * as React from 'react'
 import { LoadingButton } from '@mui/lab'
 import { TextFieldElement, useWatch } from 'react-hook-form-mui'
@@ -24,6 +24,7 @@ export const SidePanelImageUploadForm = ({
     onSaveClick,
     uploading,
 }: SidePanelImageUploadFormProps) => {
+    const theme = useTheme()
     const fieldValue = useWatch({ name: fieldName })
     const previewImage = (file && file.preview) || fieldValue
 
@@ -63,7 +64,7 @@ export const SidePanelImageUploadForm = ({
                     marginY: 2,
                     textAlign: 'center',
                     '& span': {
-                        backgroundColor: 'white',
+                        backgroundColor: theme.palette.background.paper,
                         color: '#BBB',
                         padding: 1,
                     },

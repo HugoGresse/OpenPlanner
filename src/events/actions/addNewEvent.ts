@@ -39,7 +39,7 @@ const addNewEventInternal = async (
     progress(`Getting ${uniqConferenceHallSpeakersIds.length} ConferenceHall speakers...`)
     errors.push(...getSpeakersErrors)
 
-    //1. Create the ConferenceCenterEvent:
+    //1. Create the OpenPlanner Event:
     const event: NewEvent = {
         conferenceHallId: chEvent.id,
         name: chEvent.name,

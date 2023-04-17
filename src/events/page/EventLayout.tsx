@@ -14,7 +14,6 @@ import {
     List,
     ListItem,
     ListItemAvatar,
-    ListItemButton,
     ListItemText,
     styled,
     Toolbar,
@@ -25,14 +24,13 @@ import MenuIcon from '@mui/icons-material/Menu'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useRoute } from 'wouter'
 import { useSelector } from 'react-redux'
-import { logout, selectUserConferenceCenter } from '../../auth/authReducer'
+import { logout, selectUserOpenPlanner } from '../../auth/authReducer'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { useAppDispatch } from '../../reduxStore'
 import { LoadingButton } from '@mui/lab'
 import { Event } from '../../types'
 import { useNotification } from '../../hooks/notificationHook'
 import { updateWebsiteTriggerWebhooksAction } from '../actions/updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
-import { UpdateImage } from '../../components/UpdateImage'
 
 const drawerWidth: number = 240
 
@@ -94,7 +92,7 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
     const [__, subParams] = useRoute('/:routeName/:subRoute')
     const [open, setOpen] = useState(true)
     const [loading, setLoading] = useState(false)
-    const user = useSelector(selectUserConferenceCenter)
+    const user = useSelector(selectUserOpenPlanner)
     const { createNotification } = useNotification()
     const toggleDrawer = () => {
         setOpen(!open)
@@ -149,8 +147,7 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
                 <Divider />
                 <List component="nav">
                     <EventScreenMenuItems />
-                    <ListItemButton
-                        component={LoadingButton}
+                    <LoadingButton
                         variant="contained"
                         loading={loading}
                         disabled={loading}
@@ -166,12 +163,12 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
                         }}
                         loadingIndicator={<CircularProgress color="secondary" size={16} />}>
                         <ListItemText primary={'Update website'} />
-                    </ListItemButton>
-                    {event.statusBadgeImage && (
-                        <Box m={1}>
-                            <UpdateImage src={event.statusBadgeImage} />
-                        </Box>
-                    )}
+                    </LoadingButton>
+                    {/*{event.statusBadgeImage && (*/}
+                    {/*    <Box m={1}>*/}
+                    {/*        <UpdateImage src={event.statusBadgeImage} />*/}
+                    {/*    </Box>*/}
+                    {/*)}*/}
                 </List>
                 <Box marginTop="auto">
                     <List>
@@ -199,8 +196,6 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
             <Box
                 component="main"
                 sx={{
-                    backgroundColor: (theme) =>
-                        theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
                     flexGrow: 1,
                     height: '100vh',
                     overflow: 'auto',

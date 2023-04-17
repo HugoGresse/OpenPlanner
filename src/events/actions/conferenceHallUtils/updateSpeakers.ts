@@ -1,6 +1,6 @@
 import { Speaker } from '../../../types'
 import { loadConferenceHallSpeakersFromIds } from '../../../conferencehall/firebase/loadFromConferenceHallUtils'
-import { mapConferenceHallSpeakerToConferenceCenter } from './mapFromConferenceHallToConferenceCenter'
+import { mapConferenceHallSpeakerToOpenPlanner } from './mapFromConferenceHallToOpenPlanner'
 import { CreateNotificationOption } from '../../../context/SnackBarProvider'
 import { doc, updateDoc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
@@ -22,7 +22,7 @@ export const updateSpeakers = async (
         createNotification('Errors while loading speakers from ConferenceHall', { type: 'error' })
         return
     }
-    const [speakersToUpdate, speakerErrors] = mapConferenceHallSpeakerToConferenceCenter(
+    const [speakersToUpdate, speakerErrors] = mapConferenceHallSpeakerToOpenPlanner(
         uniqConferenceHallSpeakersIds,
         speakersMap
     )
