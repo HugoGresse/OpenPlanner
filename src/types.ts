@@ -87,6 +87,7 @@ export interface EventFiles {
     public: string
     private: string
     imageFolder: string
+    openfeedback: string
 }
 
 export interface Event {

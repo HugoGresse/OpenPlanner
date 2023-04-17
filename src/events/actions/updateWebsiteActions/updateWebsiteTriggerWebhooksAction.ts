@@ -18,9 +18,9 @@ export const updateWebsiteTriggerWebhooksAction = async (
 }
 
 const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
-    const { outputPrivate, outputPublic } = await generateStaticJson(event)
+    const { outputPrivate, outputPublic, outputOpenFeedback } = await generateStaticJson(event)
 
-    const fileNames = await updateStaticJson(event, outputPublic, outputPrivate)
+    const fileNames = await updateStaticJson(event, outputPublic, outputPrivate, outputOpenFeedback)
 
     return await triggerWebhooks(event, fileNames)
 }

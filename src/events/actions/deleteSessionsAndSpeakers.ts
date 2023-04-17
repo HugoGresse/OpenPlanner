@@ -1,11 +1,11 @@
 import { doc, writeBatch } from 'firebase/firestore'
 import { Event } from '../../types'
 import { collections, instanceFirestore } from '../../services/firebase'
-import { getSession } from './sessions/getSessions'
+import { getSessions } from './sessions/getSessions'
 import { getSpeakers } from './getSpeakers'
 
 export const deleteSessionsAndSpeakers = async (event: Event, onlyConferenceHallOne = true) => {
-    const sessions = await getSession(event.id)
+    const sessions = await getSessions(event.id)
     const speakers = await getSpeakers(event.id)
 
     const batch = writeBatch(instanceFirestore)

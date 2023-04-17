@@ -1,12 +1,15 @@
 import { Event } from '../../../types'
-import { getSession } from '../sessions/getSessions'
+import { getSessions } from '../sessions/getSessions'
 import { getSpeakers } from '../getSpeakers'
 import { getSponsors } from '../getSponsors'
+import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
 
 export const generateStaticJson = async (event: Event) => {
-    const sessions = await getSession(event.id)
+    const sessions = await getSessions(event.id)
     const speakers = await getSpeakers(event.id)
     const sponsors = await getSponsors(event.id)
+
+    const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
 
     const outputSessions = sessions.map((s) => ({
         id: s.id,
@@ -95,5 +98,6 @@ export const generateStaticJson = async (event: Event) => {
     return {
         outputPublic,
         outputPrivate,
+        outputOpenFeedback: openFeedbackOutput,
     }
 }
