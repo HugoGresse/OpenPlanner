@@ -7,10 +7,9 @@ const RouterLink = WouterLink as React.FunctionComponent<WouterLinkProps & React
 
 export const LinkBehavior = React.forwardRef<
     HTMLAnchorElement,
-    Omit<WouterLinkProps, 'to'> & { href: WouterLinkProps['to'] }
+    Omit<Omit<WouterLinkProps, 'to'>, 'href'> & { href: string }
 >((props, ref) => {
     const { href, ...other } = props
     // Map href (MUI) -> to (react-router)
-    // @ts-ignore
     return <RouterLink ref={ref} to={href} {...other} />
 })
