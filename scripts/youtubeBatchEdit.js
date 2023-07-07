@@ -1,4 +1,4 @@
-import { getVideosLast72Hours, initYoutube } from './youtubeAPI.js'
+import { getVideosLast72Hours, initYoutube, updateVideo } from './youtubeAPI.js'
 import fs from 'fs'
 
 const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) => {
@@ -65,15 +65,43 @@ const formatYoutubeDescription = (video, openPlannerContent) => {
 
     const desc = session.abstract + '\n\n' + openPlannerContent.event.name
 
-    return `${speakersText.join('\n')}\n${desc}`
+    return `${speakersText.join('\n')}\n${desc.replace(/<[^>]*>?/gm, '')}`
+}
+
+const formatFillMySlidesData = (openPlannerContent) => {
+    const result = openPlannerContent.sessions
+        .map((session) => {
+            const speakers = session.speakerIds.map((speakerId) => {
+                const speaker = openPlannerContent.speakers.find((speaker) => speaker.id === speakerId)
+                return speaker.name
+            })
+            const speakersAvatar = session.speakerIds.map((speakerId) => {
+                const speaker = openPlannerContent.speakers.find((speaker) => speaker.id === speakerId)
+                return speaker.photoUrl
+            })
+            if (!speakers || speakers.length === 0) {
+                return null
+            }
+            return {
+                0: session.title,
+                1: speakers.reverse().join(', '),
+                2: speakersAvatar[0],
+                3: speakersAvatar[1] || 'https://i.ibb.co/NyxKRgx/1280px-HD-transparent-picture.png',
+            }
+        })
+        .filter((session) => !!session)
+    console.log(JSON.stringify(result))
 }
 
 const main = async () => {
     const { auth, channelId } = await initYoutube()
 
     const playlistId = 'PLz7aCyCbFOu-5OE0ajDUVjlqBFq1y9XiQ'
+    const videoCategoryId = '27' // use await listVideoCategories(auth)
     const openPlannerFileName = 'openplanner.json'
     const openPlannerContent = JSON.parse(fs.readFileSync(openPlannerFileName))
+
+    return formatFillMySlidesData(openPlannerContent)
 
     const videos = await getVideosLast72Hours(auth, channelId, playlistId)
 
@@ -90,7 +118,28 @@ const main = async () => {
         })
         .filter((video) => !!video)
 
-    console.log(videosWithValidSessionAndDescription)
+    for (const video of videosWithValidSessionAndDescription) {
+        const tagBasedOnOpenPlannerCategory = openPlannerContent.event.categories.find((category) => {
+            return category.id === video.session.categoryId
+        }).name
+
+        const updateModel = {
+            description: video.description,
+            categoryId: videoCategoryId,
+            defaultLanguage: 'fr',
+            tags: ['sunnytech', tagBasedOnOpenPlannerCategory],
+            recordingDetails: {
+                recordingDate: video.session.dateStart,
+            },
+        }
+
+        const videoId = video.snippet.resourceId.videoId
+        const result = await updateVideo(auth, videoId, video.snippet.title, updateModel)
+        if (result) {
+            console.log('Updated video: ' + video.snippet.title)
+        }
+        break
+    }
 }
 
 main()

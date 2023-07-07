@@ -6,7 +6,7 @@ var OAuth2 = google.auth.OAuth2
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/youtube-nodejs-quickstart.json
-var SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
+var SCOPES = ['https://www.googleapis.com/auth/youtube']
 var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + '/.credentials/'
 var TOKEN_PATH = TOKEN_DIR + 'youtube-nodejs-quickstart.json'
 
@@ -157,4 +157,41 @@ export const getVideosLast72Hours = async (auth, channelId, playlistId) => {
     })
 
     return playlistItems.data.items
+}
+
+export const listVideoCategories = async (auth) => {
+    var service = google.youtube('v3')
+    const response = await service.videoCategories.list({
+        auth: auth,
+        part: 'snippet',
+        regionCode: 'FR',
+    })
+    console.log(response.data.items)
+    return response.data.items
+}
+
+export const updateVideo = async (auth, videoId, videoTitle, snippetData) => {
+    var service = google.youtube('v3')
+    const response = await service.videos.update({
+        auth: auth,
+        part: 'snippet',
+        resource: {
+            id: videoId,
+            snippet: {
+                title: videoTitle,
+                ...snippetData,
+            },
+        },
+    })
+    if (response.data) {
+        const response2 = await service.videos.update({
+            auth: auth,
+            part: 'recordingDetails',
+            resource: {
+                id: videoId,
+                ...snippetData,
+            },
+        })
+    }
+    return response.data
 }
