@@ -23,15 +23,19 @@ const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) => {
                     : [],
         }
     })
-    const videosWithValidSession = videosWithOpenPlannerData.filter((video) => video.session)
+    const videosWithValidSession = videosWithOpenPlannerData.filter(
+        (video) => video.session && video.speakers.length > 0
+    )
 
     console.log('Matching videos: ' + videosWithValidSession.length)
     console.log(
-        'Non matching video title: ' +
-            videosWithOpenPlannerData.filter((video) => !video.session).map((video) => video.snippet.title)
+        'Non matching video title or no speakers: ' +
+            videosWithOpenPlannerData
+                .filter((video) => !video.session || video.speakers.length === 0)
+                .map((video) => video.snippet.title)
     )
 
-    return videosWithOpenPlannerData
+    return videosWithValidSession
 }
 
 const formatYoutubeDescription = (video, openPlannerContent) => {
@@ -69,7 +73,12 @@ const formatYoutubeDescription = (video, openPlannerContent) => {
 }
 
 const formatFillMySlidesData = (openPlannerContent) => {
-    const result = openPlannerContent.sessions
+    const captedTrackIds = ['lamour', 'amphi-106', 'amphi-108']
+    const keepedSessions = openPlannerContent.sessions.filter((session) => {
+        return session.speakerIds.length > 0 && captedTrackIds.includes(session.trackId)
+    })
+
+    const result = keepedSessions
         .map((session) => {
             const speakers = session.speakerIds.map((speakerId) => {
                 const speaker = openPlannerContent.speakers.find((speaker) => speaker.id === speakerId)
@@ -101,7 +110,8 @@ const main = async () => {
     const openPlannerFileName = 'openplanner.json'
     const openPlannerContent = JSON.parse(fs.readFileSync(openPlannerFileName))
 
-    return formatFillMySlidesData(openPlannerContent)
+    // Generate thumbnails using https://fill-my-slides.web.app/
+    // return formatFillMySlidesData(openPlannerContent)
 
     const videos = await getVideosLast72Hours(auth, channelId, playlistId)
 
@@ -118,6 +128,7 @@ const main = async () => {
         })
         .filter((video) => !!video)
 
+    // Update video metadata
     for (const video of videosWithValidSessionAndDescription) {
         const tagBasedOnOpenPlannerCategory = openPlannerContent.event.categories.find((category) => {
             return category.id === video.session.categoryId
@@ -138,8 +149,33 @@ const main = async () => {
         if (result) {
             console.log('Updated video: ' + video.snippet.title)
         }
-        break
     }
+
+    // Update video thumbnails
+    let i = 0
+    const videosWithValidSessionAndDescriptionOrderedFromOpenPlannerData = videosWithValidSessionAndDescription.sort(
+        (a, b) => {
+            // order by order of index in its respective array in openplanner.json
+            const aIndex = openPlannerContent.sessions.findIndex((session) => session.id === a.session.id)
+            const bIndex = openPlannerContent.sessions.findIndex((session) => session.id === b.session.id)
+
+            if (aIndex === -1 || bIndex === -1) {
+                return 0
+            }
+            return aIndex - bIndex
+        }
+    )
+
+    // for (const video of videosWithValidSessionAndDescriptionOrderedFromOpenPlannerData) {
+    //     let thumbnailPath = `./miniature/${i}.png`
+    //
+    //     const videoId = video.snippet.resourceId.videoId
+    //     const result = await updateVideoThumbnail(auth, videoId, thumbnailPath)
+    //     if (result) {
+    //         console.log('Updated video thumbnail: ' + video.snippet.title)
+    //     }
+    //     i++
+    // }
 }
 
 main()

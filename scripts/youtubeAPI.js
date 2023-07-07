@@ -195,3 +195,16 @@ export const updateVideo = async (auth, videoId, videoTitle, snippetData) => {
     }
     return response.data
 }
+
+export const updateVideoThumbnail = async (auth, videoId, thumbnailPath) => {
+    const service = google.youtube('v3')
+    const response = await service.thumbnails.set({
+        auth: auth,
+        videoId: videoId,
+        media: {
+            mimeType: 'image/png',
+            body: fs.createReadStream(thumbnailPath),
+        },
+    })
+    return response.data
+}
