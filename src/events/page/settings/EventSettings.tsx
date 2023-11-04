@@ -66,6 +66,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <FormContainer
                 formContext={formContext}
+                // @ts-ignore
                 resolver={yupResolver(schema)}
                 onSuccess={async (data) => {
                     return mutation.mutate(mapEventSettingsFormToMutateObject(event, data))

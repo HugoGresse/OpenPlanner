@@ -64,7 +64,7 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
                 top: 0,
                 left: 12,
                 zIndex: 100,
-                backgroundColor: '#EEE',
+                backgroundColor: '#88888822',
                 height: SessionCardMinHeight,
                 minHeight: 150,
                 padding: 2,

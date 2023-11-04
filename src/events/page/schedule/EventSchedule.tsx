@@ -60,6 +60,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
         <>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
             <NoDatesSessionsPicker sessions={sessions} />
+            <Typography variant="caption">Info: The schedule calendar is updated in realtime</Typography>
             <Box paddingBottom={6}>
                 <FullCalendar
                     schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
