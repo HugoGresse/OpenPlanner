@@ -12,4 +12,4 @@ jobs:
             - name: Install bun
               uses: oven-sh/setup-bun@v1
             - run: git config --global url."git@github.com:".insteadOf git://github.com/ && bun install --frozen-lockfile
-            - run: bun run build --if-present
+            - run: bun run build
