@@ -12,14 +12,9 @@ jobs:
         environment: 'GitHub Action Release'
         steps:
             - uses: actions/checkout@v3
-            - name: Setup Node.js environment
-              uses: actions/setup-node@v3
-              with:
-                  node-version-file: .nvmrc
-                  cache: 'npm'
             - name: Install bun
               uses: oven-sh/setup-bun@v1
-            - run: bun install --frozen-lockfile --production && npm run build
+            - run: bun install --frozen-lockfile --production && bun run build
               env:
                   VITE_FIREBASE_OPEN_PLANNER_PROJECT_ID: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID }}
                   VITE_FIREBASE_OPEN_PLANNER_API_KEY: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_API_KEY }}
