@@ -1,5 +1,30 @@
-import { getVideosLast72Hours, initYoutube, updateVideo } from './youtubeAPI.js'
+import { getVideosLast72Hours, initYoutube, updateVideo, updateVideoThumbnail } from './youtubeAPI.js'
 import fs from 'fs'
+
+/**
+ * This script allow for batch edit of youtube metadata (title, desc, tags, date, thumbnail).
+ * The youtube video should be uploaded separately with the title matching the one from OpenPlanner.
+ *
+ * It can update:
+ * - title
+ * - description (it will format the author name + social links + abstract)
+ * - tags
+ * - recorded date
+ * - thumbnail from thumnails generate using https://fill-my-slides.web.app/ or your own thumbnails, located in the "miniature" folder, with the file name being the index of the talk from openplanner.json
+ *
+ * Pre-requisites:
+ * - Upload videos to youtube with the same title as in OpenPlanner
+ * - Generate thumbnails using https://fill-my-slides.web.app/ (you can get the correct format by uncomenting the line in the main : "return formatFillMySlidesData(openPlannerContent)", then put them in the "miniature" folder on the scripts folder.
+ * - change the playlist id "playlistId" to the one you want to edit (create it on youtube first)
+ * - get the full data from open planner as "openplanner.json" in scripts/openplanner.json
+ * - get the `scripts/client_secret.json` from https://console.developers.google.com/
+ * - node 18
+ *
+ * Usage:
+ * - cd scripts
+ * - npm install
+ * - node youtubeBatchEdit.js
+ */
 
 const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) => {
     // Check if all videos exist in OpenPlanner
@@ -117,6 +142,8 @@ const main = async () => {
 
     console.log('Retrieved videos: ' + videos.length)
 
+    return
+
     const videosWithValidSession = joinYoutubeAndOpenPlannerData(videos, openPlannerContent)
 
     const videosWithValidSessionAndDescription = videosWithValidSession
@@ -166,16 +193,16 @@ const main = async () => {
         }
     )
 
-    // for (const video of videosWithValidSessionAndDescriptionOrderedFromOpenPlannerData) {
-    //     let thumbnailPath = `./miniature/${i}.png`
-    //
-    //     const videoId = video.snippet.resourceId.videoId
-    //     const result = await updateVideoThumbnail(auth, videoId, thumbnailPath)
-    //     if (result) {
-    //         console.log('Updated video thumbnail: ' + video.snippet.title)
-    //     }
-    //     i++
-    // }
+    for (const video of videosWithValidSessionAndDescriptionOrderedFromOpenPlannerData) {
+        let thumbnailPath = `./miniature/${i}.png`
+
+        const videoId = video.snippet.resourceId.videoId
+        const result = await updateVideoThumbnail(auth, videoId, thumbnailPath)
+        if (result) {
+            console.log('Updated video thumbnail: ' + video.snippet.title)
+        }
+        i++
+    }
 }
 
 main()

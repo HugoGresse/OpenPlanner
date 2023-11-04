@@ -4,14 +4,14 @@ A website to
 
 -   schedule accepted talks from [ConferenceHall](https://conference-hall.io/): pick date & time
 -   talks and speakers:
-    - manually add talks and speakers
-    - pick specific talks from ConferenceHall afterward
-    - edit talk or speaker, add profil picture, company logo, without editing data from ConferenceHall
--   a schedule calendar to arrange talks and duration 
--   additionals fields: 
-    - categories and formats for sessions
-    - private notes for speaker, email, phone
-    - tracks / rooms
+    -   manually add talks and speakers
+    -   pick specific talks from ConferenceHall afterward
+    -   edit talk or speaker, add profil picture, company logo, without editing data from ConferenceHall
+-   a schedule calendar to arrange talks and duration
+-   additionals fields:
+    -   categories and formats for sessions
+    -   private notes for speaker, email, phone
+    -   tracks / rooms
 -   manage sponsors & categories
 -   API & webhooks
 
@@ -65,3 +65,9 @@ npm start  # start the dev server
 ```
 
 **Enjoy 🚀**
+
+### Scripts
+
+The repo contain few scripts useful for:
+
+-   updating the YouTube metadata (title, desc, thumbnails, etc) of uploaded video: [scripts/youtubeBatchEdit.js](scripts/youtubeBatchEdit.js)
