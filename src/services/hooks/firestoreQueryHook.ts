@@ -63,7 +63,7 @@ export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = 
         const unsubFunc = load()
 
         return unsubFunc
-    }, [])
+    }, [load])
 
     return {
         isLoading,

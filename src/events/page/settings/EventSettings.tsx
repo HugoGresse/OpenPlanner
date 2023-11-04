@@ -9,7 +9,6 @@ import * as yup from 'yup'
 import { TrackFields } from './components/TrackFields'
 import { WebhooksFields } from './components/WebhooksFields'
 import { collections } from '../../../services/firebase'
-import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
 import { diffDays } from '../../../utils/dates/diffDays'
@@ -23,6 +22,10 @@ import { useNotification } from '../../../hooks/notificationHook'
 import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
 import { EventApiFilePaths } from './components/EventAPIFilePaths'
 import { CategoriesFields } from './components/CategoriesFields'
+import {
+    useFirestoreDocumentDeletion,
+    useFirestoreDocumentMutation,
+} from '../../../services/hooks/firestoreMutationHooks'
 
 const schema = yup
     .object({
@@ -50,9 +53,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
     const [loading, setLoading] = useState(false)
     const { createNotification } = useNotification()
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
-    const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id), {
-        merge: true,
-    })
+    const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
 
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
@@ -67,7 +68,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                 formContext={formContext}
                 resolver={yupResolver(schema)}
                 onSuccess={async (data) => {
-                    return mutation.mutateAsync(mapEventSettingsFormToMutateObject(event, data))
+                    return mutation.mutate(mapEventSettingsFormToMutateObject(event, data))
                 }}>
                 <Typography component="h1" variant="h5">
                     Event settings

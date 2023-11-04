@@ -42,7 +42,6 @@ export const sessionConverter: FirestoreDataConverter<Session> = {
         return Object.keys(session).reduce((acc, key) => {
             // @ts-ignore
             acc[key] = session[key] === undefined ? null : session[key]
-
             return acc
         }, {})
     },

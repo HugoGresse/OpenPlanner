@@ -2,12 +2,12 @@ import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { Session } from '../../../types'
-import { UseQueryResult } from 'react-query'
 import { SessionCardMinHeight } from './scheduleConstants'
 import { DocumentData } from '@firebase/firestore'
 import { SessionDraggable } from './components/SessionDraggable'
 import { Draggable } from '@fullcalendar/interaction'
 import { useLocation } from 'wouter'
+import { UseQueryResult } from '../../../services/hooks/firestoreQueryHook'
 
 export type NoDatesSessionsPickerProps = {
     sessions: UseQueryResult<DocumentData>

@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { useLocation } from 'wouter'
-import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { Button, Card, Container, Typography } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
@@ -9,6 +8,7 @@ import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 import { arrayUnion, doc } from 'firebase/firestore'
 import { SponsorForm } from './components/SponsorForm'
 import { v4 as uuidv4 } from 'uuid'
+import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreMutationHooks'
 
 export type NewSponsorProps = {
     event: Event
@@ -16,9 +16,7 @@ export type NewSponsorProps = {
 export const NewSponsor = ({ event }: NewSponsorProps) => {
     const [_, setLocation] = useLocation()
     const categoryId = getQueryParams().categoryId
-    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(event.id), categoryId), {
-        merge: true,
-    })
+    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(event.id), categoryId))
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -32,7 +30,7 @@ export const NewSponsor = ({ event }: NewSponsorProps) => {
                     event={event}
                     onSubmit={(sponsor) => {
                         return mutation
-                            .mutateAsync({
+                            .mutate({
                                 sponsors: arrayUnion({
                                     ...sponsor,
                                     id: uuidv4(),
@@ -45,7 +43,7 @@ export const NewSponsor = ({ event }: NewSponsorProps) => {
                 />
 
                 {mutation.isError && (
-                    <Typography color="error">Error while adding sponsor: {mutation.error.message}</Typography>
+                    <Typography color="error">Error while adding sponsor: {mutation.error?.message}</Typography>
                 )}
             </Card>
         </Container>

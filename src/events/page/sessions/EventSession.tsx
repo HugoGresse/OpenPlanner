@@ -8,11 +8,14 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/Firesto
 import { ArrowBack } from '@mui/icons-material'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 import { EventSessionForm } from './EventSessionForm'
-import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
+import {
+    useFirestoreDocumentDeletion,
+    useFirestoreDocumentMutation,
+} from '../../../services/hooks/firestoreMutationHooks'
 
 export type EventSessionProps = {
     event: Event
@@ -24,10 +27,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
     const sessionResult = useSession(event.id, sessionId)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.sessions(event.id), sessionId))
-
-    const mutation = useFirestoreDocumentMutation(doc(collections.sessions(event.id), sessionId), {
-        merge: true,
-    })
+    const mutation = useFirestoreDocumentMutation(doc(collections.sessions(event.id), sessionId))
 
     if (sessionResult.isLoading || !sessionResult.data) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sessionResult} />
@@ -45,13 +45,9 @@ export const EventSession = ({ event }: EventSessionProps) => {
             <Card sx={{ paddingX: 2 }}>
                 <Typography variant="h2">{session.title}</Typography>
 
-                <EventSessionForm
-                    event={event}
-                    session={session}
-                    onSubmit={(session) => mutation.mutateAsync(session)}
-                />
+                <EventSessionForm event={event} session={session} onSubmit={(session) => mutation.mutate(session)} />
                 {mutation.isError && (
-                    <Typography color="error">Error while saving session: {mutation.error.message}</Typography>
+                    <Typography color="error">Error while saving session: {mutation.error?.message}</Typography>
                 )}
             </Card>
 

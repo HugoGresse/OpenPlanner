@@ -68,12 +68,15 @@ export const EventRouter = () => {
                 <Route path="/speakers">
                     <EventSpeakers event={eventData} />
                 </Route>
-                <Route path="/speakers/new">
-                    <NewSpeaker event={eventData} />
-                </Route>
-                <Route path="/speakers/:id">
-                    <EventSpeaker event={eventData} />
-                </Route>
+                <Switch>
+                    <Route path="/speakers/new">
+                        <NewSpeaker event={eventData} />
+                    </Route>
+                    <Route path="/speakers/:id">
+                        <EventSpeaker event={eventData} />
+                    </Route>
+                </Switch>
+
                 <Route path="/schedule">
                     <EventSchedule event={eventData} />
                 </Route>

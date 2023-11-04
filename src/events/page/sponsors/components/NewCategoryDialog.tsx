@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { ConfirmDialog } from '../../../../components/ConfirmDialog'
 import { Box, TextField, Typography } from '@mui/material'
-import { useFirestoreCollectionMutation } from '@react-query-firebase/firestore'
 import { collections } from '../../../../services/firebase'
+import { useFirestoreCollectionMutation } from '../../../../services/hooks/firestoreMutationHooks'
 
 export type NewCategoryDialogProps = {
     open: boolean
@@ -23,7 +23,7 @@ export const NewCategoryDialog = ({ open, onClose, eventId }: NewCategoryDialogP
             cancelButton="cancel"
             handleAccept={() => {
                 return mutation
-                    .mutateAsync({
+                    .mutate({
                         name: value,
                         sponsors: [],
                     })
@@ -40,7 +40,7 @@ export const NewCategoryDialog = ({ open, onClose, eventId }: NewCategoryDialogP
                 />
 
                 {mutation.isError && (
-                    <Typography color="error">Error while adding session: {mutation.error.message}</Typography>
+                    <Typography color="error">Error while adding session: {mutation.error?.message}</Typography>
                 )}
             </Box>
         </ConfirmDialog>
