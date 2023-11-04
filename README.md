@@ -43,7 +43,8 @@ React guidelines:
 ### Requirements
 
 -   Tow firebase projects. One for **`conference center`** and the other for **`conference hall`**.
--   Node.js **16+**
+-   Node.js **18+**
+-   [Bun.js](https://bun.js.org/) as a build tool
 
 ### Installation
 
