@@ -1,7 +1,7 @@
 import { collections } from '../firebase'
 import { SpeakersMap, useSpeakersMap } from './useSpeakersMap'
 import { Event, Session, Speaker } from '../../types'
-import { useFirestoreCollection, UseQueryResult } from './firebaseQueryHook'
+import { useFirestoreCollection, UseQueryResult } from './firestoreQueryHook'
 
 const hydrateSession = (event: Event, sp: UseQueryResult<SpeakersMap>, data: Session[]) => {
     return data.map((session: Session) => ({

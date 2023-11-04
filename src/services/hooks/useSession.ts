@@ -2,7 +2,7 @@ import { collections } from '../firebase'
 import { useSpeakersMap } from './useSpeakersMap'
 import { doc } from 'firebase/firestore'
 import { Session } from '../../types'
-import { useFirestoreDocument, UseQueryResult } from './firebaseQueryHook'
+import { useFirestoreDocument, UseQueryResult } from './firestoreQueryHook'
 
 export const useSession = (eventId: string, sessionId: string): UseQueryResult<Session> => {
     const sp = useSpeakersMap(eventId)

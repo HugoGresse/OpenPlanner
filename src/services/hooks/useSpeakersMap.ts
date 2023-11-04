@@ -1,7 +1,7 @@
 import { collections } from '../firebase'
 import { Speaker } from '../../types'
 import { DocumentData } from '@firebase/firestore'
-import { useFirestoreCollection, UseQueryResult } from './firebaseQueryHook'
+import { useFirestoreCollection, UseQueryResult } from './firestoreQueryHook'
 
 export type SpeakersMap = {
     [speakerId: string]: Speaker
