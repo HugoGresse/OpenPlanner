@@ -14,5 +14,7 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
-            - run: git config --global url."git@github.com:".insteadOf git://github.com/ && npm ci
+            - name: Install bun
+              uses: oven-sh/setup-bun@v1
+            - run: git config --global url."git@github.com:".insteadOf git://github.com/ && bun install --frozen-lockfile --production
             - run: npm run build --if-present
