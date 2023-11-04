@@ -1,8 +1,7 @@
-import { UseQueryResult } from 'react-query'
 import { DocumentData, query, QueryConstraint } from '@firebase/firestore'
 import { where } from 'firebase/firestore'
-import { useFirestoreQueryData } from '@react-query-firebase/firestore'
 import { conferenceHallCollections } from '../firebase/conferenceHallFirebase'
+import { useFirestoreCollection, UseQueryResult } from '../../services/hooks/firebaseQueryHook'
 
 const ROLES = ['owner', 'member', 'reviewer']
 
@@ -11,5 +10,5 @@ export const useConferenceHallOrganization = (userId: string): UseQueryResult<Do
 
     constraints.push(where(`members.${userId}`, 'in', ROLES))
 
-    return useFirestoreQueryData('ch-organizations', query(conferenceHallCollections.organizations, ...constraints))
+    return useFirestoreCollection(query(conferenceHallCollections.organizations, ...constraints))
 }

@@ -12,8 +12,6 @@ import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@rea
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
-import { queryClient } from '../../../App'
-import { sessionsKeys } from '../../../services/hooks/queriesKeys'
 import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
 
 export type EventSessionProps = {
@@ -74,8 +72,6 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 handleAccept={async () => {
                     await documentDeletion.mutate()
                     setDeleteOpen(false)
-                    await queryClient.invalidateQueries(sessionsKeys.all(event.id))
-                    await queryClient.invalidateQueries(sessionsKeys.allWithSpeakers(event.id))
                     goBack()
                 }}>
                 <DialogContentText id="alert-dialog-description">

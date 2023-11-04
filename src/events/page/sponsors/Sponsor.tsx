@@ -10,8 +10,6 @@ import { useSponsors } from '../../../services/hooks/useSponsors'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { SponsorForm } from './components/SponsorForm'
-import { queryClient } from '../../../App'
-import { sponsorKeys } from '../../../services/hooks/queriesKeys'
 
 export type SponsorProps = {
     event: Event
@@ -61,7 +59,6 @@ export const Sponsor = ({ event }: SponsorProps) => {
                                 return s
                             }),
                         } as unknown as SponsorCategory)
-                        await queryClient.invalidateQueries(sponsorKeys.all(event.id))
                     }}
                 />
             </Card>

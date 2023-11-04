@@ -22,7 +22,6 @@ Project use:
 -   TypeScript everywhere
 -   Google Firestore (native) database
 -   React
--   [React Query Firebase](https://react-query-firebase.invertase.dev/): handle all requests to the db, caching, etc
 -   Firebase Hosting & functions
 
 Core concepts:

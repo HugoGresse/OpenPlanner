@@ -7,11 +7,8 @@ import { reduxStore } from './reduxStore'
 import { EventsScreen } from './events/list/EventsScreen'
 import { LinkBehavior } from './components/CCLink'
 import { LinkProps } from '@mui/material/Link'
-import { QueryClient, QueryClientProvider } from 'react-query'
 import { EventRouter } from './events/page/EventRouter'
 import { NotificationProvider } from './context/SnackBarProvider'
-
-export const queryClient = new QueryClient()
 
 export const App = ({}) => {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
@@ -54,25 +51,23 @@ export const App = ({}) => {
     return (
         <Router>
             <Provider store={reduxStore}>
-                <QueryClientProvider client={queryClient}>
-                    <ThemeProvider theme={theme}>
-                        <CssBaseline enableColorScheme />
-                        <NotificationProvider>
-                            <RequireLogin>
-                                <Switch>
-                                    <Route path="/">
-                                        <EventsScreen />
-                                    </Route>
-                                    <Route path="/events/">
-                                        <Redirect to="/" />
-                                    </Route>
-                                    <EventRouter />
-                                    <Route>404, Not Found!</Route>
-                                </Switch>
-                            </RequireLogin>
-                        </NotificationProvider>
-                    </ThemeProvider>
-                </QueryClientProvider>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline enableColorScheme />
+                    <NotificationProvider>
+                        <RequireLogin>
+                            <Switch>
+                                <Route path="/">
+                                    <EventsScreen />
+                                </Route>
+                                <Route path="/events/">
+                                    <Redirect to="/" />
+                                </Route>
+                                <EventRouter />
+                                <Route>404, Not Found!</Route>
+                            </Switch>
+                        </RequireLogin>
+                    </NotificationProvider>
+                </ThemeProvider>
             </Provider>
         </Router>
     )

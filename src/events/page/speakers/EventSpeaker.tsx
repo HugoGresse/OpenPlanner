@@ -12,8 +12,6 @@ import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
-import { queryClient } from '../../../App'
-import { speakersKeys } from '../../../services/hooks/queriesKeys'
 import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 
@@ -85,7 +83,7 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                     event={event}
                     speaker={speaker}
                     onSubmit={(data) => {
-                        return mutation.mutateAsync(data).then(() => speakerResult.refetch())
+                        return mutation.mutateAsync(data)
                     }}
                 />
                 {mutation.isError && (
@@ -109,8 +107,6 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                 handleAccept={async () => {
                     await documentDeletion.mutate()
                     setDeleteOpen(false)
-                    await queryClient.invalidateQueries(speakersKeys.all(event.id))
-                    await queryClient.invalidateQueries(speakersKeys.map(event.id))
                     setLocation('/speakers')
                 }}>
                 <DialogContentText id="alert-dialog-description">

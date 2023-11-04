@@ -15,7 +15,6 @@ import { DateTime } from 'luxon'
 import { diffDays } from '../../../utils/dates/diffDays'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { useLocation } from 'wouter'
-import { queryClient } from '../../../App'
 import { FormatsFields } from './components/FormatsFields'
 import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
 import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImportSessionsSpeakersFromConferenceHall'
@@ -43,9 +42,8 @@ const convertInputEvent = (event: Event): EventForForm => {
 
 export type EventSettingsProps = {
     event: Event
-    eventUpdated: () => Promise<any>
 }
-export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
+export const EventSettings = ({ event }: EventSettingsProps) => {
     const [_, setLocation] = useLocation()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [reImportOpen, setReimportOpen] = useState(false)
@@ -69,11 +67,7 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                 formContext={formContext}
                 resolver={yupResolver(schema)}
                 onSuccess={async (data) => {
-                    return mutation.mutateAsync(mapEventSettingsFormToMutateObject(event, data), {
-                        async onSuccess() {
-                            eventUpdated().then((result) => reset(convertInputEvent(result.data)))
-                        },
-                    })
+                    return mutation.mutateAsync(mapEventSettingsFormToMutateObject(event, data))
                 }}>
                 <Typography component="h1" variant="h5">
                     Event settings
@@ -192,7 +186,6 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                         await documentDeletion.mutate()
                         setLocation('../../')
                         setDeleteOpen(false)
-                        await queryClient.invalidateQueries('events')
                         createNotification('Event deleted', { type: 'success' })
                     }}>
                     <DialogContentText id="alert-dialog-description">
@@ -218,7 +211,6 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                         await reImportSessionsSpeakersFromConferenceHall(event)
                         setLoading(false)
                         setReimportOpen(false)
-                        await queryClient.invalidateQueries(['event', event.id])
                         createNotification('Data imported', { type: 'success' })
                     }}>
                     <DialogContentText>

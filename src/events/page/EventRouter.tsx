@@ -34,16 +34,12 @@ export const EventRouter = () => {
         return <>Error? {JSON.stringify(event, null, 4)}</>
     }
 
-    const eventUpdated = async () => {
-        return event.refetch()
-    }
-
     const eventData = event.data as Event
     const defaultRedirect = eventData.dates.start && eventData.tracks.length ? '/schedule' : '/settings'
 
     return (
         <NestedRoutes base={`/events/${params?.eventId}`}>
-            <EventLayout event={eventData} eventUpdated={eventUpdated}>
+            <EventLayout event={eventData}>
                 <Route path="/sponsors">
                     <EventSponsors event={eventData} />
                 </Route>
@@ -70,7 +66,7 @@ export const EventRouter = () => {
                 </Switch>
 
                 <Route path="/speakers">
-                    <EventSpeakers event={eventData} eventUpdated={eventUpdated} />
+                    <EventSpeakers event={eventData} />
                 </Route>
                 <Route path="/speakers/new">
                     <NewSpeaker event={eventData} />
@@ -82,7 +78,7 @@ export const EventRouter = () => {
                     <EventSchedule event={eventData} />
                 </Route>
                 <Route path="/settings">
-                    <EventSettings event={eventData} eventUpdated={eventUpdated} />
+                    <EventSettings event={eventData} />
                 </Route>
                 <Route path="/">
                     <Redirect to={defaultRedirect} />

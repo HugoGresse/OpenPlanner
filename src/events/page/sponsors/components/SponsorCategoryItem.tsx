@@ -5,8 +5,6 @@ import { SponsorItem } from './SponsorItem'
 import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
 import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
-import { queryClient } from '../../../../App'
-import { sponsorKeys } from '../../../../services/hooks/queriesKeys'
 
 export type SponsorCategoryProps = {
     category: SponsorCategory
@@ -33,7 +31,6 @@ export const SponsorCategoryItem = ({ category, eventId }: SponsorCategoryProps)
                             await mutation.mutateAsync({
                                 sponsors: category.sponsors.filter((s) => s.id !== sponsor.id),
                             } as unknown as SponsorCategory)
-                            await queryClient.invalidateQueries(sponsorKeys.all(eventId))
                         }}
                     />
                 ))}

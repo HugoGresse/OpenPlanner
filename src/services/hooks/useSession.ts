@@ -1,19 +1,18 @@
-import { UseQueryResult } from 'react-query'
-import { useFirestoreDocumentData } from '@react-query-firebase/firestore'
 import { collections } from '../firebase'
 import { useSpeakersMap } from './useSpeakersMap'
 import { doc } from 'firebase/firestore'
 import { Session } from '../../types'
+import { useFirestoreDocument, UseQueryResult } from './firebaseQueryHook'
 
 export const useSession = (eventId: string, sessionId: string): UseQueryResult<Session> => {
     const sp = useSpeakersMap(eventId)
 
-    const s = useFirestoreDocumentData(['session', eventId, sessionId], doc(collections.sessions(eventId), sessionId))
+    const s = useFirestoreDocument(doc(collections.sessions(eventId), sessionId))
 
     if (sp.data && s.data) {
         s.data = {
             ...s.data,
-            speakersData: s.data?.speakers.map((speakerId) => sp.data[speakerId]),
+            speakersData: s.data?.speakers.map((speakerId) => (sp.data ? sp.data[speakerId] : undefined)),
         } as Session
         return s as UseQueryResult<Session>
     }

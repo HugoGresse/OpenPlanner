@@ -1,8 +1,7 @@
-import { UseQueryResult } from 'react-query'
 import { DocumentData, query } from '@firebase/firestore'
-import { useFirestoreQueryData } from '@react-query-firebase/firestore'
 import { conferenceHallCollections } from '../firebase/conferenceHallFirebase'
+import { useFirestoreCollection, UseQueryResult } from '../../services/hooks/firebaseQueryHook'
 
 export const useConferenceHallProposals = (eventId: string): UseQueryResult<DocumentData> => {
-    return useFirestoreQueryData(['ch-proposals', eventId], query(conferenceHallCollections.proposals(eventId)))
+    return useFirestoreCollection(query(conferenceHallCollections.proposals(eventId)))
 }
