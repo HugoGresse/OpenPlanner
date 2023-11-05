@@ -1,4 +1,4 @@
-import { ConferenceHallProposal, ConferenceHallSpeaker, Format, Session, Speaker, SpeakerSocial } from '../../../types'
+import { ConferenceHallProposal, ConferenceHallSpeaker, Format, Session, Social, Speaker } from '../../../types'
 import { slugify } from '../../../utils/slugify'
 
 export const mapConferenceHallSpeakerToOpenPlanner = (
@@ -13,7 +13,7 @@ export const mapConferenceHallSpeakerToOpenPlanner = (
             errors.push('Missing speaker: ' + chSpeakerId)
             continue
         }
-        const socials: SpeakerSocial[] = []
+        const socials: Social[] = []
         if (chSpeaker.twitter) {
             socials.push({
                 icon: 'twitter',
