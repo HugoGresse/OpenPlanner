@@ -1,46 +1,52 @@
 import * as React from 'react'
-import { Event, Sponsor } from '../../../../types'
+import { Event, TeamMember } from '../../../../types'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { ImageTextFieldElement } from '../../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../../components/form/SaveShortcut'
 
-export type SponsorFormProps = {
+export type MemberFormProps = {
     event: Event
-    sponsor?: Sponsor
-    onSubmit: (sponsor: Sponsor) => void
+    member?: TeamMember
+    onSubmit: (member: TeamMember) => void
 }
-export const SponsorForm = ({ event, sponsor, onSubmit }: SponsorFormProps) => {
+export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
     const formContext = useForm({
-        defaultValues: sponsor
-            ? sponsor
+        defaultValues: member
+            ? member
             : {
                   name: '',
-                  logoUrl: '',
-                  website: undefined,
+                  photoUrl: '',
+                  role: '',
               },
     })
     const { formState } = formContext
-
     const isSubmitting = formState.isSubmitting
 
     return (
         <FormContainer
             formContext={formContext}
             onSuccess={async (data) => {
+                if (member) {
+                    return onSubmit({
+                        id: member?.id,
+                        name: data.name,
+                        role: data.role,
+                        photoUrl: data.photoUrl,
+                    } as TeamMember)
+                }
                 return onSubmit({
-                    id: sponsor?.id || '',
                     name: data.name,
-                    logoUrl: data.logoUrl,
-                    website: data.website || null,
-                } as Sponsor)
+                    role: data.role,
+                    photoUrl: data.photoUrl,
+                } as TeamMember)
             }}>
             <Grid container spacing={4}>
                 <Grid item xs={12} md={6}>
                     <TextFieldElement
                         margin="dense"
-                        required={!!sponsor}
+                        required={!!member}
                         fullWidth
                         label="ID"
                         name="id"
@@ -58,26 +64,25 @@ export const SponsorForm = ({ event, sponsor, onSubmit }: SponsorFormProps) => {
                         variant="filled"
                         disabled={isSubmitting}
                     />
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        required={false}
+                        label="Role"
+                        name="role"
+                        variant="filled"
+                        disabled={isSubmitting}
+                    />
 
                     <ImageTextFieldElement
                         event={event}
                         margin="dense"
                         fullWidth
-                        required={true}
-                        label="Logo Url"
-                        name="logoUrl"
+                        required={false}
+                        label="Photo URL"
+                        name="photoUrl"
                         variant="filled"
                         disabled={isSubmitting}
-                    />
-
-                    <TextFieldElement
-                        margin="dense"
-                        fullWidth
-                        label="Website"
-                        name="website"
-                        variant="filled"
-                        disabled={isSubmitting}
-                        type="url"
                     />
                 </Grid>
             </Grid>
@@ -90,9 +95,10 @@ export const SponsorForm = ({ event, sponsor, onSubmit }: SponsorFormProps) => {
                     fullWidth
                     variant="contained"
                     sx={{ mt: 2, mb: 2 }}>
-                    {sponsor ? 'Save' : 'Add sponsor'}
+                    {member ? 'Save' : 'Add member'}
                 </LoadingButton>
             </Grid>
+
             <SaveShortcut />
         </FormContainer>
     )
