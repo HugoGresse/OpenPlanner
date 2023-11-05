@@ -1,4 +1,4 @@
-import { Event, NewEvent, Session, Speaker, SponsorCategory } from '../types'
+import { Event, NewEvent, Session, Speaker, SponsorCategory, TeamMember } from '../types'
 import { FirestoreDataConverter } from '@firebase/firestore'
 import { DateTime } from 'luxon'
 
@@ -72,5 +72,19 @@ export const sponsorsConverter: FirestoreDataConverter<SponsorCategory | Omit<Sp
     },
     toFirestore(category: Omit<SponsorCategory, 'id'>) {
         return category
+    },
+}
+
+export const teamConverter: FirestoreDataConverter<TeamMember> = {
+    fromFirestore(snapshot): TeamMember {
+        const data = snapshot.data()
+
+        return {
+            id: snapshot.id,
+            ...data,
+        } as TeamMember
+    },
+    toFirestore(member: TeamMember) {
+        return member
     },
 }

@@ -134,6 +134,13 @@ export interface SponsorCategory {
     sponsors: Sponsor[]
 }
 
+export interface TeamMember {
+    id: string
+    name: string
+    role: string
+    photoUrl: string | null
+}
+
 export interface ConferenceHallEvent {
     id: string
     name: string

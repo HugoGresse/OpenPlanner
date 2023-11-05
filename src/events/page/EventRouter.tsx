@@ -8,9 +8,6 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQ
 import { Event } from '../../types'
 import { SuspenseLoader } from '../../components/SuspenseLoader'
 
-const EventSponsors = lazy(() =>
-    import('./sponsors/EventSponsors').then((module) => ({ default: module.EventSponsors }))
-)
 const EventSettings = lazy(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
 )
@@ -27,8 +24,15 @@ const EventSpeakers = lazy(() =>
 const EventSpeaker = lazy(() => import('./speakers/EventSpeaker').then((module) => ({ default: module.EventSpeaker })))
 const NewSession = lazy(() => import('./sessions/NewSession').then((module) => ({ default: module.NewSession })))
 const NewSpeaker = lazy(() => import('./speakers/NewSpeaker').then((module) => ({ default: module.NewSpeaker })))
+const EventSponsors = lazy(() =>
+    import('./sponsors/EventSponsors').then((module) => ({ default: module.EventSponsors }))
+)
 const NewSponsor = lazy(() => import('./sponsors/NewSponsor').then((module) => ({ default: module.NewSponsor })))
 const Sponsor = lazy(() => import('./sponsors/Sponsor').then((module) => ({ default: module.Sponsor })))
+
+const EventTeam = lazy(() => import('./team/EventTeam').then((module) => ({ default: module.EventTeam })))
+const NewMember = lazy(() => import('./team/NewMember').then((module) => ({ default: module.NewMember })))
+const EventMember = lazy(() => import('./team/EventMember').then((module) => ({ default: module.EventMember })))
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -67,6 +71,24 @@ export const EventRouter = () => {
                     <Route path="/sponsors/:id">
                         <Suspense fallback={<SuspenseLoader />}>
                             <Sponsor event={eventData} />
+                        </Suspense>
+                    </Route>
+                </Switch>
+
+                <Route path="/team">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventTeam event={eventData} />
+                    </Suspense>
+                </Route>
+                <Switch>
+                    <Route path="/team/new">
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <NewMember event={eventData} />
+                        </Suspense>
+                    </Route>
+                    <Route path="/team/:id">
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <EventMember event={eventData} />
                         </Suspense>
                     </Route>
                 </Switch>

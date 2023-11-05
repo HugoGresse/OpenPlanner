@@ -1,7 +1,14 @@
 import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import * as React from 'react'
 import { Icon } from '@mdi/react'
-import { mdiAccountVoice, mdiCalendarWeekend, mdiCashMultiple, mdiCogBox, mdiPresentation } from '@mdi/js'
+import {
+    mdiAccountMultiple,
+    mdiAccountVoice,
+    mdiCalendarWeekend,
+    mdiCashMultiple,
+    mdiCogBox,
+    mdiPresentation,
+} from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
 
@@ -25,6 +32,11 @@ export const Menu = [
         href: '/sponsors',
         icon: mdiCashMultiple,
         name: 'Sponsors',
+    },
+    {
+        href: '/team',
+        icon: mdiAccountMultiple,
+        name: 'Team',
     },
     {
         href: '/sessions',

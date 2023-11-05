@@ -25,6 +25,10 @@ service cloud.firestore {
                 allow read: if authenticated() && isAdmin(eventData(eventId));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
+            match /team/{memberId} {
+                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow write: if authenticated() && isAdmin(eventData(eventId));
+            }
             match /schedule/{scheduleId} {
                 allow read: if authenticated() && isAdmin(eventData(eventId));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
