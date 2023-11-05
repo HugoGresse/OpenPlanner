@@ -3,11 +3,13 @@ import { getSessions } from '../sessions/getSessions'
 import { getSpeakers } from '../getSpeakers'
 import { getSponsors } from '../getSponsors'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
+import { getTeam } from '../getTeam'
 
 export const generateStaticJson = async (event: Event) => {
     const sessions = await getSessions(event.id)
     const speakers = await getSpeakers(event.id)
     const sponsors = await getSponsors(event.id)
+    const team = await getTeam(event.id)
 
     const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
 
@@ -85,6 +87,7 @@ export const generateStaticJson = async (event: Event) => {
         })),
         sessions: outputSessions,
         sponsors: outputSponsor,
+        team: team,
         generatedAt: new Date().toISOString(),
     }
     const outputPrivate = {
@@ -92,6 +95,7 @@ export const generateStaticJson = async (event: Event) => {
         speakers: speakers,
         sessions: outputSessionsPrivate,
         sponsors: outputSponsor,
+        team: team,
         generatedAt: new Date().toISOString(),
     }
 
