@@ -10,6 +10,7 @@ import { collections } from '../../services/firebase'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { NewEvent } from '../../types'
 import { serverTimestamp } from 'firebase/firestore'
+import { useNotification } from '../../hooks/notificationHook'
 
 export type NewEventDialogProps = {
     isOpen: boolean
@@ -25,6 +26,7 @@ const schema = yup
 export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
     const userId = useSelector(selectUserIdOpenPlanner)
 
+    const { createNotification } = useNotification()
     const formContext = useForm()
     const { formState } = formContext
 
@@ -66,8 +68,8 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                             onClose(eventId)
                         })
                         .catch((error: Error) => {
+                            createNotification('Error while creating event: ' + error.message, { type: 'error' })
                             console.error('error creating event', error)
-                            alert('Error creating event: ' + error.message)
                         })
                 }}>
                 <DialogContent>

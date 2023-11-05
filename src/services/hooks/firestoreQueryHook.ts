@@ -60,9 +60,7 @@ export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = 
     }, [])
 
     useEffect(() => {
-        const unsubFunc = load()
-
-        return unsubFunc
+        return load()
     }, [load])
 
     return {
@@ -82,9 +80,15 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
     const isError = error !== ''
 
     const docTransformer = (querySnapshot: DocumentSnapshot<T, DocumentData>) => {
+        const d = querySnapshot.data()
+
+        if (d === undefined) {
+            return
+        }
+
         setData({
             id: querySnapshot.id,
-            ...(querySnapshot.data() as T),
+            ...(d as T),
         })
     }
 
@@ -114,9 +118,7 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
     }, [])
 
     useEffect(() => {
-        const unsubFunc = load()
-
-        return unsubFunc
+        return load()
     }, [])
 
     return {

@@ -190,9 +190,9 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     handleAccept={async () => {
                         await deleteSessionsAndSpeakers(event, false)
                         await documentDeletion.mutate()
-                        setLocation('../../')
                         setDeleteOpen(false)
                         createNotification('Event deleted', { type: 'success' })
+                        setLocation('../../')
                     }}>
                     <DialogContentText id="alert-dialog-description">
                         {' '}
