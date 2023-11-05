@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
@@ -9,13 +9,11 @@ import * as yup from 'yup'
 import { TrackFields } from './components/TrackFields'
 import { WebhooksFields } from './components/WebhooksFields'
 import { collections } from '../../../services/firebase'
-import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
 import { diffDays } from '../../../utils/dates/diffDays'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { useLocation } from 'wouter'
-import { queryClient } from '../../../App'
 import { FormatsFields } from './components/FormatsFields'
 import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
 import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImportSessionsSpeakersFromConferenceHall'
@@ -24,6 +22,10 @@ import { useNotification } from '../../../hooks/notificationHook'
 import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
 import { EventApiFilePaths } from './components/EventAPIFilePaths'
 import { CategoriesFields } from './components/CategoriesFields'
+import {
+    useFirestoreDocumentDeletion,
+    useFirestoreDocumentMutation,
+} from '../../../services/hooks/firestoreMutationHooks'
 
 const schema = yup
     .object({
@@ -43,18 +45,15 @@ const convertInputEvent = (event: Event): EventForForm => {
 
 export type EventSettingsProps = {
     event: Event
-    eventUpdated: () => Promise<any>
 }
-export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
+export const EventSettings = ({ event }: EventSettingsProps) => {
     const [_, setLocation] = useLocation()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [reImportOpen, setReimportOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const { createNotification } = useNotification()
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
-    const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id), {
-        merge: true,
-    })
+    const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
 
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
@@ -63,17 +62,18 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
 
+    useEffect(() => {
+        reset(convertInputEvent(event))
+    }, [event])
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <FormContainer
                 formContext={formContext}
+                // @ts-ignore
                 resolver={yupResolver(schema)}
                 onSuccess={async (data) => {
-                    return mutation.mutateAsync(mapEventSettingsFormToMutateObject(event, data), {
-                        async onSuccess() {
-                            eventUpdated().then((result) => reset(convertInputEvent(result.data)))
-                        },
-                    })
+                    return mutation.mutate(mapEventSettingsFormToMutateObject(event, data))
                 }}>
                 <Typography component="h1" variant="h5">
                     Event settings
@@ -192,7 +192,6 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                         await documentDeletion.mutate()
                         setLocation('../../')
                         setDeleteOpen(false)
-                        await queryClient.invalidateQueries('events')
                         createNotification('Event deleted', { type: 'success' })
                     }}>
                     <DialogContentText id="alert-dialog-description">
@@ -218,7 +217,6 @@ export const EventSettings = ({ event, eventUpdated }: EventSettingsProps) => {
                         await reImportSessionsSpeakersFromConferenceHall(event)
                         setLoading(false)
                         setReimportOpen(false)
-                        await queryClient.invalidateQueries(['event', event.id])
                         createNotification('Data imported', { type: 'success' })
                     }}>
                     <DialogContentText>

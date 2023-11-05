@@ -2,8 +2,8 @@ import { ConferenceHallProposal, ConferenceHallProposalState } from '../../types
 import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { randomEnum } from '../../utils/getRandomEnum'
-import { UseQueryResult } from 'react-query'
 import { DocumentData } from '@firebase/firestore'
+import { UseQueryResult } from '../../services/hooks/firestoreQueryHook'
 
 export const useFakeConferenceHallProposals = (eventId: string, count = 150): UseQueryResult<DocumentData> => {
     const [proposals, setProposals] = useState<ConferenceHallProposal[]>([])

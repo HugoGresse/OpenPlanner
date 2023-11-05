@@ -131,8 +131,6 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     isOpen={sessionsImportOpen}
                     onClose={() => {
                         setSessionsImportOpen(false)
-                        // noinspection JSIgnoredPromiseFromCall
-                        sessions.refetch()
                     }}
                 />
             )}

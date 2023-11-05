@@ -1,9 +1,8 @@
-import { UseQueryResult } from 'react-query'
 import { collections } from '../firebase'
 import { doc, DocumentData } from '@firebase/firestore'
-import { useFirestoreDocumentData } from '@react-query-firebase/firestore'
+import { useFirestoreDocument, UseQueryResult } from './firestoreQueryHook'
 
 export const useEvent = (eventId?: string): UseQueryResult<DocumentData> => {
     const ref = doc(collections.events, eventId)
-    return useFirestoreDocumentData(['events', eventId], ref)
+    return useFirestoreDocument(ref, true)
 }

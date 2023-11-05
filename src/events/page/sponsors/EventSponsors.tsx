@@ -39,7 +39,6 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                 eventId={event.id}
                 onClose={() => {
                     setNewCategoryDialog(false)
-                    sponsors.refetch()
                 }}
             />
         </Container>

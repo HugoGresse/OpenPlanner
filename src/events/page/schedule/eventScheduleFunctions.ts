@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import { DEFAULT_SESSION_DURATION } from './scheduleConstants'
 import { updateSession } from '../../actions/sessions/updateSession'
 import { mapSessionToFirestoreSession } from '../../actions/sessions/mapSessionToFirestoreSession'
-import { UseQueryResult } from 'react-query'
+import { UseQueryResult } from '../../../services/hooks/firestoreQueryHook'
 
 export const onFullCalendarEventChange = (
     eventId: string,
@@ -47,5 +47,5 @@ export const onFullCalendarEventChange = (
         durationMinutes: durationMinutes,
     }
 
-    return updateSession(eventId, mapSessionToFirestoreSession(updateDocument)).then(() => sessions.refetch())
+    return updateSession(eventId, mapSessionToFirestoreSession(updateDocument))
 }

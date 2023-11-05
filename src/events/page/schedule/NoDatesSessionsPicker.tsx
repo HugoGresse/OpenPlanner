@@ -2,12 +2,12 @@ import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { Session } from '../../../types'
-import { UseQueryResult } from 'react-query'
 import { SessionCardMinHeight } from './scheduleConstants'
 import { DocumentData } from '@firebase/firestore'
 import { SessionDraggable } from './components/SessionDraggable'
 import { Draggable } from '@fullcalendar/interaction'
 import { useLocation } from 'wouter'
+import { UseQueryResult } from '../../../services/hooks/firestoreQueryHook'
 
 export type NoDatesSessionsPickerProps = {
     sessions: UseQueryResult<DocumentData>
@@ -64,7 +64,7 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
                 top: 0,
                 left: 12,
                 zIndex: 100,
-                backgroundColor: '#EEE',
+                backgroundColor: '#88888822',
                 height: SessionCardMinHeight,
                 minHeight: 150,
                 padding: 2,

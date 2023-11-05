@@ -3,9 +3,9 @@ import { Event } from '../../../types'
 import { Button, Card, Container, Typography } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
 import { EventSessionForm } from './EventSessionForm'
-import { useFirestoreCollectionMutation } from '@react-query-firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { useLocation } from 'wouter'
+import { useFirestoreCollectionMutation } from '../../../services/hooks/firestoreMutationHooks'
 
 export type NewEventProps = {
     event: Event
@@ -27,7 +27,7 @@ export const NewSession = ({ event }: NewEventProps) => {
                     event={event}
                     onSubmit={(session) => {
                         return mutation
-                            .mutateAsync({
+                            .mutate({
                                 ...session,
                                 tags: [],
                             })
@@ -38,7 +38,7 @@ export const NewSession = ({ event }: NewEventProps) => {
                 />
 
                 {mutation.isError && (
-                    <Typography color="error">Error while adding session: {mutation.error.message}</Typography>
+                    <Typography color="error">Error while adding session: {mutation.error?.message}</Typography>
                 )}
             </Card>
         </Container>

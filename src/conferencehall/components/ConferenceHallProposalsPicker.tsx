@@ -5,8 +5,8 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQ
 import { Box, Chip, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { DataGrid, GridColDef, GridToolbarQuickFilter, useGridApiContext } from '@mui/x-data-grid'
-import { UseQueryResult } from 'react-query'
 import { DocumentData } from '@firebase/firestore'
+import { UseQueryResult } from '../../services/hooks/firestoreQueryHook'
 
 const columns: GridColDef[] = [
     { field: 'title', headerName: 'Title', width: 350 },

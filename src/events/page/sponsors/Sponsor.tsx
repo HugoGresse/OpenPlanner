@@ -3,15 +3,13 @@ import { Event, Sponsor as SponsorType, SponsorCategory } from '../../../types'
 import { Box, Button, Card, Container, Link, Typography } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
 import { useLocation, useRoute } from 'wouter'
-import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { useSponsors } from '../../../services/hooks/useSponsors'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { SponsorForm } from './components/SponsorForm'
-import { queryClient } from '../../../App'
-import { sponsorKeys } from '../../../services/hooks/queriesKeys'
+import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreMutationHooks'
 
 export type SponsorProps = {
     event: Event
@@ -24,9 +22,7 @@ export const Sponsor = ({ event }: SponsorProps) => {
     const sponsorId = params?.sponsorId
     const categoryId = getQueryParams().categoryId
 
-    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(event.id), categoryId), {
-        merge: true,
-    })
+    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(event.id), categoryId))
 
     if (sponsors.isLoading || !sponsors.data) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
@@ -53,7 +49,7 @@ export const Sponsor = ({ event }: SponsorProps) => {
                     event={event}
                     sponsor={sponsor}
                     onSubmit={async (data) => {
-                        await mutation.mutateAsync({
+                        await mutation.mutate({
                             sponsors: allSponsor.map((s: SponsorType) => {
                                 if (s.id === sponsorId) {
                                     return data
@@ -61,7 +57,6 @@ export const Sponsor = ({ event }: SponsorProps) => {
                                 return s
                             }),
                         } as unknown as SponsorCategory)
-                        await queryClient.invalidateQueries(sponsorKeys.all(event.id))
                     }}
                 />
             </Card>

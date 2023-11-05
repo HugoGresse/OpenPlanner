@@ -7,15 +7,16 @@ import { useLocation, useRoute } from 'wouter'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ArrowBack, ChevronLeft, ChevronRight } from '@mui/icons-material'
 import { EventSpeakerForm } from './EventSpeakerForm'
-import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
-import { queryClient } from '../../../App'
-import { speakersKeys } from '../../../services/hooks/queriesKeys'
 import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
+import {
+    useFirestoreDocumentDeletion,
+    useFirestoreDocumentMutation,
+} from '../../../services/hooks/firestoreMutationHooks'
 
 export type EventSpeakerProps = {
     event: Event
@@ -27,10 +28,7 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
     const speakerId = params?.speakerId
     const [deleteOpen, setDeleteOpen] = useState(false)
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.speakers(event.id), speakerId))
-
-    const mutation = useFirestoreDocumentMutation(doc(collections.speakers(event.id), speakerId), {
-        merge: true,
-    })
+    const mutation = useFirestoreDocumentMutation(doc(collections.speakers(event.id), speakerId))
 
     if (!speakerId) {
         return null
@@ -85,11 +83,11 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                     event={event}
                     speaker={speaker}
                     onSubmit={(data) => {
-                        return mutation.mutateAsync(data).then(() => speakerResult.refetch())
+                        return mutation.mutate(data)
                     }}
                 />
                 {mutation.isError && (
-                    <Typography color="error">Error while saving speaker: {mutation.error.message}</Typography>
+                    <Typography color="error">Error while saving speaker: {mutation.error?.message}</Typography>
                 )}
             </Card>
             <Box mt={2}>
@@ -109,8 +107,6 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                 handleAccept={async () => {
                     await documentDeletion.mutate()
                     setDeleteOpen(false)
-                    await queryClient.invalidateQueries(speakersKeys.all(event.id))
-                    await queryClient.invalidateQueries(speakersKeys.map(event.id))
                     setLocation('/speakers')
                 }}>
                 <DialogContentText id="alert-dialog-description">

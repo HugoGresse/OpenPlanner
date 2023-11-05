@@ -4,18 +4,14 @@ import { SponsorCategory } from '../../../../types'
 import { SponsorItem } from './SponsorItem'
 import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
-import { useFirestoreDocumentMutation } from '@react-query-firebase/firestore'
-import { queryClient } from '../../../../App'
-import { sponsorKeys } from '../../../../services/hooks/queriesKeys'
+import { useFirestoreDocumentMutation } from '../../../../services/hooks/firestoreMutationHooks'
 
 export type SponsorCategoryProps = {
     category: SponsorCategory
     eventId: string
 }
 export const SponsorCategoryItem = ({ category, eventId }: SponsorCategoryProps) => {
-    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(eventId), category.id), {
-        merge: true,
-    })
+    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(eventId), category.id))
 
     return (
         <Box marginY={1}>
@@ -30,10 +26,9 @@ export const SponsorCategoryItem = ({ category, eventId }: SponsorCategoryProps)
                         sponsor={sponsor}
                         categoryId={category.id}
                         onDelete={async () => {
-                            await mutation.mutateAsync({
+                            await mutation.mutate({
                                 sponsors: category.sponsors.filter((s) => s.id !== sponsor.id),
                             } as unknown as SponsorCategory)
-                            await queryClient.invalidateQueries(sponsorKeys.all(eventId))
                         }}
                     />
                 ))}

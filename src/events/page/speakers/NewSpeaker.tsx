@@ -2,10 +2,10 @@ import * as React from 'react'
 import { Event, Speaker } from '../../../types'
 import { Button, Card, Container, Typography } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
-import { useFirestoreCollectionMutation } from '@react-query-firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { useLocation } from 'wouter'
 import { EventSpeakerForm } from './EventSpeakerForm'
+import { useFirestoreCollectionMutation } from '../../../services/hooks/firestoreMutationHooks'
 
 export type NewSpeakerProps = {
     event: Event
@@ -27,7 +27,7 @@ export const NewSpeaker = ({ event }: NewSpeakerProps) => {
                     event={event}
                     onSubmit={(speaker) => {
                         return mutation
-                            .mutateAsync({
+                            .mutate({
                                 name: speaker.name,
                                 bio: speaker.bio || null,
                                 email: speaker.email || null,
@@ -47,7 +47,7 @@ export const NewSpeaker = ({ event }: NewSpeakerProps) => {
                 />
 
                 {mutation.isError && (
-                    <Typography color="error">Error while adding speaker: {mutation.error.message}</Typography>
+                    <Typography color="error">Error while adding speaker: {mutation.error?.message}</Typography>
                 )}
             </Card>
         </Container>

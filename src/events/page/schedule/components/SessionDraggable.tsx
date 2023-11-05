@@ -21,6 +21,7 @@ export const SessionDraggable = ({ session, setLocation }: SessionDraggableProps
                 paddingY: 0.2,
                 paddingX: 0.5,
                 borderRadius: 2,
+                marginLeft: 1,
                 position: 'relative',
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {

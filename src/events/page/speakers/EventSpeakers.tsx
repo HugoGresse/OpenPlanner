@@ -12,7 +12,6 @@ import { useSessionsRaw } from '../../../services/hooks/useSessions'
 
 export type EventSpeakersProps = {
     event: Event
-    eventUpdated: () => Promise<any>
 }
 export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const speakers = useSpeakers(event.id)
@@ -95,8 +94,6 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     isOpen={updaterDialogOpen}
                     onClose={() => {
                         setUpdaterDialogOpen(false)
-                        // noinspection JSIgnoredPromiseFromCall
-                        speakers.refetch()
                     }}
                 />
             )}

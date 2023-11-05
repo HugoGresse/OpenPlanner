@@ -83,10 +83,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 export type EventLayoutProps = {
     children: React.ReactNode
     event: Event
-    eventUpdated: () => Promise<any>
 }
 
-export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps) => {
+export const EventLayout = ({ children, event }: EventLayoutProps) => {
     const dispatch = useAppDispatch()
     const [_, firstParams] = useRoute('/:routeName')
     const [__, subParams] = useRoute('/:routeName/:subRoute')
@@ -154,7 +153,6 @@ export const EventLayout = ({ children, event, eventUpdated }: EventLayoutProps)
                         onClick={async () => {
                             setLoading(true)
                             await updateWebsiteTriggerWebhooksAction(event, createNotification)
-                            await eventUpdated()
                             setLoading(false)
                         }}
                         sx={{
