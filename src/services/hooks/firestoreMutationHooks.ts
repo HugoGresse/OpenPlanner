@@ -16,7 +16,8 @@ export const useFirestoreCollectionMutation = (ref: CollectionReference): UseMut
         async (data: any) => {
             try {
                 setLoading(true)
-                await addDoc(ref, data)
+                const newRef = await addDoc(ref, data)
+                return newRef.id
             } catch (error: any) {
                 setError(error)
             }

@@ -190,9 +190,9 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     handleAccept={async () => {
                         await deleteSessionsAndSpeakers(event, false)
                         await documentDeletion.mutate()
-                        setLocation('../../')
                         setDeleteOpen(false)
                         createNotification('Event deleted', { type: 'success' })
+                        setLocation('../../')
                     }}>
                     <DialogContentText id="alert-dialog-description">
                         {' '}
@@ -200,9 +200,11 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     </DialogContentText>
                 </ConfirmDialog>
 
-                <Button color="warning" onClick={() => setReimportOpen(true)}>
-                    Re-import from ConferenceHall
-                </Button>
+                {!!event.conferenceHallId && (
+                    <Button color="warning" onClick={() => setReimportOpen(true)}>
+                        Re-import from ConferenceHall
+                    </Button>
+                )}
 
                 <ConfirmDialog
                     open={reImportOpen}

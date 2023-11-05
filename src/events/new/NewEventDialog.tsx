@@ -1,128 +1,101 @@
-import {
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Typography,
-} from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import * as React from 'react'
-import { useState } from 'react'
-import { RequireConferenceHallLogin } from '../../conferencehall/RequireConferenceHallLogin'
-import { ConferenceHallEventsPicker } from '../../conferencehall/ConferenceHallEventsPicker'
-import { ConferenceHallEvent } from '../../types'
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
-import { addNewEvent } from '../actions/addNewEvent'
 import { useSelector } from 'react-redux'
 import { selectUserIdOpenPlanner } from '../../auth/authReducer'
-import { ConferenceHallProposalsPickerConnected } from '../../conferencehall/components/ConferenceHallProposalsPickerConnected'
+import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import { useFirestoreCollectionMutation } from '../../services/hooks/firestoreMutationHooks'
+import { collections } from '../../services/firebase'
+import LoadingButton from '@mui/lab/LoadingButton'
+import { NewEvent } from '../../types'
+import { serverTimestamp } from 'firebase/firestore'
+import { useNotification } from '../../hooks/notificationHook'
 
 export type NewEventDialogProps = {
     isOpen: boolean
     onClose: (eventId: string | null) => void
 }
 
+const schema = yup
+    .object({
+        name: yup.string().required(),
+    })
+    .required()
+
 export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
     const userId = useSelector(selectUserIdOpenPlanner)
-    const [selectedConferenceHallEvent, setSelectedConferenceHallEvent] = useState<ConferenceHallEvent | null>(null)
-    const [status, setStatus] = useState('')
-    const [newResult, setNewResults] = useState<null | { eventId: string | null; errors: string[] }>(null)
 
-    const hasErrors = (newResult?.errors || []).length > 0
+    const { createNotification } = useNotification()
+    const formContext = useForm()
+    const { formState } = formContext
+
+    const mutation = useFirestoreCollectionMutation(collections.events)
 
     return (
         <Dialog open={isOpen} onClose={() => onClose(null)} maxWidth="md" fullWidth={true} scroll="body">
-            <DialogTitle>Import a new event from Conference Hall</DialogTitle>
-            <DialogContent>
-                <DialogContentText>
-                    To import an event from ConferenceHall.io, we first need to log in into ConferenceHall on your
-                    behalf. This is done client side, no credentials will be sent to our servers.
-                </DialogContentText>
+            <DialogTitle>New event creation</DialogTitle>
 
-                <Box display="flex" alignItems="center" marginY={2}>
-                    <Typography variant="h4">1. Login with Conference-Hall.io</Typography>
-                    <img src="/logos/conference-hall.png" alt="conference hall logo" width={70} />
-                </Box>
-
-                {(!newResult || hasErrors) && (
-                    <RequireConferenceHallLogin>
-                        {(conferenceHallUserId) => {
-                            return (
-                                <>
-                                    <Box display="flex" alignItems="center" marginY={2}>
-                                        <Typography variant="h4">2. Select the event you want to import</Typography>
-                                    </Box>
-                                    {selectedConferenceHallEvent ? (
-                                        <Typography variant="body1" sx={{ display: 'flex' }}>
-                                            <CheckCircleOutlineIcon color="success" /> Selected ConferenceHall event:{' '}
-                                            {selectedConferenceHallEvent.name}
-                                        </Typography>
-                                    ) : (
-                                        <ConferenceHallEventsPicker
-                                            onEventPicked={(event) => setSelectedConferenceHallEvent(event)}
-                                            userId={conferenceHallUserId}
-                                        />
-                                    )}
-                                    {selectedConferenceHallEvent && (
-                                        <>
-                                            <Box display="flex" alignItems="center" marginY={2}>
-                                                <Typography variant="h4">
-                                                    3. Select the proposals to import (optional)
-                                                </Typography>
-                                            </Box>
-                                            <ConferenceHallProposalsPickerConnected
-                                                conferenceHallEventId={selectedConferenceHallEvent.id}
-                                                chFormats={selectedConferenceHallEvent.formats}
-                                                onSubmit={async ({ formats, proposals }) => {
-                                                    setNewResults(null)
-                                                    const result = await addNewEvent(
-                                                        selectedConferenceHallEvent,
-                                                        userId,
-                                                        proposals,
-                                                        formats,
-                                                        setStatus
-                                                    )
-                                                    setNewResults({
-                                                        eventId: result[0],
-                                                        errors: result[1],
-                                                    })
-                                                    if (result[1].length === 0) {
-                                                        onClose(result[0])
-                                                    }
-
-                                                    return null
-                                                }}
-                                            />
-                                            <Typography variant="body1">{status}</Typography>
-                                        </>
-                                    )}
-                                </>
-                            )
-                        }}
-                    </RequireConferenceHallLogin>
-                )}
-
-                {hasErrors && newResult && (
-                    <>
-                        <Typography variant="h6">Error during creation: </Typography>
-                        <ul>
-                            {newResult.errors.map((error) => (
-                                <li key={error}>
-                                    <Typography>{error}</Typography>
-                                </li>
-                            ))}
-                        </ul>
-                        <Typography variant="h6">
-                            The event was still created though, you may want to close this dialog.
-                        </Typography>
-                    </>
-                )}
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={() => onClose(newResult?.eventId || null)}>Cancel</Button>
-            </DialogActions>
+            <FormContainer
+                formContext={formContext}
+                // @ts-ignore
+                resolver={yupResolver(schema)}
+                onSuccess={async (data) => {
+                    const newEventData: NewEvent = {
+                        name: data.name,
+                        owner: userId,
+                        members: [userId],
+                        scheduleVisible: true,
+                        conferenceHallId: null,
+                        dates: {
+                            start: null,
+                            end: null,
+                        },
+                        formats: [],
+                        categories: [],
+                        tracks: [],
+                        webhooks: [],
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                        files: null,
+                        statusBadgeImage: null,
+                        statusBadgeLink: null,
+                    }
+                    mutation
+                        .mutate(newEventData)
+                        .then((eventId: any) => {
+                            console.log('new event created', eventId)
+                            onClose(eventId)
+                        })
+                        .catch((error: Error) => {
+                            createNotification('Error while creating event: ' + error.message, { type: 'error' })
+                            console.error('error creating event', error)
+                        })
+                }}>
+                <DialogContent>
+                    <TextFieldElement
+                        margin="normal"
+                        required
+                        fullWidth
+                        id="name"
+                        label="Event name"
+                        name="name"
+                        variant="filled"
+                        disabled={formState.isSubmitting}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => onClose(null)}>Cancel</Button>
+                    <LoadingButton
+                        type="submit"
+                        disabled={formState.isSubmitting}
+                        loading={formState.isSubmitting}
+                        variant="contained"
+                        sx={{ mt: 2, mb: 2 }}>
+                        Create event
+                    </LoadingButton>
+                </DialogActions>
+            </FormContainer>
         </Dialog>
     )
 }
