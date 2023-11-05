@@ -200,9 +200,11 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     </DialogContentText>
                 </ConfirmDialog>
 
-                <Button color="warning" onClick={() => setReimportOpen(true)}>
-                    Re-import from ConferenceHall
-                </Button>
+                {!!event.conferenceHallId && (
+                    <Button color="warning" onClick={() => setReimportOpen(true)}>
+                        Re-import from ConferenceHall
+                    </Button>
+                )}
 
                 <ConfirmDialog
                     open={reImportOpen}
