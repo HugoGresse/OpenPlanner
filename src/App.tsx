@@ -1,14 +1,19 @@
 import * as React from 'react'
+import { lazy, Suspense } from 'react'
 import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material'
 import { Redirect, Route, Router, Switch } from 'wouter'
 import { RequireLogin } from './auth/RequireLogin'
 import { Provider } from 'react-redux'
 import { reduxStore } from './reduxStore'
-import { EventsScreen } from './events/list/EventsScreen'
 import { LinkBehavior } from './components/CCLink'
 import { LinkProps } from '@mui/material/Link'
 import { EventRouter } from './events/page/EventRouter'
 import { NotificationProvider } from './context/SnackBarProvider'
+import { SuspenseLoader } from './components/SuspenseLoader'
+
+const EventsScreen = lazy(() =>
+    import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
+)
 
 export const App = ({}) => {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
@@ -57,7 +62,9 @@ export const App = ({}) => {
                         <RequireLogin>
                             <Switch>
                                 <Route path="/">
-                                    <EventsScreen />
+                                    <Suspense fallback={<SuspenseLoader />}>
+                                        <EventsScreen />
+                                    </Suspense>
                                 </Route>
                                 <Route path="/events/">
                                     <Redirect to="/" />
