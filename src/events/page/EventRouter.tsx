@@ -1,22 +1,34 @@
 import * as React from 'react'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Redirect, Route, Switch, useRoute } from 'wouter'
 import { NestedRoutes } from '../../components/NestedRoutes'
 import { EventLayout } from './EventLayout'
 import { useEvent } from '../../services/hooks/useEvent'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { EventSponsors } from './sponsors/EventSponsors'
-import { EventSettings } from './settings/EventSettings'
 import { Event } from '../../types'
-import { EventSchedule } from './schedule/EventSchedule'
-import { EventSessions } from './sessions/list/EventSessions'
-import { EventSession } from './sessions/EventSession'
-import { EventSpeakers } from './speakers/EventSpeakers'
-import { EventSpeaker } from './speakers/EventSpeaker'
-import { NewSession } from './sessions/NewSession'
-import { NewSpeaker } from './speakers/NewSpeaker'
-import { NewSponsor } from './sponsors/NewSponsor'
-import { Sponsor } from './sponsors/Sponsor'
+import { SuspenseLoader } from '../../components/SuspenseLoader'
+
+const EventSponsors = lazy(() =>
+    import('./sponsors/EventSponsors').then((module) => ({ default: module.EventSponsors }))
+)
+const EventSettings = lazy(() =>
+    import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
+)
+const EventSchedule = lazy(() =>
+    import('./schedule/EventSchedule').then((module) => ({ default: module.EventSchedule }))
+)
+const EventSessions = lazy(() =>
+    import('./sessions/list/EventSessions').then((module) => ({ default: module.EventSessions }))
+)
+const EventSession = lazy(() => import('./sessions/EventSession').then((module) => ({ default: module.EventSession })))
+const EventSpeakers = lazy(() =>
+    import('./speakers/EventSpeakers').then((module) => ({ default: module.EventSpeakers }))
+)
+const EventSpeaker = lazy(() => import('./speakers/EventSpeaker').then((module) => ({ default: module.EventSpeaker })))
+const NewSession = lazy(() => import('./sessions/NewSession').then((module) => ({ default: module.NewSession })))
+const NewSpeaker = lazy(() => import('./speakers/NewSpeaker').then((module) => ({ default: module.NewSpeaker })))
+const NewSponsor = lazy(() => import('./sponsors/NewSponsor').then((module) => ({ default: module.NewSponsor })))
+const Sponsor = lazy(() => import('./sponsors/Sponsor').then((module) => ({ default: module.Sponsor })))
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -41,47 +53,69 @@ export const EventRouter = () => {
         <NestedRoutes base={`/events/${params?.eventId}`}>
             <EventLayout event={eventData}>
                 <Route path="/sponsors">
-                    <EventSponsors event={eventData} />
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventSponsors event={eventData} />
+                    </Suspense>
                 </Route>
 
                 <Switch>
                     <Route path="/sponsors/new">
-                        <NewSponsor event={eventData} />
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <NewSponsor event={eventData} />
+                        </Suspense>
                     </Route>
                     <Route path="/sponsors/:id">
-                        <Sponsor event={eventData} />
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <Sponsor event={eventData} />
+                        </Suspense>
                     </Route>
                 </Switch>
 
                 <Route path="/sessions">
-                    <EventSessions event={eventData} />
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventSessions event={eventData} />
+                    </Suspense>
                 </Route>
                 <Switch>
                     <Route path="/sessions/new">
-                        <NewSession event={eventData} />
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <NewSession event={eventData} />
+                        </Suspense>
                     </Route>
                     <Route path="/sessions/:id">
-                        <EventSession event={eventData} />
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <EventSession event={eventData} />
+                        </Suspense>
                     </Route>
                 </Switch>
 
                 <Route path="/speakers">
-                    <EventSpeakers event={eventData} />
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventSpeakers event={eventData} />
+                    </Suspense>
                 </Route>
                 <Switch>
                     <Route path="/speakers/new">
-                        <NewSpeaker event={eventData} />
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <NewSpeaker event={eventData} />
+                        </Suspense>
                     </Route>
                     <Route path="/speakers/:id">
-                        <EventSpeaker event={eventData} />
+                        <Suspense fallback={<SuspenseLoader />}>
+                            <EventSpeaker event={eventData} />
+                        </Suspense>
                     </Route>
                 </Switch>
 
                 <Route path="/schedule">
-                    <EventSchedule event={eventData} />
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventSchedule event={eventData} />
+                    </Suspense>
                 </Route>
                 <Route path="/settings">
-                    <EventSettings event={eventData} />
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventSettings event={eventData} />
+                    </Suspense>
                 </Route>
                 <Route path="/">
                     <Redirect to={defaultRedirect} />
