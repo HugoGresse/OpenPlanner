@@ -30,7 +30,7 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
         <FormContainer
             formContext={formContext}
             onSuccess={async (data) => {
-                const socials = (data.socials || []).filter((social) => social.link)
+                const socials = (data.socials || []).filter((social) => social.link && social.link.length)
                 const newData = {
                     name: data.name,
                     role: data.role,
