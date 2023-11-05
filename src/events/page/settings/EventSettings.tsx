@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
@@ -61,6 +61,10 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
     const { control, formState, reset, watch } = formContext
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
+
+    useEffect(() => {
+        reset(convertInputEvent(event))
+    }, [event])
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
