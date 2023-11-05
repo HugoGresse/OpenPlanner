@@ -2,14 +2,14 @@ import * as React from 'react'
 import { Box, IconButton, Typography } from '@mui/material'
 import { Control, TextFieldElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
-import { Social, Speaker } from '../../../types'
+import { Social, TeamMember } from '../../../../types'
 
-export type SpeakerSocialsFieldsProps = {
-    control: Control<Speaker, any>
+export type TeamSocialsFieldsProps = {
+    control: Control<TeamMember, any>
     isSubmitting: boolean
 }
-type SpeakerSocialsWithKey = Social & { key: string }
-export const SpeakerSocialFields = ({ control, isSubmitting }: SpeakerSocialsFieldsProps) => {
+type TeamSocialsWithKey = Social & { key: string }
+export const TeamSocialFields = ({ control, isSubmitting }: TeamSocialsFieldsProps) => {
     const { fields, append, remove } = useFieldArray({
         control,
         name: 'socials',
@@ -23,7 +23,7 @@ export const SpeakerSocialFields = ({ control, isSubmitting }: SpeakerSocialsFie
             </Typography>
 
             <Box paddingLeft={2}>
-                {fields.map((social: SpeakerSocialsWithKey, index) => (
+                {fields.map((social: TeamSocialsWithKey, index) => (
                     <Box display="flex" key={social.key}>
                         <TextFieldElement
                             id={social.key}

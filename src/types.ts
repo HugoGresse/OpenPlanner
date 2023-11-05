@@ -32,7 +32,7 @@ export interface DateTimeType {
     end: DateTime | null
 }
 
-export interface SpeakerSocial {
+export interface Social {
     name: string
     icon: string
     link: string
@@ -50,7 +50,7 @@ export interface Speaker {
     companyLogoUrl: string | null
     geolocation: string | null
     photoUrl: string | null
-    socials: SpeakerSocial[]
+    socials: Social[]
     note: string | null
 }
 
@@ -139,6 +139,7 @@ export interface TeamMember {
     name: string
     role: string
     photoUrl: string | null
+    socials?: Social[]
 }
 
 export interface ConferenceHallEvent {
