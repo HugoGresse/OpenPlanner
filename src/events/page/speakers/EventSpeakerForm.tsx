@@ -5,6 +5,7 @@ import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SpeakerSocialFields } from './SpeakerSocials'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
+import { SaveShortcut } from '../../../components/form/SaveShortcut'
 
 export type EventSpeakerFormProps = {
     event: Event
@@ -165,6 +166,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                     </LoadingButton>
                 </Grid>
             </Grid>
+            <SaveShortcut />
         </FormContainer>
     )
 }

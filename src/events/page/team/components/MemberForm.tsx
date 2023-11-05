@@ -4,6 +4,7 @@ import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { ImageTextFieldElement } from '../../../../components/form/ImageTextFieldElement'
+import { SaveShortcut } from '../../../../components/form/SaveShortcut'
 
 export type MemberFormProps = {
     event: Event
@@ -97,6 +98,8 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                     {member ? 'Save' : 'Add member'}
                 </LoadingButton>
             </Grid>
+
+            <SaveShortcut />
         </FormContainer>
     )
 }

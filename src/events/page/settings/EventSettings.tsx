@@ -26,6 +26,7 @@ import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
+import { SaveShortcut } from '../../../components/form/SaveShortcut'
 
 const schema = yup
     .object({
@@ -172,6 +173,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                         </Grid>
                     </Grid>
                 </Card>
+                {!deleteOpen && !reImportOpen && <SaveShortcut />}
             </FormContainer>
 
             <Box mt={2}>

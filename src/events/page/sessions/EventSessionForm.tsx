@@ -14,6 +14,7 @@ import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 import { useLocation } from 'wouter'
+import { SaveShortcut } from '../../../components/form/SaveShortcut'
 
 export type EventSessionFormProps = {
     event: Event
@@ -287,6 +288,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     </LoadingButton>
                 </Grid>
             </Grid>
+            <SaveShortcut />
         </FormContainer>
     )
 }

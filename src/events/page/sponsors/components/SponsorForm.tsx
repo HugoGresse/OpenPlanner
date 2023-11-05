@@ -4,6 +4,7 @@ import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { ImageTextFieldElement } from '../../../../components/form/ImageTextFieldElement'
+import { SaveShortcut } from '../../../../components/form/SaveShortcut'
 
 export type SponsorFormProps = {
     event: Event
@@ -92,6 +93,7 @@ export const SponsorForm = ({ event, sponsor, onSubmit }: SponsorFormProps) => {
                     {sponsor ? 'Save' : 'Add sponsor'}
                 </LoadingButton>
             </Grid>
+            <SaveShortcut />
         </FormContainer>
     )
 }
