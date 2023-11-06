@@ -19,6 +19,7 @@ export const Member = ({ event, member }: MemberProps) => {
             component="li"
             borderRadius={2}
             marginRight={1}
+            marginBottom={1}
             paddingY={1}
             bgcolor="#88888888"
             display="flex"

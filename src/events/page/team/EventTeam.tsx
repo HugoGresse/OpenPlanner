@@ -25,7 +25,16 @@ export const EventTeam = ({ event }: EventTeamProps) => {
                     <Button href={`/team/new`}>Add member</Button>
                 </Box>
             </Box>
-            <Card sx={{ padding: 2, minHeight: '50vh', display: 'flex', flexDirection: 'column', flexFlow: 'row' }}>
+            <Card
+                sx={{
+                    padding: 2,
+                    minHeight: '50vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexFlow: 'row',
+                    flexWrap: 'wrap',
+                    alignContent: 'flex-start',
+                }}>
                 {teamData.map((member: TeamMember) => (
                     <Member key={member.id} member={member} event={event} />
                 ))}
