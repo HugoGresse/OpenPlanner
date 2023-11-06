@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { SidePanel } from './SidePanel'
 import { useDropzone } from 'react-dropzone'
 import { SidePanelImageUploadForm } from './SidePanelImageUploadForm'
@@ -8,6 +8,7 @@ import { uploadImage } from '../../utils/images/uploadImage'
 import { Event } from '../../types'
 import { useController } from 'react-hook-form'
 import { useNotification } from '../../hooks/notificationHook'
+import { useClipboardImage } from '../form/useClipboardImage'
 
 export type SidePanelImageUploadProps = {
     event: Event
@@ -32,6 +33,17 @@ export const SidePanelImageUpload = ({
         preview: any
     } | null>(null)
     const [uploading, setUploading] = useState(false)
+
+    const imageFromClipboard = useClipboardImage(isOpen)
+
+    useEffect(() => {
+        if (imageFromClipboard && !upload) {
+            setUpload({
+                file: imageFromClipboard,
+                preview: URL.createObjectURL(imageFromClipboard),
+            })
+        }
+    }, [imageFromClipboard])
 
     const onSave = async () => {
         setUploading(true)
@@ -83,7 +95,7 @@ export const SidePanelImageUpload = ({
                 fieldName={fieldName}
                 onInputClick={open}
                 onSaveClick={onSave}
-                helpText="PNG or JPEG image, will be resized in the browser."
+                helpText="PNG or JPEG image, will be resized in the browser. You can also paste image directly from clipboard."
             />
         </SidePanel>
     )
