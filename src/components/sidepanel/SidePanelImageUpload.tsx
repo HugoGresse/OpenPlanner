@@ -95,7 +95,7 @@ export const SidePanelImageUpload = ({
                 fieldName={fieldName}
                 onInputClick={open}
                 onSaveClick={onSave}
-                helpText="PNG or JPEG image, will be resized in the browser."
+                helpText="PNG or JPEG image, will be resized in the browser. You can also paste image directly from clipboard."
             />
         </SidePanel>
     )
