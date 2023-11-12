@@ -1,7 +1,9 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import Fastify from 'fastify'
-import { sponsorsRoutes } from './sponsors/sponsors'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
+
+import { sponsorsRoutes } from './sponsors/sponsors'
+import { registerSwagger } from './swagger'
 
 const fastify = Fastify({
     logger: true,
@@ -12,6 +14,8 @@ fastify.addContentTypeParser('application/json', {}, (req, body, done) => {
     // @ts-ignore
     done(null, body.body)
 })
+
+registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
 
