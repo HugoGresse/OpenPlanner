@@ -104,6 +104,7 @@ export interface Event {
     webhooks: Webhooks[]
     createdAt: Date
     updatedAt: Date
+    apiKey: string | null
     files: EventFiles | null
     statusBadgeImage: string | null
     statusBadgeLink: string | null
@@ -114,6 +115,11 @@ export type EventForForm = Omit<Event, 'dates'> & {
         start: string | null
         end: string | null
     }
+}
+
+export type EventSettingForForm = {
+    webhooks: Webhooks[]
+    apiKey: string | null
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {

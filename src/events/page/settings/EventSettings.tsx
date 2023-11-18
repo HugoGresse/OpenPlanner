@@ -7,7 +7,6 @@ import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
 import * as yup from 'yup'
 import { TrackFields } from './components/TrackFields'
-import { WebhooksFields } from './components/WebhooksFields'
 import { collections } from '../../../services/firebase'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
@@ -20,7 +19,6 @@ import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImpo
 import { RequireConferenceHallLogin } from '../../../conferencehall/RequireConferenceHallLogin'
 import { useNotification } from '../../../hooks/notificationHook'
 import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
-import { EventApiFilePaths } from './components/EventAPIFilePaths'
 import { CategoriesFields } from './components/CategoriesFields'
 import {
     useFirestoreDocumentDeletion,
@@ -123,41 +121,6 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                             {days ? days + ' day(s)' : ''}
 
                             <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Typography variant="h6" margin={0}>
-                                Deployments
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
-
-                            {/*<TextFieldElement*/}
-                            {/*    margin="dense"*/}
-                            {/*    size="small"*/}
-                            {/*    fullWidth*/}
-                            {/*    id="statusBadgeImage"*/}
-                            {/*    label="Status Badge Image (URL)"*/}
-                            {/*    name="statusBadgeImage"*/}
-                            {/*    variant="filled"*/}
-                            {/*    type="url"*/}
-                            {/*    disabled={formState.isSubmitting}*/}
-                            {/*/>*/}
-                            {/*<TextFieldElement*/}
-                            {/*    margin="dense"*/}
-                            {/*    size="small"*/}
-                            {/*    fullWidth*/}
-                            {/*    id="statusBadgeLink"*/}
-                            {/*    label="Status Badge Link (job)"*/}
-                            {/*    name="statusBadgeLink"*/}
-                            {/*    variant="filled"*/}
-                            {/*    type="url"*/}
-                            {/*    disabled={formState.isSubmitting}*/}
-                            {/*/>*/}
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <EventApiFilePaths event={event} />
                         </Grid>
 
                         <Grid item xs={12}>
