@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
+import { apiKeyPlugin } from '../apiKeyPlugin'
 
 export const Sponsor = Type.Object({
     name: Type.String(),
@@ -11,8 +12,8 @@ export const Sponsor = Type.Object({
 export type SponsorType = Static<typeof Sponsor>
 
 export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.post<{ Body: SponsorType; Reply: SponsorType }>(
-        '/v1/sponsors',
+    fastify.register(apiKeyPlugin).post<{ Body: SponsorType; Reply: SponsorType }>(
+        '/v1/:eventId/sponsors',
         {
             schema: {
                 body: Sponsor,

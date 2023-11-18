@@ -3,9 +3,11 @@
         "module": "commonjs",
         "noImplicitReturns": true,
         "noUnusedLocals": true,
+        "esModuleInterop": true,
         "outDir": "lib",
         "sourceMap": true,
         "strict": true,
+        "declaration": true,
         "target": "es2020",
         "typeRoots": ["./node_modules/@types"]
     },

@@ -1,9 +1,18 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import Fastify from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-
+import fastifyFirebase from '@now-ims/fastify-firebase'
 import { sponsorsRoutes } from './sponsors/sponsors'
 import { registerSwagger } from './swagger'
+import { app as firebaseApp } from 'firebase-admin'
+
+type Firebase = firebaseApp.App
+
+declare module 'fastify' {
+    interface FastifyInstance {
+        firebase: Firebase
+    }
+}
 
 const fastify = Fastify({
     logger: true,
@@ -15,6 +24,7 @@ fastify.addContentTypeParser('application/json', {}, (req, body, done) => {
     done(null, body.body)
 })
 
+fastify.register(fastifyFirebase)
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
