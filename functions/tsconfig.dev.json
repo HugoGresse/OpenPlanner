@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
+        "target": "es2022",
         "noImplicitReturns": true,
         "noUnusedLocals": true,
         "esModuleInterop": true,
@@ -8,7 +9,6 @@
         "sourceMap": true,
         "strict": true,
         "declaration": true,
-        "target": "es2020",
         "typeRoots": ["./node_modules/@types"]
     },
     "include": [".eslintrc.js"]

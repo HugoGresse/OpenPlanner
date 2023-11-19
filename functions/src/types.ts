@@ -1,4 +1,6 @@
-import { Timestamp } from 'firebase-admin/lib/firestore/'
+import firebase from 'firebase-admin'
+
+type Timestamp = firebase.firestore.Timestamp
 
 export interface Track {
     id: string
@@ -105,17 +107,19 @@ export interface Event {
     statusBadgeLink: string | null
 }
 
-export interface Sponsor {
+export interface SponsorResponse {
     id: string
     name: string
     logoUrl: string
-    website: string | null
+    website: string | undefined
+    categoryId: string
+    categoryName: string
 }
 
 export interface SponsorCategory {
     id: string
     name: string
-    sponsors: Sponsor[]
+    sponsors: SponsorResponse[]
 }
 
 export interface TeamMember {

@@ -1,10 +1,12 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import Fastify from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-import fastifyFirebase from '@now-ims/fastify-firebase'
-import { sponsorsRoutes } from './sponsors/sponsors'
 import { registerSwagger } from './swagger'
 import { app as firebaseApp } from 'firebase-admin'
+import { firebasePlugin } from './dao/firebasePlugin'
+
+import { sponsorsRoutes } from './sponsors/sponsors'
+import { filesRoutes } from './file/files'
 
 type Firebase = firebaseApp.App
 
@@ -14,32 +16,39 @@ declare module 'fastify' {
     }
 }
 
+const isDev = !!(process.env.FUNCTIONS_EMULATOR && process.env.FUNCTIONS_EMULATOR === 'true')
+
 const fastify = Fastify({
-    logger: true,
+    logger: isDev,
 }).withTypeProvider<TypeBoxTypeProvider>()
 
 // For serverless compatibility
 fastify.addContentTypeParser('application/json', {}, (req, body, done) => {
-    // @ts-ignore
-    done(null, body.body)
+    done(null, (body as any).body)
+})
+fastify.addContentTypeParser('multipart/form-data', {}, (req, body, done) => {
+    done(null, req)
 })
 
-fastify.register(fastifyFirebase)
+fastify.register(firebasePlugin)
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
+fastify.register(filesRoutes)
 
 fastify.get('/', function (request, reply) {
     reply.send({ hello: 'world ' + Date.now() })
 })
 
-fastify.listen({ port: 3000 }, function (err, address) {
-    if (err) {
-        fastify.log.error(err)
-        process.exit(1)
-    }
-    // Server is now listening on ${address}
-})
+if (process.env.FUNCTIONS_EMULATOR) {
+    fastify.listen({ port: 3000 }, function (err, address) {
+        if (err) {
+            fastify.log.error(err)
+            process.exit(1)
+        }
+        // Server is now listening on ${address}
+    })
+}
 
 export const fastifyFunction = onRequest(async (request, reply) => {
     fastify.ready((error) => {
