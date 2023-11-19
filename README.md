@@ -13,7 +13,7 @@ A website to
     -   private notes for speaker, email, phone
     -   tracks / rooms
 -   manage sponsors & categories
--   API & webhooks
+-   [API](https://api.openplanner.fr/) & webhooks
 
 ## Dev guidelines
 

@@ -7,14 +7,14 @@ export const registerSwagger = (fastify: FastifyInstance) => {
             info: {
                 title: 'OpenPlanner API',
             },
-            host: 'https://openplanner.fr/api',
+            host: 'https://api.openplanner.fr/',
             schemes: ['https'],
             consumes: ['application/json'],
             produces: ['application/json'],
         },
     })
     fastify.register(FastifySwaggerUi, {
-        routePrefix: '/docs',
+        routePrefix: '/',
         uiConfig: {
             docExpansion: 'full',
             deepLinking: false,

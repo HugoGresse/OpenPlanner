@@ -36,7 +36,7 @@ registerSwagger(fastify)
 fastify.register(sponsorsRoutes)
 fastify.register(filesRoutes)
 
-fastify.get('/', function (request, reply) {
+fastify.get('/hello', function (request, reply) {
     reply.send({ hello: 'world ' + Date.now() })
 })
 

@@ -9,7 +9,6 @@ export const Sponsor = Type.Object({
     categoryName: Type.String(),
     website: Type.Optional(Type.String({ format: 'uri' })),
     logoUrl: Type.Optional(Type.String({ format: 'uri' })),
-    logo: Type.Optional(Type.String({ format: 'uri' })),
 })
 
 export type SponsorType = Static<typeof Sponsor>
@@ -32,7 +31,11 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
 
             const sponsor = await SponsorDao.getSponsor(fastify.firebase, eventId, request.body.categoryId, sponsorId)
 
-            reply.status(201).send(sponsor)
+            reply.status(201).send({
+                ...sponsor,
+                categoryId: request.body.categoryId,
+                categoryName: request.body.categoryName,
+            })
         }
     )
     done()

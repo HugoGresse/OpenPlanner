@@ -49,8 +49,6 @@ export const API = ({ event }: APIProps) => {
                 // @ts-ignore
                 resolver={yupResolver(schema)}
                 onSuccess={async (data) => {
-                    console.log(data)
-
                     return mutation.mutate(mapEventDevSettingsFormToMutateObject(event, data))
                 }}>
                 <Card sx={{ padding: 2 }}>
@@ -64,7 +62,7 @@ export const API = ({ event }: APIProps) => {
                             <Typography fontWeight="600" mt={2}>
                                 Dynamic API (slow, not cached, read/write, work in progress)
                             </Typography>
-                            <Typography fontWeight="600" mt={2} component="a" href="https://openplanner.fr/api/docs">
+                            <Typography fontWeight="600" mt={2} component="a" href="https://api.openplanner.fr/">
                                 Docs
                             </Typography>
                             <TextFieldElementWithGenerateApiKeyButton
