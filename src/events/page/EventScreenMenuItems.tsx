@@ -4,6 +4,7 @@ import { Icon } from '@mdi/react'
 import {
     mdiAccountMultiple,
     mdiAccountVoice,
+    mdiApi,
     mdiCalendarWeekend,
     mdiCashMultiple,
     mdiCogBox,
@@ -57,6 +58,11 @@ export const Menu = [
         href: '/settings',
         icon: mdiCogBox,
         name: 'Settings',
+    },
+    {
+        href: '/api',
+        icon: mdiApi,
+        name: 'API & Deploys',
     },
 ]
 

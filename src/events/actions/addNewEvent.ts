@@ -53,6 +53,7 @@ const addNewEventInternal = async (
             id: e.id,
             color: randomColor(),
         })),
+        apiKey: null,
         scheduleVisible: true,
         webhooks: [],
         createdAt: serverTimestamp(),

@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import { Event } from '../../../../types'
 import { Box, CircularProgress, Typography } from '@mui/material'
 import { getUploadFilePathFromEvent } from '../../../actions/updateWebsiteActions/getFilesNames'
+import { TypographyCopyable } from '../../../../components/TypographyCopyable'
 
 export type EventApiFilePathsProps = {
     event: Event
 }
-export const EventApiFilePaths = ({ event }: EventApiFilePathsProps) => {
+export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
     const [filesPath, setFilesPaths] = useState<{
         public: null | string
         private: null | string
@@ -43,16 +44,23 @@ export const EventApiFilePaths = ({ event }: EventApiFilePathsProps) => {
     return (
         <Box>
             <Typography fontWeight="600" mt={2}>
-                API URLs
+                Static APIs (very fast, cached, read only)
             </Typography>
             {filesPath.public ? (
                 <Box>
                     <Typography>Public (no private information):</Typography>
-                    <Typography variant="caption">{filesPath.public}</Typography>
+                    <TypographyCopyable>{filesPath.public}</TypographyCopyable>
                     <Typography>Private (all private datas, don't share it or put in another website):</Typography>
-                    <Typography variant="caption">{filesPath.private}</Typography>
+                    {filesPath.private && <TypographyCopyable>{filesPath.private}</TypographyCopyable>}
                     <Typography>OpenFeedback.io:</Typography>
-                    <Typography variant="caption">{filesPath.openfeedback}</Typography>
+                    {filesPath.openfeedback && <TypographyCopyable>{filesPath.openfeedback}</TypographyCopyable>}
+
+                    <Box bgcolor={'#88888888'} p={1} mt={2} borderRadius={1}>
+                        <Typography>
+                            You may want to add a cache busting param to the url to force refresh the cache:
+                            "?t=Date.now()"
+                        </Typography>
+                    </Box>
                 </Box>
             ) : (
                 <CircularProgress />

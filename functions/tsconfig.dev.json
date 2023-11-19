@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es2022",
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "esModuleInterop": true,
+        "outDir": "lib",
+        "sourceMap": true,
+        "strict": true,
+        "declaration": true,
+        "typeRoots": ["./node_modules/@types"]
+    },
+    "include": [".eslintrc.js"]
+}

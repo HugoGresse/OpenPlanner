@@ -13,10 +13,10 @@ import {
 } from '@mui/material'
 import { Control, TextFieldElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
-import { Event, EventForForm, Webhooks } from '../../../../types'
+import { Event, EventSettingForForm, Webhooks } from '../../../../types'
 
 export type WebhooksFieldsProps = {
-    control: Control<EventForForm, any>
+    control: Control<EventSettingForForm, any>
     isSubmitting: boolean
     event: Event
 }

@@ -11,6 +11,7 @@ import { SuspenseLoader } from '../../components/SuspenseLoader'
 const EventSettings = lazy(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
 )
+const EventAPI = lazy(() => import('./api/Api').then((module) => ({ default: module.API })))
 const EventSchedule = lazy(() =>
     import('./schedule/EventSchedule').then((module) => ({ default: module.EventSchedule }))
 )
@@ -137,6 +138,11 @@ export const EventRouter = () => {
                 <Route path="/settings">
                     <Suspense fallback={<SuspenseLoader />}>
                         <EventSettings event={eventData} />
+                    </Suspense>
+                </Route>
+                <Route path="/api">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventAPI event={eventData} />
                     </Suspense>
                 </Route>
                 <Route path="/">
