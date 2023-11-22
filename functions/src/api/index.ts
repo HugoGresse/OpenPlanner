@@ -40,13 +40,20 @@ fastify.get('/hello', function (request, reply) {
     reply.send({ hello: 'world ' + Date.now() })
 })
 
-if (process.env.FUNCTIONS_EMULATOR) {
+const isNodeEnvDev = process.env.NODE_ENV === 'development'
+
+if (process.env.FUNCTIONS_EMULATOR || isNodeEnvDev) {
     fastify.listen({ port: 3000 }, function (err, address) {
         if (err) {
             fastify.log.error(err)
             process.exit(1)
         }
         // Server is now listening on ${address}
+        console.log('listening :3000')
+    })
+    fastify.ready((error) => {
+        if (error) throw error
+        console.log('ready')
     })
 }
 
