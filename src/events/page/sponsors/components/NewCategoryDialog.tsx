@@ -29,7 +29,7 @@ export const NewCategoryDialog = ({ open, onClose, eventId }: NewCategoryDialogP
                     })
                     .then(onClose)
             }}>
-            <Box marginY={1} sx={{ minWidth: '30vw' }}>
+            <Box marginY={1} sx={{ minWidth: '20vw' }}>
                 <TextField
                     name="Category name"
                     label={'Category name'}
