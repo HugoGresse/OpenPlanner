@@ -17,18 +17,21 @@ declare module 'fastify' {
 }
 
 const isDev = !!(process.env.FUNCTIONS_EMULATOR && process.env.FUNCTIONS_EMULATOR === 'true')
+const isNodeEnvDev = process.env.NODE_ENV === 'development'
 
 const fastify = Fastify({
     logger: isDev,
 }).withTypeProvider<TypeBoxTypeProvider>()
 
-// For serverless compatibility
-fastify.addContentTypeParser('application/json', {}, (req, body, done) => {
-    done(null, (body as any).body)
-})
-fastify.addContentTypeParser('multipart/form-data', {}, (req, body, done) => {
-    done(null, req)
-})
+if (!isNodeEnvDev) {
+    // For serverless compatibility
+    fastify.addContentTypeParser('application/json', {}, (req, body, done) => {
+        done(null, (body as any).body)
+    })
+    fastify.addContentTypeParser('multipart/form-data', {}, (req, body, done) => {
+        done(null, req)
+    })
+}
 
 fastify.register(firebasePlugin)
 registerSwagger(fastify)
@@ -40,9 +43,7 @@ fastify.get('/hello', function (request, reply) {
     reply.send({ hello: 'world ' + Date.now() })
 })
 
-const isNodeEnvDev = process.env.NODE_ENV === 'development'
-
-if (process.env.FUNCTIONS_EMULATOR || isNodeEnvDev) {
+if (isNodeEnvDev) {
     fastify.listen({ port: 3000 }, function (err, address) {
         if (err) {
             fastify.log.error(err)
@@ -51,10 +52,8 @@ if (process.env.FUNCTIONS_EMULATOR || isNodeEnvDev) {
         // Server is now listening on ${address}
         console.log('listening :3000')
     })
-    fastify.ready((error) => {
-        if (error) throw error
-        console.log('ready')
-    })
+} else {
+    console.log("Running in production mode, don't listen")
 }
 
 export const fastifyFunction = onRequest(async (request, reply) => {

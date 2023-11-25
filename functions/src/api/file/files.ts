@@ -37,11 +37,11 @@ export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => 
                 summary: 'Upload many files at once and get stored urls',
                 body: {
                     type: 'object',
-                    required: ['anyKey'],
                     properties: {
                         anyKey: {
                             type: 'object',
-                            description: "Put any key, and add the file as value. It's multipart/form-data",
+                            description:
+                                "Put any key (will be used as suffix), and add the file as value. It's multipart/form-data",
                         },
                     },
                 },
@@ -64,13 +64,6 @@ export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => 
                 return reply.status(400).send('Missing file(s)')
             }
 
-            const storageBucketParam = defineString('BUCKET', {
-                input: { resource: { resource: { type: 'storage.googleapis.com/Bucket' } } },
-                description:
-                    'This will automatically populate the selector field with the deploying Cloud Project’s  storage buckets',
-            })
-            const storageBucket = storageBucketParam.value()
-
             const fileUploads = result.uploads
 
             const output = []
@@ -78,29 +71,20 @@ export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => 
             for (const file in fileUploads) {
                 const buffer = fileUploads[file]
 
-                const fileType = await FileType.fromBuffer(buffer)
+                const [success, publicFileUrlOrError] = await uploadBufferToStorage(
+                    fastify.firebase,
+                    buffer,
+                    eventId,
+                    file
+                )
 
-                if (!fileType) {
-                    return reply.status(400).send('Invalid file type')
+                if (!success) {
+                    return reply.status(400).send(publicFileUrlOrError)
                 }
-
-                const { mime, ext } = fileType
-
-                const bucket = firebase.storage().bucket(storageBucket)
-                const path = `events/${eventId}/${uuidv4()}_${file}.${ext}`
-                const bucketFile = bucket.file(path)
-
-                await bucketFile.save(buffer, {
-                    contentType: mime,
-                    predefinedAcl: 'publicRead',
-                })
-                await bucketFile.makePublic()
-
-                const publicFileUrl = `https://${bucketFile.bucket.name}.storage.googleapis.com/${bucketFile.name}`
 
                 output.push({
                     originalName: file,
-                    publicFileUrl,
+                    publicFileUrl: publicFileUrlOrError,
                 })
             }
 
@@ -108,4 +92,40 @@ export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => 
         }
     )
     done()
+}
+
+export const uploadBufferToStorage = async (
+    firebase: firebase.app.App,
+    buffer: Buffer,
+    eventId: string,
+    fileName: string
+): Promise<[boolean, string]> => {
+    const storageBucketParam = defineString('BUCKET', {
+        input: { resource: { resource: { type: 'storage.googleapis.com/Bucket' } } },
+        description:
+            'This will automatically populate the selector field with the deploying Cloud Project’s  storage buckets',
+    })
+    const storageBucket = storageBucketParam.value()
+
+    const fileType = await FileType.fromBuffer(buffer)
+
+    if (!fileType) {
+        return [false, 'Invalid file type']
+    }
+
+    const { mime, ext } = fileType
+
+    const bucket = firebase.storage().bucket(storageBucket)
+    const path = `events/${eventId}/${uuidv4()}_${fileName}.${ext}`
+    const bucketFile = bucket.file(path)
+
+    await bucketFile.save(buffer, {
+        contentType: mime,
+        predefinedAcl: 'publicRead',
+    })
+    await bucketFile.makePublic()
+
+    const publicFileUrl = `https://${bucketFile.bucket.name}.storage.googleapis.com/${bucketFile.name}`
+
+    return [true, publicFileUrl]
 }
