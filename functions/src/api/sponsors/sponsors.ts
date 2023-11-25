@@ -18,10 +18,17 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
         '/v1/:eventId/sponsors',
         {
             schema: {
+                tags: ['sponsors'],
+                summary: 'Add one sponsor to an event',
                 body: Sponsor,
                 response: {
                     201: Sponsor,
                 },
+                security: [
+                    {
+                        apiKey: [],
+                    },
+                ],
             },
         },
         async (request, reply) => {

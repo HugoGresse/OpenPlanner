@@ -11,10 +11,52 @@ export const NewFile = Type.Any()
 
 export type NewFileType = Static<typeof NewFile>
 
+const FilesOutputs = Type.Union(
+    Type.Rest(
+        Type.Tuple([
+            Type.Array(
+                Type.Object({
+                    originalName: Type.String(),
+                    publicFileUrl: Type.String(),
+                })
+            ),
+            Type.String(),
+        ])
+    )
+)
+
+export type FilesOutputsType = Static<typeof FilesOutputs>
+
 export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify
-        .register(apiKeyPlugin)
-        .post<{ Body: NewFileType; Reply: void }>('/v1/:eventId/files', async (request, reply) => {
+    fastify.register(apiKeyPlugin).post<{ Body: NewFileType; Reply: FilesOutputsType }>(
+        '/v1/:eventId/files',
+        {
+            schema: {
+                tags: ['files'],
+                consumes: ['multipart/form-data'],
+                summary: 'Upload many files at once and get stored urls',
+                body: {
+                    type: 'object',
+                    required: ['anyKey'],
+                    properties: {
+                        anyKey: {
+                            type: 'object',
+                            description: "Put any key, and add the file as value. It's multipart/form-data",
+                        },
+                    },
+                },
+                response: {
+                    201: FilesOutputs,
+                    400: Type.String(),
+                },
+                security: [
+                    {
+                        apiKey: [],
+                    },
+                ],
+            },
+        },
+        async (request, reply) => {
             const { eventId } = request.params as { eventId: string }
             const result = await extractMultipartFormData(request.raw)
 
@@ -63,6 +105,7 @@ export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => 
             }
 
             reply.status(201).send(output)
-        })
+        }
+    )
     done()
 }
