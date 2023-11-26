@@ -63,42 +63,40 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
     }
 
     return (
-        <DndProvider backend={HTML5Backend}>
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
-                    <Typography> {sponsors.data?.length} sponsors</Typography>
-                </Box>
-                <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
-                    <DragDropContext onDragEnd={onDragEnd}>
-                        <Droppable droppableId="droppable">
-                            {(provided) => (
-                                <div {...provided.droppableProps} ref={provided.innerRef}>
-                                    {sponsorsData.map((category: SponsorCategory, index: number) => (
-                                        <SponsorCategoryItem
-                                            key={category.id}
-                                            index={index}
-                                            category={category}
-                                            eventId={event.id}
-                                        />
-                                    ))}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+                <Typography> {sponsors.data?.length} sponsors</Typography>
+            </Box>
+            <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="droppable">
+                        {(provided) => (
+                            <div {...provided.droppableProps} ref={provided.innerRef}>
+                                {sponsorsData.map((category: SponsorCategory, index: number) => (
+                                    <SponsorCategoryItem
+                                        key={category.id}
+                                        index={index}
+                                        category={category}
+                                        eventId={event.id}
+                                    />
+                                ))}
+                                {provided.placeholder}
+                            </div>
+                        )}
+                    </Droppable>
+                </DragDropContext>
 
-                    <Box marginY={2}>
-                        <Button onClick={() => setNewCategoryDialog(true)}>Add category</Button>
-                    </Box>
-                </Card>
-                <NewCategoryDialog
-                    open={newCategoryDialog}
-                    eventId={event.id}
-                    onClose={() => {
-                        setNewCategoryDialog(false)
-                    }}
-                />
-            </Container>
-        </DndProvider>
+                <Box marginY={2}>
+                    <Button onClick={() => setNewCategoryDialog(true)}>Add category</Button>
+                </Box>
+            </Card>
+            <NewCategoryDialog
+                open={newCategoryDialog}
+                eventId={event.id}
+                onClose={() => {
+                    setNewCategoryDialog(false)
+                }}
+            />
+        </Container>
     )
 }
