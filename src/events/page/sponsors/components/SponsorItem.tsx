@@ -11,7 +11,14 @@ export type SponsorItemProps = {
 }
 export const SponsorItem = ({ sponsor, onDelete, categoryId }: SponsorItemProps) => {
     return (
-        <Box component="li" borderRadius={2} marginRight={1} bgcolor="#DDD" display="flex">
+        <Box
+            component="li"
+            borderRadius={2}
+            marginRight={1}
+            marginTop={1}
+            paddingLeft={1}
+            bgcolor="#DDDDDD88"
+            display="flex">
             <Box
                 sx={{
                     img: {

@@ -52,7 +52,7 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                             </IconButton>
                         </Typography>
 
-                        <Box component="ul" margin={0} padding={0} display="flex">
+                        <Box component="ul" margin={0} padding={0} display="flex" flexWrap="wrap">
                             {category.sponsors.map((sponsor) => (
                                 <SponsorItem
                                     key={sponsor.id}
