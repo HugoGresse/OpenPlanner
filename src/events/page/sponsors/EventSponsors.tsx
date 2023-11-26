@@ -6,9 +6,7 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/Firesto
 import { useSponsors } from '../../../services/hooks/useSponsors'
 import { SponsorCategoryItem } from './components/SponsorCategoryItem'
 import { NewCategoryDialog } from './components/NewCategoryDialog'
-import { DndProvider } from 'react-dnd'
-import { HTML5Backend } from 'react-dnd-html5-backend'
-import { DragDropContext, Droppable, DropResult, ResponderProvided } from '@hello-pangea/dnd'
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import { updateSponsors } from '../../actions/updateSponsors'
 
 export type EventSponsorsProps = {
@@ -24,7 +22,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
     }
 
-    const onDragEnd = async (result: DropResult, provided: ResponderProvided): any => {
+    const onDragEnd = async (result: DropResult): Promise<any> => {
         // dropped outside the list
         if (!result.destination) {
             return
@@ -73,7 +71,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                 <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
                     <DragDropContext onDragEnd={onDragEnd}>
                         <Droppable droppableId="droppable">
-                            {(provided, snapshot) => (
+                            {(provided) => (
                                 <div {...provided.droppableProps} ref={provided.innerRef}>
                                     {sponsorsData.map((category: SponsorCategory, index: number) => (
                                         <SponsorCategoryItem
