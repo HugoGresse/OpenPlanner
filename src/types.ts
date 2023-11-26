@@ -137,6 +137,7 @@ export interface Sponsor {
 export interface SponsorCategory {
     id: string
     name: string
+    order: number
     sponsors: Sponsor[]
 }
 
