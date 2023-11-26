@@ -6,6 +6,8 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/Firesto
 import { useSponsors } from '../../../services/hooks/useSponsors'
 import { SponsorCategoryItem } from './components/SponsorCategoryItem'
 import { NewCategoryDialog } from './components/NewCategoryDialog'
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
+import { updateSponsors } from '../../actions/updateSponsors'
 
 export type EventSponsorsProps = {
     event: Event
@@ -20,15 +22,69 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
     }
 
+    const onDragEnd = async (result: DropResult): Promise<any> => {
+        // dropped outside the list
+        if (!result.destination) {
+            return
+        }
+
+        const sponsorsCategoriesWithOrder = sponsorsData.map((category: SponsorCategory, index: number) => {
+            return {
+                ...category,
+                order: isNaN(category.order) ? index : category.order,
+            }
+        })
+        // @ts-ignore
+        const source = sponsorsCategoriesWithOrder[result.source.index]
+        // @ts-ignore
+        const destination = sponsorsCategoriesWithOrder[result.destination.index as any]
+
+        if (!source || !destination) {
+            return undefined
+        }
+
+        const updatedSponsorsCat = sponsorsCategoriesWithOrder.map((category: SponsorCategory) => {
+            const order =
+                category.id === source.id
+                    ? destination.order
+                    : category.id === destination.id
+                    ? source.order
+                    : category.order
+
+            return {
+                ...category,
+                order: order,
+            }
+        })
+
+        await updateSponsors(event.id, updatedSponsorsCat)
+
+        return undefined
+    }
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
-                <Typography>{sponsors.data?.length} sponsors</Typography>
+                <Typography> {sponsors.data?.length} sponsors</Typography>
             </Box>
             <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
-                {sponsorsData.map((category: SponsorCategory) => (
-                    <SponsorCategoryItem key={category.id} category={category} eventId={event.id} />
-                ))}
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="droppable">
+                        {(provided) => (
+                            <div {...provided.droppableProps} ref={provided.innerRef}>
+                                {sponsorsData.map((category: SponsorCategory, index: number) => (
+                                    <SponsorCategoryItem
+                                        key={category.id}
+                                        index={index}
+                                        category={category}
+                                        eventId={event.id}
+                                    />
+                                ))}
+                                {provided.placeholder}
+                            </div>
+                        )}
+                    </Droppable>
+                </DragDropContext>
 
                 <Box marginY={2}>
                     <Button onClick={() => setNewCategoryDialog(true)}>Add category</Button>
