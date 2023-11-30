@@ -4,7 +4,14 @@ import { FirebaseApp } from '@firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
 import { Auth } from '@firebase/auth'
-import { eventConverter, sessionConverter, speakerConverter, sponsorsConverter, teamConverter } from './converters'
+import {
+    eventConverter,
+    faqConverter,
+    sessionConverter,
+    speakerConverter,
+    sponsorsConverter,
+    teamConverter,
+} from './converters'
 
 const config = {
     apiKey: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_API_KEY,
@@ -31,6 +38,7 @@ export const collections = {
     speakers: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
     team: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'team').withConverter(teamConverter),
+    faq: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'faq').withConverter(faqConverter),
 }
 
 export const getOpenPlannerAuth = (): Auth => {

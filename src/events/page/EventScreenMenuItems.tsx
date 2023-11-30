@@ -9,6 +9,7 @@ import {
     mdiCashMultiple,
     mdiCogBox,
     mdiPresentation,
+    mdiFrequentlyAskedQuestions,
 } from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
@@ -38,6 +39,11 @@ export const Menu = [
         href: '/team',
         icon: mdiAccountMultiple,
         name: 'Team',
+    },
+    {
+        href: '/faq',
+        icon: mdiFrequentlyAskedQuestions,
+        name: 'FAQ',
     },
     {
         href: '/sessions',

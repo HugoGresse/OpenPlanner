@@ -149,6 +149,21 @@ export interface TeamMember {
     socials?: Social[]
 }
 
+export interface FaqCategory {
+    id: string
+    name: string
+    order: number
+    collectionList: string[]
+    faqs: Faq[]
+}
+
+export interface Faq {
+    id: string
+    question: string
+    answer: string
+    order: number
+}
+
 export interface ConferenceHallEvent {
     id: string
     name: string
