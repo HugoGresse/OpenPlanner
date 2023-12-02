@@ -34,6 +34,7 @@ const Sponsor = lazy(() => import('./sponsors/Sponsor').then((module) => ({ defa
 const EventTeam = lazy(() => import('./team/EventTeam').then((module) => ({ default: module.EventTeam })))
 const NewMember = lazy(() => import('./team/NewMember').then((module) => ({ default: module.NewMember })))
 const EventMember = lazy(() => import('./team/EventMember').then((module) => ({ default: module.EventMember })))
+const EventFaq = lazy(() => import('./faq/EventFaq').then((module) => ({ default: module.EventFAQ })))
 
 export const EventRouter = () => {
     const [_, params] = useRoute('/events/:eventId/:subRoute*')
@@ -93,6 +94,11 @@ export const EventRouter = () => {
                         </Suspense>
                     </Route>
                 </Switch>
+                <Route path="/faq">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventFaq event={eventData} />
+                    </Suspense>
+                </Route>
 
                 <Route path="/sessions">
                     <Suspense fallback={<SuspenseLoader />}>

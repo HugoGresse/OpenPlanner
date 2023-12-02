@@ -1,32 +1,38 @@
 import * as React from 'react'
-import { ConfirmDialog } from '../../../../components/ConfirmDialog'
+import { useState } from 'react'
 import { Box, TextField, Typography } from '@mui/material'
-import { collections } from '../../../../services/firebase'
-import { useFirestoreCollectionMutation } from '../../../../services/hooks/firestoreMutationHooks'
+import { useFirestoreCollectionMutation } from '../../../services/hooks/firestoreMutationHooks'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { collections } from '../../../services/firebase'
+import { slugify } from '../../../utils/slugify'
 
-export type NewCategoryDialogProps = {
+export type NewFaqCategoryDialogProps = {
     open: boolean
     onClose: () => void
     eventId: string
+    categoryCount: number
 }
-export const NewCategoryDialog = ({ open, onClose, eventId }: NewCategoryDialogProps) => {
-    const [value, setValue] = React.useState<string>('')
-    const mutation = useFirestoreCollectionMutation(collections.sponsors(eventId))
+export const NewFaqCategoryDialog = ({ open, onClose, eventId, categoryCount }: NewFaqCategoryDialogProps) => {
+    const [value, setValue] = useState<string>('')
+    const mutation = useFirestoreCollectionMutation(collections.faq(eventId))
 
     return (
         <ConfirmDialog
             open={open}
             handleClose={onClose}
             loading={false}
-            title="Add a new category"
+            title="Add a new FAQ category"
             acceptButton="Add"
             cancelButton="cancel"
             handleAccept={() => {
                 return mutation
-                    .mutate({
-                        name: value,
-                        sponsors: [],
-                    })
+                    .mutate(
+                        {
+                            name: value,
+                            order: categoryCount,
+                        },
+                        slugify(value)
+                    )
                     .then(onClose)
             }}>
             <Box marginY={1} sx={{ minWidth: '20vw' }}>

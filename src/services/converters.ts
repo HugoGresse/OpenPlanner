@@ -1,4 +1,4 @@
-import { Event, NewEvent, Session, Speaker, SponsorCategory, TeamMember } from '../types'
+import { Event, Faq, FaqCategory, NewEvent, Session, Speaker, SponsorCategory, TeamMember } from '../types'
 import { FirestoreDataConverter } from '@firebase/firestore'
 import { DateTime } from 'luxon'
 
@@ -86,5 +86,33 @@ export const teamConverter: FirestoreDataConverter<TeamMember> = {
     },
     toFirestore(member: TeamMember) {
         return member
+    },
+}
+
+export const faqConverter: FirestoreDataConverter<FaqCategory> = {
+    fromFirestore(snapshot): FaqCategory {
+        const data = snapshot.data()
+
+        return {
+            id: snapshot.id,
+            ...data,
+        } as FaqCategory
+    },
+    toFirestore(member: FaqCategory) {
+        return member
+    },
+}
+
+export const faqItemConverter: FirestoreDataConverter<Faq> = {
+    fromFirestore(snapshot): Faq {
+        const data = snapshot.data()
+
+        return {
+            id: snapshot.id,
+            ...data,
+        } as Faq
+    },
+    toFirestore(data: Faq) {
+        return data
     },
 }

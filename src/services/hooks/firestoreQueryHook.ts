@@ -16,6 +16,7 @@ export type UseQueryResult<T = unknown> = {
     error: string
     isError: boolean
     data: T | null
+    loaded: boolean
 }
 
 export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = false): UseQueryResult<T[]> => {
@@ -69,6 +70,7 @@ export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = 
         error,
         isError,
         data: data || null,
+        loaded: data !== undefined,
     }
 }
 
@@ -127,5 +129,6 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
         error,
         isError,
         data: data || null,
+        loaded: data !== undefined,
     }
 }
