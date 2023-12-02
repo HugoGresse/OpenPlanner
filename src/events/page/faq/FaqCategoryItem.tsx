@@ -20,16 +20,17 @@ export type FaqCategoryProps = {
 export const FaqCategoryItem = (props: FaqCategoryProps) => {
     const categoryId = props.category.id
     const queryResult = useFaq(props.event, categoryId)
-    const [isOpen, setOpen] = useState(true)
+    const [isOpen, setOpen] = useState(false)
     const [data, setData] = useState<Faq[]>([])
     const [didChange, setDidChange] = useState(false)
     const mutation = useFirestoreCollectionMutation(collection(collections.faq(props.event.id), categoryId, 'items'))
 
     useEffect(() => {
-        if (queryResult.data && !data.length && !didChange) {
-            setData(queryResult.data)
+        if (queryResult.loaded) {
+            setData(queryResult.data || [])
+            setDidChange(false)
         }
-    }, [queryResult])
+    }, [queryResult.data])
 
     if (queryResult.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={queryResult} />
@@ -51,10 +52,11 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
         updateLocalState(d)
     }
 
-    const save = () => {
+    const save = async () => {
         for (const f of data) {
-            mutation.mutate(f, f.id)
+            await mutation.mutate(f, f.id)
         }
+        setDidChange(false)
     }
 
     const openContent = isOpen ? (
