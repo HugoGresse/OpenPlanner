@@ -7,6 +7,7 @@ import { firebasePlugin } from './dao/firebasePlugin'
 
 import { sponsorsRoutes } from './sponsors/sponsors'
 import { filesRoutes } from './file/files'
+import { faqRoutes } from './faq/faq'
 
 type Firebase = firebaseApp.App
 
@@ -37,6 +38,7 @@ fastify.register(firebasePlugin)
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
+fastify.register(faqRoutes)
 fastify.register(filesRoutes)
 
 fastify.get('/hello', function (request, reply) {
