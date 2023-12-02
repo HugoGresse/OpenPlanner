@@ -29,6 +29,7 @@
         "@mui/x-data-grid": "^6.18.0",
         "@mui/x-date-pickers": "^6.18.0",
         "@reduxjs/toolkit": "^1.9.7",
+        "@uiw/react-md-editor": "^4.0.1",
         "firebase": "^10.5.2",
         "image-blob-reduce": "^4.1.0",
         "luxon": "^3.4.3",

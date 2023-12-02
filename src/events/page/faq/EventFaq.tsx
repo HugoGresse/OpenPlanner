@@ -1,12 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Box, Button, Card, Container } from '@mui/material'
 import { Event, FaqCategory } from '../../../types'
 import { useFaqs } from '../../../services/hooks/useFaqs'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { FaqCategoryItem } from './FaqCategoryItem'
+import { NewFaqCategoryDialog } from './NewFaqCategoryDialog'
 
 export const EventFAQ = ({ event }: { event: Event }) => {
     const queryResult = useFaqs(event)
+    const [addDialogOpen, setAddDialogOpen] = useState(false)
 
     if (queryResult.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={queryResult} />
@@ -31,8 +33,19 @@ export const EventFAQ = ({ event }: { event: Event }) => {
                 ))}
             </Card>
             <Box marginY={2}>
-                <Button href={`/faq/new`}>Add FAQ top-level category</Button>
+                <Button
+                    onClick={() => {
+                        setAddDialogOpen(true)
+                    }}>
+                    Add FAQ top-level category
+                </Button>
             </Box>
+            <NewFaqCategoryDialog
+                open={addDialogOpen}
+                onClose={() => setAddDialogOpen(false)}
+                categoryCount={categoryData.length}
+                eventId={event.id}
+            />
         </Container>
     )
 }
