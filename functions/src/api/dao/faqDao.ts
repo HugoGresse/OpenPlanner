@@ -31,4 +31,16 @@ export class FaqDao {
 
         return faqId
     }
+
+    public static async getFaqCategory(firebaseApp: firebase.app.App, eventId: string, publicId: string): Promise<any> {
+        const db = firebaseApp.firestore()
+
+        const snapshot = await db.collection(`events/${eventId}/faq/`).doc(publicId).get()
+
+        if (!snapshot.exists) {
+            throw new Error('FAQ category not found')
+        }
+
+        return snapshot.data()
+    }
 }

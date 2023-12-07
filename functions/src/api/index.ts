@@ -1,5 +1,6 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import Fastify from 'fastify'
+import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { registerSwagger } from './swagger'
 import { app as firebaseApp } from 'firebase-admin'
@@ -8,12 +9,14 @@ import { firebasePlugin } from './dao/firebasePlugin'
 import { sponsorsRoutes } from './sponsors/sponsors'
 import { filesRoutes } from './file/files'
 import { faqRoutes } from './faq/faq'
+import { apiKeyPlugin } from './apiKeyPlugin'
 
 type Firebase = firebaseApp.App
 
 declare module 'fastify' {
     interface FastifyInstance {
         firebase: Firebase
+        verifyApiKey: FastifyAuthFunction
     }
 }
 
@@ -34,7 +37,9 @@ if (!isNodeEnvDev) {
     })
 }
 
+fastify.register(fastifyAuth)
 fastify.register(firebasePlugin)
+fastify.register(apiKeyPlugin)
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
@@ -49,6 +54,7 @@ if (isNodeEnvDev) {
     fastify.listen({ port: 3000 }, function (err, address) {
         if (err) {
             fastify.log.error(err)
+            console.error('error starting fastify server', err)
             process.exit(1)
         }
         // Server is now listening on ${address}

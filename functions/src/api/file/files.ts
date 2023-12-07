@@ -1,6 +1,5 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { apiKeyPlugin } from '../apiKeyPlugin'
 import { extractMultipartFormData } from './parseMultipartFiles'
 import { v4 as uuidv4 } from 'uuid'
 import firebase from 'firebase-admin'
@@ -28,7 +27,7 @@ const FilesOutputs = Type.Union(
 export type FilesOutputsType = Static<typeof FilesOutputs>
 
 export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.register(apiKeyPlugin).post<{ Body: NewFileType; Reply: FilesOutputsType }>(
+    fastify.post<{ Body: NewFileType; Reply: FilesOutputsType }>(
         '/v1/:eventId/files',
         {
             schema: {
@@ -55,6 +54,7 @@ export const filesRoutes = (fastify: FastifyInstance, options: any, done: () => 
                     },
                 ],
             },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         async (request, reply) => {
             const { eventId } = request.params as { eventId: string }

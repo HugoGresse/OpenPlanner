@@ -3,18 +3,27 @@ import { useEffect, useState } from 'react'
 import { Event, Faq, FaqCategory } from '../../../types'
 import { useFaq } from '../../../services/hooks/useFaq'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { Box, Button, IconButton, Typography } from '@mui/material'
+import { Box, Button, FormControlLabel, IconButton, Switch, Typography } from '@mui/material'
 import { ExpandLessSharp, ExpandMore } from '@mui/icons-material'
 import { FaqItem } from './FaqItem'
 import { LoadingButton } from '@mui/lab'
-import { useFirestoreCollectionMutation } from '../../../services/hooks/firestoreMutationHooks'
+import {
+    useFirestoreCollectionMutation,
+    useFirestoreDocumentMutation,
+} from '../../../services/hooks/firestoreMutationHooks'
 import { collections } from '../../../services/firebase'
 import { collection } from '@firebase/firestore'
 import { generateFirestoreId } from '../../../utils/generateFirestoreId'
+import { doc } from 'firebase/firestore'
+import { TypographyCopyable } from '../../../components/TypographyCopyable'
 
 export type FaqCategoryProps = {
     event: Event
     category: FaqCategory
+}
+
+const getFaqCategoryPrivateLink = (event: Event, publicCategoryId: string) => {
+    return `https://openplanner.fr/public/event/${event.id}/faq/${publicCategoryId}`
 }
 
 export const FaqCategoryItem = (props: FaqCategoryProps) => {
@@ -23,6 +32,7 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
     const [isOpen, setOpen] = useState(false)
     const [data, setData] = useState<Faq[]>([])
     const [didChange, setDidChange] = useState(false)
+    const categoryMutation = useFirestoreDocumentMutation(doc(collections.faq(props.event.id), categoryId))
     const mutation = useFirestoreCollectionMutation(collection(collections.faq(props.event.id), categoryId, 'items'))
 
     useEffect(() => {
@@ -61,6 +71,43 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
 
     const openContent = isOpen ? (
         <Box>
+            <Box>
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={props.category.share}
+                            onChange={(e) => {
+                                const newCategory = {
+                                    share: e.target.checked,
+                                    public: props.category.public !== undefined ? props.category.public : false,
+                                    publicId:
+                                        props.category.publicId !== undefined
+                                            ? props.category.publicId
+                                            : generateFirestoreId(),
+                                }
+                                categoryMutation.mutate(newCategory)
+                            }}
+                        />
+                    }
+                    label="Share online"
+                />
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={props.category.public}
+                            onChange={(e) => {
+                                categoryMutation.mutate({ public: e.target.checked })
+                            }}
+                        />
+                    }
+                    label="Private url?"
+                />
+                {!props.category.public && props.category.publicId ? (
+                    <TypographyCopyable component="a">
+                        {getFaqCategoryPrivateLink(props.event, props.category.publicId)}
+                    </TypographyCopyable>
+                ) : null}
+            </Box>
             {data.map((faq, index) => (
                 <FaqItem
                     key={faq.id}

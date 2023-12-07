@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { useState } from 'react'
-import { ClickAwayListener, Tooltip, Typography } from '@mui/material'
+import { ClickAwayListener, Tooltip, Typography, TypographyProps } from '@mui/material'
 
 export type TypographyCopyableProps = {
     children: string
-}
-export const TypographyCopyable = ({ children, ...otherProps }: TypographyCopyableProps) => {
+} & TypographyProps
+export const TypographyCopyable = ({ children, component, ...otherProps }: TypographyCopyableProps) => {
     const [open, setOpen] = useState(false)
     const [openHover, setOpenHover] = useState(false)
 

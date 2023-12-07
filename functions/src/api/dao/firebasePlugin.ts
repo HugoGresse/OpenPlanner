@@ -1,10 +1,12 @@
 import fp from 'fastify-plugin'
-import fb from 'firebase-admin'
+import fb, { credential } from 'firebase-admin'
 import { FastifyInstance } from 'fastify'
 
 function firebase(fastify: FastifyInstance, options: any, next: () => void) {
     const appConfig = {
-        credential: fb.credential.applicationDefault(),
+        credential:
+            credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string)) ||
+            fb.credential.applicationDefault(),
     }
 
     const firebaseApp = fb.initializeApp(appConfig)
