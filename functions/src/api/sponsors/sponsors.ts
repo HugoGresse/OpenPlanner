@@ -28,6 +28,10 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
                     type: 'object',
                     additionalProperties: false,
                     properties: {
+                        apiKey: {
+                            type: 'string',
+                            description: 'The API key of the event',
+                        },
                         reUploadAssets: {
                             type: 'boolean',
                             description: 'Download the provided logo to be stored in OpenPlanner storage',
