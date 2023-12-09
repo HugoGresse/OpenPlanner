@@ -6,10 +6,14 @@ import { registerSwagger } from './swagger'
 import { app as firebaseApp } from 'firebase-admin'
 import { firebasePlugin } from './dao/firebasePlugin'
 
+import { fastifyErrorHandler } from './other/fastifyErrorHandler'
+import { addContentTypeParserForServerless } from './other/addContentTypeParserForServerless'
+import { apiKeyPlugin } from './apiKeyPlugin'
+
 import { sponsorsRoutes } from './sponsors/sponsors'
 import { filesRoutes } from './file/files'
 import { faqRoutes } from './faq/faq'
-import { apiKeyPlugin } from './apiKeyPlugin'
+import { helloRoute } from './hello/hello'
 
 type Firebase = firebaseApp.App
 
@@ -28,13 +32,7 @@ const fastify = Fastify({
 }).withTypeProvider<TypeBoxTypeProvider>()
 
 if (!isNodeEnvDev) {
-    // For serverless compatibility
-    fastify.addContentTypeParser('application/json', {}, (req, body, done) => {
-        done(null, (body as any).body)
-    })
-    fastify.addContentTypeParser('multipart/form-data', {}, (req, body, done) => {
-        done(null, req)
-    })
+    addContentTypeParserForServerless(fastify)
 }
 
 fastify.register(fastifyAuth)
@@ -45,10 +43,9 @@ registerSwagger(fastify)
 fastify.register(sponsorsRoutes)
 fastify.register(faqRoutes)
 fastify.register(filesRoutes)
+fastify.register(helloRoute)
 
-fastify.get('/hello', function (request, reply) {
-    reply.send({ hello: 'world ' + Date.now() })
-})
+fastify.setErrorHandler(fastifyErrorHandler)
 
 if (isNodeEnvDev) {
     fastify.listen({ port: 3000 }, function (err, address) {

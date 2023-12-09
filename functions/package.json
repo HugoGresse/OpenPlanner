@@ -26,6 +26,7 @@
         "file-type": "^16.5.4",
         "firebase-admin": "^11.11.0",
         "firebase-functions": "^4.5.0",
+        "ts-custom-error": "^3.3.1",
         "uuid": "^9.0.1"
     },
     "devDependencies": {
