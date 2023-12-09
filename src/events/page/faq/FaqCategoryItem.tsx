@@ -79,10 +79,10 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
                             onChange={(e) => {
                                 const newCategory = {
                                     share: e.target.checked,
-                                    public: props.category.public !== undefined ? props.category.public : false,
-                                    publicId:
-                                        props.category.publicId !== undefined
-                                            ? props.category.publicId
+                                    private: props.category.private !== undefined ? props.category.private : false,
+                                    privateId:
+                                        props.category.privateId !== undefined
+                                            ? props.category.privateId
                                             : generateFirestoreId(),
                                 }
                                 categoryMutation.mutate(newCategory)
@@ -94,17 +94,17 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
                 <FormControlLabel
                     control={
                         <Switch
-                            checked={props.category.public}
+                            checked={props.category.private}
                             onChange={(e) => {
-                                categoryMutation.mutate({ public: e.target.checked })
+                                categoryMutation.mutate({ private: e.target.checked })
                             }}
                         />
                     }
                     label="Private url?"
                 />
-                {!props.category.public && props.category.publicId ? (
+                {props.category.private && props.category.privateId ? (
                     <TypographyCopyable component="a">
-                        {getFaqCategoryPrivateLink(props.event, props.category.publicId)}
+                        {getFaqCategoryPrivateLink(props.event, props.category.privateId)}
                     </TypographyCopyable>
                 ) : null}
             </Box>
