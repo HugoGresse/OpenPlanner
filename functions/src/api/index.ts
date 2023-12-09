@@ -1,19 +1,26 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import Fastify from 'fastify'
+import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { registerSwagger } from './swagger'
 import { app as firebaseApp } from 'firebase-admin'
 import { firebasePlugin } from './dao/firebasePlugin'
 
+import { fastifyErrorHandler } from './other/fastifyErrorHandler'
+import { addContentTypeParserForServerless } from './other/addContentTypeParserForServerless'
+import { apiKeyPlugin } from './apiKeyPlugin'
+
 import { sponsorsRoutes } from './sponsors/sponsors'
 import { filesRoutes } from './file/files'
 import { faqRoutes } from './faq/faq'
+import { helloRoute } from './hello/hello'
 
 type Firebase = firebaseApp.App
 
 declare module 'fastify' {
     interface FastifyInstance {
         firebase: Firebase
+        verifyApiKey: FastifyAuthFunction
     }
 }
 
@@ -25,30 +32,26 @@ const fastify = Fastify({
 }).withTypeProvider<TypeBoxTypeProvider>()
 
 if (!isNodeEnvDev) {
-    // For serverless compatibility
-    fastify.addContentTypeParser('application/json', {}, (req, body, done) => {
-        done(null, (body as any).body)
-    })
-    fastify.addContentTypeParser('multipart/form-data', {}, (req, body, done) => {
-        done(null, req)
-    })
+    addContentTypeParserForServerless(fastify)
 }
 
+fastify.register(fastifyAuth)
 fastify.register(firebasePlugin)
+fastify.register(apiKeyPlugin)
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
 fastify.register(faqRoutes)
 fastify.register(filesRoutes)
+fastify.register(helloRoute)
 
-fastify.get('/hello', function (request, reply) {
-    reply.send({ hello: 'world ' + Date.now() })
-})
+fastify.setErrorHandler(fastifyErrorHandler)
 
 if (isNodeEnvDev) {
     fastify.listen({ port: 3000 }, function (err, address) {
         if (err) {
             fastify.log.error(err)
+            console.error('error starting fastify server', err)
             process.exit(1)
         }
         // Server is now listening on ${address}

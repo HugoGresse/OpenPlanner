@@ -8,13 +8,14 @@
         "shell": "npm run build && firebase functions:shell",
         "start": "npm run shell",
         "logs": "firebase functions:log",
-        "apiOnly": "NODE_ENV=development npx ts-node src/api/index.ts"
+        "apiOnly": "NODE_ENV=development nodemon src/api/index.ts"
     },
     "engines": {
         "node": "20"
     },
     "main": "lib/index.js",
     "dependencies": {
+        "@fastify/auth": "^4.4.0",
         "@fastify/swagger": "^8.12.0",
         "@fastify/swagger-ui": "^1.10.1",
         "@fastify/type-provider-typebox": "^3.5.0",
@@ -25,6 +26,7 @@
         "file-type": "^16.5.4",
         "firebase-admin": "^11.11.0",
         "firebase-functions": "^4.5.0",
+        "ts-custom-error": "^3.3.1",
         "uuid": "^9.0.1"
     },
     "devDependencies": {
@@ -34,6 +36,8 @@
         "eslint-config-google": "^0.14.0",
         "eslint-plugin-import": "^2.25.4",
         "firebase-functions-test": "^3.1.0",
+        "nodemon": "^3.0.2",
+        "ts-node": "^10.9.1",
         "typescript": "^5.2.2"
     },
     "private": true

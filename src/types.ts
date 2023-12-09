@@ -153,6 +153,9 @@ export interface FaqCategory {
     id: string
     name: string
     order: number
+    share: boolean
+    private: boolean
+    privateId: string | null
     collectionList: string[]
     faqs: Faq[]
 }

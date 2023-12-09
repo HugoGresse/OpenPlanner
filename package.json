@@ -4,7 +4,7 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "bunx --bun vite",
+        "dev": "vite",
         "start": "npm run dev",
         "build": "bunx --bun vite build",
         "preview": "vite preview",
@@ -58,7 +58,7 @@
         "husky": "^8.0.3",
         "pretty-quick": "^3.1.3",
         "typescript": "^5.2.2",
-        "vite": "^4.5.0"
+        "vite": "^5.0.7"
     },
     "overrides": {
         "react": "^18.2.0"

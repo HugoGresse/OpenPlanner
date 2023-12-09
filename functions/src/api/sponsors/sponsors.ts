@@ -1,6 +1,5 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { apiKeyPlugin } from '../apiKeyPlugin'
 import { SponsorDao } from '../dao/sponsorDao'
 import { uploadBufferToStorage } from '../file/files'
 
@@ -18,7 +17,7 @@ interface IQuerystring {
 }
 
 export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.register(apiKeyPlugin).post<{ Querystring: IQuerystring; Body: SponsorType; Reply: SponsorType | string }>(
+    fastify.post<{ Querystring: IQuerystring; Body: SponsorType; Reply: SponsorType | string }>(
         '/v1/:eventId/sponsors',
         {
             schema: {
@@ -29,6 +28,10 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
                     type: 'object',
                     additionalProperties: false,
                     properties: {
+                        apiKey: {
+                            type: 'string',
+                            description: 'The API key of the event',
+                        },
                         reUploadAssets: {
                             type: 'boolean',
                             description: 'Download the provided logo to be stored in OpenPlanner storage',
@@ -45,6 +48,7 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
                     },
                 ],
             },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         async (request, reply) => {
             const { eventId } = request.params as { eventId: string }
