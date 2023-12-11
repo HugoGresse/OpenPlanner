@@ -4,6 +4,7 @@ import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { registerSwagger } from './swagger'
 import { app as firebaseApp } from 'firebase-admin'
+import cors from '@fastify/cors'
 import { firebasePlugin } from './dao/firebasePlugin'
 
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
@@ -38,6 +39,9 @@ if (!isNodeEnvDev) {
 fastify.register(fastifyAuth)
 fastify.register(firebasePlugin)
 fastify.register(apiKeyPlugin)
+fastify.register(cors, {
+    origin: '*',
+})
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)

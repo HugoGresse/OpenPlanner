@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
 import { FaqDao } from '../dao/faqDao'
+import { EventDao } from '../dao/eventDao'
 
 const FaqCategory = Type.Object({
     id: Type.String(),
@@ -13,6 +14,7 @@ const FaqCategory = Type.Object({
 export type FaqCategoryType = Static<typeof FaqCategory>
 
 export const Faq = Type.Object({
+    id: Type.String(),
     categoryId: Type.String(),
     categoryName: Type.Optional(Type.String()),
     question: Type.String(),
@@ -27,6 +29,7 @@ const Reply = Type.Object({ faqItemId: Type.String() })
 type FaqReply = Static<typeof Reply>
 
 const GetReply = Type.Object({
+    eventName: Type.String(),
     faq: Type.Array(
         Type.Object({
             category: FaqCategory,
@@ -86,6 +89,7 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
 
             const output = []
 
+            const event = await EventDao.getEvent(fastify.firebase, eventId)
             const faqCategories = await FaqDao.getFaqPrivateCategory(fastify.firebase, eventId, faqPrivateId)
 
             for (const faqCategory of faqCategories) {
@@ -94,6 +98,7 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
                 const questionsWithCategoryInfo: FaqType[] = questions.map((question) => {
                     return {
                         ...question,
+                        id: question.id,
                         categoryId: faqCategory.id,
                         categoryName: faqCategory.name,
                         categoryOrder: faqCategory.order,
@@ -107,6 +112,7 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
             }
 
             reply.status(200).send({
+                eventName: event.name,
                 faq: output,
             })
         }

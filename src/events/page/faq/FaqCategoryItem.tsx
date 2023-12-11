@@ -23,7 +23,11 @@ export type FaqCategoryProps = {
 }
 
 const getFaqCategoryPrivateLink = (event: Event, publicCategoryId: string) => {
-    return `https://openplanner.fr/public/event/${event.id}/faq/${publicCategoryId}`
+    const port = window.location.port
+    const domainName = window.location.hostname + (port ? `:${port}` : '')
+    const protocol = window.location.protocol
+
+    return `${protocol}//${domainName}/public/event/${event.id}/faq/${publicCategoryId}`
 }
 
 export const FaqCategoryItem = (props: FaqCategoryProps) => {
