@@ -2,12 +2,16 @@ import * as React from 'react'
 import { PublicFaqType } from '../publicTypes'
 import { Box, Typography } from '@mui/material'
 import { FaqQuestion } from './FaqQuestion'
+import { useSearchParams } from '../../hooks/useSearchParams'
 
 export type FaqCategoryProps = {
     faq: PublicFaqType
 }
 export const PublicFaqCategory = ({ faq }: FaqCategoryProps) => {
-    const [openQuestionId, setOpenQuestion] = React.useState<string | null>(null)
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [openQuestionId, setOpenQuestion] = React.useState<string | null>(
+        searchParams.get('question') ? searchParams.get('question') : null
+    )
 
     if (faq.questions.length === 0) {
         return (
@@ -33,9 +37,19 @@ export const PublicFaqCategory = ({ faq }: FaqCategoryProps) => {
                         open={openQuestionId === question.id}
                         onClick={() => {
                             if (openQuestionId === question.id) {
+                                setSearchParams((prev) => {
+                                    const newParams = new URLSearchParams(prev)
+                                    newParams.delete('question')
+                                    return newParams
+                                })
                                 setOpenQuestion(null)
                                 return
                             }
+                            setSearchParams((prev) => {
+                                const newParams = new URLSearchParams(prev)
+                                newParams.set('question', question.id)
+                                return newParams
+                            })
                             setOpenQuestion(question.id)
                         }}
                     />

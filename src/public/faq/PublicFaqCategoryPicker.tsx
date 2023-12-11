@@ -6,7 +6,7 @@ import { PublicFaqReply } from '../publicTypes'
 export type PublicFaqCategoryPickerProps = {
     faqReply: PublicFaqReply
     selectedCategoryId: string | null
-    onSelectCategory: (categoryId: string | null) => void
+    onSelectCategory: (categoryId: string) => void
 }
 export const PublicFaqCategoryPicker = ({
     faqReply,
@@ -23,10 +23,6 @@ export const PublicFaqCategoryPicker = ({
                             variant="contained"
                             endIcon={selectedCategoryId === faq.category.id ? <ExpandLess /> : <ExpandMore />}
                             onClick={() => {
-                                if (selectedCategoryId === faq.category.id) {
-                                    onSelectCategory(null)
-                                    return
-                                }
                                 onSelectCategory(faq.category.id)
                             }}>
                             <Typography variant="h6">{faq.category.name}</Typography>

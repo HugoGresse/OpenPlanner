@@ -5,14 +5,20 @@ import { PublicFaqReply } from '../publicTypes'
 import { PublicEventLayout } from '../PublicEventLayout'
 import { PublicFaqCategory } from './PublicFaqCategory'
 import { PublicFaqCategoryPicker } from './PublicFaqCategoryPicker'
+import { useSearchParams } from '../../hooks/useSearchParams'
 
 export type PublicEventFaqProps = {
     faqReply: PublicFaqReply
 }
 export const PublicEventFaq = ({ faqReply }: PublicEventFaqProps) => {
     const hasMoreThanOneCategory = faqReply.faq.length > 1
+    const [searchParams, setSearchParams] = useSearchParams()
     const [selectedCategoryId, setSelectedCategory] = useState<string | null>(
-        hasMoreThanOneCategory ? null : faqReply.faq[0].category.id
+        hasMoreThanOneCategory
+            ? searchParams.get('category')
+                ? searchParams.get('category')
+                : null
+            : faqReply.faq[0].category.id
     )
 
     const selectedCategory = selectedCategoryId
@@ -38,7 +44,15 @@ export const PublicEventFaq = ({ faqReply }: PublicEventFaqProps) => {
                     <PublicFaqCategoryPicker
                         faqReply={faqReply}
                         selectedCategoryId={selectedCategoryId}
-                        onSelectCategory={setSelectedCategory}
+                        onSelectCategory={(categoryId) => {
+                            if (categoryId === selectedCategoryId) {
+                                setSelectedCategory(null)
+                                setSearchParams({})
+                                return
+                            }
+                            setSelectedCategory(categoryId)
+                            setSearchParams({ category: categoryId })
+                        }}
                     />
                 ) : null}
 
