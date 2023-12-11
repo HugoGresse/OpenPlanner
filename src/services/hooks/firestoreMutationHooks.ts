@@ -68,21 +68,32 @@ export type UseDeletionMutationResult<T = unknown> = {
     isLoading: boolean
     error: { message: string } | null
     isError: boolean
-    mutate: () => any
+    mutate: (id?: string) => any
 }
-export const useFirestoreDocumentDeletion = (ref: DocumentReference): UseDeletionMutationResult => {
+export const useFirestoreDocumentDeletion = (
+    ref: DocumentReference | CollectionReference
+): UseDeletionMutationResult => {
     const [isLoading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    const mutate = useCallback(async () => {
-        try {
-            setLoading(true)
-            await deleteDoc(ref)
-        } catch (error: any) {
-            setError(error)
-        }
-        setLoading(false)
-    }, [ref])
+    const mutate = useCallback(
+        async (id?: string) => {
+            try {
+                setLoading(true)
+                if (ref instanceof CollectionReference) {
+                    if (id) {
+                        await deleteDoc(doc(ref, id))
+                    }
+                } else {
+                    await deleteDoc(ref)
+                }
+            } catch (error: any) {
+                setError(error)
+            }
+            setLoading(false)
+        },
+        [ref]
+    )
 
     return {
         isLoading,
