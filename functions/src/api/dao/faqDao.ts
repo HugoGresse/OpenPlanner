@@ -22,14 +22,17 @@ export class FaqDao {
 
         const faqId = faq.id || uuidv4()
 
-        await db.collection(`events/${eventId}/faq/`).doc(faq.categoryId).collection('items').doc(faqId).set({
-            id: faqId,
-            question: faq.question,
-            answer: faq.answer,
-            order: faq.order,
-            createdAt: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
-        })
+        await db.collection(`events/${eventId}/faq/`).doc(faq.categoryId).collection('items').doc(faqId).set(
+            {
+                id: faqId,
+                question: faq.question,
+                answer: faq.answer,
+                order: faq.order,
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+        )
 
         return faqId
     }
