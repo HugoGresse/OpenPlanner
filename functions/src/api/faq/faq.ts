@@ -14,7 +14,7 @@ const FaqCategory = Type.Object({
 export type FaqCategoryType = Static<typeof FaqCategory>
 
 export const Faq = Type.Object({
-    id: Type.String(),
+    id: Type.Optional(Type.String()),
     categoryId: Type.String(),
     categoryName: Type.Optional(Type.String()),
     question: Type.String(),
@@ -45,7 +45,8 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
         {
             schema: {
                 tags: ['faq'],
-                summary: 'Add a new item in the FAQ',
+                summary:
+                    'Add a new item in the FAQ. If the question id is provided, and the question with the same id already exist, it will be updated instead of created.',
                 body: Faq,
                 response: {
                     201: Reply,

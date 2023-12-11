@@ -9,6 +9,7 @@ import { FaqItem } from './FaqItem'
 import { LoadingButton } from '@mui/lab'
 import {
     useFirestoreCollectionMutation,
+    useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
 import { collections } from '../../../services/firebase'
@@ -35,9 +36,13 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
     const queryResult = useFaq(props.event, categoryId)
     const [isOpen, setOpen] = useState(false)
     const [data, setData] = useState<Faq[]>([])
+    const [deletedItems, setDeletedItems] = useState<string[]>([])
     const [didChange, setDidChange] = useState(false)
     const categoryMutation = useFirestoreDocumentMutation(doc(collections.faq(props.event.id), categoryId))
     const mutation = useFirestoreCollectionMutation(collection(collections.faq(props.event.id), categoryId, 'items'))
+    const deletionMutation = useFirestoreDocumentDeletion(
+        collection(collections.faq(props.event.id), categoryId, 'items')
+    )
 
     useEffect(() => {
         if (queryResult.loaded) {
@@ -67,9 +72,17 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
     }
 
     const save = async () => {
-        for (const f of data) {
-            await mutation.mutate(f, f.id)
-        }
+        const promises = data.map((faq) => {
+            return mutation.mutate(faq, faq.id)
+        })
+        promises.push(
+            ...deletedItems.map((id) => {
+                return deletionMutation.mutate(id)
+            })
+        )
+
+        await Promise.all(promises)
+        setDeletedItems([])
         setDidChange(false)
     }
 
@@ -117,6 +130,7 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
                     key={faq.id}
                     faq={faq}
                     onDelete={() => {
+                        setDeletedItems([...deletedItems, faq.id])
                         const d = [...data]
                         d.splice(index, 1)
                         updateLocalState(d)
