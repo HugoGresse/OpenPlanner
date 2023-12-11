@@ -75,6 +75,12 @@ export class FaqDao {
             throw new NotFoundError('FAQ category does not exist or no items found')
         }
 
-        return snapshot.docs.map((doc) => doc.data() as FaqType)
+        return snapshot.docs.map(
+            (doc) =>
+                ({
+                    ...doc.data(),
+                    id: doc.id,
+                } as FaqType)
+        )
     }
 }

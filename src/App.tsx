@@ -10,6 +10,7 @@ import { LinkProps } from '@mui/material/Link'
 import { EventRouter } from './events/page/EventRouter'
 import { NotificationProvider } from './context/SnackBarProvider'
 import { SuspenseLoader } from './components/SuspenseLoader'
+import { PublicApp } from './public/PublicApp'
 
 const EventsScreen = lazy(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
@@ -59,20 +60,25 @@ export const App = ({}) => {
                 <ThemeProvider theme={theme}>
                     <CssBaseline enableColorScheme />
                     <NotificationProvider>
-                        <RequireLogin>
-                            <Switch>
-                                <Route path="/">
-                                    <Suspense fallback={<SuspenseLoader />}>
-                                        <EventsScreen />
-                                    </Suspense>
-                                </Route>
-                                <Route path="/events/">
-                                    <Redirect to="/" />
-                                </Route>
-                                <EventRouter />
-                                <Route>404, Not Found!</Route>
-                            </Switch>
-                        </RequireLogin>
+                        <Switch>
+                            <Route path="/public/event/:eventId/:page*">
+                                <PublicApp />
+                            </Route>
+                            <RequireLogin>
+                                <Switch>
+                                    <Route path="/">
+                                        <Suspense fallback={<SuspenseLoader />}>
+                                            <EventsScreen />
+                                        </Suspense>
+                                    </Route>
+                                    <Route path="/events/">
+                                        <Redirect to="/" />
+                                    </Route>
+                                    <EventRouter />
+                                    <Route>404, Not Found!</Route>
+                                </Switch>
+                            </RequireLogin>
+                        </Switch>
                     </NotificationProvider>
                 </ThemeProvider>
             </Provider>

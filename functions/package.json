@@ -16,6 +16,7 @@
     "main": "lib/index.js",
     "dependencies": {
         "@fastify/auth": "^4.4.0",
+        "@fastify/cors": "^8.4.2",
         "@fastify/swagger": "^8.12.0",
         "@fastify/swagger-ui": "^1.10.1",
         "@fastify/type-provider-typebox": "^3.5.0",
