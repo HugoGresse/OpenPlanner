@@ -1,16 +1,19 @@
 import * as React from 'react'
 import { useState } from 'react'
-import { Box, Button, Card, Typography } from '@mui/material'
+import { Card, Typography } from '@mui/material'
 import { PublicFaqReply } from '../publicTypes'
 import { PublicEventLayout } from '../PublicEventLayout'
 import { PublicFaqCategory } from './PublicFaqCategory'
-import { ExpandLess, ExpandMore } from '@mui/icons-material'
+import { PublicFaqCategoryPicker } from './PublicFaqCategoryPicker'
 
 export type PublicEventFaqProps = {
     faqReply: PublicFaqReply
 }
 export const PublicEventFaq = ({ faqReply }: PublicEventFaqProps) => {
-    const [selectedCategoryId, setSelectedCategory] = useState<string | null>(null)
+    const hasMoreThanOneCategory = faqReply.faq.length > 1
+    const [selectedCategoryId, setSelectedCategory] = useState<string | null>(
+        hasMoreThanOneCategory ? null : faqReply.faq[0].category.id
+    )
 
     const selectedCategory = selectedCategoryId
         ? faqReply.faq.find((faq) => {
@@ -31,27 +34,13 @@ export const PublicEventFaq = ({ faqReply }: PublicEventFaqProps) => {
                     flexWrap: 'wrap',
                     alignContent: 'flex-start',
                 }}>
-                <Box display="flex" justifyContent="center" width="100%" gap={2} marginY={2}>
-                    {faqReply.faq.map((faq, index) => {
-                        return (
-                            <Box key={index}>
-                                <Button
-                                    size="large"
-                                    variant="contained"
-                                    endIcon={selectedCategoryId === faq.category.id ? <ExpandLess /> : <ExpandMore />}
-                                    onClick={() => {
-                                        if (selectedCategoryId === faq.category.id) {
-                                            setSelectedCategory(null)
-                                            return
-                                        }
-                                        setSelectedCategory(faq.category.id)
-                                    }}>
-                                    <Typography variant="h6">{faq.category.name}</Typography>
-                                </Button>
-                            </Box>
-                        )
-                    })}
-                </Box>
+                {hasMoreThanOneCategory ? (
+                    <PublicFaqCategoryPicker
+                        faqReply={faqReply}
+                        selectedCategoryId={selectedCategoryId}
+                        onSelectCategory={setSelectedCategory}
+                    />
+                ) : null}
 
                 {selectedCategory && <PublicFaqCategory faq={selectedCategory} />}
             </Card>

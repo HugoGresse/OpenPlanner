@@ -23,7 +23,7 @@ export const PublicFaqCategory = ({ faq }: FaqCategoryProps) => {
     return (
         <Box display="flex" justifyContent="center" flexWrap="wrap" width="100%" gap={2}>
             <Box width="100%" gap={2}>
-                <Typography variant="h2">{faq.category.name} FAQ</Typography>
+                <Typography variant="h2">{faq.category.name}</Typography>
             </Box>
             {faq.questions.map((question, index) => {
                 return (

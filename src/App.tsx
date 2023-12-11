@@ -61,7 +61,7 @@ export const App = ({}) => {
                     <CssBaseline enableColorScheme />
                     <NotificationProvider>
                         <Switch>
-                            <Route path="/public/:eventId/:page*">
+                            <Route path="/public/event/:eventId/:page*">
                                 <PublicApp />
                             </Route>
                             <RequireLogin>

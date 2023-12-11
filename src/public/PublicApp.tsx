@@ -9,9 +9,9 @@ import { Typography } from '@mui/material'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
-    const [_, params] = useRoute('/public/:eventId/:subRoute*')
+    const [_, params] = useRoute('/public/event/:eventId/:subRoute/:privateId*')
 
-    const publicEvent = usePublicEvent(params?.eventId)
+    const publicEvent = usePublicEvent(params?.eventId, params?.privateId)
 
     useEffect(() => {
         document.title = `FAQ | ${publicEvent.data ? publicEvent.data.eventName : ''}`
@@ -28,9 +28,12 @@ export const PublicApp = (props: PublicAppProps) => {
     const publicEventData = publicEvent.data
 
     return (
-        <NestedRoutes base={`/public/${params?.eventId}`}>
+        <NestedRoutes base={`/public/event/${params?.eventId}`}>
             <Switch>
                 <Route path="/faq">
+                    <PublicEventFaq faqReply={publicEventData} />
+                </Route>
+                <Route path="/faq/:privateId">
                     <PublicEventFaq faqReply={publicEventData} />
                 </Route>
 
