@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "vite",
         "start": "npm run dev",
-        "build": "bunx --bun vite build",
+        "build": "vite build",
         "preview": "vite preview",
         "prepare": "husky install"
     },
