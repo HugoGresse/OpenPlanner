@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
-import { Box, Button, Card, Container } from '@mui/material'
+import { Box, Button, Card, Container, IconButton } from '@mui/material'
 import { Event, FaqCategory } from '../../../types'
 import { useFaqs } from '../../../services/hooks/useFaqs'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { FaqCategoryItem } from './FaqCategoryItem'
 import { NewFaqCategoryDialog } from './NewFaqCategoryDialog'
+import { getFaqBaseLinkLink } from './faqLink'
+import { ContentCopy, OpenInNew } from '@mui/icons-material'
 
 export const EventFAQ = ({ event }: { event: Event }) => {
     const queryResult = useFaqs(event)
@@ -16,8 +18,21 @@ export const EventFAQ = ({ event }: { event: Event }) => {
 
     const categoryData = queryResult.data || []
 
+    const faqLink = getFaqBaseLinkLink(event)
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Button href={faqLink} target="_blank" startIcon={<OpenInNew />}>
+                Open public FAQ
+            </Button>
+            <IconButton
+                aria-label="Copy FAQ Link"
+                color="primary"
+                onClick={() => {
+                    navigator.clipboard.writeText(faqLink)
+                }}>
+                <ContentCopy />
+            </IconButton>
             <Card
                 sx={{
                     padding: 2,

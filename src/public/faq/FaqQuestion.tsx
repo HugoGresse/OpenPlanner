@@ -6,12 +6,13 @@ import { Add, Remove } from '@mui/icons-material'
 
 const FlexBox = styled(Box)(({ theme }) => ({
     flexBasis: '49%',
-    backgroundColor: '#555',
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[100],
     borderRadius: theme.shape.borderRadius,
+    borderColor: theme.palette.mode === 'dark' ? theme.palette.grey[600] : theme.palette.grey[400],
     gap: theme.spacing(2),
 }))
 const BoxBorder = styled(Button)(({ theme }) => ({
-    borderBottom: `1px solid ${theme.palette.divider}`,
+    borderBottom: `1px solid `,
     justifyContent: 'flex-start',
 }))
 

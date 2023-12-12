@@ -17,18 +17,11 @@ import { collection } from '@firebase/firestore'
 import { generateFirestoreId } from '../../../utils/generateFirestoreId'
 import { doc } from 'firebase/firestore'
 import { TypographyCopyable } from '../../../components/TypographyCopyable'
+import { getFaqCategoryPrivateLink } from './faqLink'
 
 export type FaqCategoryProps = {
     event: Event
     category: FaqCategory
-}
-
-const getFaqCategoryPrivateLink = (event: Event, publicCategoryId: string) => {
-    const port = window.location.port
-    const domainName = window.location.hostname + (port ? `:${port}` : '')
-    const protocol = window.location.protocol
-
-    return `${protocol}//${domainName}/public/event/${event.id}/faq/${publicCategoryId}`
 }
 
 export const FaqCategoryItem = (props: FaqCategoryProps) => {
