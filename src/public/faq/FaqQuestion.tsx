@@ -10,6 +10,9 @@ const FlexBox = styled(Box)(({ theme }) => ({
     borderRadius: theme.shape.borderRadius,
     borderColor: theme.palette.mode === 'dark' ? theme.palette.grey[600] : theme.palette.grey[400],
     gap: theme.spacing(2),
+    '@media (max-width:880px)': {
+        flexBasis: '100%',
+    },
 }))
 const BoxBorder = styled(Button)(({ theme }) => ({
     borderBottom: `1px solid `,
