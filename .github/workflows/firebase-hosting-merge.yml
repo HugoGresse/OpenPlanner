@@ -25,6 +25,7 @@ jobs:
                   VITE_FIREBASE_CONFERENCE_HALL_API_KEY: ${{ vars.VITE_FIREBASE_CONFERENCE_HALL_API_KEY }}
                   VITE_FIREBASE_CONFERENCE_HALL_DOMAIN: ${{ vars.VITE_FIREBASE_CONFERENCE_HALL_DOMAIN }}
                   VITE_FIREBASE_CONFERENCE_HALL_PROJECT_ID: ${{ vars.VITE_FIREBASE_CONFERENCE_HALL_PROJECT_ID }}
+                  VITE_FIREBASE_OPEN_PLANNER_API_URL: https://api.openplanner.fr
             - uses: FirebaseExtended/action-hosting-deploy@v0
               with:
                   repoToken: '${{ secrets.GITHUB_TOKEN }}'
