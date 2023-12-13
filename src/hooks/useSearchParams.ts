@@ -10,7 +10,7 @@ import { navigate, useSearch } from 'wouter/use-location'
 
 type ParamKeyValuePair = [string, string]
 
-type URLSearchParamsInit = string | ParamKeyValuePair[] | Record<string, string | string[]> | URLSearchParams
+export type URLSearchParamsInit = string | ParamKeyValuePair[] | Record<string, string | string[]> | URLSearchParams
 
 export function createSearchParams(init: URLSearchParamsInit = ''): URLSearchParams {
     return new URLSearchParams(
