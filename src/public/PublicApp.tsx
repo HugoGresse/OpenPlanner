@@ -5,7 +5,7 @@ import { NestedRoutes } from '../components/NestedRoutes'
 import { usePublicEvent } from './hooks/usePublicEvent'
 import { PublicEventFaq } from './faq/PublicEventFaq'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../components/FirestoreQueryLoaderAndErrorDisplay'
-import { Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
@@ -17,12 +17,12 @@ export const PublicApp = (props: PublicAppProps) => {
         document.title = `FAQ | ${publicEvent.data ? publicEvent.data.eventName : ''}`
     }, [params])
 
-    if (publicEvent.isLoading) {
-        return <FirestoreQueryLoaderAndErrorDisplay hookResult={publicEvent} />
-    }
-
-    if (!publicEvent.data) {
-        return <>Error? {JSON.stringify(publicEvent, null, 4)}</>
+    if (publicEvent.isLoading || !publicEvent.data) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+                <FirestoreQueryLoaderAndErrorDisplay hookResult={publicEvent} />
+            </Box>
+        )
     }
 
     const publicEventData = publicEvent.data
