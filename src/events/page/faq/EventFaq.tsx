@@ -22,7 +22,7 @@ export const EventFAQ = ({ event }: { event: Event }) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Button href={faqLink} target="_blank" startIcon={<OpenInNew />}>
+            <Button component="a" href={faqLink} target="_blank" startIcon={<OpenInNew />}>
                 Open public FAQ
             </Button>
             <IconButton

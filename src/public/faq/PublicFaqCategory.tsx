@@ -41,7 +41,7 @@ export const PublicFaqCategory = ({ faq }: FaqCategoryProps) => {
                       return 0
                   })
                 : faq.questions,
-        [isQuestionFromUrlOnOpen]
+        [isQuestionFromUrlOnOpen, faq]
     )
 
     return (
