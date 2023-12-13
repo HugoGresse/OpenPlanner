@@ -27,6 +27,8 @@ export const PublicEventFaq = ({ faqReply }: PublicEventFaqProps) => {
           })
         : null
 
+    console.log(selectedCategoryId, selectedCategory)
+
     return (
         <PublicEventLayout>
             <Typography variant="h1">{faqReply.eventName} FAQ</Typography>
