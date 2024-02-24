@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth'
 import { getOpenPlannerAuth } from '../services/firebase'
 import { MD5 } from '../utils/MD5'
-import { browserLocalPersistence } from '@firebase/auth'
+import { browserLocalPersistence, sendPasswordResetEmail } from '@firebase/auth'
 
 export type UserId = string
 
@@ -110,6 +110,19 @@ export const login = createAsyncThunk(
     }
 )
 
+export const resetPassword = createAsyncThunk('auth/reset', async ({ email }: { email: string }, thunkAPI) => {
+    const auth = getOpenPlannerAuth()
+
+    return setPersistence(auth, browserLocalPersistence)
+        .then(() => sendPasswordResetEmail(auth, email, { url: 'https://openplanner.fr/' }))
+        .catch((error) => {
+            return thunkAPI.rejectWithValue({
+                error: error.code,
+                message: error.message,
+            } as AuthError)
+        })
+})
+
 export const logout = createAsyncThunk('auth/logout', async () => {
     await signOut(getOpenPlannerAuth())
     localStorage.removeItem('user')
@@ -156,4 +169,4 @@ export const authSlice = createSlice({
 export const selectIsUserLoggedInToOpenPlanner = (state: RootState) => state.auth.isLoggedIn
 export const selectUserOpenPlanner = (state: RootState) => state.auth.user
 export const selectUserIdOpenPlanner = (state: RootState) => state.auth.user!.uid
-export const selectAuthCCError = (state: RootState) => state.auth.error
+export const selectAuthOpenPlannerError = (state: RootState) => state.auth.error

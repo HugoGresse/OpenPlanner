@@ -42,15 +42,15 @@ React guidelines:
 
 ### Requirements
 
--   Tow firebase projects. One for **`open planner`** and the other for **`conference hall`**.
--   Node.js **18+**
+-   Two firebase projects. One for **`open planner`** and the other for **`conference hall`**.
+-   Node.js **20+**
 -   [Bun.js](https://bun.js.org/) as a build tool
 
 ### Installation
 
 1. Create a **`.env`** with **`.env.example`** as a template.
 2. Create a web app in your firebase project for **`conference hall`** and **`open planner`**. then copy the config and fill **`.env`** with it.
-3. Use [bun.sh](https://bun.js.org/) to install dependencies and build the project.
+3. Use [bun.sh](https://bun.sh/) to install dependencies and build the project: `bun install`
 
 Inside OpenPlanner's firebase project:
 
