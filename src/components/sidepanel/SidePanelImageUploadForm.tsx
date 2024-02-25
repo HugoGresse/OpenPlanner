@@ -89,7 +89,7 @@ export const SidePanelImageUploadForm = ({
                         textAlign: 'center',
                         textTransform: 'uppercase',
                         marginY: 4,
-                        width: 'fit-content',
+                        width: '100%',
                         '& img': {
                             maxWidth: '100%',
                             display: 'block',
@@ -98,12 +98,13 @@ export const SidePanelImageUploadForm = ({
                     <Typography>Preview</Typography>
                     <Box
                         sx={{
+                            width: '100%',
                             backgroundImage:
-                                'linear-gradient(45deg, #BBB 25%, transparent 25%), linear-gradient(-45deg, #BBB 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #BBB 75%), linear-gradient(-45deg, transparent 75%, #BBB 75%)',
+                                'linear-gradient(45deg, #BBB 25%, transparent 25%), linear-gradient(-45deg, #BBB 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #BBB 75%), linear-gradient(-45deg, transparent 75%, #BBB 75%), linear-gradient(0deg, #FFFFFF 0%, #FFFFFF 100%)',
                             backgroundSize: '20px 20px',
                             backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
                         }}>
-                        <img src={previewImage} alt="" />
+                        <img src={previewImage} alt="" width="100%" />
                     </Box>
                 </Box>
             )}

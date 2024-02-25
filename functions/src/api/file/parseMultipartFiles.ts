@@ -21,7 +21,7 @@ export function extractMultipartFormData(req: IncomingMessage): Promise<any> {
                 const filepath = path.join(tmpdir, filename)
                 const writeStream = fs.createWriteStream(filepath)
 
-                uploads[fieldname] = filepath
+                uploads[filename] = filepath
 
                 file.pipe(writeStream)
 

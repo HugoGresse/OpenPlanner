@@ -3,8 +3,8 @@ import { Static, Type } from '@sinclair/typebox'
 import { extractMultipartFormData } from './parseMultipartFiles'
 import { v4 as uuidv4 } from 'uuid'
 import firebase from 'firebase-admin'
-import FileType from 'file-type'
 import { defineString } from 'firebase-functions/params'
+import { checkFileTypes } from '../other/checkFileTypes'
 
 export const NewFile = Type.Any()
 
@@ -107,22 +107,28 @@ export const uploadBufferToStorage = async (
     })
     const storageBucket = storageBucketParam.value()
 
-    const fileType = await FileType.fromBuffer(buffer)
+    const fileType = await checkFileTypes(buffer, fileName)
 
     if (!fileType) {
         return [false, 'Invalid file type']
     }
 
-    const { mime, ext } = fileType
+    const { mime, extension } = fileType
 
     const bucket = firebase.storage().bucket(storageBucket)
-    const path = `events/${eventId}/${uuidv4()}_${fileName}.${ext}`
+    const path = `events/${eventId}/${uuidv4()}_${fileName}.${extension}`
     const bucketFile = bucket.file(path)
 
-    await bucketFile.save(buffer, {
-        contentType: mime,
-        predefinedAcl: 'publicRead',
-    })
+    try {
+        await bucketFile.save(buffer, {
+            contentType: mime,
+            predefinedAcl: 'publicRead',
+        })
+    } catch (error) {
+        console.warn('error uploading file', error)
+        const errorString = '' + error
+        return [false, 'Error uploading file, ' + errorString]
+    }
     await bucketFile.makePublic()
 
     const publicFileUrl = `https://${bucketFile.bucket.name}.storage.googleapis.com/${bucketFile.name}`
