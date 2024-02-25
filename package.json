@@ -8,7 +8,9 @@
         "start": "npm run dev",
         "build": "vite build",
         "preview": "vite preview",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "deploy": "npm run build && firebase deploy",
+        "release": "npm version minor && npm run deploy && git push && git push --tags"
     },
     "dependencies": {
         "@emotion/react": "^11.11.1",
