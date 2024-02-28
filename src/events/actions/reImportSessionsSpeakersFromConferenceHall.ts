@@ -20,9 +20,11 @@ export const reImportSessionsSpeakersFromConferenceHall = async (event: Event, r
         return
     }
 
+    let formats = event.formats
+
     if (reImportCategoriesFormats) {
         const chEvent = await getConferenceHallEvent(conferenceHallId)
-        const formats = mapConferenceHallFormatsToOpenPlanner(chEvent.formats)
+        formats = mapConferenceHallFormatsToOpenPlanner(chEvent.formats)
         const categories = mapConferenceHallCategoriesToOpenPlanner(chEvent.categories)
 
         await updateDoc(doc(collections.events, event.id), {
@@ -57,7 +59,7 @@ export const reImportSessionsSpeakersFromConferenceHall = async (event: Event, r
         console.error(speakerErrors)
     }
 
-    const [_, sessionErrors] = await importSessions(event.id, proposals, event.formats, speakerMapToCC, () => null)
+    const [_, sessionErrors] = await importSessions(event.id, proposals, formats, speakerMapToCC, () => null)
     if (sessionErrors.length) {
         console.error(sessionErrors)
     }
