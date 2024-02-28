@@ -35,6 +35,8 @@ import {
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { ConferenceHallEventsPicker } from '../../../conferencehall/ConferenceHallEventsPicker'
+import { linkOpenPlannerEventToConferenceHallEvent } from '../../actions/linkOpenPlannerEventToConferenceHallEvent'
 
 const schema = yup
     .object({
@@ -60,6 +62,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [reImportOpen, setReimportOpen] = useState(false)
     const [reImportCategoriesFormats, setReImportCategoriesFormat] = useState(false)
+    const [attachToConferenceHallOpen, setAttachToConferenceHallOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const { createNotification } = useNotification()
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
@@ -226,6 +229,62 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                         {(conferenceHallUserId) => {
                             if (conferenceHallUserId) {
                                 return null
+                            }
+                            return <Typography>Login to ConferenceHall first!</Typography>
+                        }}
+                    </RequireConferenceHallLogin>
+                </ConfirmDialog>
+
+                {!event.conferenceHallId && (
+                    <Button color="warning" onClick={() => setAttachToConferenceHallOpen(true)}>
+                        Attach event to a ConferenceHall event
+                    </Button>
+                )}
+                <ConfirmDialog
+                    open={attachToConferenceHallOpen}
+                    title="Attach this OpenPlanner event to an existing ConferenceHall event?"
+                    disabled={loading}
+                    loading={loading}
+                    cancelButton="cancel"
+                    handleClose={() => setAttachToConferenceHallOpen(false)}
+                    handleAccept={() => null}>
+                    <DialogContentText>
+                        Attach this OpenPlanner event to an existing ConferenceHall event. It is useful when you have
+                        used OpenPlanner without importing the event from ConferenceHall before hand. This will not
+                        display the same setup as the regular "New event from ConferenceHall" but using the below
+                        features, it should cover most things :
+                        <br />
+                        <br />
+                        - "Re-import from ConferenceHall" (from the Event settings page)
+                        <br />
+                        - "Import sessions" (from the Sessions page)
+                        <br />
+                        <br />
+                    </DialogContentText>
+
+                    <RequireConferenceHallLogin>
+                        {(conferenceHallUserId) => {
+                            if (conferenceHallUserId) {
+                                return (
+                                    <>
+                                        <Box display="flex" alignItems="center" marginY={2}>
+                                            <Typography variant="h4">
+                                                2. Select the event you want to attach to
+                                            </Typography>
+                                        </Box>
+                                        <ConferenceHallEventsPicker
+                                            onEventPicked={async (chEvent) => {
+                                                await linkOpenPlannerEventToConferenceHallEvent(event.id, chEvent.id)
+                                                setAttachToConferenceHallOpen(false)
+                                                createNotification('ConferenceHall event linked/attached', {
+                                                    type: 'success',
+                                                })
+                                                setReimportOpen(true)
+                                            }}
+                                            userId={conferenceHallUserId}
+                                        />
+                                    </>
+                                )
                             }
                             return <Typography>Login to ConferenceHall first!</Typography>
                         }}
