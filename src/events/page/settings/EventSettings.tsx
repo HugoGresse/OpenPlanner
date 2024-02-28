@@ -2,7 +2,17 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
+import {
+    Box,
+    Button,
+    Card,
+    Checkbox,
+    Container,
+    DialogContentText,
+    FormControlLabel,
+    Grid,
+    Typography,
+} from '@mui/material'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
 import * as yup from 'yup'
@@ -49,6 +59,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
     const [_, setLocation] = useLocation()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [reImportOpen, setReimportOpen] = useState(false)
+    const [reImportCategoriesFormats, setReImportCategoriesFormat] = useState(false)
     const [loading, setLoading] = useState(false)
     const { createNotification } = useNotification()
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
@@ -181,7 +192,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     handleClose={() => setReimportOpen(false)}
                     handleAccept={async () => {
                         setLoading(true)
-                        await reImportSessionsSpeakersFromConferenceHall(event)
+                        await reImportSessionsSpeakersFromConferenceHall(event, reImportCategoriesFormats)
                         setLoading(false)
                         setReimportOpen(false)
                         createNotification('Data imported', { type: 'success' })
@@ -197,6 +208,18 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                         - cannot be cancelled (it would be cool to have versioning in the future though...)
                         <br />
                         <br />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={reImportCategoriesFormats}
+                                    onChange={(e) => {
+                                        setReImportCategoriesFormat(e.target.checked)
+                                    }}
+                                    inputProps={{ 'aria-label': 'controlled' }}
+                                />
+                            }
+                            label="Replace categories & formats?"
+                        />
                     </DialogContentText>
 
                     <RequireConferenceHallLogin>

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { collection, CollectionReference, getFirestore } from '@firebase/firestore'
+import { collection, doc, CollectionReference, DocumentReference, getFirestore } from '@firebase/firestore'
 
 const config = {
     apiKey: import.meta.env.VITE_FIREBASE_CONFERENCE_HALL_API_KEY,
@@ -13,6 +13,7 @@ export const conferenceHallFirestore = getFirestore(conferenceHallFirebaseApp)
 export const conferenceHallCollections = {
     organizations: collection(conferenceHallFirestore, 'organizations'),
     events: collection(conferenceHallFirestore, 'events'),
+    event: (eventId: string): DocumentReference => doc(conferenceHallFirestore, 'events', eventId),
     proposals: (eventId: string): CollectionReference =>
         collection(conferenceHallFirestore, 'events', eventId, 'proposals'),
     users: collection(conferenceHallFirestore, 'users'),

@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { ConferenceHallProposal, Format } from '../../types'
 import { ConferenceHallFormatsMapping } from './ConferenceHallFormatsMapping'
 import { useConferenceHallProposals } from '../hooks/useConferenceHallProposals'
+import { mapConferenceHallFormatsToOpenPlanner } from '../../events/actions/conferenceHallUtils/mapFromConferenceHallToOpenPlanner'
 
 type ConferenceHallProposalsPickerConnectedProps = {
     conferenceHallEventId: string
@@ -27,12 +28,7 @@ export const ConferenceHallProposalsPickerConnected = ({
     submitText,
 }: ConferenceHallProposalsPickerConnectedProps) => {
     const proposals = useConferenceHallProposals(conferenceHallEventId)
-    const [formats, setFormatDurations] = useState<Format[]>(
-        (chFormats || []).map((f) => ({
-            ...f,
-            durationMinutes: 20,
-        }))
-    )
+    const [formats, setFormatDurations] = useState<Format[]>(mapConferenceHallFormatsToOpenPlanner(chFormats))
 
     const submitSelectedProposalsAndFormats = (proposals: ConferenceHallProposal[]) => {
         return onSubmit({
