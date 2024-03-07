@@ -60,17 +60,18 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
                 console.log('Downloading sponsor logo')
                 const response = await fetch(logoUrl)
                 const arrayBuffer = await response.arrayBuffer()
+                const fileName = logoUrl.split('/').pop() || Date.now().toString() + '.png'
 
-                console.log("Uploading sponsor's logo")
+                console.log("Uploading sponsor's logo", fileName)
                 const [reUploadSuccess, publicLogoUrl] = await uploadBufferToStorage(
                     fastify.firebase,
                     Buffer.from(arrayBuffer),
                     eventId,
-                    `${Date.now()}`
+                    fileName
                 )
 
                 if (!reUploadSuccess) {
-                    return reply.status(400).send('failed to re-upload logo')
+                    return reply.status(400).send('failed to re-upload logo, ' + logoUrl)
                 }
 
                 logoUrl = publicLogoUrl
