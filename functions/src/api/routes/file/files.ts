@@ -4,7 +4,7 @@ import { extractMultipartFormData } from './parseMultipartFiles'
 import { v4 as uuidv4 } from 'uuid'
 import firebase from 'firebase-admin'
 import { defineString } from 'firebase-functions/params'
-import { checkFileTypes } from '../other/checkFileTypes'
+import { checkFileTypes } from '../../other/checkFileTypes'
 
 export const NewFile = Type.Any()
 

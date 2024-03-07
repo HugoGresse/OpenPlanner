@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { FaqDao } from '../dao/faqDao'
-import { EventDao } from '../dao/eventDao'
+import { FaqDao } from '../../dao/faqDao'
+import { EventDao } from '../../dao/eventDao'
 
 const FaqCategory = Type.Object({
     id: Type.String(),
