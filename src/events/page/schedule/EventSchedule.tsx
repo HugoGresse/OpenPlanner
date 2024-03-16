@@ -5,9 +5,6 @@ import { Event, Session } from '../../../types'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
-import FullCalendar from '@fullcalendar/react'
-import resourceTimeGrid from '@fullcalendar/resource-timegrid'
-import interactionPlugin from '@fullcalendar/interaction'
 import './eventschedule.css'
 import { diffDays } from '../../../utils/dates/diffDays'
 import { DateTime } from 'luxon'
@@ -16,6 +13,9 @@ import { onFullCalendarEventChange } from './eventScheduleFunctions'
 import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from './scheduleConstants'
 import { SessionCardContent } from './components/SessionCardContent'
 import { useLocation } from 'wouter'
+import { FullCalendarBase } from './components/FullCalendarBase'
+import { useSessionTemplate } from '../../../services/hooks/useSessionsTemplate'
+import { TemplateDialog } from './components/TemplateDialog'
 
 export type EventScheduleProps = {
     event: Event
@@ -24,7 +24,9 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const numberOfDays = diffDays(event.dates.start, event.dates.end)
     const [_, setLocation] = useLocation()
     const sessions = useSessions(event)
+    const sessionsTemplate = useSessionTemplate(event)
     const [daysToDisplay, setDaysToDisplay] = useState<number>(1)
+    const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
 
     if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
         return (
@@ -54,62 +56,56 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const sessionsArray = sessions.data || []
     const sessionsWithDates = sessionsArray.filter((s: Session) => s.dates)
 
+    const sessionsTemplateArray = sessionsTemplate.data || []
     const startTime = DateTime.fromJSDate(event.dates.start).toFormat('HH:mm')
+
+    const customButtons = {
+        allDays: {
+            text: 'Display all days',
+            click: () => {
+                setDaysToDisplay(numberOfDays === daysToDisplay ? 1 : numberOfDays)
+            },
+        },
+        changeTemplate: {
+            text: 'Change template',
+            click: () => {
+                setTemplateDialogOpen(true)
+            },
+        },
+    }
 
     return (
         <>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
             <NoDatesSessionsPicker sessions={sessions} />
             <Typography variant="caption">Info: The schedule calendar is updated in realtime</Typography>
-            <Box paddingBottom={6}>
-                <FullCalendar
-                    schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
-                    plugins={[resourceTimeGrid, interactionPlugin]}
-                    allDaySlot={false}
-                    datesAboveResources={true}
-                    droppable
-                    editable
-                    nowIndicator
-                    headerToolbar={{
-                        right: 'prev,next',
-                        left: 'allDays',
-                        center: 'title',
-                    }}
-                    customButtons={{
-                        allDays: {
-                            text: 'Display all days',
-                            click: () => {
-                                setDaysToDisplay(numberOfDays === daysToDisplay ? 1 : numberOfDays)
-                            },
-                        },
-                    }}
-                    initialView="resourceTimeGridFourDay"
-                    initialDate={event.dates.start.toISOString()}
-                    validRange={{
-                        start: event.dates.start.toISOString(),
-                        end: event.dates.end.toISOString(),
-                    }}
-                    views={{
-                        resourceTimeGridFourDay: {
-                            type: 'resourceTimeGrid',
-                            duration: { days: daysToDisplay },
-                        },
-                    }}
-                    slotMinTime={startTime}
-                    slotLabelFormat={{
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    }}
-                    locale={'fr'}
-                    slotDuration="00:05:00"
-                    slotLabelInterval="00:15"
-                    height="auto"
-                    resourceOrder="order"
-                    resources={event.tracks.map((t, index) => ({
-                        id: t.id,
-                        title: t.name,
-                        order: index,
-                    }))}
+            <Box paddingBottom={6} position="relative">
+                <Box position="absolute" top={0}>
+                    <FullCalendarBase
+                        event={event}
+                        daysToDisplay={daysToDisplay}
+                        startTime={startTime}
+                        events={sessionsTemplateArray.map((template) => {
+                            return {
+                                title: template.title,
+                                id: template.id,
+                                start: template.dates?.start?.toISO() || undefined,
+                                end: template.dates?.end?.toISO() || undefined,
+                                resourceId: template.trackId || undefined,
+                                backgroundColor: DEFAULT_SESSION_CARD_BACKGROUND_COLOR,
+                                extendedProps: template,
+                            }
+                        })}
+                        eventContent={(info) => {
+                            return <SessionCardContent session={info.event._def.extendedProps as Session} />
+                        }}
+                        customButtons={customButtons}
+                    />
+                </Box>
+                <FullCalendarBase
+                    startTime={startTime}
+                    daysToDisplay={daysToDisplay}
+                    event={event}
                     events={
                         sessionsWithDates.map((s: Session) => ({
                             title: s.title,
@@ -129,6 +125,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                             />
                         )
                     }}
+                    customButtons={customButtons}
                     drop={(info) => {
                         const sessionId = info.draggedEl.getAttribute('data-id')
                         const trackId = info.resource?.id
@@ -163,6 +160,14 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                     }}
                 />
             </Box>
+
+            {templateDialogOpen && (
+                <TemplateDialog
+                    event={event}
+                    isOpen={templateDialogOpen}
+                    onClose={() => setTemplateDialogOpen(false)}
+                />
+            )}
         </>
     )
 }

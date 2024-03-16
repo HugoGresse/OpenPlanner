@@ -5,8 +5,7 @@ import EditIcon from '@mui/icons-material/Edit'
 
 export type SessionCardContentProps = {
     session: Session
-
-    setLocation: (to: string) => void
+    setLocation?: (to: string) => void
 }
 export const SessionCardContent = ({ session, setLocation }: SessionCardContentProps) => {
     if (!session.id) {
@@ -28,13 +27,15 @@ export const SessionCardContent = ({ session, setLocation }: SessionCardContentP
                     }}>
                     {session.title.slice(0, 50)}
                 </Typography>
-                <IconButton
-                    onClick={() => {
-                        setLocation(`/sessions/${session.id}?backTo=Schedule`)
-                    }}
-                    sx={{ position: 'absolute', top: 0, right: 0 }}>
-                    <EditIcon color="action" fontSize="small" />
-                </IconButton>
+                {setLocation && (
+                    <IconButton
+                        onClick={() => {
+                            setLocation(`/sessions/${session.id}?backTo=Schedule`)
+                        }}
+                        sx={{ position: 'absolute', top: 0, right: 0 }}>
+                        <EditIcon color="action" fontSize="small" />
+                    </IconButton>
+                )}
             </Box>
             <Typography color="white" variant="caption" lineHeight={1}>
                 {`${session.formatText || 'no format'} • ${session.categoryObject?.name || 'no category'}`}
