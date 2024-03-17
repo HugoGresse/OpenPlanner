@@ -37,6 +37,7 @@ import {
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { ConferenceHallEventsPicker } from '../../../conferencehall/ConferenceHallEventsPicker'
 import { linkOpenPlannerEventToConferenceHallEvent } from '../../actions/linkOpenPlannerEventToConferenceHallEvent'
+import { EventSettingsFormatCategoriesGrid } from './EventSettingsFormatCategoriesGrid'
 
 const schema = yup
     .object({
@@ -135,6 +136,9 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                             {days ? days + ' day(s)' : ''}
 
                             <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <EventSettingsFormatCategoriesGrid event={event} />
                         </Grid>
 
                         <Grid item xs={12}>
