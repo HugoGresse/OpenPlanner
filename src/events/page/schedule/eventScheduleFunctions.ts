@@ -11,7 +11,8 @@ export const onFullCalendarEventChange = (
     sessionId: string | null,
     trackId: string | undefined,
     startJs: Date | null,
-    endJs: Date | null
+    endJs: Date | null,
+    updateFunction = updateSession
 ) => {
     if (!trackId || !sessionId) {
         console.warn('Missing trackId or sessionId')
@@ -47,5 +48,5 @@ export const onFullCalendarEventChange = (
         durationMinutes: durationMinutes,
     }
 
-    return updateSession(eventId, mapSessionToFirestoreSession(updateDocument))
+    return updateFunction(eventId, mapSessionToFirestoreSession(updateDocument))
 }

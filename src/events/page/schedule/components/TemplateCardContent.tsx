@@ -1,14 +1,14 @@
 import * as React from 'react'
 import { Session } from '../../../../types'
 import { Box, IconButton, Typography } from '@mui/material'
-import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../scheduleConstants'
 
 export type SessionCardContentProps = {
     session: Session
-    setLocation?: (to: string) => void
+    onDelete?: () => void
 }
-export const SessionCardContent = ({ session, setLocation }: SessionCardContentProps) => {
+export const TemplateCardContent = ({ session, onDelete }: SessionCardContentProps) => {
     if (!session.id) {
         return null
     }
@@ -22,32 +22,7 @@ export const SessionCardContent = ({ session, setLocation }: SessionCardContentP
         : 'white'
 
     return (
-        <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
-            <Box display="flex" justifyContent="space-between">
-                <Typography
-                    fontWeight={600}
-                    color="white"
-                    lineHeight={1}
-                    variant="body2"
-                    sx={{
-                        textOverflow: 'ellipsis',
-                        wordWrap: 'break-word',
-                        overflow: 'hidden',
-                        maxHeight: 42,
-                        color: textColor,
-                    }}>
-                    {session.title.slice(0, 50)}
-                </Typography>
-                {setLocation && (
-                    <IconButton
-                        onClick={() => {
-                            setLocation(`/sessions/${session.id}?backTo=Schedule`)
-                        }}
-                        sx={{ position: 'absolute', top: 0, right: 0 }}>
-                        <EditIcon fontSize="small" htmlColor={textColor} />
-                    </IconButton>
-                )}
-            </Box>
+        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" height="100%">
             <Typography color={textColor} variant="caption" lineHeight={1}>
                 {`${session.formatText || 'no format'} • ${session.categoryObject?.name || 'no category'}`}
                 <br />
@@ -62,6 +37,11 @@ export const SessionCardContent = ({ session, setLocation }: SessionCardContentP
                     {session.speakersData?.map((s) => s?.name).join(', ')}
                 </Box>
             </Typography>
+            {onDelete && (
+                <IconButton onClick={onDelete} sx={{ position: 'absolute', top: 0, right: 0 }}>
+                    <DeleteIcon fontSize="small" htmlColor={textColor} />
+                </IconButton>
+            )}
         </Box>
     )
 }

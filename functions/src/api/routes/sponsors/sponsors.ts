@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { SponsorDao } from '../dao/sponsorDao'
+import { SponsorDao } from '../../dao/sponsorDao'
 import { uploadBufferToStorage } from '../file/files'
 
 export const Sponsor = Type.Object({

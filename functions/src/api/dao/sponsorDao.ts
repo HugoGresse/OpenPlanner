@@ -1,5 +1,5 @@
 import firebase from 'firebase-admin'
-import { SponsorType } from '../sponsors/sponsors'
+import { SponsorType } from '../routes/sponsors/sponsors'
 import { SponsorResponse } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
 

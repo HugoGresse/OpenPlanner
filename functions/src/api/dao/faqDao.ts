@@ -1,6 +1,6 @@
 import firebase from 'firebase-admin'
 import { v4 as uuidv4 } from 'uuid'
-import { FaqCategoryType, FaqType } from '../faq/faq'
+import { FaqCategoryType, FaqType } from '../routes/faq/faq'
 import { NotFoundError } from '../other/Errors'
 
 const { FieldValue } = firebase.firestore

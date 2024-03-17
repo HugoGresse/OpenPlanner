@@ -11,8 +11,9 @@ import { UseQueryResult } from '../../../services/hooks/firestoreQueryHook'
 
 export type NoDatesSessionsPickerProps = {
     sessions: UseQueryResult<DocumentData>
+    title: string
 }
-export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) => {
+export const NoDatesSessionsPicker = ({ sessions, title }: NoDatesSessionsPickerProps) => {
     const [sessionsToDisplay, setSessionsToDisplay] = useState<Session[]>([])
     const [_, setLocation] = useLocation()
     const [isDragInit, setIsDragInit] = useState(false)
@@ -34,15 +35,17 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
         new Draggable(node, {
             itemSelector: '.noDateSession',
             eventData: function (eventEl) {
-                let id = eventEl.dataset.id
-                let title = eventEl.getAttribute('title')
-                let color = eventEl.dataset.color
-                let custom = eventEl.dataset.custom
+                const id = eventEl.dataset.id
+                const title = eventEl.dataset.title
+                const backgroundColor = eventEl.dataset.backgroundcolor
+                const duration = eventEl.dataset.duration
+
                 return {
                     id: id,
                     title: title,
-                    color: color,
-                    custom: custom,
+                    textColor: '#000000',
+                    backgroundColor: backgroundColor,
+                    duration: duration,
                     create: true,
                 }
             },
@@ -74,7 +77,7 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
                 overflowX: 'auto',
                 overflowY: 'hidden',
             }}>
-            <Typography sx={{ width: 80, marginRight: 2 }}>Sessions without times:</Typography>
+            <Typography sx={{ width: 80, marginRight: 2 }}>{title}</Typography>
             {sessionsToDisplay.map((session: Session) => (
                 <SessionDraggable key={session.id} session={session} setLocation={setLocation} />
             ))}

@@ -8,12 +8,20 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQ
 import { Event } from '../../types'
 import { SuspenseLoader } from '../../components/SuspenseLoader'
 
+import { NewMember } from './team/NewMember'
+import { NewSponsor } from './sponsors/NewSponsor'
+import { NewSession } from './sessions/NewSession'
+import { NewSpeaker } from './speakers/NewSpeaker'
+
 const EventSettings = lazy(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
 )
 const EventAPI = lazy(() => import('./api/Api').then((module) => ({ default: module.API })))
 const EventSchedule = lazy(() =>
     import('./schedule/EventSchedule').then((module) => ({ default: module.EventSchedule }))
+)
+const EventScheduleTemplate = lazy(() =>
+    import('./schedule/EventScheduleTemplate').then((module) => ({ default: module.EventScheduleTemplate }))
 )
 const EventSessions = lazy(() =>
     import('./sessions/list/EventSessions').then((module) => ({ default: module.EventSessions }))
@@ -23,16 +31,12 @@ const EventSpeakers = lazy(() =>
     import('./speakers/EventSpeakers').then((module) => ({ default: module.EventSpeakers }))
 )
 const EventSpeaker = lazy(() => import('./speakers/EventSpeaker').then((module) => ({ default: module.EventSpeaker })))
-const NewSession = lazy(() => import('./sessions/NewSession').then((module) => ({ default: module.NewSession })))
-const NewSpeaker = lazy(() => import('./speakers/NewSpeaker').then((module) => ({ default: module.NewSpeaker })))
 const EventSponsors = lazy(() =>
     import('./sponsors/EventSponsors').then((module) => ({ default: module.EventSponsors }))
 )
-const NewSponsor = lazy(() => import('./sponsors/NewSponsor').then((module) => ({ default: module.NewSponsor })))
 const Sponsor = lazy(() => import('./sponsors/Sponsor').then((module) => ({ default: module.Sponsor })))
 
 const EventTeam = lazy(() => import('./team/EventTeam').then((module) => ({ default: module.EventTeam })))
-const NewMember = lazy(() => import('./team/NewMember').then((module) => ({ default: module.NewMember })))
 const EventMember = lazy(() => import('./team/EventMember').then((module) => ({ default: module.EventMember })))
 const EventFaq = lazy(() => import('./faq/EventFaq').then((module) => ({ default: module.EventFAQ })))
 
@@ -66,9 +70,7 @@ export const EventRouter = () => {
 
                 <Switch>
                     <Route path="/sponsors/new">
-                        <Suspense fallback={<SuspenseLoader />}>
-                            <NewSponsor event={eventData} />
-                        </Suspense>
+                        <NewSponsor event={eventData} />
                     </Route>
                     <Route path="/sponsors/:id">
                         <Suspense fallback={<SuspenseLoader />}>
@@ -84,9 +86,7 @@ export const EventRouter = () => {
                 </Route>
                 <Switch>
                     <Route path="/team/new">
-                        <Suspense fallback={<SuspenseLoader />}>
-                            <NewMember event={eventData} />
-                        </Suspense>
+                        <NewMember event={eventData} />
                     </Route>
                     <Route path="/team/:id">
                         <Suspense fallback={<SuspenseLoader />}>
@@ -107,9 +107,7 @@ export const EventRouter = () => {
                 </Route>
                 <Switch>
                     <Route path="/sessions/new">
-                        <Suspense fallback={<SuspenseLoader />}>
-                            <NewSession event={eventData} />
-                        </Suspense>
+                        <NewSession event={eventData} />
                     </Route>
                     <Route path="/sessions/:id">
                         <Suspense fallback={<SuspenseLoader />}>
@@ -125,9 +123,7 @@ export const EventRouter = () => {
                 </Route>
                 <Switch>
                     <Route path="/speakers/new">
-                        <Suspense fallback={<SuspenseLoader />}>
-                            <NewSpeaker event={eventData} />
-                        </Suspense>
+                        <NewSpeaker event={eventData} />
                     </Route>
                     <Route path="/speakers/:id">
                         <Suspense fallback={<SuspenseLoader />}>
@@ -136,6 +132,11 @@ export const EventRouter = () => {
                     </Route>
                 </Switch>
 
+                <Route path="/schedule/template">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventScheduleTemplate event={eventData} />
+                    </Suspense>
+                </Route>
                 <Route path="/schedule">
                     <Suspense fallback={<SuspenseLoader />}>
                         <EventSchedule event={eventData} />

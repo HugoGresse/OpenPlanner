@@ -8,7 +8,7 @@ import {
     Speaker,
 } from '../../../types'
 import { slugify } from '../../../utils/slugify'
-import { randomColor } from '../../../utils/randomColor'
+import { randomColor } from '../../../utils/colors/randomColor'
 
 export const mapConferenceHallSpeakerToOpenPlanner = (
     speakerIds: string[],
