@@ -13,8 +13,6 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
     const sessions = useSessions(event)
     const [_, setLocation] = useLocation()
 
-    event.categories
-
     const categoryColumnType: GridColTypeDef<number[]> = {
         ...GRID_STRING_COL_DEF,
         resizable: false,
