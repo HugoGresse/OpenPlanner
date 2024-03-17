@@ -20,6 +20,11 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
         sortable: true,
         editable: false,
         renderCell: (params) => {
+            if (params.id === 'total' && params.field === 'total') {
+                return <b>{params.value}</b>
+            } else if (params.id === 'total' || params.field === 'total') {
+                return params.value
+            }
             return (
                 <Chip
                     label={params.value}
@@ -40,17 +45,25 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
             ...categoryColumnType,
             field: 'category',
             headerName: 'Category',
-            width: 150,
+            width: 170,
         },
-    ].concat(
-        event.formats.map((format) => ({
+    ]
+        .concat(
+            event.formats.map((format) => ({
+                ...categoryColumnType,
+                field: format.id,
+                headerName: format.name,
+                width: 170,
+                type: 'number',
+            }))
+        )
+        .concat({
             ...categoryColumnType,
-            field: format.id,
-            headerName: format.name,
-            width: 150,
+            field: 'total',
+            headerName: 'Total',
             type: 'number',
-        }))
-    )
+            width: 150,
+        })
 
     const rows = event.categories.map((category) => ({
         id: category.id,
@@ -63,7 +76,26 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
                         .length || 0,
             }
         }, {}),
+        total: event.formats.reduce((acc, format) => {
+            return (
+                acc +
+                (sessions.data?.filter((session) => session.category === category.id && session.format === format.id)
+                    .length || 0)
+            )
+        }, 0),
     }))
+
+    rows.push({
+        id: 'total',
+        category: 'Total',
+        ...event.formats.reduce((acc, format) => {
+            return {
+                ...acc,
+                [format.id]: sessions.data?.filter((session) => session.format === format.id).length || 0,
+            }
+        }, {}),
+        total: sessions.data?.length || 0,
+    })
 
     return (
         <>

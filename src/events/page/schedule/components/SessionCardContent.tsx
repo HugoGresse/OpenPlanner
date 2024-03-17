@@ -21,6 +21,9 @@ export const SessionCardContent = ({ session, setLocation }: SessionCardContentP
             : 'white'
         : 'white'
 
+    const startTime = session.dates?.start?.toFormat('HH:mm')
+    const endTime = session.dates?.end?.toFormat('HH:mm')
+
     return (
         <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
             <Box display="flex" justifyContent="space-between">
@@ -50,6 +53,7 @@ export const SessionCardContent = ({ session, setLocation }: SessionCardContentP
             </Box>
             <Typography color={textColor} variant="caption" lineHeight={1}>
                 {`${session.formatText || 'no format'} • ${session.categoryObject?.name || 'no category'}`}
+                {startTime ? ` • ${startTime} → ${endTime}` : null}
                 <br />
                 <Box
                     sx={{

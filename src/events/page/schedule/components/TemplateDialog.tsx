@@ -22,13 +22,13 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
         {
             field: 'category',
             headerName: 'Category',
-            width: 150,
+            width: 200,
         },
     ].concat(
         event.formats.map((format) => ({
             field: format.id,
             headerName: format.name + ' (actual)',
-            width: 150,
+            width: 200,
             type: 'number',
             editable: true,
             valueParser: (value: any) => {
@@ -40,6 +40,11 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
                 return parsed
             },
             valueFormatter: (params: GridValueFormatterParams<number>) => {
+                if (params.id === 'total') {
+                    const totalExisting = sessions.data?.filter((session) => session.format === format.id).length
+                    return `${params.value} (${totalExisting || 0})`
+                }
+
                 const existingSessionsCount = sessions.data?.filter(
                     (session) => session.category === params.id && session.format === format.id
                 ).length
@@ -50,6 +55,13 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
             },
         }))
     )
+
+    columns.push({
+        field: 'total',
+        headerName: 'Total',
+        type: 'number',
+        width: 150,
+    })
 
     const rows = event.categories.map((category) => ({
         id: category.id,
@@ -63,7 +75,26 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
                     ).length || 0,
             }
         }, {}),
+        total: event.formats.reduce((acc, format) => {
+            return (
+                acc +
+                (sessionsTemplate.data?.filter(
+                    (session) => session.category === category.id && session.format === format.id
+                ).length || 0)
+            )
+        }, 0),
     }))
+    rows.push({
+        id: 'total',
+        category: 'Total',
+        ...event.formats.reduce((acc, format) => {
+            return {
+                ...acc,
+                [format.id]: sessionsTemplate.data?.filter((session) => session.format === format.id).length || 0,
+            }
+        }, {}),
+        total: sessionsTemplate.data?.length || 0,
+    })
 
     return (
         <Dialog open={isOpen} onClose={() => onClose()} maxWidth="md" fullWidth={true} scroll="body">
