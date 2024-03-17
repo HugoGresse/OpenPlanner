@@ -4,6 +4,13 @@
 
 .fc-event {
     font-size: 16px;
+    border-width: 0;
+    border-radius: 6px;
+}
+
+.fc-template {
+    border-width: 2px;
+    border-style: dashed;
 }
 
 .fc .fc-timegrid-slot {

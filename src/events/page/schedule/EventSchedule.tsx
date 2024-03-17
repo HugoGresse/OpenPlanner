@@ -1,6 +1,6 @@
 import { Box, Button, Card, Link, Typography } from '@mui/material'
 import * as React from 'react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Event, Session } from '../../../types'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -10,23 +10,25 @@ import { diffDays } from '../../../utils/dates/diffDays'
 import { DateTime } from 'luxon'
 import { EventSourceInput } from '@fullcalendar/core'
 import { onFullCalendarEventChange } from './eventScheduleFunctions'
-import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from './scheduleConstants'
 import { SessionCardContent } from './components/SessionCardContent'
 import { useLocation } from 'wouter'
 import { FullCalendarBase } from './components/FullCalendarBase'
 import { useSessionTemplate } from '../../../services/hooks/useSessionsTemplate'
-import { TemplateDialog } from './components/TemplateDialog'
+import { getSessionBackgroundColor } from './components/getSessionBackgroundColor'
+import { hexOpacity } from '../../../utils/colors/hexOpacity'
+import { hexDarken } from '../../../utils/colors/hexDarken'
+import { TemplateCardContent } from './components/TemplateCardContent'
 
 export type EventScheduleProps = {
     event: Event
 }
 export const EventSchedule = ({ event }: EventScheduleProps) => {
+    const calendarRef = useRef(null)
     const numberOfDays = diffDays(event.dates.start, event.dates.end)
     const [_, setLocation] = useLocation()
     const sessions = useSessions(event)
     const sessionsTemplate = useSessionTemplate(event)
     const [daysToDisplay, setDaysToDisplay] = useState<number>(1)
-    const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
 
     if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
         return (
@@ -56,6 +58,8 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const sessionsArray = sessions.data || []
     const sessionsWithDates = sessionsArray.filter((s: Session) => s.dates)
 
+    const hasTemplates = sessionsTemplate.data && sessionsTemplate.data.length > 0
+
     const sessionsTemplateArray = sessionsTemplate.data || []
     const startTime = DateTime.fromJSDate(event.dates.start).toFormat('HH:mm')
 
@@ -69,7 +73,8 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
         changeTemplate: {
             text: 'Change template',
             click: () => {
-                setTemplateDialogOpen(true)
+                // Redirect to the template page
+                setLocation(`/schedule/template`)
             },
         },
     }
@@ -77,32 +82,11 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     return (
         <>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
-            <NoDatesSessionsPicker sessions={sessions} />
+            <NoDatesSessionsPicker sessions={sessions} title="Sessions without times:" />
             <Typography variant="caption">Info: The schedule calendar is updated in realtime</Typography>
             <Box paddingBottom={6} position="relative">
-                <Box position="absolute" top={0}>
-                    <FullCalendarBase
-                        event={event}
-                        daysToDisplay={daysToDisplay}
-                        startTime={startTime}
-                        events={sessionsTemplateArray.map((template) => {
-                            return {
-                                title: template.title,
-                                id: template.id,
-                                start: template.dates?.start?.toISO() || undefined,
-                                end: template.dates?.end?.toISO() || undefined,
-                                resourceId: template.trackId || undefined,
-                                backgroundColor: DEFAULT_SESSION_CARD_BACKGROUND_COLOR,
-                                extendedProps: template,
-                            }
-                        })}
-                        eventContent={(info) => {
-                            return <SessionCardContent session={info.event._def.extendedProps as Session} />
-                        }}
-                        customButtons={customButtons}
-                    />
-                </Box>
                 <FullCalendarBase
+                    forwardRef={calendarRef}
                     startTime={startTime}
                     daysToDisplay={daysToDisplay}
                     event={event}
@@ -114,7 +98,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                             end: s.dates?.end?.toISO(),
                             resourceId: s.trackId,
                             extendedProps: s,
-                            backgroundColor: s.categoryObject?.color || DEFAULT_SESSION_CARD_BACKGROUND_COLOR,
+                            backgroundColor: getSessionBackgroundColor(s),
                         })) as EventSourceInput
                     }
                     eventContent={(info) => {
@@ -159,15 +143,42 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                         )
                     }}
                 />
-            </Box>
 
-            {templateDialogOpen && (
-                <TemplateDialog
-                    event={event}
-                    isOpen={templateDialogOpen}
-                    onClose={() => setTemplateDialogOpen(false)}
-                />
-            )}
+                {hasTemplates && (
+                    <Box position="absolute" top={0} zIndex={0}>
+                        <FullCalendarBase
+                            event={event}
+                            daysToDisplay={daysToDisplay}
+                            startTime={startTime}
+                            events={sessionsTemplateArray.map((template) => {
+                                return {
+                                    title: template.title,
+                                    id: template.id,
+                                    start: template.dates?.start?.toISO() || undefined,
+                                    end: template.dates?.end?.toISO() || undefined,
+                                    resourceId: template.trackId || undefined,
+                                    borderColor: hexDarken(getSessionBackgroundColor(template), 10),
+                                    backgroundColor: hexOpacity(getSessionBackgroundColor(template), 0.5),
+                                    extendedProps: template,
+                                }
+                            })}
+                            eventClassNames="fc-template"
+                            eventContent={(info) => {
+                                return <TemplateCardContent session={info.event._def.extendedProps as Session} />
+                            }}
+                            customButtons={customButtons}
+                            datesSet={(arg) => {
+                                if (calendarRef.current) {
+                                    const calendarApi = (calendarRef.current as any).getApi()
+                                    if (calendarApi) {
+                                        calendarApi.gotoDate(arg.start)
+                                    }
+                                }
+                            }}
+                        />
+                    </Box>
+                )}
+            </Box>
         </>
     )
 }

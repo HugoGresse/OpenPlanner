@@ -6,6 +6,7 @@ import FullCalendar from '@fullcalendar/react'
 import { Event } from '../../../../types'
 
 type FullCalendarBaseProps = {
+    forwardRef?: React.RefObject<any>
     event: Event
     events: EventSourceInput
     daysToDisplay: number
@@ -15,9 +16,12 @@ type FullCalendarBaseProps = {
     eventDrop?: (arg: EventDropArg) => void
     eventResize?: (arg: EventResizeDoneArg) => void
     eventContent?: (info: EventContentArg) => React.ReactNode
+    datesSet?: (arg: { start: Date; end: Date }) => void
+    eventClassNames?: string
 }
 
 export const FullCalendarBase = ({
+    forwardRef,
     event,
     events,
     startTime,
@@ -27,9 +31,12 @@ export const FullCalendarBase = ({
     eventDrop,
     eventResize,
     eventContent,
+    eventClassNames,
+    datesSet,
 }: FullCalendarBaseProps) => {
     return (
         <FullCalendar
+            ref={forwardRef}
             schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
             plugins={[resourceTimeGrid, interactionPlugin]}
             allDaySlot={false}
@@ -39,7 +46,7 @@ export const FullCalendarBase = ({
             nowIndicator
             headerToolbar={{
                 right: 'prev,next',
-                left: 'allDays, changeTemplate',
+                left: 'allDays,changeTemplate',
                 center: 'title',
             }}
             customButtons={customButtons}
@@ -75,6 +82,12 @@ export const FullCalendarBase = ({
             drop={drop}
             eventDrop={eventDrop}
             eventResize={eventResize}
+            eventClassNames={eventClassNames}
+            datesSet={(arg) => {
+                if (datesSet) {
+                    datesSet(arg)
+                }
+            }}
         />
     )
 }

@@ -68,7 +68,7 @@ export const updateSessionsTemplateAtOnce = async (
                     category: updatedRow.id,
                     format: format.id,
                     durationMinutes: format.durationMinutes,
-                    title: 'template session',
+                    title: '',
                     abstract: null,
                     dates: null,
                     conferenceHallId: null,
