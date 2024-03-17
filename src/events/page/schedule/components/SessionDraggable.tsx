@@ -11,13 +11,17 @@ export type SessionDraggableProps = {
 }
 export const SessionDraggable = ({ session, setLocation }: SessionDraggableProps) => {
     const backgroundColor = getSessionBackgroundColor(session)
+
+    const hours = Math.floor(session.durationMinutes / 60)
+    const minutes = session.durationMinutes % 60
+
     return (
         <Box
             className="noDateSession"
             data-id={session.id}
             data-backgroundcolor={backgroundColor}
             data-title={session.title}
-            data-duration={`00:${session.durationMinutes}` || '00:30'}
+            data-duration={`${hours}:${minutes}` || '00:30'}
             sx={{
                 display: 'flex',
                 cursor: 'grab',
