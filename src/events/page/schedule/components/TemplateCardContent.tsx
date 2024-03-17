@@ -21,21 +21,15 @@ export const TemplateCardContent = ({ session, onDelete }: SessionCardContentPro
             : 'white'
         : 'white'
 
+    const startTime = session.dates?.start?.toFormat('HH:mm')
+    const endTime = session.dates?.end?.toFormat('HH:mm')
+
     return (
         <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" height="100%">
             <Typography color={textColor} variant="caption" lineHeight={1}>
                 {`${session.formatText || 'no format'} • ${session.categoryObject?.name || 'no category'}`}
                 <br />
-                <Box
-                    sx={{
-                        backgroundColor: 'rgba(255,255,255, 0.7)',
-                        width: 'fit-content',
-                        color: '#000',
-                        borderRadius: 1,
-                        paddingX: 0.4,
-                    }}>
-                    {session.speakersData?.map((s) => s?.name).join(', ')}
-                </Box>
+                {startTime ? `${startTime} → ${endTime}` : null}
             </Typography>
             {onDelete && (
                 <IconButton onClick={onDelete} sx={{ position: 'absolute', top: 0, right: 0 }}>
