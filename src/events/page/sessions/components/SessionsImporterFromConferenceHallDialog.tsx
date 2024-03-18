@@ -6,6 +6,7 @@ import { ConferenceHallProposal, Event, Format } from '../../../../types'
 import { Dialog, DialogContent, Typography } from '@mui/material'
 import { useNotification } from '../../../../hooks/notificationHook'
 import { addSessionsFromCH } from '../../../actions/sessions/addSessionsFromCH'
+import { UPDATE_FIELDS_SESSIONS } from '../../../actions/conferenceHallUtils/importSessions'
 
 export type SessionsImporterFromConferenceHallProps = {
     event: Event
@@ -41,7 +42,8 @@ export const SessionsImporterFromConferenceHallDialog = ({
                                 submitText="Add sessions"
                             />
                             <Typography margin={1}>
-                                ⚠️ it will replace already added sessions matching the selected one.
+                                ⚠️ it will update or add already added sessions matching the selected one. The update
+                                will only concern those fields: {UPDATE_FIELDS_SESSIONS.join(', ')}
                             </Typography>
                         </>
                     )}

@@ -4,11 +4,11 @@ import { Box, IconButton, Typography } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../scheduleConstants'
 
-export type SessionCardContentProps = {
+export type TemplateCardContentProps = {
     session: Session
     onDelete?: () => void
 }
-export const TemplateCardContent = ({ session, onDelete }: SessionCardContentProps) => {
+export const TemplateCardContent = ({ session, onDelete }: TemplateCardContentProps) => {
     if (!session.id) {
         return null
     }
