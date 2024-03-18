@@ -1,15 +1,16 @@
 import * as React from 'react'
 import { Session } from '../../../../types'
 import { Box } from '@mui/material'
-import { SessionCardContent } from './SessionCardContent'
+import { SessionCardContent, SessionCardContentProps } from './SessionCardContent'
 import { getSessionBackgroundColor } from './getSessionBackgroundColor'
 import { hexDarken } from '../../../../utils/colors/hexDarken'
 
 export type SessionDraggableProps = {
     session: Session
     setLocation: (to: string) => void
+    Component?: React.ComponentType<SessionCardContentProps>
 }
-export const SessionDraggable = ({ session, setLocation }: SessionDraggableProps) => {
+export const SessionDraggable = ({ session, setLocation, Component = SessionCardContent }: SessionDraggableProps) => {
     const backgroundColor = getSessionBackgroundColor(session)
 
     const hours = Math.floor(session.durationMinutes / 60)
@@ -37,7 +38,7 @@ export const SessionDraggable = ({ session, setLocation }: SessionDraggableProps
                 },
                 background: backgroundColor,
             }}>
-            <SessionCardContent session={session} setLocation={setLocation} />
+            <Component session={session} setLocation={setLocation} />
         </Box>
     )
 }

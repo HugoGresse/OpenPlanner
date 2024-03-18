@@ -84,7 +84,11 @@ export const EventScheduleTemplate = ({ event }: EventScheduleTemplateProps) => 
                 <Box></Box>
             </Box>
             <FirestoreQueryLoaderAndErrorDisplay hookResult={sessionsTemplate} />
-            <NoDatesSessionsPicker sessions={sessionsTemplate} title="Not placed template" />
+            <NoDatesSessionsPicker
+                sessions={sessionsTemplate}
+                title="Not placed template"
+                Component={TemplateCardContent}
+            />
             <FullCalendarBase
                 event={event}
                 daysToDisplay={daysToDisplay}
