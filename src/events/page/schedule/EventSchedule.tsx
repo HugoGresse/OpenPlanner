@@ -24,6 +24,7 @@ export type EventScheduleProps = {
 }
 export const EventSchedule = ({ event }: EventScheduleProps) => {
     const calendarRef = useRef(null)
+    const templateCalendarRef = useRef(null)
     const numberOfDays = diffDays(event.dates.start, event.dates.end)
     const [_, setLocation] = useLocation()
     const sessions = useSessions(event)
@@ -67,7 +68,23 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
         allDays: {
             text: 'Display all days',
             click: () => {
-                setDaysToDisplay(numberOfDays === daysToDisplay ? 1 : numberOfDays)
+                const newDaysToDisplay = numberOfDays === daysToDisplay ? 1 : numberOfDays
+                setDaysToDisplay(newDaysToDisplay)
+                const calendarApi = (templateCalendarRef.current as any).getApi()
+                if (calendarApi && event?.dates?.end) {
+                    const currentDay = calendarApi.getDate()
+                    const lastDayTimestamp = event?.dates?.end?.getTime() || 0
+                    const tomorrowDate = new Date(calendarApi.getDate())
+                    const diffDays = Math.ceil(
+                        Math.abs(event?.dates?.end?.getTime() - currentDay.getTime()) / (1000 * 60 * 60 * 24)
+                    )
+                    tomorrowDate.setDate(tomorrowDate.getDate() + diffDays)
+                    const isThereSomethingTomorrow = lastDayTimestamp > tomorrowDate.getTime()
+                    if (!isThereSomethingTomorrow && newDaysToDisplay > daysToDisplay) {
+                        // Go to the first event day
+                        calendarApi.gotoDate(event?.dates?.start)
+                    }
+                }
             },
         },
         changeTemplate: {
@@ -147,6 +164,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                 {hasTemplates && (
                     <Box position="absolute" top={0} zIndex={0}>
                         <FullCalendarBase
+                            forwardRef={templateCalendarRef}
                             event={event}
                             daysToDisplay={daysToDisplay}
                             startTime={startTime}
