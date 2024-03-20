@@ -3,7 +3,17 @@ import { collections } from '../../../services/firebase'
 import { mapConferenceHallProposalsToOpenPlanner } from './mapFromConferenceHallToOpenPlanner'
 import { ConferenceHallProposal, Format } from '../../../types'
 
-export const UPDATE_FIELDS_SESSIONS = ['title', 'abstract', 'language', 'level', 'speakers', 'tags']
+export const UPDATE_FIELDS_SESSIONS = [
+    'title',
+    'abstract',
+    'language',
+    'level',
+    'speakers',
+    'tags',
+    'format',
+    'durationMinutes',
+    'category',
+]
 export const importSessions = async (
     eventId: string,
     proposals: ConferenceHallProposal[],
