@@ -92,11 +92,10 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
 
                             <TextFieldElement
                                 margin="normal"
-                                required
                                 fullWidth
-                                id="openAIKey"
+                                id="openAPIKey"
                                 label="OpenAI API key"
-                                name="openAIKey"
+                                name="openAPIKey"
                                 variant="filled"
                                 disabled={formState.isSubmitting}
                             />
@@ -143,6 +142,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 sx={{ mt: 2, mb: 2 }}>
                                 Save
                             </LoadingButton>
+                            {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}
                         </Grid>
                     </Grid>
                 </Card>
