@@ -1,6 +1,6 @@
+import { DateTime } from 'luxon'
 import { Category, Event, EventForForm, EventSettingForForm, Format, Track } from '../../../types'
 import { slugify } from '../../../utils/slugify'
-import { DateTime } from 'luxon'
 import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../schedule/scheduleConstants'
 
 export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForForm) => {
@@ -30,6 +30,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         start: data.dates.start ? (DateTime.fromISO(data.dates.start).toJSDate() as Date) : null,
         end: data.dates.end ? (DateTime.fromISO(data.dates.end).toJSDate() as Date) : null,
     }
+    const openAIKey = data.openAPIKey
 
     return {
         ...event,
@@ -40,6 +41,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         tracks,
         formats,
         categories,
+        openAIKey,
     }
 }
 

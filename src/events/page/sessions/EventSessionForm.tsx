@@ -1,4 +1,6 @@
-import * as React from 'react'
+import LoadingButton from '@mui/lab/LoadingButton'
+import { Avatar, Button, Chip, CircularProgress, Grid, Typography } from '@mui/material'
+import { useState } from 'react'
 import {
     AutocompleteElement,
     CheckboxElement,
@@ -7,14 +9,13 @@ import {
     TextFieldElement,
     useForm,
 } from 'react-hook-form-mui'
-import { Avatar, Chip, CircularProgress, Grid, Typography } from '@mui/material'
+import { useLocation } from 'wouter'
+import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
+import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
+import { TeasingPostSocials, generatePost } from '../../../services/openai'
 import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
-import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
-import LoadingButton from '@mui/lab/LoadingButton'
-import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
-import { useLocation } from 'wouter'
-import { SaveShortcut } from '../../../components/form/SaveShortcut'
 
 export type EventSessionFormProps = {
     event: Event
@@ -45,6 +46,36 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
     const { formState } = formContext
 
     const isSubmitting = formState.isSubmitting
+
+    const onGenerateTeasingPosts = async () => {
+        setIsGeneratingPosts(true)
+
+        if (!event.apiKey || !session) {
+            setIsGeneratingPosts(false)
+            return
+        }
+
+        const linkedInPost = await generatePost(event.apiKey, TeasingPostSocials.LinkedIn, session)
+        const twitterPost = await generatePost(event.apiKey, TeasingPostSocials.Twitter, session)
+        const facebookPost = await generatePost(event.apiKey, TeasingPostSocials.Facebook, session)
+        const instagramPost = await generatePost(event.apiKey, TeasingPostSocials.Instagram, session)
+
+        console.log('LinkedIn:', linkedInPost)
+        console.log('Twitter:', twitterPost)
+        console.log('Facebook:', facebookPost)
+        console.log('Instagram:', instagramPost)
+
+        session.teasingPosts = {
+            linkedin: linkedInPost.choices[0].message.content,
+            twitter: twitterPost.choices[0].message.content,
+            facebook: facebookPost.choices[0].message.content,
+            instagram: instagramPost.choices[0].message.content,
+        }
+
+        setIsGeneratingPosts(false)
+    }
+
+    const [isGeneratingPosts, setIsGeneratingPosts] = useState(false)
 
     const startAt = session?.dates?.start ? dateTimeToDayMonthHours(session.dates?.start) : 'not set'
     const endAt = session?.dates?.end ? dateTimeToDayMonthHours(session.dates?.end) : 'not set'
@@ -148,6 +179,28 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                         minRows={4}
                         maxRows={40}
                         label="Note (private, for organisers)"
+                        name="note"
+                        variant="filled"
+                        disabled={isSubmitting}
+                    />
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        maxRows={40}
+                        label="LinkedIn teasing post"
+                        name="note"
+                        variant="filled"
+                        disabled={isSubmitting}
+                    />
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        maxRows={40}
+                        label="Twitter teasing post"
                         name="note"
                         variant="filled"
                         disabled={isSubmitting}
@@ -274,6 +327,38 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     </Grid>
                     <CheckboxElement label="Hide track title" name="hideTrackTitle" />
                     <CheckboxElement label="Show in feedback" name="showInFeedback" />
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        maxRows={40}
+                        label="Instagram teasing post"
+                        name="note"
+                        variant="filled"
+                        disabled={isGeneratingPosts}
+                    />
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        maxRows={40}
+                        label="Facebook teasing post"
+                        name="note"
+                        variant="filled"
+                        disabled={isGeneratingPosts}
+                    />
+                </Grid>
+
+                <Grid item xs={12}>
+                    <Button
+                        disabled={isGeneratingPosts}
+                        fullWidth
+                        sx={{ mt: 2, mb: 2 }}
+                        onClick={onGenerateTeasingPosts}>
+                        Generate social media posts
+                    </Button>
                 </Grid>
 
                 <Grid item xs={12}>

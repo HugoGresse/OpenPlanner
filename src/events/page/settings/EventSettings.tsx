@@ -1,30 +1,29 @@
-import * as React from 'react'
-import { useEffect, useState } from 'react'
-import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
-import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
-import * as yup from 'yup'
-import { TrackFields } from './components/TrackFields'
-import { collections } from '../../../services/firebase'
+import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
-import { diffDays } from '../../../utils/dates/diffDays'
-import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { useEffect, useState } from 'react'
+import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { useLocation } from 'wouter'
-import { FormatsFields } from './components/FormatsFields'
-import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
-import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImportSessionsSpeakersFromConferenceHall'
+import * as yup from 'yup'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { RequireConferenceHallLogin } from '../../../conferencehall/RequireConferenceHallLogin'
 import { useNotification } from '../../../hooks/notificationHook'
-import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
-import { CategoriesFields } from './components/CategoriesFields'
+import { collections } from '../../../services/firebase'
 import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
-import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { Event, EventForForm } from '../../../types'
+import { diffDays } from '../../../utils/dates/diffDays'
+import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
+import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImportSessionsSpeakersFromConferenceHall'
+import { CategoriesFields } from './components/CategoriesFields'
+import { FormatsFields } from './components/FormatsFields'
+import { TrackFields } from './components/TrackFields'
+import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
 
 const schema = yup
     .object({
@@ -87,6 +86,17 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 id="name"
                                 label="Event name"
                                 name="name"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                            />
+
+                            <TextFieldElement
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="openAIKey"
+                                label="OpenAI API key"
+                                name="openAIKey"
                                 variant="filled"
                                 disabled={formState.isSubmitting}
                             />

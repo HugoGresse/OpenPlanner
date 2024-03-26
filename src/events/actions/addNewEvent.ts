@@ -1,11 +1,11 @@
-import { ConferenceHallEvent, ConferenceHallProposal, Format, NewEvent } from '../../types'
-import { collections } from '../../services/firebase'
 import { addDoc, serverTimestamp } from 'firebase/firestore'
 import { loadConferenceHallSpeakers } from '../../conferencehall/firebase/loadFromConferenceHallUtils'
-import { importSpeakers } from './conferenceHallUtils/importSpeakers'
-import { importSessions } from './conferenceHallUtils/importSessions'
-import { getNewEventDates } from './conferenceHallUtils/addNewEventDateUtils'
+import { collections } from '../../services/firebase'
+import { ConferenceHallEvent, ConferenceHallProposal, Format, NewEvent } from '../../types'
 import { randomColor } from '../../utils/randomColor'
+import { getNewEventDates } from './conferenceHallUtils/addNewEventDateUtils'
+import { importSessions } from './conferenceHallUtils/importSessions'
+import { importSpeakers } from './conferenceHallUtils/importSpeakers'
 
 export const addNewEvent = async (
     chEvent: ConferenceHallEvent,
@@ -61,6 +61,7 @@ const addNewEventInternal = async (
         files: null,
         statusBadgeLink: null,
         statusBadgeImage: null,
+        openAPIKey: null,
     }
     progress(`Creating the event...`)
     const newEventRef = await addDoc(collections.events, event)
