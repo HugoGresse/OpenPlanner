@@ -82,6 +82,7 @@ export interface Session {
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
+    teasingHidden: boolean
     teasingPosts: TeasingPosts | null
     extendHeight?: number
     extendWidth?: number

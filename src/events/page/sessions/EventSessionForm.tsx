@@ -1,5 +1,5 @@
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Avatar, Button, Chip, CircularProgress, Grid, Typography } from '@mui/material'
+import { Avatar, Button, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
 import { useState } from 'react'
 import {
     AutocompleteElement,
@@ -16,6 +16,7 @@ import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { TeasingPostSocials, generatePost } from '../../../services/openai'
 import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
+import { ArrowDownward, ExpandMore } from '@mui/icons-material'
 
 export type EventSessionFormProps = {
     event: Event
@@ -25,6 +26,7 @@ export type EventSessionFormProps = {
 export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
     const [_2, setLocation] = useLocation()
+    const [teasingPostsOpen, setTeasingPostsOpen] = useState<boolean>(!!session?.teasingPosts)
     const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
         defaultValues: session
@@ -98,6 +100,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     language: data.language,
                     level: data.level,
                     note: data.note,
+                    teasingHidden: data.teasingHidden,
                     extendHeight: data.extendHeight,
                     extendWidth: data.extendWidth,
                 } as Session)
@@ -179,28 +182,6 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                         minRows={4}
                         maxRows={40}
                         label="Note (private, for organisers)"
-                        name="note"
-                        variant="filled"
-                        disabled={isSubmitting}
-                    />
-                    <TextFieldElement
-                        margin="dense"
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        maxRows={40}
-                        label="LinkedIn teasing post"
-                        name="note"
-                        variant="filled"
-                        disabled={isSubmitting}
-                    />
-                    <TextFieldElement
-                        margin="dense"
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        maxRows={40}
-                        label="Twitter teasing post"
                         name="note"
                         variant="filled"
                         disabled={isSubmitting}
@@ -327,38 +308,78 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     </Grid>
                     <CheckboxElement label="Hide track title" name="hideTrackTitle" />
                     <CheckboxElement label="Show in feedback" name="showInFeedback" />
-                    <TextFieldElement
-                        margin="dense"
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        maxRows={40}
-                        label="Instagram teasing post"
-                        name="note"
-                        variant="filled"
-                        disabled={isGeneratingPosts}
-                    />
-                    <TextFieldElement
-                        margin="dense"
-                        fullWidth
-                        multiline
-                        minRows={4}
-                        maxRows={40}
-                        label="Facebook teasing post"
-                        name="note"
-                        variant="filled"
-                        disabled={isGeneratingPosts}
-                    />
+                    <CheckboxElement label="Don't share this session on socials" name="teasingHidden" />
                 </Grid>
 
                 <Grid item xs={12}>
-                    <Button
-                        disabled={isGeneratingPosts}
-                        fullWidth
-                        sx={{ mt: 2, mb: 2 }}
-                        onClick={onGenerateTeasingPosts}>
-                        Generate social media posts
-                    </Button>
+                    <Grid container spacing={1}>
+                        <Grid item xs={6} sx={{ flexDirection: 'row', alignItems: 'center', display: 'flex' }}>
+                            <Typography variant="h6">Teasing posts</Typography>
+                            <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
+                                <ExpandMore />
+                            </IconButton>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <LoadingButton>Generate media post</LoadingButton>
+                        </Grid>
+
+                        {teasingPostsOpen && (
+                            <>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="LinkedIn teasing post"
+                                        name="note"
+                                        variant="filled"
+                                        disabled={isSubmitting}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Twitter teasing post"
+                                        name="note"
+                                        variant="filled"
+                                        disabled={isSubmitting}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Instagram teasing post"
+                                        name="note"
+                                        variant="filled"
+                                        disabled={isGeneratingPosts}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Facebook teasing post"
+                                        name="note"
+                                        variant="filled"
+                                        disabled={isGeneratingPosts}
+                                    />
+                                </Grid>
+                            </>
+                        )}
+                    </Grid>
                 </Grid>
 
                 <Grid item xs={12}>
