@@ -30,7 +30,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         start: data.dates.start ? (DateTime.fromISO(data.dates.start).toJSDate() as Date) : null,
         end: data.dates.end ? (DateTime.fromISO(data.dates.end).toJSDate() as Date) : null,
     }
-    const openAIKey = data.openAPIKey
+    const openAPIKey = data.openAPIKey || ''
 
     return {
         ...event,
@@ -41,7 +41,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         tracks,
         formats,
         categories,
-        openAIKey,
+        openAPIKey,
     }
 }
 

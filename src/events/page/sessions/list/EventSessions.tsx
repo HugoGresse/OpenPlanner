@@ -23,6 +23,7 @@ import { Clear } from '@mui/icons-material'
 import { filterSessions } from './filterSessions'
 import { FilterCategory } from './FilterCategory'
 import { FilterFormat } from './FilterFormat'
+import { GenerateSessionsMediaContentDialog } from '../components/GenerateSessionsMediaContentDialog'
 
 export type EventSessionsProps = {
     event: Event
@@ -35,6 +36,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('')
     const [selectedFormat, setSelectedFormat] = useState<string>('')
     const [onlyWithoutSpeaker, setOnlyWithoutSpeaker] = useState<boolean>(false)
+    const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
 
     const sessionsData = sessions.data || []
     const isFiltered = displayedSessions.length !== sessionsData.length
@@ -65,6 +67,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                 <RequireConferenceHallConnections event={event}>
                     <Button onClick={() => setSessionsImportOpen(true)}>Import proposals from ConferenceHall</Button>
                 </RequireConferenceHallConnections>
+                <Button onClick={() => setGenerateDialogOpen(true)}>Generate sessions content</Button>
                 <Button href="/sessions/new" variant="contained">
                     Add session
                 </Button>
@@ -132,6 +135,16 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     onClose={() => {
                         setSessionsImportOpen(false)
                     }}
+                />
+            )}
+            {generateDialogOpen && (
+                <GenerateSessionsMediaContentDialog
+                    isOpen={generateDialogOpen}
+                    onClose={() => {
+                        setGenerateDialogOpen(false)
+                    }}
+                    event={event}
+                    sessions={displayedSessions}
                 />
             )}
         </Container>

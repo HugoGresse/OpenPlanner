@@ -55,10 +55,10 @@ export interface Speaker {
 }
 
 export interface TeasingPosts {
-    twitter: string | null
-    linkedin: string | null
-    facebook: string | null
-    instagram: string | null
+    twitter?: string | null
+    linkedin?: string | null
+    facebook?: string | null
+    instagram?: string | null
 }
 
 export interface Session {

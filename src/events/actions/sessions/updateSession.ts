@@ -1,6 +1,6 @@
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, writeBatch } from 'firebase/firestore'
 import { Session } from '../../../types'
-import { collections } from '../../../services/firebase'
+import { collections, instanceFirestore } from '../../../services/firebase'
 
 export const updateSession = async (eventId: string, session: Session): Promise<void> => {
     const ref = doc(collections.sessions(eventId), session.id)
@@ -12,4 +12,17 @@ export const updateSession = async (eventId: string, session: Session): Promise<
             end: session.dates?.end ? session.dates.end.toJSDate() : null,
         },
     })
+}
+
+export const updateSessions = async (eventId: string, sessions: Session[]): Promise<void> => {
+    const batch = writeBatch(instanceFirestore)
+
+    sessions.forEach((session) => {
+        const ref = doc(collections.sessions(eventId), session.id)
+        batch.update(ref, {
+            ...session,
+        })
+    })
+
+    return await batch.commit()
 }

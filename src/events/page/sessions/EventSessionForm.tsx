@@ -13,10 +13,9 @@ import { useLocation } from 'wouter'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
-import { TeasingPostSocials, generatePost } from '../../../services/openai'
 import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
-import { ArrowDownward, ExpandMore } from '@mui/icons-material'
+import { ExpandMore } from '@mui/icons-material'
 
 export type EventSessionFormProps = {
     event: Event
@@ -49,36 +48,6 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
 
     const isSubmitting = formState.isSubmitting
 
-    const onGenerateTeasingPosts = async () => {
-        setIsGeneratingPosts(true)
-
-        if (!event.apiKey || !session) {
-            setIsGeneratingPosts(false)
-            return
-        }
-
-        const linkedInPost = await generatePost(event.apiKey, TeasingPostSocials.LinkedIn, session)
-        const twitterPost = await generatePost(event.apiKey, TeasingPostSocials.Twitter, session)
-        const facebookPost = await generatePost(event.apiKey, TeasingPostSocials.Facebook, session)
-        const instagramPost = await generatePost(event.apiKey, TeasingPostSocials.Instagram, session)
-
-        console.log('LinkedIn:', linkedInPost)
-        console.log('Twitter:', twitterPost)
-        console.log('Facebook:', facebookPost)
-        console.log('Instagram:', instagramPost)
-
-        session.teasingPosts = {
-            linkedin: linkedInPost.choices[0].message.content,
-            twitter: twitterPost.choices[0].message.content,
-            facebook: facebookPost.choices[0].message.content,
-            instagram: instagramPost.choices[0].message.content,
-        }
-
-        setIsGeneratingPosts(false)
-    }
-
-    const [isGeneratingPosts, setIsGeneratingPosts] = useState(false)
-
     const startAt = session?.dates?.start ? dateTimeToDayMonthHours(session.dates?.start) : 'not set'
     const endAt = session?.dates?.end ? dateTimeToDayMonthHours(session.dates?.end) : 'not set'
 
@@ -101,6 +70,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     level: data.level,
                     note: data.note,
                     teasingHidden: data.teasingHidden,
+                    teasingPosts: data.teasingPosts,
                     extendHeight: data.extendHeight,
                     extendWidth: data.extendWidth,
                 } as Session)
@@ -314,13 +284,13 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                 <Grid item xs={12}>
                     <Grid container spacing={1}>
                         <Grid item xs={6} sx={{ flexDirection: 'row', alignItems: 'center', display: 'flex' }}>
-                            <Typography variant="h6">Teasing posts</Typography>
+                            <Typography variant="h6">Talk announcements</Typography>
                             <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
                                 <ExpandMore />
                             </IconButton>
                         </Grid>
                         <Grid item xs={6}>
-                            <LoadingButton>Generate media post</LoadingButton>
+                            {/*<LoadingButton>Generate media post</LoadingButton>*/}
                         </Grid>
 
                         {teasingPostsOpen && (
@@ -333,9 +303,9 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         minRows={4}
                                         maxRows={40}
                                         label="LinkedIn teasing post"
-                                        name="note"
+                                        name="teasingPosts.linkedin"
                                         variant="filled"
-                                        disabled={isSubmitting}
+                                        disabled={false}
                                     />
                                 </Grid>
                                 <Grid item xs={6}>
@@ -346,9 +316,9 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         minRows={4}
                                         maxRows={40}
                                         label="Twitter teasing post"
-                                        name="note"
+                                        name="teasingPosts.twitter"
                                         variant="filled"
-                                        disabled={isSubmitting}
+                                        disabled={false}
                                     />
                                 </Grid>
                                 <Grid item xs={6}>
@@ -359,9 +329,9 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         minRows={4}
                                         maxRows={40}
                                         label="Instagram teasing post"
-                                        name="note"
+                                        name="teasingPosts.instagram"
                                         variant="filled"
-                                        disabled={isGeneratingPosts}
+                                        disabled={false}
                                     />
                                 </Grid>
                                 <Grid item xs={6}>
@@ -372,9 +342,9 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         minRows={4}
                                         maxRows={40}
                                         label="Facebook teasing post"
-                                        name="note"
+                                        name="teasingPosts.facebook"
                                         variant="filled"
-                                        disabled={isGeneratingPosts}
+                                        disabled={false}
                                     />
                                 </Grid>
                             </>
