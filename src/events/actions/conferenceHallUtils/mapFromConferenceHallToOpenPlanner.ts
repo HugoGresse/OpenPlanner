@@ -99,6 +99,8 @@ export const mapConferenceHallProposalsToOpenPlanner = (
             note: null,
             trackId: null,
             videoLink: null,
+            teasingHidden: false,
+            teasingPosts: null,
         })
     }
     return [sessions, errors]

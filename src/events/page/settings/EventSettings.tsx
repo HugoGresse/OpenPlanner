@@ -1,6 +1,3 @@
-import * as React from 'react'
-import { useEffect, useState } from 'react'
-import { Event, EventForForm } from '../../../types'
 import { yupResolver } from '@hookform/resolvers/yup'
 import {
     Box,
@@ -15,25 +12,27 @@ import {
 } from '@mui/material'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
-import * as yup from 'yup'
-import { TrackFields } from './components/TrackFields'
-import { collections } from '../../../services/firebase'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
-import { diffDays } from '../../../utils/dates/diffDays'
-import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'wouter'
-import { FormatsFields } from './components/FormatsFields'
-import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
-import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImportSessionsSpeakersFromConferenceHall'
+import * as yup from 'yup'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { RequireConferenceHallLogin } from '../../../conferencehall/RequireConferenceHallLogin'
 import { useNotification } from '../../../hooks/notificationHook'
-import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
-import { CategoriesFields } from './components/CategoriesFields'
+import { collections } from '../../../services/firebase'
 import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
+import { Event, EventForForm } from '../../../types'
+import { diffDays } from '../../../utils/dates/diffDays'
+import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeakers'
+import { reImportSessionsSpeakersFromConferenceHall } from '../../actions/reImportSessionsSpeakersFromConferenceHall'
+import { CategoriesFields } from './components/CategoriesFields'
+import { FormatsFields } from './components/FormatsFields'
+import { TrackFields } from './components/TrackFields'
+import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { ConferenceHallEventsPicker } from '../../../conferencehall/ConferenceHallEventsPicker'
 import { linkOpenPlannerEventToConferenceHallEvent } from '../../actions/linkOpenPlannerEventToConferenceHallEvent'
@@ -106,6 +105,16 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 disabled={formState.isSubmitting}
                             />
 
+                            <TextFieldElement
+                                margin="normal"
+                                fullWidth
+                                id="openAPIKey"
+                                label="OpenAI API key"
+                                name="openAPIKey"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                            />
+
                             <TrackFields control={control} isSubmitting={formState.isSubmitting} />
 
                             <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
@@ -151,6 +160,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 sx={{ mt: 2, mb: 2 }}>
                                 Save
                             </LoadingButton>
+                            {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}
                         </Grid>
                     </Grid>
                 </Card>

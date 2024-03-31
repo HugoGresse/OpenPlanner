@@ -1,7 +1,6 @@
-import * as React from 'react'
-import { Session } from '../../../types'
-import { Button, Chip, Grid, Link, Typography, useTheme } from '@mui/material'
 import { Edit } from '@mui/icons-material'
+import { Button, Chip, Grid, Link, Typography, useTheme } from '@mui/material'
+import { Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 
 type EventSessionItem = {

@@ -54,6 +54,13 @@ export interface Speaker {
     note: string | null
 }
 
+export interface TeasingPosts {
+    twitter?: string | null
+    linkedin?: string | null
+    facebook?: string | null
+    instagram?: string | null
+}
+
 export interface Session {
     id: string
     conferenceHallId: string | null
@@ -75,6 +82,8 @@ export interface Session {
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
+    teasingHidden: boolean
+    teasingPosts: TeasingPosts | null
     extendHeight?: number
     extendWidth?: number
     // Hydrated data during load, removed in mapSessionToFirestoreSession.ts
@@ -108,6 +117,7 @@ export interface Event {
     files: EventFiles | null
     statusBadgeImage: string | null
     statusBadgeLink: string | null
+    openAPIKey: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

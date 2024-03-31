@@ -1,4 +1,6 @@
-import * as React from 'react'
+import LoadingButton from '@mui/lab/LoadingButton'
+import { Avatar, Button, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
+import { useState } from 'react'
 import {
     AutocompleteElement,
     CheckboxElement,
@@ -7,14 +9,13 @@ import {
     TextFieldElement,
     useForm,
 } from 'react-hook-form-mui'
-import { Avatar, Chip, CircularProgress, Grid, Typography } from '@mui/material'
+import { useLocation } from 'wouter'
+import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
+import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
-import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
-import LoadingButton from '@mui/lab/LoadingButton'
-import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
-import { useLocation } from 'wouter'
-import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { ExpandMore } from '@mui/icons-material'
 
 export type EventSessionFormProps = {
     event: Event
@@ -24,6 +25,7 @@ export type EventSessionFormProps = {
 export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
     const [_2, setLocation] = useLocation()
+    const [teasingPostsOpen, setTeasingPostsOpen] = useState<boolean>(!!session?.teasingPosts)
     const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
         defaultValues: session
@@ -67,6 +69,8 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     language: data.language,
                     level: data.level,
                     note: data.note,
+                    teasingHidden: data.teasingHidden,
+                    teasingPosts: data.teasingPosts,
                     extendHeight: data.extendHeight,
                     extendWidth: data.extendWidth,
                 } as Session)
@@ -274,6 +278,78 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     </Grid>
                     <CheckboxElement label="Hide track title" name="hideTrackTitle" />
                     <CheckboxElement label="Show in feedback" name="showInFeedback" />
+                    <CheckboxElement label="Don't share this session on socials" name="teasingHidden" />
+                </Grid>
+
+                <Grid item xs={12}>
+                    <Grid container spacing={1}>
+                        <Grid item xs={6} sx={{ flexDirection: 'row', alignItems: 'center', display: 'flex' }}>
+                            <Typography variant="h6">Talk announcements</Typography>
+                            <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
+                                <ExpandMore />
+                            </IconButton>
+                        </Grid>
+                        <Grid item xs={6}>
+                            {/*<LoadingButton>Generate media post</LoadingButton>*/}
+                        </Grid>
+
+                        {teasingPostsOpen && (
+                            <>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="LinkedIn teasing post"
+                                        name="teasingPosts.linkedin"
+                                        variant="filled"
+                                        disabled={false}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Twitter teasing post"
+                                        name="teasingPosts.twitter"
+                                        variant="filled"
+                                        disabled={false}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Instagram teasing post"
+                                        name="teasingPosts.instagram"
+                                        variant="filled"
+                                        disabled={false}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Facebook teasing post"
+                                        name="teasingPosts.facebook"
+                                        variant="filled"
+                                        disabled={false}
+                                    />
+                                </Grid>
+                            </>
+                        )}
+                    </Grid>
                 </Grid>
 
                 <Grid item xs={12}>
