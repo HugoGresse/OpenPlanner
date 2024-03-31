@@ -117,11 +117,11 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
         }
 
         return unsubcribeFunc
-    }, [])
+    }, [ref.path])
 
     useEffect(() => {
         return load()
-    }, [])
+    }, [ref.path])
 
     return {
         isLoading,

@@ -67,7 +67,11 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                 <Button onClick={() => navigateBackOrFallbackTo('/speakers', setLocation)} startIcon={<ArrowBack />}>
                     {getQueryParams().fromSession ? 'To session' : 'All speaker'}
                 </Button>
-                <Box display="flex">
+                <Box display="flex" alignItems="center">
+                    <Typography>
+                        {speakers.data ? speakers.data.findIndex((s) => s.id === speakerId) + 1 : 0}/
+                        {speakers.data ? speakers.data.length : 0}
+                    </Typography>
                     <IconButton href={prevLink || ''} component={Link} disabled={!prevLink}>
                         <ChevronLeft />
                     </IconButton>

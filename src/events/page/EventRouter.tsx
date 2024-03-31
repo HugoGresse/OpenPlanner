@@ -12,6 +12,7 @@ import { NewMember } from './team/NewMember'
 import { NewSponsor } from './sponsors/NewSponsor'
 import { NewSession } from './sessions/NewSession'
 import { NewSpeaker } from './speakers/NewSpeaker'
+import { EventSpeaker } from './speakers/EventSpeaker'
 
 const EventSettings = lazy(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
@@ -30,7 +31,6 @@ const EventSession = lazy(() => import('./sessions/EventSession').then((module) 
 const EventSpeakers = lazy(() =>
     import('./speakers/EventSpeakers').then((module) => ({ default: module.EventSpeakers }))
 )
-const EventSpeaker = lazy(() => import('./speakers/EventSpeaker').then((module) => ({ default: module.EventSpeaker })))
 const EventSponsors = lazy(() =>
     import('./sponsors/EventSponsors').then((module) => ({ default: module.EventSponsors }))
 )
