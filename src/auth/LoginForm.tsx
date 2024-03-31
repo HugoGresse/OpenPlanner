@@ -4,7 +4,7 @@ import LoadingButton from '@mui/lab/LoadingButton'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { login, register, selectAuthCCError } from './authReducer'
+import { login, register, selectAuthOpenPlannerError } from './authReducer'
 import { useAppDispatch } from '../reduxStore'
 import { useSelector } from 'react-redux'
 
@@ -24,7 +24,7 @@ export const LoginForm = ({}) => {
             password: '',
         },
     })
-    const error = useSelector(selectAuthCCError)
+    const error = useSelector(selectAuthOpenPlannerError)
 
     const { watch, formState } = formContext
 
@@ -119,8 +119,8 @@ export const LoginForm = ({}) => {
 
                         <Grid container>
                             <Grid item xs>
-                                <Link href="#" variant="body2">
-                                    Forgot password? (not implemented, ask Hugo)
+                                <Link href="/auth/reset" variant="body2">
+                                    Forgot password?
                                 </Link>
                             </Grid>
                         </Grid>

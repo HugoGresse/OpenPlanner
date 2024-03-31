@@ -11,6 +11,7 @@ import { EventRouter } from './events/page/EventRouter'
 import { NotificationProvider } from './context/SnackBarProvider'
 import { SuspenseLoader } from './components/SuspenseLoader'
 import { PublicApp } from './public/PublicApp'
+import { ForgotPasswordScreen } from './auth/ForgotPasswordScreen'
 
 const EventsScreen = lazy(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
@@ -63,6 +64,9 @@ export const App = ({}) => {
                         <Switch>
                             <Route path="/public/event/:eventId/:page*">
                                 <PublicApp />
+                            </Route>
+                            <Route path="/auth/reset">
+                                <ForgotPasswordScreen />
                             </Route>
                             <RequireLogin>
                                 <Switch>

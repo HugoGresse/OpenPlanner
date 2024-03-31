@@ -1,5 +1,14 @@
-import { ConferenceHallProposal, ConferenceHallSpeaker, Format, Session, Social, Speaker } from '../../../types'
+import {
+    Category,
+    ConferenceHallProposal,
+    ConferenceHallSpeaker,
+    Format,
+    Session,
+    Social,
+    Speaker,
+} from '../../../types'
 import { slugify } from '../../../utils/slugify'
+import { randomColor } from '../../../utils/colors/randomColor'
 
 export const mapConferenceHallSpeakerToOpenPlanner = (
     speakerIds: string[],
@@ -95,4 +104,30 @@ export const mapConferenceHallProposalsToOpenPlanner = (
         })
     }
     return [sessions, errors]
+}
+
+export const mapConferenceHallFormatsToOpenPlanner = (
+    chFormats: { id: string; name: string }[] | undefined,
+    defaultDurationMinutes = 20
+): Format[] => {
+    if (!chFormats) {
+        return []
+    }
+    return chFormats.map((f) => ({
+        id: f.id,
+        name: f.name,
+        durationMinutes: defaultDurationMinutes,
+    }))
+}
+export const mapConferenceHallCategoriesToOpenPlanner = (
+    chCategories: { id: string; name: string }[] | undefined
+): Category[] => {
+    if (!chCategories) {
+        return []
+    }
+    return chCategories.map((f) => ({
+        id: f.id,
+        name: f.name,
+        color: randomColor(),
+    }))
 }

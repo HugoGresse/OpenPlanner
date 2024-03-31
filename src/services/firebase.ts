@@ -35,6 +35,8 @@ export const collections = {
         collection(instanceFirestore, 'events', eventId, 'sponsors').withConverter(sponsorsConverter),
     sessions: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'sessions').withConverter(sessionConverter),
+    sessionsTemplate: (eventId: string) =>
+        collection(instanceFirestore, 'events', eventId, 'sessionsTemplate').withConverter(sessionConverter),
     speakers: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
     team: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'team').withConverter(teamConverter),

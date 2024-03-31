@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { SponsorDao } from '../dao/sponsorDao'
+import { SponsorDao } from '../../dao/sponsorDao'
 import { uploadBufferToStorage } from '../file/files'
 
 export const Sponsor = Type.Object({
@@ -13,7 +13,7 @@ export const Sponsor = Type.Object({
 
 export type SponsorType = Static<typeof Sponsor>
 interface IQuerystring {
-    reUploadAssets?: string
+    reUploadAssets?: boolean
 }
 
 export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
@@ -56,24 +56,22 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
 
             let logoUrl = request.body.logoUrl
 
-            if (
-                reUploadAssets === 'true' &&
-                request.body.logoUrl &&
-                request.body.logoUrl.startsWith('http') &&
-                request.body.logoUrl.length > 10
-            ) {
-                const response = await fetch(request.body.logoUrl)
+            if (reUploadAssets === true && logoUrl && logoUrl.startsWith('http') && logoUrl.length > 10) {
+                console.log('Downloading sponsor logo')
+                const response = await fetch(logoUrl)
                 const arrayBuffer = await response.arrayBuffer()
+                const fileName = logoUrl.split('/').pop() || Date.now().toString() + '.png'
 
+                console.log("Uploading sponsor's logo", fileName)
                 const [reUploadSuccess, publicLogoUrl] = await uploadBufferToStorage(
                     fastify.firebase,
                     Buffer.from(arrayBuffer),
                     eventId,
-                    `${Date.now()}`
+                    fileName
                 )
 
                 if (!reUploadSuccess) {
-                    return reply.status(400).send('failed to re-upload logo')
+                    return reply.status(400).send('failed to re-upload logo, ' + logoUrl)
                 }
 
                 logoUrl = publicLogoUrl

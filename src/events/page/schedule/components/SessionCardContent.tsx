@@ -2,16 +2,28 @@ import * as React from 'react'
 import { Session } from '../../../../types'
 import { Box, IconButton, Typography } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
+import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../scheduleConstants'
 
 export type SessionCardContentProps = {
     session: Session
-
-    setLocation: (to: string) => void
+    setLocation?: (to: string) => void
 }
 export const SessionCardContent = ({ session, setLocation }: SessionCardContentProps) => {
     if (!session.id) {
         return null
     }
+
+    // Detect luminance of the background color and set the text color accordingly
+    const backgroundColor = session.categoryObject?.color || DEFAULT_SESSION_CARD_BACKGROUND_COLOR
+    const textColor = backgroundColor
+        ? parseInt(backgroundColor.slice(1), 16) > 0xffffff / 2
+            ? 'black'
+            : 'white'
+        : 'white'
+
+    const startTime = session.dates?.start?.toFormat('HH:mm')
+    const endTime = session.dates?.end?.toFormat('HH:mm')
+
     return (
         <Box display="flex" flexDirection="column" justifyContent="space-between" height="100%">
             <Box display="flex" justifyContent="space-between">
@@ -25,19 +37,23 @@ export const SessionCardContent = ({ session, setLocation }: SessionCardContentP
                         wordWrap: 'break-word',
                         overflow: 'hidden',
                         maxHeight: 42,
+                        color: textColor,
                     }}>
                     {session.title.slice(0, 50)}
                 </Typography>
-                <IconButton
-                    onClick={() => {
-                        setLocation(`/sessions/${session.id}?backTo=Schedule`)
-                    }}
-                    sx={{ position: 'absolute', top: 0, right: 0 }}>
-                    <EditIcon color="action" fontSize="small" />
-                </IconButton>
+                {setLocation && (
+                    <IconButton
+                        onClick={() => {
+                            setLocation(`/sessions/${session.id}?backTo=Schedule`)
+                        }}
+                        sx={{ position: 'absolute', top: 0, right: 0 }}>
+                        <EditIcon fontSize="small" htmlColor={textColor} />
+                    </IconButton>
+                )}
             </Box>
-            <Typography color="white" variant="caption" lineHeight={1}>
+            <Typography color={textColor} variant="caption" lineHeight={1}>
                 {`${session.formatText || 'no format'} • ${session.categoryObject?.name || 'no category'}`}
+                {startTime ? ` • ${startTime} → ${endTime}` : null}
                 <br />
                 <Box
                     sx={{

@@ -8,11 +8,12 @@ A website to
     -   pick specific talks from ConferenceHall afterward
     -   edit talk or speaker, add profil picture, company logo, without editing data from ConferenceHall
 -   a schedule calendar to arrange talks and duration
--   additionals fields:
+-   additional fields:
     -   categories and formats for sessions
     -   private notes for speaker, email, phone
     -   tracks / rooms
 -   manage sponsors & categories
+-   FAQ with admin and public or hidden pages
 -   [API](https://api.openplanner.fr/) & webhooks
 
 ## Dev guidelines
@@ -41,27 +42,28 @@ React guidelines:
 
 ### Requirements
 
--   Tow firebase projects. One for **`conference center`** and the other for **`conference hall`**.
--   Node.js **18+**
+-   Two firebase projects. One for **`open planner`** and the other for **`conference hall`**.
+-   Node.js **20+**
 -   [Bun.js](https://bun.js.org/) as a build tool
 
 ### Installation
 
 1. Create a **`.env`** with **`.env.example`** as a template.
-2. Create a web app in your firebase project for **`conference hall`** and **`conference center`**. then copy the config and fill **`.env`** with it.
+2. Create a web app in your firebase project for **`conference hall`** and **`open planner`**. then copy the config and fill **`.env`** with it.
+3. Use [bun.sh](https://bun.sh/) to install dependencies and build the project: `bun install`
 
-Inside conference center's firebase project:
+Inside OpenPlanner's firebase project:
 
 1. Create a Cloud firestore database and copy path the rules from `firestore.rules` to the rules tab of your database.
-2. Create an authentification provider (email/password) and enable it.
+2. Create an authentication provider (email/password) and enable it.
 
 ### Development
 
 In order to run the project locally, you need to run the following commands:
 
 ```bash
-npm ci     # install dependencies
-npm start  # start the dev server
+bun install # install dependencies
+bun start   # start the dev server
 ```
 
 **Enjoy 🚀**

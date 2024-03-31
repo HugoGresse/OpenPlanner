@@ -32,7 +32,8 @@ export const addSessionsFromCH = async (
         proposals,
         event.formats,
         speakersMappingFromConferenceHall,
-        progressCallback
+        progressCallback,
+        true
     )
     errors.push(...sessionErrors)
 

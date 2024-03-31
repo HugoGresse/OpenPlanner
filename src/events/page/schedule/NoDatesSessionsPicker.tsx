@@ -8,11 +8,14 @@ import { SessionDraggable } from './components/SessionDraggable'
 import { Draggable } from '@fullcalendar/interaction'
 import { useLocation } from 'wouter'
 import { UseQueryResult } from '../../../services/hooks/firestoreQueryHook'
+import { SessionCardContentProps } from './components/SessionCardContent'
 
 export type NoDatesSessionsPickerProps = {
     sessions: UseQueryResult<DocumentData>
+    title: string
+    Component?: React.ComponentType<SessionCardContentProps>
 }
-export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) => {
+export const NoDatesSessionsPicker = ({ sessions, title, Component }: NoDatesSessionsPickerProps) => {
     const [sessionsToDisplay, setSessionsToDisplay] = useState<Session[]>([])
     const [_, setLocation] = useLocation()
     const [isDragInit, setIsDragInit] = useState(false)
@@ -34,15 +37,17 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
         new Draggable(node, {
             itemSelector: '.noDateSession',
             eventData: function (eventEl) {
-                let id = eventEl.dataset.id
-                let title = eventEl.getAttribute('title')
-                let color = eventEl.dataset.color
-                let custom = eventEl.dataset.custom
+                const id = eventEl.dataset.id
+                const title = eventEl.dataset.title
+                const backgroundColor = eventEl.dataset.backgroundcolor
+                const duration = eventEl.dataset.duration
+
                 return {
                     id: id,
                     title: title,
-                    color: color,
-                    custom: custom,
+                    textColor: '#000000',
+                    backgroundColor: backgroundColor,
+                    duration: duration,
                     create: true,
                 }
             },
@@ -73,10 +78,11 @@ export const NoDatesSessionsPicker = ({ sessions }: NoDatesSessionsPickerProps) 
                 borderRadius: 2,
                 overflowX: 'auto',
                 overflowY: 'hidden',
+                backdropFilter: 'blur(10px)',
             }}>
-            <Typography sx={{ width: 80, marginRight: 2 }}>Sessions without times:</Typography>
+            <Typography sx={{ width: 80, marginRight: 2 }}>{title}</Typography>
             {sessionsToDisplay.map((session: Session) => (
-                <SessionDraggable key={session.id} session={session} setLocation={setLocation} />
+                <SessionDraggable key={session.id} session={session} setLocation={setLocation} Component={Component} />
             ))}
         </Box>
     )

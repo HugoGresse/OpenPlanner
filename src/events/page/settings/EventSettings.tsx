@@ -1,14 +1,23 @@
 import { yupResolver } from '@hookform/resolvers/yup'
+import {
+    Box,
+    Button,
+    Card,
+    Checkbox,
+    Container,
+    DialogContentText,
+    FormControlLabel,
+    Grid,
+    Typography,
+} from '@mui/material'
+import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
-import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { useLocation } from 'wouter'
 import * as yup from 'yup'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
-import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { RequireConferenceHallLogin } from '../../../conferencehall/RequireConferenceHallLogin'
 import { useNotification } from '../../../hooks/notificationHook'
 import { collections } from '../../../services/firebase'
@@ -24,6 +33,10 @@ import { CategoriesFields } from './components/CategoriesFields'
 import { FormatsFields } from './components/FormatsFields'
 import { TrackFields } from './components/TrackFields'
 import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
+import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { ConferenceHallEventsPicker } from '../../../conferencehall/ConferenceHallEventsPicker'
+import { linkOpenPlannerEventToConferenceHallEvent } from '../../actions/linkOpenPlannerEventToConferenceHallEvent'
+import { EventSettingsFormatCategoriesGrid } from './EventSettingsFormatCategoriesGrid'
 
 const schema = yup
     .object({
@@ -48,6 +61,8 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
     const [_, setLocation] = useLocation()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [reImportOpen, setReimportOpen] = useState(false)
+    const [reImportCategoriesFormats, setReImportCategoriesFormat] = useState(false)
+    const [attachToConferenceHallOpen, setAttachToConferenceHallOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const { createNotification } = useNotification()
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
@@ -131,6 +146,9 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
 
                             <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
                         </Grid>
+                        <Grid item xs={12}>
+                            <EventSettingsFormatCategoriesGrid event={event} />
+                        </Grid>
 
                         <Grid item xs={12}>
                             <LoadingButton
@@ -191,7 +209,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     handleClose={() => setReimportOpen(false)}
                     handleAccept={async () => {
                         setLoading(true)
-                        await reImportSessionsSpeakersFromConferenceHall(event)
+                        await reImportSessionsSpeakersFromConferenceHall(event, reImportCategoriesFormats)
                         setLoading(false)
                         setReimportOpen(false)
                         createNotification('Data imported', { type: 'success' })
@@ -207,12 +225,80 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                         - cannot be cancelled (it would be cool to have versioning in the future though...)
                         <br />
                         <br />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={reImportCategoriesFormats}
+                                    onChange={(e) => {
+                                        setReImportCategoriesFormat(e.target.checked)
+                                    }}
+                                    inputProps={{ 'aria-label': 'controlled' }}
+                                />
+                            }
+                            label="Replace categories & formats?"
+                        />
                     </DialogContentText>
 
                     <RequireConferenceHallLogin>
                         {(conferenceHallUserId) => {
                             if (conferenceHallUserId) {
                                 return null
+                            }
+                            return <Typography>Login to ConferenceHall first!</Typography>
+                        }}
+                    </RequireConferenceHallLogin>
+                </ConfirmDialog>
+
+                {!event.conferenceHallId && (
+                    <Button color="warning" onClick={() => setAttachToConferenceHallOpen(true)}>
+                        Attach event to a ConferenceHall event
+                    </Button>
+                )}
+                <ConfirmDialog
+                    open={attachToConferenceHallOpen}
+                    title="Attach this OpenPlanner event to an existing ConferenceHall event?"
+                    disabled={loading}
+                    loading={loading}
+                    cancelButton="cancel"
+                    handleClose={() => setAttachToConferenceHallOpen(false)}
+                    handleAccept={() => null}>
+                    <DialogContentText>
+                        Attach this OpenPlanner event to an existing ConferenceHall event. It is useful when you have
+                        used OpenPlanner without importing the event from ConferenceHall before hand. This will not
+                        display the same setup as the regular "New event from ConferenceHall" but using the below
+                        features, it should cover most things :
+                        <br />
+                        <br />
+                        - "Re-import from ConferenceHall" (from the Event settings page)
+                        <br />
+                        - "Import sessions" (from the Sessions page)
+                        <br />
+                        <br />
+                    </DialogContentText>
+
+                    <RequireConferenceHallLogin>
+                        {(conferenceHallUserId) => {
+                            if (conferenceHallUserId) {
+                                return (
+                                    <>
+                                        <Box display="flex" alignItems="center" marginY={2}>
+                                            <Typography variant="h4">
+                                                2. Select the event you want to attach to
+                                            </Typography>
+                                        </Box>
+                                        <ConferenceHallEventsPicker
+                                            onEventPicked={async (chEvent) => {
+                                                await linkOpenPlannerEventToConferenceHallEvent(event.id, chEvent.id)
+                                                setAttachToConferenceHallOpen(false)
+                                                createNotification('ConferenceHall event linked/attached', {
+                                                    type: 'success',
+                                                })
+                                                setReimportOpen(true)
+                                            }}
+                                            userId={conferenceHallUserId}
+                                        />
+                                    </>
+                                )
                             }
                             return <Typography>Login to ConferenceHall first!</Typography>
                         }}

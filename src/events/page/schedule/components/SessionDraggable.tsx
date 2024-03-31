@@ -1,19 +1,28 @@
 import * as React from 'react'
 import { Session } from '../../../../types'
 import { Box } from '@mui/material'
-import { DEFAULT_SESSION_CARD_BACKGROUND_COLOR } from '../scheduleConstants'
-import { SessionCardContent } from './SessionCardContent'
+import { SessionCardContent, SessionCardContentProps } from './SessionCardContent'
+import { getSessionBackgroundColor } from './getSessionBackgroundColor'
+import { hexDarken } from '../../../../utils/colors/hexDarken'
 
 export type SessionDraggableProps = {
     session: Session
     setLocation: (to: string) => void
+    Component?: React.ComponentType<SessionCardContentProps>
 }
-export const SessionDraggable = ({ session, setLocation }: SessionDraggableProps) => {
+export const SessionDraggable = ({ session, setLocation, Component = SessionCardContent }: SessionDraggableProps) => {
+    const backgroundColor = getSessionBackgroundColor(session)
+
+    const hours = Math.floor(session.durationMinutes / 60)
+    const minutes = session.durationMinutes % 60
+
     return (
         <Box
-            className="noDateSession fc-day fc-day-thu fc-day-future fc-timegrid-col fc-resource"
-            title={session.title}
+            className="noDateSession"
             data-id={session.id}
+            data-backgroundcolor={backgroundColor}
+            data-title={session.title}
+            data-duration={`${hours}:${minutes}` || '00:30'}
             sx={{
                 display: 'flex',
                 cursor: 'grab',
@@ -23,13 +32,13 @@ export const SessionDraggable = ({ session, setLocation }: SessionDraggableProps
                 borderRadius: 2,
                 marginLeft: 1,
                 position: 'relative',
-                transition: 'all 0.2s ease-in-out',
+                transition: 'background 0.2s ease-in-out',
                 '&:hover': {
-                    backgroundColor: 'red',
+                    background: hexDarken(backgroundColor, 15),
                 },
-                background: session.categoryObject?.color || DEFAULT_SESSION_CARD_BACKGROUND_COLOR,
+                background: backgroundColor,
             }}>
-            <SessionCardContent session={session} setLocation={setLocation} />
+            <Component session={session} setLocation={setLocation} />
         </Box>
     )
 }

@@ -24,17 +24,19 @@ import { filterSessions } from './filterSessions'
 import { FilterCategory } from './FilterCategory'
 import { FilterFormat } from './FilterFormat'
 import { GenerateSessionsMediaContentDialog } from '../components/GenerateSessionsMediaContentDialog'
+import { useSearchParams } from '../../../../hooks/useSearchParams'
 
 export type EventSessionsProps = {
     event: Event
 }
 export const EventSessions = ({ event }: EventSessionsProps) => {
+    const [searchParams, setSearchParams] = useSearchParams()
     const sessions = useSessions(event)
     const [sessionsImportOpen, setSessionsImportOpen] = useState(false)
     const [displayedSessions, setDisplayedSessions] = useState<Session[]>([])
     const [search, setSearch] = useState<string>('')
-    const [selectedCategory, setSelectedCategory] = useState<string>('')
-    const [selectedFormat, setSelectedFormat] = useState<string>('')
+    const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || '')
+    const [selectedFormat, setSelectedFormat] = useState<string>(searchParams.get('format') || '')
     const [onlyWithoutSpeaker, setOnlyWithoutSpeaker] = useState<boolean>(false)
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
 
@@ -101,7 +103,10 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             event={event}
                             sessions={sessionsData}
                             selectedCategory={selectedCategory}
-                            setSelectedCategory={setSelectedCategory}
+                            setSelectedCategory={(category) => {
+                                setSelectedCategory(category)
+                                setSearchParams({ category, format: selectedFormat })
+                            }}
                         />
                     </Grid>
                     <Grid item xs={6} md={3}>
@@ -109,7 +114,10 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             event={event}
                             sessions={sessionsData}
                             selectedFormat={selectedFormat}
-                            setSelectedFormat={setSelectedFormat}
+                            setSelectedFormat={(format) => {
+                                setSelectedFormat(format)
+                                setSearchParams({ format, category: selectedCategory })
+                            }}
                         />
                     </Grid>
                     <Grid item xs={6} md={3} sx={{ marginTop: 0 }}>

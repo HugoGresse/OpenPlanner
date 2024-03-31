@@ -2,10 +2,10 @@ import { addDoc, serverTimestamp } from 'firebase/firestore'
 import { loadConferenceHallSpeakers } from '../../conferencehall/firebase/loadFromConferenceHallUtils'
 import { collections } from '../../services/firebase'
 import { ConferenceHallEvent, ConferenceHallProposal, Format, NewEvent } from '../../types'
-import { randomColor } from '../../utils/randomColor'
 import { getNewEventDates } from './conferenceHallUtils/addNewEventDateUtils'
 import { importSessions } from './conferenceHallUtils/importSessions'
 import { importSpeakers } from './conferenceHallUtils/importSpeakers'
+import { mapConferenceHallCategoriesToOpenPlanner } from './conferenceHallUtils/mapFromConferenceHallToOpenPlanner'
 
 export const addNewEvent = async (
     chEvent: ConferenceHallEvent,
@@ -48,11 +48,7 @@ const addNewEventInternal = async (
         owner: userId,
         tracks: [],
         formats: formats,
-        categories: (chEvent.categories || []).map((e) => ({
-            name: e.name,
-            id: e.id,
-            color: randomColor(),
-        })),
+        categories: mapConferenceHallCategoriesToOpenPlanner(chEvent.categories),
         apiKey: null,
         scheduleVisible: true,
         webhooks: [],

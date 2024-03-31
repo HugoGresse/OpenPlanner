@@ -34,6 +34,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
     }
 
     const session = sessionResult.data
+    const isSessionInSchedule = session.dates && !!session.dates.start
 
     const goBack = () => navigateBackOrFallbackTo('/sessions', setLocation)
 
@@ -55,6 +56,15 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 <Button color="warning" onClick={() => setDeleteOpen(true)}>
                     Delete session
                 </Button>
+                {isSessionInSchedule && (
+                    <Button
+                        onClick={async () => {
+                            await mutation.mutate({ ...session, dates: null })
+                            sessionResult.load()
+                        }}>
+                        Remove from schedule
+                    </Button>
+                )}
             </Box>
 
             <ConfirmDialog

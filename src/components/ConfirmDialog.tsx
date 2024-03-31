@@ -6,7 +6,7 @@ export type ConfirmDialogProps = {
     open: boolean
     handleClose: () => void
     title: string | undefined
-    acceptButton: string
+    acceptButton?: string
     cancelButton: string
     handleAccept: () => void
     disabled?: boolean
@@ -35,14 +35,16 @@ export const ConfirmDialog = ({
             <DialogContent>{children}</DialogContent>
             <DialogActions>
                 <Button onClick={handleClose}>{cancelButton}</Button>
-                <LoadingButton
-                    onClick={handleAccept}
-                    disabled={disabled}
-                    loading={loading}
-                    autoFocus
-                    variant="contained">
-                    {acceptButton}
-                </LoadingButton>
+                {acceptButton && (
+                    <LoadingButton
+                        onClick={handleAccept}
+                        disabled={disabled}
+                        loading={loading}
+                        autoFocus
+                        variant="contained">
+                        {acceptButton}
+                    </LoadingButton>
+                )}
             </DialogActions>
         </Dialog>
     )

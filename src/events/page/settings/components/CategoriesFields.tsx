@@ -3,7 +3,7 @@ import { Box, Grid, IconButton, Typography } from '@mui/material'
 import { Control, TextFieldElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
 import { Category, EventForForm } from '../../../../types'
-import { randomColor } from '../../../../utils/randomColor'
+import { randomColor } from '../../../../utils/colors/randomColor'
 
 export type CategoriesFieldsProps = {
     control: Control<EventForForm, any>

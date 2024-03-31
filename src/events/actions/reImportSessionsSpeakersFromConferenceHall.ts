@@ -4,13 +4,34 @@ import { loadConferenceHallSpeakers } from '../../conferencehall/firebase/loadFr
 import { importSpeakers } from './conferenceHallUtils/importSpeakers'
 import { importSessions } from './conferenceHallUtils/importSessions'
 import { deleteSessionsAndSpeakers } from './deleteSessionsAndSpeakers'
+import { getConferenceHallEvent } from '../../conferencehall/firebase/getConferenceHallEvent'
+import {
+    mapConferenceHallCategoriesToOpenPlanner,
+    mapConferenceHallFormatsToOpenPlanner,
+} from './conferenceHallUtils/mapFromConferenceHallToOpenPlanner'
+import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { collections } from '../../services/firebase'
 
-export const reImportSessionsSpeakersFromConferenceHall = async (event: Event) => {
+export const reImportSessionsSpeakersFromConferenceHall = async (event: Event, reImportCategoriesFormats: boolean) => {
     const conferenceHallId = event.conferenceHallId
 
     if (!conferenceHallId) {
         console.log('Cannot import an Event without ConferenceHallId')
         return
+    }
+
+    let formats = event.formats
+
+    if (reImportCategoriesFormats) {
+        const chEvent = await getConferenceHallEvent(conferenceHallId)
+        formats = mapConferenceHallFormatsToOpenPlanner(chEvent.formats)
+        const categories = mapConferenceHallCategoriesToOpenPlanner(chEvent.categories)
+
+        await updateDoc(doc(collections.events, event.id), {
+            formats: formats,
+            categories: categories,
+            updatedAt: serverTimestamp(),
+        })
     }
 
     // 1. Get proposals and speakers
@@ -38,7 +59,7 @@ export const reImportSessionsSpeakersFromConferenceHall = async (event: Event) =
         console.error(speakerErrors)
     }
 
-    const [_, sessionErrors] = await importSessions(event.id, proposals, event.formats, speakerMapToCC, () => null)
+    const [_, sessionErrors] = await importSessions(event.id, proposals, formats, speakerMapToCC, () => null)
     if (sessionErrors.length) {
         console.error(sessionErrors)
     }

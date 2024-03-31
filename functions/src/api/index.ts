@@ -11,10 +11,10 @@ import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { addContentTypeParserForServerless } from './other/addContentTypeParserForServerless'
 import { apiKeyPlugin } from './apiKeyPlugin'
 
-import { sponsorsRoutes } from './sponsors/sponsors'
-import { filesRoutes } from './file/files'
-import { faqRoutes } from './faq/faq'
-import { helloRoute } from './hello/hello'
+import { sponsorsRoutes } from './routes/sponsors/sponsors'
+import { filesRoutes } from './routes/file/files'
+import { faqRoutes } from './routes/faq/faq'
+import { helloRoute } from './routes/hello/hello'
 
 type Firebase = firebaseApp.App
 
