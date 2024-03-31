@@ -28,6 +28,9 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
         <FormContainer
             formContext={formContext}
             onSuccess={async (data) => {
+                if (!data.id && speaker?.id) {
+                    data.id = speaker.id
+                }
                 return onSubmit({
                     ...data,
                     photoUrl: data.photoUrl || speaker?.photoUrl || null,
