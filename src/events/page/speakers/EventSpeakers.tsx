@@ -106,7 +106,6 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     onClose={() => {
                         setSpeakersStatsOpen(false)
                     }}
-                    event={event}
                     speakers={speakers.data || []}
                 />
             )}
