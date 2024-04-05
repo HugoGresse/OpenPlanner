@@ -1,6 +1,6 @@
 import { Box, Button, Card, Container, Grid, IconButton, InputAdornment, TextField, Typography } from '@mui/material'
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Event, Speaker } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventSpeakerItem } from './EventSpeakerItem'
@@ -22,7 +22,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
 
-    const speakersData = speakers.data || []
+    const speakersData = useMemo(() => speakers.data || [], [speakers.data])
     const isFiltered = displayedSpeakers.length !== speakersData.length
 
     useEffect(() => {

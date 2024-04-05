@@ -12,7 +12,7 @@ import {
     Typography,
 } from '@mui/material'
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Event, Session } from '../../../../types'
 import { useSessions } from '../../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -33,26 +33,24 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     const [searchParams, setSearchParams] = useSearchParams()
     const sessions = useSessions(event)
     const [sessionsImportOpen, setSessionsImportOpen] = useState(false)
-    const [displayedSessions, setDisplayedSessions] = useState<Session[]>([])
     const [search, setSearch] = useState<string>('')
     const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || '')
     const [selectedFormat, setSelectedFormat] = useState<string>(searchParams.get('format') || '')
     const [onlyWithoutSpeaker, setOnlyWithoutSpeaker] = useState<boolean>(false)
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
 
-    const sessionsData = sessions.data || []
-    const isFiltered = displayedSessions.length !== sessionsData.length
+    const sessionsData = useMemo(() => sessions.data || [], [sessions.data])
 
-    useEffect(() => {
-        setDisplayedSessions(
-            filterSessions(sessionsData, {
-                search,
-                category: selectedCategory,
-                format: selectedFormat,
-                withoutSpeaker: onlyWithoutSpeaker,
-            })
-        )
+    const displayedSessions = useMemo(() => {
+        return filterSessions(sessionsData, {
+            search,
+            category: selectedCategory,
+            format: selectedFormat,
+            withoutSpeaker: onlyWithoutSpeaker,
+        })
     }, [sessionsData, search, selectedCategory, selectedFormat, onlyWithoutSpeaker])
+
+    const isFiltered = displayedSessions.length !== sessionsData.length
 
     if (sessions.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
@@ -89,7 +87,12 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                                     <InputAdornment position="start">
                                         <IconButton
                                             aria-label="Clear filters"
-                                            onClick={() => setDisplayedSessions(displayedSessions)}
+                                            onClick={() => {
+                                                setSearch('')
+                                                setSearchParams({})
+                                                setSelectedCategory('')
+                                                setSelectedFormat('')
+                                            }}
                                             edge="end">
                                             <Clear />
                                         </IconButton>
