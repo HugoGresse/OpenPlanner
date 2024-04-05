@@ -9,6 +9,7 @@ import { RequireConferenceHallConnections } from '../../../components/RequireCon
 import { SpeakersFromConferenceHallUpdaterDialog } from './components/SpeakersFromConferenceHallUpdaterDialog'
 import { Clear } from '@mui/icons-material'
 import { useSessionsRaw } from '../../../services/hooks/useSessions'
+import { SpeakersStatsDialog } from './components/SpeakersStatsDialog'
 
 export type EventSpeakersProps = {
     event: Event
@@ -17,6 +18,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const speakers = useSpeakers(event.id)
     const sessions = useSessionsRaw(event.id)
     const [updaterDialogOpen, setUpdaterDialogOpen] = useState(false)
+    const [speakersStatsOpen, setSpeakersStatsOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
 
@@ -53,6 +55,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                         Update speakers infos from ConferenceHall
                     </Button>
                 </RequireConferenceHallConnections>
+                <Button onClick={() => setSpeakersStatsOpen(true)}>Speakers stats</Button>
                 <Button href="/speakers/new" variant="contained">
                     Add speaker
                 </Button>
@@ -95,6 +98,16 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     onClose={() => {
                         setUpdaterDialogOpen(false)
                     }}
+                />
+            )}
+            {speakersStatsOpen && (
+                <SpeakersStatsDialog
+                    isOpen={speakersStatsOpen}
+                    onClose={() => {
+                        setSpeakersStatsOpen(false)
+                    }}
+                    event={event}
+                    speakers={speakers.data || []}
                 />
             )}
         </Container>
