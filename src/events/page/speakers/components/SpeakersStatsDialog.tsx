@@ -1,4 +1,4 @@
-import { Event, Speaker } from '../../../../types'
+import { Speaker } from '../../../../types'
 import { Button, Dialog, DialogContent, Grid, Typography } from '@mui/material'
 import * as React from 'react'
 import { useMemo } from 'react'
