@@ -1,8 +1,7 @@
-import { Event, Session, Speaker } from '../../../../types'
-import { Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
+import { Event, Speaker } from '../../../../types'
+import { Button, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
-import { GenerationStates, useSessionsGeneration } from '../../../actions/sessions/generation/useSessionsGeneration'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 export const SpeakersStatsDialog = ({
     isOpen,
