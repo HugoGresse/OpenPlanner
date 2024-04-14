@@ -38,11 +38,11 @@ export const mapConferenceHallSpeakerToOpenPlanner = (
             })
         }
         speakers.push({
-            id: slugify(chSpeaker.displayName),
+            id: slugify(chSpeaker.displayName) || 'speaker-' + Math.random(),
             email: chSpeaker.email || null,
             phone: chSpeaker.phone || null,
             conferenceHallId: chSpeaker.uid || null,
-            name: chSpeaker.displayName,
+            name: chSpeaker.displayName || 'Unknown',
             bio: chSpeaker.bio || null,
             company: chSpeaker.company || null,
             geolocation: chSpeaker.address?.formattedAddress || null,
@@ -79,7 +79,7 @@ export const mapConferenceHallProposalsToOpenPlanner = (
         const format = chProposal.formats ? formats.find((f) => f.id === chProposal.formats) : null
 
         sessions.push({
-            id: slugify(chProposal.title).slice(0, 30),
+            id: slugify(chProposal.title).slice(0, 30) || 'session-' + Math.random(),
             conferenceHallId: chProposal.id,
             title: chProposal.title,
             abstract: chProposal.abstract || null,
