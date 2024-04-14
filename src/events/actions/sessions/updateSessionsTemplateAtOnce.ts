@@ -84,6 +84,8 @@ export const updateSessionsTemplateAtOnce = async (
                     showInFeedback: false,
                     hideTrackTitle: false,
                     note: null,
+                    teasingPosts: null,
+                    teasingHidden: false,
                 })
             }
         }
