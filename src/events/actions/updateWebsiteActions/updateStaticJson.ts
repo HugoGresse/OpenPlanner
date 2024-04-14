@@ -7,7 +7,8 @@ export const updateStaticJson = async (
     event: Event,
     outputPublic: {},
     outputPrivate: {},
-    outputOpenFeedback: { sessions: { [p: string]: any }; speakers: { [p: string]: any } }
+    outputOpenFeedback: { sessions: { [p: string]: any }; speakers: { [p: string]: any } },
+    outputVoxxrin: {} | null
 ) => {
     const fileNames = await getFilesNames(event)
 
@@ -18,10 +19,20 @@ export const updateStaticJson = async (
     const outputRefPublic = ref(storage, fileNames.public)
     const outputRefPrivate = ref(storage, fileNames.private)
     const outputRefOpenFeedback = ref(storage, fileNames.openfeedback)
+    const outputRefVoxxrin = ref(storage, fileNames.voxxrin)
 
-    await uploadString(outputRefPublic, JSON.stringify(outputPublic), undefined, metadata)
-    await uploadString(outputRefPrivate, JSON.stringify(outputPrivate), undefined, metadata)
-    await uploadString(outputRefOpenFeedback, JSON.stringify(outputOpenFeedback), undefined, metadata)
+    // noinspection ES6MissingAwait
+    const promiseArray = [
+        uploadString(outputRefPublic, JSON.stringify(outputPublic), undefined, metadata),
+        uploadString(outputRefPrivate, JSON.stringify(outputPrivate), undefined, metadata),
+        uploadString(outputRefOpenFeedback, JSON.stringify(outputOpenFeedback), undefined, metadata),
+    ]
+
+    if (outputVoxxrin !== null) {
+        promiseArray.push(uploadString(outputRefVoxxrin, JSON.stringify(outputVoxxrin), undefined, metadata))
+    }
+
+    await Promise.all(promiseArray)
 
     return fileNames
 }

@@ -4,14 +4,18 @@ import { getSpeakers } from '../getSpeakers'
 import { getSponsors } from '../getSponsors'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
 import { getTeam } from '../getTeam'
+import { generateVoxxrinJson } from './generateVoxxrinJson'
 
 export const generateStaticJson = async (event: Event) => {
-    const sessions = await getSessions(event.id)
-    const speakers = await getSpeakers(event.id)
-    const sponsors = await getSponsors(event.id)
-    const team = await getTeam(event.id)
+    const [sessions, speakers, sponsors, team] = await Promise.all([
+        getSessions(event.id),
+        getSpeakers(event.id),
+        getSponsors(event.id),
+        getTeam(event.id),
+    ])
 
     const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
+    const voxxrinJson = event.enableVoxxrin ? generateVoxxrinJson(event, sessions, speakers, sponsors) : null
 
     const outputSessions = sessions.map((s) => ({
         id: s.id,
@@ -103,5 +107,6 @@ export const generateStaticJson = async (event: Event) => {
         outputPublic,
         outputPrivate,
         outputOpenFeedback: openFeedbackOutput,
+        outputVoxxrin: voxxrinJson,
     }
 }

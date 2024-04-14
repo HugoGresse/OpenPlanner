@@ -97,6 +97,7 @@ export interface EventFiles {
     private: string
     imageFolder: string
     openfeedback: string
+    voxxrin: string
 }
 
 export interface Event {
@@ -118,6 +119,7 @@ export interface Event {
     statusBadgeImage: string | null
     statusBadgeLink: string | null
     openAPIKey: string | null
+    enableVoxxrin: boolean
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

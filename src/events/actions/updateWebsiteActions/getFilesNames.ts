@@ -7,6 +7,7 @@ export const getFilesNames = async (event: Event): Promise<EventFiles> => {
     if (!event.files || !event.files.imageFolder || !event.files.openfeedback) {
         const publicFile = event.files?.public || `events/${event.id}/${uuidv4()}.json`
         const openFeedbackFile = event.files?.openfeedback || `events/${event.id}/${uuidv4()}-openfeedback.json`
+        const voxxrinFile = event.files?.openfeedback || `events/${event.id}/${uuidv4()}-voxxrin.json`
         const privateFile = event.files?.private || `events/${event.id}/${uuidv4()}-private.json`
         const imageFolder = event.files?.imageFolder || `events/${event.id}/`
 
@@ -17,6 +18,7 @@ export const getFilesNames = async (event: Event): Promise<EventFiles> => {
                 private: privateFile,
                 imageFolder: imageFolder,
                 openfeedback: openFeedbackFile,
+                voxxrin: voxxrinFile,
             },
         })
         return {
@@ -24,6 +26,7 @@ export const getFilesNames = async (event: Event): Promise<EventFiles> => {
             private: privateFile,
             imageFolder: imageFolder,
             openfeedback: openFeedbackFile,
+            voxxrin: voxxrinFile,
         }
     }
     return event.files
@@ -41,5 +44,6 @@ export const getUploadFilePath = (files: EventFiles) => {
         private: `${base}${storageBucket}/${files.private}`,
         imageFolder: `${base}${storageBucket}/${files.imageFolder}`,
         openfeedback: `${base}${storageBucket}/${files.openfeedback}`,
+        voxxrin: `${base}${storageBucket}/${files.voxxrin}`,
     }
 }

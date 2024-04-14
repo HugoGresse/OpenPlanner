@@ -58,6 +58,7 @@ const addNewEventInternal = async (
         statusBadgeLink: null,
         statusBadgeImage: null,
         openAPIKey: null,
+        enableVoxxrin: false,
     }
     progress(`Creating the event...`)
     const newEventRef = await addDoc(collections.events, event)
