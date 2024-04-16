@@ -1,5 +1,5 @@
 import { Event, Session } from '../../../../types'
-import { Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
+import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
 import { GenerationStates, useSessionsGeneration } from '../../../actions/sessions/generation/useSessionsGeneration'
 
@@ -41,16 +41,16 @@ export const GenerateSessionsMediaContentDialog = ({
                 )}
 
                 <Button
-                    variant="contained"
+                    variant="outlined"
                     disabled={generatingState.generationState === GenerationStates.GENERATING}
-                    onClick={() => generateMediaContent(sessions.slice(0, 2))}>
+                    onClick={() => generateMediaContent(sessions.slice(0, 1))}>
                     {generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
                             <CircularProgress />
                         </>
                     ) : (
-                        'Generate preview (2 sessions max)'
+                        'Generate preview (1 session)'
                     )}
                     {generatingState.progress && ` (${generatingState.progress})`}
                 </Button>
@@ -62,17 +62,22 @@ export const GenerateSessionsMediaContentDialog = ({
                     <>
                         <Typography color="success">{generatingState.message}</Typography>
 
-                        {generatingState.results &&
-                            generatingState.results.map((result, index) => {
-                                return (
-                                    <Typography key={index}>
-                                        {result.social}: {result.result}
-                                    </Typography>
-                                )
-                            })}
+                        <Box padding={2} border={1} borderColor="#66666688" borderRadius={4} margin={2}>
+                            {generatingState.results &&
+                                generatingState.results.map((result, index) => {
+                                    return (
+                                        <Box key={index}>
+                                            <Typography key={index} variant="h6">
+                                                - {result.social}
+                                            </Typography>
+                                            <Typography>{result.result}</Typography>
+                                        </Box>
+                                    )
+                                })}
+                        </Box>
 
                         <Button
-                            variant="outlined"
+                            variant="contained"
                             disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
                             onClick={() => finalGeneration.generateMediaContent(sessions, true)}>
                             {finalGeneration.generatingState.generationState === 'GENERATING' ? (
