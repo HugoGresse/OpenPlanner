@@ -20,12 +20,27 @@ type StateInterface = {
     generationState: GenerationStates
     videoStates: GenerationStates
     progress: string
+    videoProgress: string
     message: string
     results: {
         social: TeasingPostSocials
         session: Session
         result: string | null
     }[]
+}
+
+type ShortVidSettings = {
+    backgroundColor: string
+    title: string
+    startingDate: string
+    logoUrl: string
+    location: string | null
+    speaker: {
+        pictureUrl: string
+        name: string
+        company: string
+        job: string | null
+    }
 }
 
 const PARALLEL_REQUEST = 2
@@ -37,6 +52,7 @@ export const useSessionsGeneration = (event: Event) => {
         generationState: GenerationStates.IDLE,
         videoStates: GenerationStates.IDLE,
         progress: '',
+        videoProgress: '',
         message: '',
         results: [],
     })
@@ -133,5 +149,55 @@ export const useSessionsGeneration = (event: Event) => {
         []
     )
 
-    return { generatingState: state, generateMediaContent }
+    const generateVideos = useCallback(
+        async (sessions: Session[], updateDoc: boolean, shortVidSettings: ShortVidSettings) => {
+            const sessionsCount = sessions.length
+
+            setState({
+                ...state,
+                videoStates: GenerationStates.GENERATING,
+                videoProgress: `0/${sessionsCount}`,
+            })
+
+            if (!event.openAPIKey || !sessionsCount) {
+                setState({
+                    ...state,
+                    videoStates: GenerationStates.ERROR,
+                    videoProgress: `0/${sessionsCount}`,
+                    message: 'No sessions to generate videos',
+                })
+                return
+            }
+
+            const results: { [key: string]: string } = {}
+            for (const session of sessions) {
+                // TODO : 1. Add a new API Route for shortvid generation, which can also update the session with the shortVidUrl or not
+                // TODO 2. Call the API Route for each session
+                results[session.id] = 'TODO'
+
+                setState((oldState) => ({
+                    ...oldState,
+                    videoProgress: `${Object.keys(results).length}/${sessionsCount}`,
+                }))
+            }
+
+            if (updateDoc) {
+                const newSessions = sessions.map((session) => ({
+                    ...session,
+                    shortVidUrl: results[session.id],
+                }))
+                await updateSessions(event.id, newSessions)
+            }
+
+            setState({
+                ...state,
+                videoStates: GenerationStates.SUCCESS,
+                videoProgress: `${Object.keys(results).length}/${sessionsCount}`,
+                message: '',
+            })
+        },
+        []
+    )
+
+    return { generatingState: state, generateMediaContent, generateVideos }
 }
