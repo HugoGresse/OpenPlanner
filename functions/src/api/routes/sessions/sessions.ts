@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
 import { SessionDao } from '../../dao/sessionDao'
+import { uploadBufferToStorage } from '../file/files'
 
 /**
  *
@@ -108,19 +109,32 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
                 return
             }
 
-            const blobData = await shortVidResponse.blob()
-            const shortVidUrl = URL.createObjectURL(blobData)
+            const videoArrayBuffer = await shortVidResponse.arrayBuffer()
+            const videoBuffer = Buffer.from(videoArrayBuffer)
 
-            // TODO : store the data... it's not really an url
+            const [success, publicFileUrlOrError] = await uploadBufferToStorage(
+                fastify.firebase,
+                videoBuffer,
+                eventId,
+                'shortvid'
+            )
+
+            if (!success) {
+                return reply.status(400).send({
+                    success: false,
+                    // @ts-ignore
+                    error: publicFileUrlOrError,
+                })
+            }
 
             if (updateSession) {
                 await SessionDao.updateSession(fastify.firebase, eventId, {
                     id: sessionId,
-                    teaserUrl: shortVidUrl,
+                    teaserUrl: publicFileUrlOrError,
                 })
             }
             reply.status(201).send({
-                shortVidUrl: shortVidUrl,
+                shortVidUrl: publicFileUrlOrError,
                 success: true,
             })
         }

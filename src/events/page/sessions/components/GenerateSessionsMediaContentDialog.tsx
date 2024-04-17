@@ -2,6 +2,7 @@ import { Event, Session } from '../../../../types'
 import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
 import { GenerationStates, useSessionsGeneration } from '../../../actions/sessions/generation/useSessionsGeneration'
+import { convertSecondsToMinutes } from '../../../../utils/dates/convertSecondsToMinutes'
 
 export const GenerateSessionsMediaContentDialog = ({
     isOpen,
@@ -16,6 +17,8 @@ export const GenerateSessionsMediaContentDialog = ({
 }) => {
     const { generatingState, generateMediaContent, generateVideos } = useSessionsGeneration(event)
     const finalGeneration = useSessionsGeneration(event)
+
+    // TODO : add shortVidSettings to event settings and use it here
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
@@ -74,9 +77,9 @@ export const GenerateSessionsMediaContentDialog = ({
                             <CircularProgress />
                         </>
                     ) : (
-                        'Generate session video (preview) using ShortVid.io'
+                        'Generate 1 session video using ShortVid.io (~20s)'
                     )}
-                    {generatingState.progress && ` (${generatingState.progress})`}
+                    {generatingState.videoProgress && ` (${generatingState.videoProgress})`}
                 </Button>
 
                 {generatingState.generationState === GenerationStates.ERROR && (
@@ -117,6 +120,41 @@ export const GenerateSessionsMediaContentDialog = ({
                             )}
                             {finalGeneration.generatingState.progress &&
                                 ` (${finalGeneration.generatingState.progress})`}
+                        </Button>
+                    </>
+                )}
+
+                {generatingState.videoStates === GenerationStates.SUCCESS && (
+                    <>
+                        <Typography color="success">{generatingState.message}</Typography>
+
+                        <Box padding={2} border={1} borderColor="#66666688" borderRadius={4} margin={2}>
+                            {generatingState.results &&
+                                generatingState.results.map((result, index) => {
+                                    return (
+                                        <Box key={index}>
+                                            <video src={result.videoUrl} controls width="100%" />
+                                        </Box>
+                                    )
+                                })}
+                        </Box>
+
+                        <Button
+                            variant="contained"
+                            disabled={finalGeneration.generatingState.videoStates === GenerationStates.GENERATING}
+                            onClick={() => finalGeneration.generateVideos(sessions, true)}>
+                            {finalGeneration.generatingState.videoStates === 'GENERATING' ? (
+                                <>
+                                    Generating...
+                                    <CircularProgress />
+                                </>
+                            ) : (
+                                `Generate all videos (${convertSecondsToMinutes(
+                                    sessions.length * 20
+                                )} minutes) using ShortVid.io`
+                            )}
+                            {finalGeneration.generatingState.videoProgress &&
+                                ` (${finalGeneration.generatingState.videoProgress})`}
                         </Button>
                     </>
                 )}

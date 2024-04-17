@@ -7,6 +7,9 @@ import {
     TeasingPostSocials,
 } from './generateSessionTeasingContent'
 import { updateSessions } from '../updateSession'
+import { generateApiKey } from '../../../../utils/generateApiKey'
+import { updateEvent } from '../../updateEvent'
+import { generateShortVid } from './generateShortVid'
 
 export enum GenerationStates {
     IDLE = 'IDLE',
@@ -26,6 +29,7 @@ type StateInterface = {
         social: TeasingPostSocials
         session: Session
         result: string | null
+        videoUrl?: string
     }[]
 }
 
@@ -159,7 +163,13 @@ export const useSessionsGeneration = (event: Event) => {
                 videoProgress: `0/${sessionsCount}`,
             })
 
-            if (!event.openAPIKey || !sessionsCount) {
+            let apiKey = event.apiKey
+            if (!event.apiKey) {
+                apiKey = generateApiKey()
+                await updateEvent(event.id, { apiKey })
+            }
+
+            if (!sessionsCount) {
                 setState({
                     ...state,
                     videoStates: GenerationStates.ERROR,
@@ -169,33 +179,63 @@ export const useSessionsGeneration = (event: Event) => {
                 return
             }
 
-            const results: { [key: string]: string } = {}
+            const videoSessionMapping: { [key: string]: string } = {}
+
             for (const session of sessions) {
-                // TODO : 1. Add a new API Route for shortvid generation, which can also update the session with the shortVidUrl or not
-                // TODO 2. Call the API Route for each session
-                // TODO 3. Generate api key if missing
-                results[session.id] = 'TODO'
+                // TODO : add UI for settings
+
+                const { success, error, shortVidUrl } = await generateShortVid(
+                    event.id,
+                    session.id,
+                    apiKey as string,
+                    'TalkBranded',
+                    updateDoc,
+                    shortVidSettings
+                )
+
+                if (!success) {
+                    setState({
+                        ...state,
+                        videoStates: GenerationStates.ERROR,
+                        videoProgress: `${state.results.length}/${sessionsCount}`,
+                        message: error,
+                    })
+                    return
+                }
+
+                videoSessionMapping[session.id] = shortVidUrl
 
                 setState((oldState) => ({
                     ...oldState,
-                    videoProgress: `${Object.keys(results).length}/${sessionsCount}`,
+                    videoProgress: `${oldState.results.length + 1}/${sessionsCount}`,
+                    results: [
+                        ...(oldState.results || []),
+                        {
+                            social: TeasingPostSocials.Twitter,
+                            session: session,
+                            result: null,
+                            videoUrl: shortVidUrl,
+                        },
+                    ],
                 }))
             }
 
             if (updateDoc) {
-                const newSessions = sessions.map((session) => ({
-                    ...session,
-                    shortVidUrl: results[session.id],
-                }))
+                const newSessions = sessions.map((session) => {
+                    return {
+                        ...session,
+                        shortVidUrl: videoSessionMapping[session.id],
+                    }
+                })
                 await updateSessions(event.id, newSessions)
             }
 
-            setState({
-                ...state,
+            setState((oldState) => ({
+                ...oldState,
                 videoStates: GenerationStates.SUCCESS,
-                videoProgress: `${Object.keys(results).length}/${sessionsCount}`,
+                videoProgress: `${oldState.results.length}/${sessionsCount}`,
                 message: '',
-            })
+            }))
         },
         []
     )
