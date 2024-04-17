@@ -173,6 +173,7 @@ export const useSessionsGeneration = (event: Event) => {
             for (const session of sessions) {
                 // TODO : 1. Add a new API Route for shortvid generation, which can also update the session with the shortVidUrl or not
                 // TODO 2. Call the API Route for each session
+                // TODO 3. Generate api key if missing
                 results[session.id] = 'TODO'
 
                 setState((oldState) => ({
