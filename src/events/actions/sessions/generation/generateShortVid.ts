@@ -1,36 +1,101 @@
-import { API_URL } from '../../../../env'
+import { Session } from '../../../../types'
+import { generateApiKey } from '../../../../utils/generateApiKey'
+import { updateEvent } from '../../updateEvent'
+import { GenerateBaseResultAnswer } from './useSessionsGenerationGeneric'
+import { shortVidAPI, ShortVidSettings } from './shortVidAPI'
+
+export type ShortVidGenerationSettings = {
+    template: string
+    eventId: string
+    eventApiKey: string | null
+    updateSession: boolean
+}
+
+export type GeneratedSessionVideoAnswer = {
+    success: boolean
+    results: {
+        baseSession: Session
+        updatedSession: Partial<Session>
+        videoUrl: string
+    }[]
+} & GenerateBaseResultAnswer
 
 export const generateShortVid = async (
-    eventId: string,
-    sessionId: string,
-    eventApiKey: string,
-    shortVidType: string,
-    updateSession: boolean,
-    settings: any
-) => {
-    const url = new URL(API_URL as string)
-    url.pathname += `v1/${eventId}/sessions/${sessionId}/shortvid`
+    sessions: Session[],
+    settings: ShortVidGenerationSettings,
+    progressCallback: (totalCount: number, doneCount: number) => void
+): Promise<GeneratedSessionVideoAnswer> => {
+    const sessionsCount = sessions.length
 
-    url.searchParams.append('apiKey', eventApiKey)
+    let apiKey = settings.eventApiKey
+    if (!apiKey) {
+        apiKey = generateApiKey()
+        await updateEvent(settings.eventId, { apiKey })
+    }
 
-    const response = await fetch(url.href, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            shortVidType,
-            updateSession,
-            settings,
-        }),
-    })
-
-    if (!response.ok) {
+    if (!sessionsCount) {
         return {
             success: false,
-            error: response.statusText,
+            message: 'No sessions to generate',
+            results: [],
         }
     }
 
-    return await response.json()
+    const videoSessionMapping: { [key: string]: string } = {}
+
+    let progress = 0
+    for (const session of sessions) {
+        // TODO : add UI for settings
+
+        const sessionSettings: ShortVidSettings = {
+            backgroundColor: '#000000',
+            title: session.title,
+            startingDate: '2024-04-16T20:26:00.000Z',
+            logoUrl: 'https://github.com/Sunny-Tech/website/blob/main/public/images/logo_medium.png?raw=true',
+            location: 'session.location',
+            speakers: (session.speakersData || []).map((speaker) => {
+                return {
+                    pictureUrl: speaker.photoUrl || '',
+                    name: speaker.name,
+                    company: speaker.company || '',
+                    job: speaker.jobTitle,
+                }
+            }),
+        }
+
+        const { success, error, shortVidUrl } = await shortVidAPI(
+            settings.eventId,
+            session.id,
+            apiKey,
+            settings.template,
+            settings.updateSession,
+            sessionSettings
+        )
+
+        if (!success) {
+            return {
+                success: false,
+                message: error,
+                results: [],
+            }
+        }
+
+        progress++
+
+        videoSessionMapping[session.id] = shortVidUrl
+
+        progressCallback(sessionsCount, progress)
+    }
+
+    return {
+        success: true,
+        results: sessions.map((session) => ({
+            baseSession: session,
+            updatedSession: {
+                id: session.id,
+                teaserUrl: videoSessionMapping[session.id],
+            },
+            videoUrl: videoSessionMapping[session.id],
+        })),
+    }
 }
