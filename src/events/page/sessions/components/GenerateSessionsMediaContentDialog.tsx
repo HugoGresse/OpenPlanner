@@ -1,12 +1,14 @@
 import { Event, Session } from '../../../../types'
 import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
-import { GenerationStates } from '../../../actions/sessions/generation/useSessionsGeneration'
-import { useSessionsGenerationGeneric } from '../../../actions/sessions/generation/useSessionsGenerationGeneric'
+import {
+    GenerationStates,
+    useSessionsGenerationGeneric,
+} from '../../../actions/sessions/generation/useSessionsGenerationGeneric'
 import {
     generateSessionTeasingTexts,
     GenerateSessionTeasingTextsSettings,
-    GenerateSessionTestingTextAnswer,
+    GeneratedSessionTeasingTextAnswer,
 } from '../../../actions/sessions/generation/generateSessionTeasingTexts'
 import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 import { useNotification } from '../../../../hooks/notificationHook'
@@ -30,11 +32,11 @@ export const GenerateSessionsMediaContentDialog = ({
 
     const { generatingState, generate } = useSessionsGenerationGeneric<
         GenerateSessionTeasingTextsSettings,
-        GenerateSessionTestingTextAnswer
+        GeneratedSessionTeasingTextAnswer
     >(event, generateSessionTeasingTexts)
     const finalGeneration = useSessionsGenerationGeneric<
         GenerateSessionTeasingTextsSettings,
-        GenerateSessionTestingTextAnswer
+        GeneratedSessionTeasingTextAnswer
     >(event, generateSessionTeasingTexts)
 
     return (
@@ -82,17 +84,17 @@ export const GenerateSessionsMediaContentDialog = ({
                                         result.updatedSession.teasingPosts &&
                                         Object.keys(result.updatedSession.teasingPosts).map((social) => {
                                             const teasingPost = result.updatedSession.teasingPosts
+                                            const socialWithType = social as keyof typeof teasingPost
+                                            const postText =
+                                                teasingPost && teasingPost[socialWithType]
+                                                    ? teasingPost[socialWithType]
+                                                    : '???'
                                             return (
                                                 <Box key={social + index}>
                                                     <Typography key={index} variant="h6">
                                                         • {social}
                                                     </Typography>
-                                                    <Typography>
-                                                        {/* @ts-ignore */}
-                                                        {teasingPost && teasingPost[social]
-                                                            ? teasingPost[social]
-                                                            : '???'}
-                                                    </Typography>
+                                                    <Typography>{postText}</Typography>
                                                 </Box>
                                             )
                                         })

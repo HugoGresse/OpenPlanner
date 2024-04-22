@@ -19,7 +19,7 @@ export type GenerateSessionTeasingTextsSettings = {
     openApiKey: string | null
 } & GenerateBaseSettings
 
-export type GenerateSessionTestingTextAnswer = {
+export type GeneratedSessionTeasingTextAnswer = {
     success: boolean
     results: {
         baseSession: Session
@@ -32,7 +32,7 @@ export const generateSessionTeasingTexts = async (
     sessions: Session[],
     settings: GenerateSessionTeasingTextsSettings,
     progressCallback: (totalCount: number, doneCount: number) => void
-): Promise<GenerateSessionTestingTextAnswer> => {
+): Promise<GeneratedSessionTeasingTextAnswer> => {
     const promptSystem = settings.prompts.fr.system
     const promptUser = settings.prompts.fr.user
 
