@@ -1,8 +1,15 @@
 import { Event, Session } from '../../../../types'
 import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
-import { GenerationStates, useSessionsGeneration } from '../../../actions/sessions/generation/useSessionsGeneration'
-import { convertSecondsToMinutes } from '../../../../utils/dates/convertSecondsToMinutes'
+import { GenerationStates } from '../../../actions/sessions/generation/useSessionsGeneration'
+import { useSessionsGenerationGeneric } from '../../../actions/sessions/generation/useSessionsGenerationGeneric'
+import {
+    generateSessionTeasingTexts,
+    GenerateSessionTeasingTextsSettings,
+    GenerateSessionTestingTextAnswer,
+} from '../../../actions/sessions/generation/generateSessionTeasingTexts'
+import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
+import { useNotification } from '../../../../hooks/notificationHook'
 
 export const GenerateSessionsMediaContentDialog = ({
     isOpen,
@@ -15,24 +22,27 @@ export const GenerateSessionsMediaContentDialog = ({
     event: Event
     sessions: Session[]
 }) => {
-    const { generatingState, generateMediaContent, generateVideos } = useSessionsGeneration(event)
-    const finalGeneration = useSessionsGeneration(event)
+    const { createNotification } = useNotification()
+    const llmSettings: GenerateSessionTeasingTextsSettings = {
+        prompts: GenerateSessionsTeasingContentPrompts,
+        openApiKey: event.openAPIKey,
+    }
 
-    // TODO : add shortVidSettings to event settings and use it here
+    const { generatingState, generate } = useSessionsGenerationGeneric<
+        GenerateSessionTeasingTextsSettings,
+        GenerateSessionTestingTextAnswer
+    >(event, generateSessionTeasingTexts)
+    const finalGeneration = useSessionsGenerationGeneric<
+        GenerateSessionTeasingTextsSettings,
+        GenerateSessionTestingTextAnswer
+    >(event, generateSessionTeasingTexts)
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
             <DialogContent sx={{ minHeight: '80vh' }}>
                 <Typography variant="h5">Generate media content for sessions</Typography>
                 <Typography>
-                    This will do: <br />
-                    1. Generate post content using OpenAI ChatGPT3.5-turbo (through OpenRouter.ai)
-                    <br />
-                    2. Generate a video for each session using the generated post content using shortvid.io
-                    <br />
-                    ⚠️ Please don't spam this service, as video generation is compute heavy and is not free.
-                    <br />
-                    <a href="https://github.com/lyonjs/shortvid.io">More info</a>
+                    This will do generate post content using OpenAI ChatGPT3.5-turbo (through OpenAI ChatGPT API)
                     <br />
                 </Typography>
 
@@ -46,7 +56,7 @@ export const GenerateSessionsMediaContentDialog = ({
                 <Button
                     variant="outlined"
                     disabled={generatingState.generationState === GenerationStates.GENERATING}
-                    onClick={() => generateMediaContent(sessions.slice(0, 1))}>
+                    onClick={() => generate(sessions.slice(0, 1), false, llmSettings)}>
                     {generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
@@ -57,35 +67,8 @@ export const GenerateSessionsMediaContentDialog = ({
                     )}
                     {generatingState.progress && ` (${generatingState.progress})`}
                 </Button>
-                <Button
-                    variant="outlined"
-                    disabled={generatingState.videoStates === GenerationStates.GENERATING}
-                    onClick={() =>
-                        generateVideos(sessions.slice(0, 1), false, {
-                            backgroundColor: '#f17f44',
-                            title: 'Example',
-                            startingDate: '2024-04-16T20:26:00.000Z',
-                            location: null,
-                            logoUrl:
-                                'https://github.com/Sunny-Tech/website/blob/main/public/images/logo_medium.png?raw=true',
-                            speaker: { pictureUrl: '', name: 'John Doe', company: 'null', job: null },
-                        })
-                    }>
-                    {generatingState.videoStates === 'GENERATING' ? (
-                        <>
-                            Generating...
-                            <CircularProgress />
-                        </>
-                    ) : (
-                        'Generate 1 session video using ShortVid.io (~20s)'
-                    )}
-                    {generatingState.videoProgress && ` (${generatingState.videoProgress})`}
-                </Button>
 
                 {generatingState.generationState === GenerationStates.ERROR && (
-                    <Typography color="error">{generatingState.message}</Typography>
-                )}
-                {generatingState.videoStates === GenerationStates.ERROR && (
                     <Typography color="error">{generatingState.message}</Typography>
                 )}
                 {generatingState.generationState === GenerationStates.SUCCESS && (
@@ -94,14 +77,25 @@ export const GenerateSessionsMediaContentDialog = ({
 
                         <Box padding={2} border={1} borderColor="#66666688" borderRadius={4} margin={2}>
                             {generatingState.results &&
-                                generatingState.results.map((result, index) => {
+                                generatingState.results.results.flatMap((result, index) => {
                                     return (
-                                        <Box key={index}>
-                                            <Typography key={index} variant="h6">
-                                                - {result.social}
-                                            </Typography>
-                                            <Typography>{result.result}</Typography>
-                                        </Box>
+                                        result.updatedSession.teasingPosts &&
+                                        Object.keys(result.updatedSession.teasingPosts).map((social) => {
+                                            const teasingPost = result.updatedSession.teasingPosts
+                                            return (
+                                                <Box key={social + index}>
+                                                    <Typography key={index} variant="h6">
+                                                        • {social}
+                                                    </Typography>
+                                                    <Typography>
+                                                        {/* @ts-ignore */}
+                                                        {teasingPost && teasingPost[social]
+                                                            ? teasingPost[social]
+                                                            : '???'}
+                                                    </Typography>
+                                                </Box>
+                                            )
+                                        })
                                     )
                                 })}
                         </Box>
@@ -109,7 +103,12 @@ export const GenerateSessionsMediaContentDialog = ({
                         <Button
                             variant="contained"
                             disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
-                            onClick={() => finalGeneration.generateMediaContent(sessions, true)}>
+                            onClick={() =>
+                                finalGeneration.generate(sessions, true, llmSettings).then(() => {
+                                    onClose()
+                                    createNotification('Generation done, sessions updated!', { type: 'success' })
+                                })
+                            }>
                             {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                                 <>
                                     Generating...
@@ -120,41 +119,6 @@ export const GenerateSessionsMediaContentDialog = ({
                             )}
                             {finalGeneration.generatingState.progress &&
                                 ` (${finalGeneration.generatingState.progress})`}
-                        </Button>
-                    </>
-                )}
-
-                {generatingState.videoStates === GenerationStates.SUCCESS && (
-                    <>
-                        <Typography color="success">{generatingState.message}</Typography>
-
-                        <Box padding={2} border={1} borderColor="#66666688" borderRadius={4} margin={2}>
-                            {generatingState.results &&
-                                generatingState.results.map((result, index) => {
-                                    return (
-                                        <Box key={index}>
-                                            <video src={result.videoUrl} controls width="100%" />
-                                        </Box>
-                                    )
-                                })}
-                        </Box>
-
-                        <Button
-                            variant="contained"
-                            disabled={finalGeneration.generatingState.videoStates === GenerationStates.GENERATING}
-                            onClick={() => finalGeneration.generateVideos(sessions, true)}>
-                            {finalGeneration.generatingState.videoStates === 'GENERATING' ? (
-                                <>
-                                    Generating...
-                                    <CircularProgress />
-                                </>
-                            ) : (
-                                `Generate all videos (${convertSecondsToMinutes(
-                                    sessions.length * 20
-                                )} minutes) using ShortVid.io`
-                            )}
-                            {finalGeneration.generatingState.videoProgress &&
-                                ` (${finalGeneration.generatingState.videoProgress})`}
                         </Button>
                     </>
                 )}
