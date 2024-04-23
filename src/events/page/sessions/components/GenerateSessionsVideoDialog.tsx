@@ -11,6 +11,7 @@ import {
     generateShortVid,
     ShortVidGenerationSettings,
 } from '../../../actions/sessions/generation/generateShortVid'
+import { ShortVidSettings } from './ShortVidSettings'
 
 export const GenerateSessionsVideoDialog = ({
     isOpen,
@@ -33,20 +34,25 @@ export const GenerateSessionsVideoDialog = ({
     )
 
     const shortVidSetting = {
-        template: 'TalkBranded',
+        template: event.shortVidSettings?.template || 'TalkBranded',
         eventId: event.id,
         updateSession: true,
         eventApiKey: event.apiKey,
     }
 
-    console.log(sessions)
+    const disabledButton =
+        generatingState.generationState === GenerationStates.GENERATING ||
+        finalGeneration.generatingState.generationState === GenerationStates.GENERATING
+
+    const sessionToGenerateFor = sessions.filter((session) => session.speakers && session.speakers.length > 0)
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
             <DialogContent sx={{ minHeight: '80vh' }}>
                 <Typography variant="h5">Generate announcement videos for each session</Typography>
                 <Typography>
-                    This will do generate a video for each session using shortvid.io
+                    This will do generate a video for each session using shortvid.io. Only sessions with speakers will
+                    be generated.
                     <br />
                     ⚠️ Please don't spam this service, as video generation is compute heavy and is not free.
                     <br />
@@ -54,10 +60,12 @@ export const GenerateSessionsVideoDialog = ({
                     <br />
                 </Typography>
 
+                <ShortVidSettings event={event} />
+
                 <Button
-                    variant="outlined"
-                    disabled={generatingState.generationState === GenerationStates.GENERATING}
-                    onClick={() => generate(sessions.slice(0, 1), false, shortVidSetting)}>
+                    variant="contained"
+                    disabled={disabledButton}
+                    onClick={() => generate(sessionToGenerateFor.slice(0, 1), false, shortVidSetting)}>
                     {generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
@@ -67,6 +75,22 @@ export const GenerateSessionsVideoDialog = ({
                         'Generate 1 session video using ShortVid.io (~20s)'
                     )}
                     {generatingState.progress && ` (${generatingState.progress})`}
+                </Button>
+                <Button
+                    variant="outlined"
+                    disabled={disabledButton}
+                    onClick={() => finalGeneration.generate(sessionToGenerateFor, true, shortVidSetting)}>
+                    {finalGeneration.generatingState.generationState === 'GENERATING' ? (
+                        <>
+                            Generating...
+                            <CircularProgress />
+                        </>
+                    ) : (
+                        `Generate all videos (${convertSecondsToMinutes(
+                            sessionToGenerateFor.length * 20
+                        )} minutes) using ShortVid.io`
+                    )}
+                    {finalGeneration.generatingState.progress && ` (${finalGeneration.generatingState.progress})`}
                 </Button>
 
                 {generatingState.generationState === GenerationStates.ERROR && (
@@ -89,9 +113,9 @@ export const GenerateSessionsVideoDialog = ({
                         </Box>
 
                         <Button
-                            variant="contained"
+                            variant="outlined"
                             disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
-                            onClick={() => finalGeneration.generate(sessions, true, shortVidSetting)}>
+                            onClick={() => finalGeneration.generate(sessionToGenerateFor, true, shortVidSetting)}>
                             {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                                 <>
                                     Generating...
@@ -99,7 +123,7 @@ export const GenerateSessionsVideoDialog = ({
                                 </>
                             ) : (
                                 `Generate all videos (${convertSecondsToMinutes(
-                                    sessions.length * 20
+                                    sessionToGenerateFor.length * 20
                                 )} minutes) using ShortVid.io`
                             )}
                             {finalGeneration.generatingState.progress &&

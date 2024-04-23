@@ -100,6 +100,10 @@ export interface EventFiles {
     openfeedback: string
 }
 
+export interface EventShortVidSettings {
+    template: string | null
+}
+
 export interface Event {
     id: string
     name: string
@@ -119,6 +123,7 @@ export interface Event {
     statusBadgeImage: string | null
     statusBadgeLink: string | null
     openAPIKey: string | null
+    shortVidSettings: EventShortVidSettings | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

@@ -53,6 +53,14 @@ export const generateShortVid = async (
             startingDate: '2024-04-16T20:26:00.000Z',
             logoUrl: 'https://github.com/Sunny-Tech/website/blob/main/public/images/logo_medium.png?raw=true',
             location: 'session.location',
+            speaker: (session.speakersData || []).map((speaker) => {
+                return {
+                    pictureUrl: speaker.photoUrl || '',
+                    name: speaker.name,
+                    company: speaker.company || '',
+                    job: speaker.jobTitle,
+                }
+            })[0],
             speakers: (session.speakersData || []).map((speaker) => {
                 return {
                     pictureUrl: speaker.photoUrl || '',
