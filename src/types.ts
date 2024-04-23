@@ -124,6 +124,11 @@ export interface Event {
     statusBadgeLink: string | null
     openAPIKey: string | null
     shortVidSettings: EventShortVidSettings | null
+    locationName: string | null
+    locationUrl: string | null
+    logoUrl: string | null
+    logoUrl2: string | null
+    backgroundUrl: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

@@ -37,6 +37,8 @@ import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { ConferenceHallEventsPicker } from '../../../conferencehall/ConferenceHallEventsPicker'
 import { linkOpenPlannerEventToConferenceHallEvent } from '../../actions/linkOpenPlannerEventToConferenceHallEvent'
 import { EventSettingsFormatCategoriesGrid } from './EventSettingsFormatCategoriesGrid'
+import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
+import * as React from 'react'
 
 const schema = yup
     .object({
@@ -104,20 +106,6 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 variant="filled"
                                 disabled={formState.isSubmitting}
                             />
-
-                            <TextFieldElement
-                                margin="normal"
-                                fullWidth
-                                id="openAPIKey"
-                                label="OpenAI API key"
-                                name="openAPIKey"
-                                variant="filled"
-                                disabled={formState.isSubmitting}
-                            />
-
-                            <TrackFields control={control} isSubmitting={formState.isSubmitting} />
-
-                            <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextFieldElement
@@ -143,7 +131,91 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 disabled={formState.isSubmitting}
                             />
                             {days ? days + ' day(s)' : ''}
+                        </Grid>
+                    </Grid>
 
+                    <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                            <Typography fontWeight="600" mt={2}>
+                                Event details & theme
+                            </Typography>
+
+                            <TextFieldElement
+                                margin="dense"
+                                fullWidth
+                                id="eventLocation"
+                                label="Location name (.locationName)"
+                                name="locationName"
+                                variant="filled"
+                                size="small"
+                                disabled={formState.isSubmitting}
+                            />
+                            <TextFieldElement
+                                margin="dense"
+                                fullWidth
+                                id="eventLocationUrl"
+                                label="Location url (.locationUrl)"
+                                name="locationUrl"
+                                variant="filled"
+                                size="small"
+                                disabled={formState.isSubmitting}
+                            />
+
+                            <ImageTextFieldElement
+                                event={event}
+                                margin="dense"
+                                fullWidth
+                                label="Logo (.logoUrl)"
+                                name="logoUrl"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                                size="small"
+                            />
+                            <ImageTextFieldElement
+                                event={event}
+                                margin="dense"
+                                fullWidth
+                                label="Logo 2 (.logoUrl2)"
+                                name="logoUrl2"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                                size="small"
+                            />
+                            <ImageTextFieldElement
+                                event={event}
+                                margin="dense"
+                                fullWidth
+                                label="Background image (.backgroundUrl) used for ShortVid.io"
+                                name="backgroundUrl"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                                size="small"
+                            />
+
+                            {/*// Add main color and secondary color*/}
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <Typography fontWeight="600" mt={2}>
+                                Other stuffs
+                            </Typography>
+
+                            <TextFieldElement
+                                margin="normal"
+                                fullWidth
+                                id="openAPIKey"
+                                label="OpenAI API key"
+                                name="openAPIKey"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                            />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                            <TrackFields control={control} isSubmitting={formState.isSubmitting} />
+                            <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
                             <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
                         </Grid>
                         <Grid item xs={12}>
