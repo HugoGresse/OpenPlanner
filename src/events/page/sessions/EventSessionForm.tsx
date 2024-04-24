@@ -1,5 +1,5 @@
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Avatar, Button, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
+import { Avatar, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
 import { useState } from 'react'
 import {
     AutocompleteElement,
@@ -73,6 +73,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     teasingPosts: data.teasingPosts,
                     extendHeight: data.extendHeight,
                     extendWidth: data.extendWidth,
+                    teaserUrl: data.teaserUrl,
                 } as Session)
             }}>
             <Grid container spacing={4}>
@@ -295,7 +296,20 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
 
                         {teasingPostsOpen && (
                             <>
-                                <Grid item xs={6}>
+                                <Grid item xs={12}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Teaser url (video?)"
+                                        name="teaserUrl"
+                                        variant="filled"
+                                        disabled={false}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
                                     <TextFieldElement
                                         margin="dense"
                                         fullWidth
@@ -308,7 +322,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         disabled={false}
                                     />
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={12} md={6}>
                                     <TextFieldElement
                                         margin="dense"
                                         fullWidth
@@ -321,7 +335,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         disabled={false}
                                     />
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={12} md={6}>
                                     <TextFieldElement
                                         margin="dense"
                                         fullWidth
@@ -334,7 +348,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         disabled={false}
                                     />
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={12} md={6}>
                                     <TextFieldElement
                                         margin="dense"
                                         fullWidth

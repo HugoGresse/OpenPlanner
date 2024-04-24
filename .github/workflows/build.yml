@@ -13,7 +13,7 @@ jobs:
               uses: oven-sh/setup-bun@v1
             - run: bun install --frozen-lockfile
             - run: bun run build
-
+            - run: bun run tscheck
             - name: Setup Node.js environment
               uses: actions/setup-node@v4
               with:

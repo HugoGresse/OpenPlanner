@@ -28,10 +28,10 @@ export const Sponsor = ({ event }: SponsorProps) => {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
     }
 
-    const allSponsor = sponsors.data.find((c: SponsorCategory) => c.id === categoryId).sponsors
-    const sponsor = allSponsor.find((s: SponsorType) => s.id === sponsorId)
+    const allSponsor = sponsors.data.find((c: SponsorCategory) => c.id === categoryId)?.sponsors
+    const sponsor = allSponsor?.find((s: SponsorType) => s.id === sponsorId)
 
-    if (!sponsor) {
+    if (!sponsor || !allSponsor) {
         setLocation('/sponsors')
     }
 
@@ -43,14 +43,14 @@ export const Sponsor = ({ event }: SponsorProps) => {
                 </Button>
             </Box>
             <Card sx={{ paddingX: 2 }}>
-                <Typography variant="h2">{sponsor.name}</Typography>
+                <Typography variant="h2">{sponsor?.name}</Typography>
 
                 <SponsorForm
                     event={event}
                     sponsor={sponsor}
                     onSubmit={async (data) => {
                         await mutation.mutate({
-                            sponsors: allSponsor.map((s: SponsorType) => {
+                            sponsors: allSponsor?.map((s: SponsorType) => {
                                 if (s.id === sponsorId) {
                                     return data
                                 }

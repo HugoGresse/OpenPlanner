@@ -15,6 +15,7 @@ import { sponsorsRoutes } from './routes/sponsors/sponsors'
 import { filesRoutes } from './routes/file/files'
 import { faqRoutes } from './routes/faq/faq'
 import { helloRoute } from './routes/hello/hello'
+import { sessionsRoutes } from './routes/sessions/sessions'
 
 type Firebase = firebaseApp.App
 
@@ -45,6 +46,7 @@ fastify.register(cors, {
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
+fastify.register(sessionsRoutes)
 fastify.register(faqRoutes)
 fastify.register(filesRoutes)
 fastify.register(helloRoute)
@@ -65,7 +67,7 @@ if (isNodeEnvDev) {
     console.log("Running in production mode, don't listen")
 }
 
-export const fastifyFunction = onRequest(async (request, reply) => {
+export const fastifyFunction = onRequest({ timeoutSeconds: 300 }, async (request, reply) => {
     fastify.ready((error) => {
         if (error) throw error
         fastify.server.emit('request', request, reply)

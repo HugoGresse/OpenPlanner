@@ -110,7 +110,7 @@ export const uploadBufferToStorage = async (
     const fileType = await checkFileTypes(buffer, fileName)
 
     if (!fileType) {
-        return [false, 'Invalid file type']
+        return [false, 'Invalid or unknown file type']
     }
 
     const { mime, extension } = fileType

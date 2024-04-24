@@ -82,6 +82,7 @@ export interface Session {
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
+    teaserUrl: string | null
     teasingHidden: boolean
     teasingPosts: TeasingPosts | null
     extendHeight?: number
@@ -97,6 +98,10 @@ export interface EventFiles {
     private: string
     imageFolder: string
     openfeedback: string
+}
+
+export interface EventShortVidSettings {
+    template: string | null
 }
 
 export interface Event {
@@ -118,6 +123,15 @@ export interface Event {
     statusBadgeImage: string | null
     statusBadgeLink: string | null
     openAPIKey: string | null
+    shortVidSettings: EventShortVidSettings | null
+    locationName: string | null
+    locationUrl: string | null
+    logoUrl: string | null
+    logoUrl2: string | null
+    backgroundUrl: string | null
+    color: string | null
+    colorSecondary: string | null
+    colorBackground: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
