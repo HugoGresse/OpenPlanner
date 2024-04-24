@@ -60,7 +60,7 @@ export const generateShortVid = async (
                     pictureUrl: speaker.photoUrl || '',
                     name: speaker.name,
                     company: speaker.company || '',
-                    job: speaker.jobTitle,
+                    job: speaker.jobTitle || '',
                 }
             })[0],
         }

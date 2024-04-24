@@ -12,6 +12,7 @@ import {
     ShortVidGenerationSettings,
 } from '../../../actions/sessions/generation/generateShortVid'
 import { ShortVidSettings } from './ShortVidSettings'
+import { useNotification } from '../../../../hooks/notificationHook'
 
 export const GenerateSessionsVideoDialog = ({
     isOpen,
@@ -24,6 +25,7 @@ export const GenerateSessionsVideoDialog = ({
     event: Event
     sessions: Session[]
 }) => {
+    const { createNotification } = useNotification()
     const { generatingState, generate } = useSessionsGenerationGeneric<
         ShortVidGenerationSettings,
         GeneratedSessionVideoAnswer
@@ -48,6 +50,18 @@ export const GenerateSessionsVideoDialog = ({
         finalGeneration.generatingState.generationState === GenerationStates.GENERATING
 
     const sessionToGenerateFor = sessions.filter((session) => session.speakers && session.speakers.length > 0)
+
+    const generateAllVideos = () => {
+        finalGeneration
+            .generate(sessionToGenerateFor, true, {
+                ...shortVidSetting,
+                updateSession: true,
+            })
+            .then(() => {
+                onClose()
+                createNotification('Video generation done, sessions updated!', { type: 'success' })
+            })
+    }
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
@@ -85,15 +99,7 @@ export const GenerateSessionsVideoDialog = ({
                     )}
                     {generatingState.progress && ` (${generatingState.progress})`}
                 </Button>
-                <Button
-                    variant="outlined"
-                    disabled={disabledButton}
-                    onClick={() =>
-                        finalGeneration.generate(sessionToGenerateFor, true, {
-                            ...shortVidSetting,
-                            updateSession: true,
-                        })
-                    }>
+                <Button variant="outlined" disabled={disabledButton} onClick={generateAllVideos}>
                     {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
@@ -129,12 +135,7 @@ export const GenerateSessionsVideoDialog = ({
                         <Button
                             variant="outlined"
                             disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
-                            onClick={() =>
-                                finalGeneration.generate(sessionToGenerateFor, true, {
-                                    ...shortVidSetting,
-                                    updateSession: true,
-                                })
-                            }>
+                            onClick={generateAllVideos}>
                             {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                                 <>
                                     Generating...
