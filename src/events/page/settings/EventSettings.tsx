@@ -117,6 +117,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 name="dates.start"
                                 variant="filled"
                                 type="datetime-local"
+                                InputLabelProps={{ shrink: true }}
                                 disabled={formState.isSubmitting}
                             />
                             <TextFieldElement
@@ -128,6 +129,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 name="dates.end"
                                 variant="filled"
                                 type="datetime-local"
+                                InputLabelProps={{ shrink: true }}
                                 disabled={formState.isSubmitting}
                             />
                             {days ? days + ' day(s)' : ''}
