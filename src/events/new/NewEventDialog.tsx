@@ -62,6 +62,15 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         statusBadgeLink: null,
                         apiKey: null,
                         openAPIKey: null,
+                        shortVidSettings: null,
+                        locationName: null,
+                        locationUrl: null,
+                        logoUrl: null,
+                        logoUrl2: null,
+                        backgroundUrl: null,
+                        color: null,
+                        colorSecondary: null,
+                        colorBackground: null,
                     }
                     mutation
                         .mutate(newEventData)
