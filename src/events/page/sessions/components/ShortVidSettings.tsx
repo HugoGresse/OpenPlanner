@@ -36,7 +36,7 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
                 <Grid container>
                     <Grid item xs={12} md={6}>
                         <TextFieldElement
-                            margin="normal"
+                            margin="dense"
                             required
                             fullWidth
                             id="template"
@@ -52,9 +52,7 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
                             type="submit"
                             disabled={formState.isSubmitting}
                             loading={formState.isSubmitting}
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 2, mb: 2 }}>
+                            variant="contained">
                             Save
                         </LoadingButton>
                         {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}

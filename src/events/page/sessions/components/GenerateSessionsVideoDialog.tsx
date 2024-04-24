@@ -36,8 +36,11 @@ export const GenerateSessionsVideoDialog = ({
     const shortVidSetting = {
         template: event.shortVidSettings?.template || 'TalkBranded',
         eventId: event.id,
-        updateSession: true,
         eventApiKey: event.apiKey,
+        locationName: event.locationName || '',
+        logoUrl: event.logoUrl || '',
+        colorBackground: event.colorBackground || '',
+        eventStartDate: event.dates.start,
     }
 
     const disabledButton =
@@ -54,7 +57,8 @@ export const GenerateSessionsVideoDialog = ({
                     This will do generate a video for each session using shortvid.io. Only sessions with speakers will
                     be generated.
                     <br />
-                    ⚠️ Please don't spam this service, as video generation is compute heavy and is not free.
+                    ⚠️ Please fill the event details & theme info in the settings page before generating the videos. ⚠️
+                    Please don't spam this service, as video generation is compute heavy and is not free.
                     <br />
                     <a href="https://github.com/lyonjs/shortvid.io">More info</a>
                     <br />
@@ -65,7 +69,12 @@ export const GenerateSessionsVideoDialog = ({
                 <Button
                     variant="contained"
                     disabled={disabledButton}
-                    onClick={() => generate(sessionToGenerateFor.slice(0, 1), false, shortVidSetting)}>
+                    onClick={() =>
+                        generate(sessionToGenerateFor.slice(0, 1), false, {
+                            ...shortVidSetting,
+                            updateSession: false,
+                        })
+                    }>
                     {generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
@@ -79,7 +88,12 @@ export const GenerateSessionsVideoDialog = ({
                 <Button
                     variant="outlined"
                     disabled={disabledButton}
-                    onClick={() => finalGeneration.generate(sessionToGenerateFor, true, shortVidSetting)}>
+                    onClick={() =>
+                        finalGeneration.generate(sessionToGenerateFor, true, {
+                            ...shortVidSetting,
+                            updateSession: true,
+                        })
+                    }>
                     {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
@@ -115,7 +129,12 @@ export const GenerateSessionsVideoDialog = ({
                         <Button
                             variant="outlined"
                             disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
-                            onClick={() => finalGeneration.generate(sessionToGenerateFor, true, shortVidSetting)}>
+                            onClick={() =>
+                                finalGeneration.generate(sessionToGenerateFor, true, {
+                                    ...shortVidSetting,
+                                    updateSession: true,
+                                })
+                            }>
                             {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                                 <>
                                     Generating...

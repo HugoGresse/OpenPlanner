@@ -129,6 +129,9 @@ export interface Event {
     logoUrl: string | null
     logoUrl2: string | null
     backgroundUrl: string | null
+    color: string | null
+    colorSecondary: string | null
+    colorBackground: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {

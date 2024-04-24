@@ -194,7 +194,39 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 size="small"
                             />
 
-                            {/*// Add main color and secondary color*/}
+                            <TextFieldElement
+                                label="Color"
+                                name="color"
+                                variant="filled"
+                                size="small"
+                                margin="dense"
+                                type="color"
+                                InputLabelProps={{ shrink: true }}
+                                disabled={formState.isSubmitting}
+                                sx={{ minWidth: 150, mr: 1 }}
+                            />
+                            <TextFieldElement
+                                label="Color secondary"
+                                name="colorSecondary"
+                                variant="filled"
+                                size="small"
+                                margin="dense"
+                                type="color"
+                                InputLabelProps={{ shrink: true }}
+                                disabled={formState.isSubmitting}
+                                sx={{ minWidth: 150, mr: 1 }}
+                            />
+                            <TextFieldElement
+                                label="Color background"
+                                name="colorBackground"
+                                variant="filled"
+                                size="small"
+                                margin="dense"
+                                type="color"
+                                InputLabelProps={{ shrink: true }}
+                                disabled={formState.isSubmitting}
+                                sx={{ minWidth: 150 }}
+                            />
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <Typography fontWeight="600" mt={2}>

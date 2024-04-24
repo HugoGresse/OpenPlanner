@@ -9,6 +9,10 @@ export type ShortVidGenerationSettings = {
     eventId: string
     eventApiKey: string | null
     updateSession: boolean
+    locationName: string
+    logoUrl: string
+    colorBackground: string
+    eventStartDate: Date | null
 }
 
 export type GeneratedSessionVideoAnswer = {
@@ -45,14 +49,12 @@ export const generateShortVid = async (
 
     let progress = 0
     for (const session of sessions) {
-        // TODO : add UI for settings
-
         const sessionSettings: ShortVidSettings = {
-            backgroundColor: '#000000',
+            backgroundColor: settings.colorBackground,
             title: session.title,
-            startingDate: '2024-04-16T20:26:00.000Z',
-            logoUrl: 'https://github.com/Sunny-Tech/website/blob/main/public/images/logo_medium.png?raw=true',
-            location: 'session.location',
+            startingDate: session.dates?.start?.toISO() || settings.eventStartDate?.toISOString() || '',
+            logoUrl: settings.logoUrl,
+            location: settings.locationName,
             speaker: (session.speakersData || []).map((speaker) => {
                 return {
                     pictureUrl: speaker.photoUrl || '',
@@ -61,14 +63,6 @@ export const generateShortVid = async (
                     job: speaker.jobTitle,
                 }
             })[0],
-            speakers: (session.speakersData || []).map((speaker) => {
-                return {
-                    pictureUrl: speaker.photoUrl || '',
-                    name: speaker.name,
-                    company: speaker.company || '',
-                    job: speaker.jobTitle,
-                }
-            }),
         }
 
         const { success, error, shortVidUrl } = await shortVidAPI(
