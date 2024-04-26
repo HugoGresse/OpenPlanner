@@ -73,7 +73,8 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     teasingPosts: data.teasingPosts,
                     extendHeight: data.extendHeight,
                     extendWidth: data.extendWidth,
-                    teaserUrl: data.teaserUrl,
+                    teaserVideoUrl: data.teaserVideoUrl,
+                    teaserImageUrl: data.teaserImageUrl,
                 } as Session)
             }}>
             <Grid container spacing={4}>
@@ -300,11 +301,20 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                     <TextFieldElement
                                         margin="dense"
                                         fullWidth
-                                        multiline
                                         minRows={4}
                                         maxRows={40}
-                                        label="Teaser url (video?)"
-                                        name="teaserUrl"
+                                        label="Teaser video url"
+                                        name="teaserVideoUrl"
+                                        variant="filled"
+                                        disabled={false}
+                                    />
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Teaser image url"
+                                        name="teaserImageUrl"
                                         variant="filled"
                                         disabled={false}
                                     />

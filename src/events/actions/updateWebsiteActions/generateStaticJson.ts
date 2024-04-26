@@ -34,6 +34,8 @@ export const generateStaticJson = async (event: Event) => {
         hideTrackTitle: s.hideTrackTitle,
         extendHeight: s.extendHeight,
         extendWidth: s.extendWidth,
+        teaserVideoUrl: s.teaserVideoUrl,
+        teaserImageUrl: s.teaserImageUrl,
     }))
     const outputSessionsPrivate = sessions.map((s) => ({
         id: s.id,
@@ -57,6 +59,8 @@ export const generateStaticJson = async (event: Event) => {
         extendHeight: s.extendHeight,
         extendWidth: s.extendWidth,
         note: s.note,
+        teaserVideoUrl: s.teaserVideoUrl,
+        teaserImageUrl: s.teaserImageUrl,
     }))
 
     const outputSponsor = sponsors

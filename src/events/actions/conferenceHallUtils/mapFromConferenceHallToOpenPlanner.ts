@@ -101,7 +101,8 @@ export const mapConferenceHallProposalsToOpenPlanner = (
             videoLink: null,
             teasingHidden: false,
             teasingPosts: null,
-            teaserUrl: null,
+            teaserVideoUrl: null,
+            teaserImageUrl: null,
         })
     }
     return [sessions, errors]

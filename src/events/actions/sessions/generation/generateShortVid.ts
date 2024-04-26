@@ -44,6 +44,14 @@ export const generateShortVid = async (
             results: [],
         }
     }
+    if (!settings.colorBackground || !settings.logoUrl || !settings.locationName || !settings.eventStartDate) {
+        return {
+            success: false,
+            message:
+                'Missing settings, ensure those are set in the event settings: colorBackground, logoUrl, locationName, eventStartDate',
+            results: [],
+        }
+    }
 
     const videoSessionMapping: { [key: string]: string } = {}
 
@@ -55,14 +63,14 @@ export const generateShortVid = async (
             startingDate: session.dates?.start?.toISO() || settings.eventStartDate?.toISOString() || '',
             logoUrl: settings.logoUrl,
             location: settings.locationName,
-            speaker: (session.speakersData || []).map((speaker) => {
+            speakers: (session.speakersData || []).map((speaker) => {
                 return {
                     pictureUrl: speaker.photoUrl || '',
                     name: speaker.name,
                     company: speaker.company || '',
                     job: speaker.jobTitle || '',
                 }
-            })[0],
+            }),
         }
 
         const { success, error, shortVidUrl } = await shortVidAPI(
