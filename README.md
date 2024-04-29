@@ -54,8 +54,11 @@ React guidelines:
 
 Inside OpenPlanner's firebase project:
 
-1. Create a Cloud firestore database and copy path the rules from `firestore.rules` to the rules tab of your database.
-2. Create an authentication provider (email/password) and enable it.
+1. Enable Authentication with email/pwd in console.firebase.google.com
+2. In the Authentication parameters, "User actions", disable the "Protection against enumeration of e-mail addresses (recommended)" option
+3. Enable Storage, with rules in test or prod (whatever)
+4. Set the hosting config for the website using the firebase CLI: `firebase target:apply hosting conferencecenterr dist`
+5. Set the hosting config for the API (swagger) `firebase target:apply hosting apiopenplanner api-swagger`
 
 ### Development
 
