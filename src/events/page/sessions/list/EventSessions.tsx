@@ -7,6 +7,8 @@ import {
     Grid,
     IconButton,
     InputAdornment,
+    Menu,
+    MenuItem,
     Switch,
     TextField,
     Typography,
@@ -25,6 +27,7 @@ import { FilterCategory } from './FilterCategory'
 import { FilterFormat } from './FilterFormat'
 import { GenerateSessionsMediaContentDialog } from '../components/GenerateSessionsMediaContentDialog'
 import { useSearchParams } from '../../../../hooks/useSearchParams'
+import { GenerateSessionsVideoDialog } from '../components/GenerateSessionsVideoDialog'
 
 export type EventSessionsProps = {
     event: Event
@@ -37,7 +40,10 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || '')
     const [selectedFormat, setSelectedFormat] = useState<string>(searchParams.get('format') || '')
     const [onlyWithoutSpeaker, setOnlyWithoutSpeaker] = useState<boolean>(false)
-    const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
+    const [generateAnchorEl, setGenerateAnchorEl] = React.useState<null | HTMLElement>(null)
+    const open = Boolean(generateAnchorEl)
+    const [generateTextDialogOpen, setGenerateTextDialogOpen] = useState(false)
+    const [generateVideoDialogOpen, setGenerateVideoDialogOpen] = useState(false)
 
     const sessionsData = useMemo(() => sessions.data || [], [sessions.data])
 
@@ -51,6 +57,21 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     }, [sessionsData, search, selectedCategory, selectedFormat, onlyWithoutSpeaker])
 
     const isFiltered = displayedSessions.length !== sessionsData.length
+
+    const closeGenerateMenu = (type: string) => () => {
+        setGenerateAnchorEl(null)
+        switch (type) {
+            case 'text':
+                setGenerateTextDialogOpen(true)
+                break
+            case 'video':
+                setGenerateVideoDialogOpen(true)
+                break
+            default:
+                console.warn('Unknown type', type)
+                break
+        }
+    }
 
     if (sessions.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
@@ -67,7 +88,18 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                 <RequireConferenceHallConnections event={event}>
                     <Button onClick={() => setSessionsImportOpen(true)}>Import proposals from ConferenceHall</Button>
                 </RequireConferenceHallConnections>
-                <Button onClick={() => setGenerateDialogOpen(true)}>Generate sessions content</Button>
+                <Button onClick={(event) => setGenerateAnchorEl(event.currentTarget)}>Generate</Button>
+                <Menu
+                    id="basic-menu"
+                    anchorEl={generateAnchorEl}
+                    open={open}
+                    onClose={closeGenerateMenu('')}
+                    MenuListProps={{
+                        'aria-labelledby': 'basic-button',
+                    }}>
+                    <MenuItem onClick={closeGenerateMenu('text')}>Teasing for socials</MenuItem>
+                    <MenuItem onClick={closeGenerateMenu('video')}>Teasing video using ShortVid.io</MenuItem>
+                </Menu>
                 <Button href="/sessions/new" variant="contained">
                     Add session
                 </Button>
@@ -148,11 +180,21 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     }}
                 />
             )}
-            {generateDialogOpen && (
+            {generateTextDialogOpen && (
                 <GenerateSessionsMediaContentDialog
-                    isOpen={generateDialogOpen}
+                    isOpen={generateTextDialogOpen}
                     onClose={() => {
-                        setGenerateDialogOpen(false)
+                        setGenerateTextDialogOpen(false)
+                    }}
+                    event={event}
+                    sessions={displayedSessions}
+                />
+            )}
+            {generateVideoDialogOpen && (
+                <GenerateSessionsVideoDialog
+                    isOpen={generateVideoDialogOpen}
+                    onClose={() => {
+                        setGenerateVideoDialogOpen(false)
                     }}
                     event={event}
                     sessions={displayedSessions}

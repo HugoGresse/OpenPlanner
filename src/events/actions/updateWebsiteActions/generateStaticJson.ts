@@ -75,6 +75,14 @@ export const generateStaticJson = async (event: Event) => {
         categories: event.categories,
         tracks: event.tracks,
         updatedAt: event.updatedAt,
+        locationName: event.locationName,
+        locationUrl: event.locationUrl,
+        color: event.color,
+        colorSecondary: event.colorSecondary,
+        colorBackground: event.colorBackground,
+        logoUrl: event.logoUrl,
+        logoUrl2: event.logoUrl2,
+        backgroundUrl: event.backgroundUrl,
     }
 
     const outputPublic = {

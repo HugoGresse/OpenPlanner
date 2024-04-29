@@ -14,7 +14,7 @@ export const updateSession = async (eventId: string, session: Session): Promise<
     })
 }
 
-export const updateSessions = async (eventId: string, sessions: Session[]): Promise<void> => {
+export const updateSessions = async (eventId: string, sessions: Partial<Session>[]): Promise<void> => {
     const batch = writeBatch(instanceFirestore)
 
     sessions.forEach((session) => {

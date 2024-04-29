@@ -5,6 +5,7 @@ export interface Track {
     id: string
     name: string
 }
+
 export interface Webhooks {
     lastAnswer: string | null
     url: string
@@ -27,6 +28,7 @@ export interface DateType {
     start: Date | null
     end: Date | null
 }
+
 export interface DateTimeType {
     start: DateTime | null
     end: DateTime | null
@@ -82,6 +84,7 @@ export interface Session {
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
+    teaserUrl: string | null
     teasingHidden: boolean
     teasingPosts: TeasingPosts | null
     extendHeight?: number
@@ -98,6 +101,10 @@ export interface EventFiles {
     imageFolder: string
     openfeedback: string
     voxxrin: string
+}
+
+export interface EventShortVidSettings {
+    template: string | null
 }
 
 export interface Event {
@@ -120,6 +127,15 @@ export interface Event {
     statusBadgeLink: string | null
     openAPIKey: string | null
     enableVoxxrin: boolean
+    shortVidSettings: EventShortVidSettings | null
+    locationName: string | null
+    locationUrl: string | null
+    logoUrl: string | null
+    logoUrl2: string | null
+    backgroundUrl: string | null
+    color: string | null
+    colorSecondary: string | null
+    colorBackground: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -200,6 +216,7 @@ export interface ConferenceHallEvent {
         name: string
     }[]
 }
+
 export interface ConferenceHallOrganization {
     id: string
     name: string
@@ -219,6 +236,7 @@ export interface ConferenceHallProposal {
         [key: string]: boolean
     }
 }
+
 export enum ConferenceHallProposalState {
     submitted = 'submitted',
     accepted = 'accepted',

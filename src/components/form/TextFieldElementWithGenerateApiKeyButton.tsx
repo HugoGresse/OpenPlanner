@@ -34,7 +34,7 @@ export const TextFieldElementWithGenerateApiKeyButton = (props: TextFieldElement
                 label={props.label}
                 name={props.name}
                 variant="filled"
-                disabled={props.disabled}
+                disabled={false}
                 helperText={props.helperText}
                 InputProps={{
                     endAdornment: (

@@ -1,7 +1,17 @@
 import { Event, Session } from '../../../../types'
-import { Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
+import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
-import { GenerationStates, useSessionsGeneration } from '../../../actions/sessions/generation/useSessionsGeneration'
+import {
+    GenerationStates,
+    useSessionsGenerationGeneric,
+} from '../../../actions/sessions/generation/useSessionsGenerationGeneric'
+import {
+    generateSessionTeasingTexts,
+    GenerateSessionTeasingTextsSettings,
+    GeneratedSessionTeasingTextAnswer,
+} from '../../../actions/sessions/generation/generateSessionTeasingTexts'
+import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
+import { useNotification } from '../../../../hooks/notificationHook'
 
 export const GenerateSessionsMediaContentDialog = ({
     isOpen,
@@ -14,22 +24,27 @@ export const GenerateSessionsMediaContentDialog = ({
     event: Event
     sessions: Session[]
 }) => {
-    const { generatingState, generateMediaContent } = useSessionsGeneration(event)
-    const finalGeneration = useSessionsGeneration(event)
+    const { createNotification } = useNotification()
+    const llmSettings: GenerateSessionTeasingTextsSettings = {
+        prompts: GenerateSessionsTeasingContentPrompts,
+        openApiKey: event.openAPIKey,
+    }
+
+    const { generatingState, generate } = useSessionsGenerationGeneric<
+        GenerateSessionTeasingTextsSettings,
+        GeneratedSessionTeasingTextAnswer
+    >(event, generateSessionTeasingTexts)
+    const finalGeneration = useSessionsGenerationGeneric<
+        GenerateSessionTeasingTextsSettings,
+        GeneratedSessionTeasingTextAnswer
+    >(event, generateSessionTeasingTexts)
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
             <DialogContent sx={{ minHeight: '80vh' }}>
                 <Typography variant="h5">Generate media content for sessions</Typography>
                 <Typography>
-                    This will do: <br />
-                    1. Generate post content using OpenAI ChatGPT3.5-turbo (through OpenRouter.ai)
-                    <br />
-                    2. Generate a video for each session using the generated post content using shortvid.io
-                    <br />
-                    ⚠️ Please don't spam this service, as video generation is compute heavy is not provided for free.
-                    <br />
-                    <a href="https://github.com/lyonjs/shortvid.io">More info</a>
+                    This will do generate post content using OpenAI ChatGPT3.5-turbo (through OpenAI ChatGPT API)
                     <br />
                 </Typography>
 
@@ -41,16 +56,16 @@ export const GenerateSessionsMediaContentDialog = ({
                 )}
 
                 <Button
-                    variant="contained"
+                    variant="outlined"
                     disabled={generatingState.generationState === GenerationStates.GENERATING}
-                    onClick={() => generateMediaContent(sessions.slice(0, 2))}>
+                    onClick={() => generate(sessions.slice(0, 1), false, llmSettings)}>
                     {generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
                             <CircularProgress />
                         </>
                     ) : (
-                        'Generate preview (2 sessions max)'
+                        'Generate preview (1 session)'
                     )}
                     {generatingState.progress && ` (${generatingState.progress})`}
                 </Button>
@@ -62,19 +77,40 @@ export const GenerateSessionsMediaContentDialog = ({
                     <>
                         <Typography color="success">{generatingState.message}</Typography>
 
-                        {generatingState.results &&
-                            generatingState.results.map((result, index) => {
-                                return (
-                                    <Typography key={index}>
-                                        {result.social}: {result.result}
-                                    </Typography>
-                                )
-                            })}
+                        <Box padding={2} border={1} borderColor="#66666688" borderRadius={4} margin={2}>
+                            {generatingState.results &&
+                                generatingState.results.results.flatMap((result, index) => {
+                                    return (
+                                        result.updatedSession.teasingPosts &&
+                                        Object.keys(result.updatedSession.teasingPosts).map((social) => {
+                                            const teasingPost = result.updatedSession.teasingPosts
+                                            const socialWithType = social as keyof typeof teasingPost
+                                            const postText =
+                                                teasingPost && teasingPost[socialWithType]
+                                                    ? teasingPost[socialWithType]
+                                                    : '???'
+                                            return (
+                                                <Box key={social + index}>
+                                                    <Typography key={index} variant="h6">
+                                                        • {social}
+                                                    </Typography>
+                                                    <Typography>{postText}</Typography>
+                                                </Box>
+                                            )
+                                        })
+                                    )
+                                })}
+                        </Box>
 
                         <Button
-                            variant="outlined"
+                            variant="contained"
                             disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
-                            onClick={() => finalGeneration.generateMediaContent(sessions, true)}>
+                            onClick={() =>
+                                finalGeneration.generate(sessions, true, llmSettings).then(() => {
+                                    onClose()
+                                    createNotification('Generation done, sessions updated!', { type: 'success' })
+                                })
+                            }>
                             {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                                 <>
                                     Generating...

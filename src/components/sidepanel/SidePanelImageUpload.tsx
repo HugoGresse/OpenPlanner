@@ -83,7 +83,6 @@ export const SidePanelImageUpload = ({
             'image/png': ['.png', '.jpg', '.jpeg'],
             'image/svg+xml': ['.svg'],
         },
-        maxSize: 1024 * 1024,
     })
 
     return (
