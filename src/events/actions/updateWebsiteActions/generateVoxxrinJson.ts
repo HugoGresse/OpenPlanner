@@ -1,5 +1,6 @@
-import { Event, Session, Speaker, Sponsor, SponsorCategory } from '../../../types'
+import { Event, Session, Speaker, SponsorCategory } from '../../../types'
 import { getIndividualDays } from '../../../utils/dates/diffDays'
+import { hexContrast } from '../../../utils/colors/hexContrast'
 
 export const generateVoxxrinJson = (
     event: Event,
@@ -11,26 +12,31 @@ export const generateVoxxrinJson = (
 
     if (!days || days.length === 0) {
         console.warn('No days found')
-        return {}
+        return null
     }
     if (!event.dates.start || !event.dates.end) {
         console.warn('No start or end date found')
-        return {}
+        return null
+    }
+
+    if (!event.logoUrl) {
+        alert('No logoUrl set in the event settings')
+        return null
+    }
+    if (!event.backgroundUrl) {
+        alert('No backgroundUrl set in the event settings')
+        return null
     }
 
     // TODO : supportedTalkLanguages
     const supportedTalkLanguages = [{ id: 'fr', themeColor: '#000000', label: 'Français' }]
-    // TODO : eventFamily
-    const eventFamily = ''
     // TODO : eventTimezone
     const eventTimezone = 'Europe/Paris'
 
-    // TODO : logoUrl, backgroundUrl
-    const logoUrl = ''
-    const backgroundUrl = ''
+    const logoUrl = event.logoUrl
+    const backgroundUrl = event.backgroundUrl
 
     const voxxrinJson: {
-        eventFamily: string
         title: string
         headingTitle: string
         timezone: string
@@ -41,12 +47,12 @@ export const generateVoxxrinJson = (
         backgroundUrl: string
         theming: {
             colors: {
-                primaryHex: '#F78125'
-                primaryContrastHex: '#FFFFFF'
-                secondaryHex: '#3880FF'
-                secondaryContrastHex: '#FFFFFF'
-                tertiaryHex: '#202020'
-                tertiaryContrastHex: '#FFFFFF'
+                primaryHex: string
+                primaryContrastHex: string
+                secondaryHex: string
+                secondaryContrastHex: string
+                tertiaryHex: string
+                tertiaryContrastHex: string
             }
         }
         supportedTalkLanguages: { id: string; themeColor: string; label: string }[]
@@ -54,9 +60,9 @@ export const generateVoxxrinJson = (
         talkTracks: { id: string; title: string; themeColor: string }[]
         talkFormats: { id: string; title: string; duration: string; themeColor: string }[]
         features: {
-            favoritesEnabled: true
-            roomsDisplayed: true
-            remindMeOnceVideosAreAvailableEnabled: true
+            favoritesEnabled: boolean
+            roomsDisplayed: boolean
+            remindMeOnceVideosAreAvailableEnabled: boolean
             showInfosTab: true
             showRoomCapacityIndicator: false
             hideLanguages: []
@@ -74,7 +80,7 @@ export const generateVoxxrinJson = (
         }
         sponsors: {
             type: string
-            typeColor: string
+            typeBackgroundColor: string
             typeFontColor: string
             sponsorships: {
                 name: string
@@ -89,7 +95,6 @@ export const generateVoxxrinJson = (
             [key: string]: any
         }
     } = {
-        eventFamily: eventFamily,
         title: event.name,
         headingTitle: event.name,
         timezone: eventTimezone,
@@ -103,12 +108,12 @@ export const generateVoxxrinJson = (
         backgroundUrl: backgroundUrl,
         theming: {
             colors: {
-                primaryHex: '#F78125',
-                primaryContrastHex: '#FFFFFF',
-                secondaryHex: '#3880FF',
-                secondaryContrastHex: '#FFFFFF',
-                tertiaryHex: '#202020',
-                tertiaryContrastHex: '#FFFFFF',
+                primaryHex: event.color || '#F78125',
+                primaryContrastHex: hexContrast(event.color || '#F78125'),
+                secondaryHex: event.colorSecondary || '#3880FF',
+                secondaryContrastHex: hexContrast(event.colorSecondary || '#3880FF'),
+                tertiaryHex: event.colorBackground || '#202020',
+                tertiaryContrastHex: hexContrast(event.colorBackground || '#202020'),
             },
         },
         supportedTalkLanguages: supportedTalkLanguages,
@@ -145,8 +150,8 @@ export const generateVoxxrinJson = (
         },
         sponsors: sponsors.map((sponsorCategory) => ({
             type: sponsorCategory.name,
-            typeColor: '#000000',
-            typeFontColor: '#000000',
+            typeFontColor: event.color || '#000000',
+            typeBackgroundColor: event.colorBackground || '#E5E4E2',
             sponsorships: sponsorCategory.sponsors
                 .map((sponsor) => ({
                     name: sponsor.name,
