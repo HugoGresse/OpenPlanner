@@ -19,7 +19,7 @@ export const updateStaticJson = async (
     const outputRefPublic = ref(storage, fileNames.public)
     const outputRefPrivate = ref(storage, fileNames.private)
     const outputRefOpenFeedback = ref(storage, fileNames.openfeedback)
-    const outputRefVoxxrin = ref(storage, fileNames.voxxrin)
+    const outputRefVoxxrin = ref(storage, fileNames.voxxrin || undefined)
 
     // noinspection ES6MissingAwait
     const promiseArray = [
