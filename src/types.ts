@@ -100,7 +100,7 @@ export interface EventFiles {
     private: string
     imageFolder: string
     openfeedback: string
-    voxxrin: string
+    voxxrin: string | null
 }
 
 export interface EventShortVidSettings {

@@ -1,22 +1,28 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Event } from '../../../../types'
-import { Box, CircularProgress, Typography } from '@mui/material'
+import { Box, CircularProgress, FormControlLabel, Switch, Typography } from '@mui/material'
 import { getUploadFilePathFromEvent } from '../../../actions/updateWebsiteActions/getFilesNames'
 import { TypographyCopyable } from '../../../../components/TypographyCopyable'
+import { collections } from '../../../../services/firebase'
+import { doc } from 'firebase/firestore'
+import { useFirestoreDocumentMutation } from '../../../../services/hooks/firestoreMutationHooks'
 
 export type EventApiFilePathsProps = {
     event: Event
 }
 export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
+    const eventMutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
     const [filesPath, setFilesPaths] = useState<{
         public: null | string
         private: null | string
         openfeedback: null | string
+        voxxrin: null | string
     }>({
         public: null,
         private: null,
         openfeedback: null,
+        voxxrin: null,
     })
 
     const update = async () => {
@@ -54,6 +60,24 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
                     {filesPath.private && <TypographyCopyable>{filesPath.private}</TypographyCopyable>}
                     <Typography>OpenFeedback.io:</Typography>
                     {filesPath.openfeedback && <TypographyCopyable>{filesPath.openfeedback}</TypographyCopyable>}
+                    {filesPath.voxxrin ? (
+                        <>
+                            <Typography>Voxxrin:</Typography>
+                            <TypographyCopyable>{filesPath.voxxrin}</TypographyCopyable>
+                        </>
+                    ) : (
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={event.enableVoxxrin}
+                                    onChange={(e) => {
+                                        eventMutation.mutate({ enableVoxxrin: e.target.checked })
+                                    }}
+                                />
+                            }
+                            label="Enable Voxxrin"
+                        />
+                    )}
 
                     <Box bgcolor={'#88888888'} p={1} mt={2} borderRadius={1}>
                         <Typography>

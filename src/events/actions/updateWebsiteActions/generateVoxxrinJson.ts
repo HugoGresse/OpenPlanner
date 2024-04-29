@@ -11,20 +11,20 @@ export const generateVoxxrinJson = (
     const days = getIndividualDays(event.dates.start, event.dates.end)
 
     if (!days || days.length === 0) {
-        console.warn('No days found')
+        console.warn('Voxxrin: no days found')
         return null
     }
     if (!event.dates.start || !event.dates.end) {
-        console.warn('No start or end date found')
+        console.warn('Voxxrin: no start or end date found')
         return null
     }
 
     if (!event.logoUrl) {
-        alert('No logoUrl set in the event settings')
+        alert('Voxxrin: no logoUrl set in the event settings')
         return null
     }
     if (!event.backgroundUrl) {
-        alert('No backgroundUrl set in the event settings')
+        alert('Voxxrin: no backgroundUrl set in the event settings')
         return null
     }
 

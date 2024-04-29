@@ -44,6 +44,7 @@ export const TypographyCopyable = ({ children, component, ...otherProps }: Typog
                                 sx={{
                                     padding: '0.2rem',
                                     borderRadius: '0.2rem',
+                                    border: '1px solid #88888877',
                                     cursor: 'pointer',
                                     wordBreak: 'break-all',
                                     transition: 'background-color 0.2s',
