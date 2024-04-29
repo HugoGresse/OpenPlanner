@@ -132,7 +132,7 @@ export const generateVoxxrinJson = (
         features: {
             favoritesEnabled: true,
             roomsDisplayed: true,
-            remindMeOnceVideosAreAvailableEnabled: true,
+            remindMeOnceVideosAreAvailableEnabled: false,
             showInfosTab: true,
             showRoomCapacityIndicator: false,
             hideLanguages: [],
