@@ -86,7 +86,8 @@ export const updateSessionsTemplateAtOnce = async (
                     note: null,
                     teasingPosts: null,
                     teasingHidden: false,
-                    teaserUrl: null,
+                    teaserVideoUrl: null,
+                    teaserImageUrl: null,
                 })
             }
         }
