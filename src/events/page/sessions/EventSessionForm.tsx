@@ -16,6 +16,7 @@ import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { ExpandMore } from '@mui/icons-material'
+import { VideoTextFieldElement } from '../../../components/form/VideoTextFieldElement'
 
 export type EventSessionFormProps = {
     event: Event
@@ -297,8 +298,8 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
 
                         {teasingPostsOpen && (
                             <>
-                                <Grid item xs={12}>
-                                    <TextFieldElement
+                                <Grid item xs={12} sm={6}>
+                                    <VideoTextFieldElement
                                         margin="dense"
                                         fullWidth
                                         minRows={4}
@@ -307,8 +308,12 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         name="teaserVideoUrl"
                                         variant="filled"
                                         disabled={false}
+                                        filePrefix={session?.id || session?.title || undefined}
                                     />
-                                    <TextFieldElement
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <ImageTextFieldElement
+                                        event={event}
                                         margin="dense"
                                         fullWidth
                                         minRows={4}

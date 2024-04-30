@@ -2,6 +2,8 @@ import { Box, Button, Typography, useTheme } from '@mui/material'
 import * as React from 'react'
 import { LoadingButton } from '@mui/lab'
 import { TextFieldElement, useWatch } from 'react-hook-form-mui'
+import { Download } from '@mui/icons-material'
+import { triggerFileDownload } from '../../utils/triggerFileDownload'
 
 export type SidePanelImageUploadFormProps = {
     fieldName: string
@@ -82,31 +84,43 @@ export const SidePanelImageUploadForm = ({
             />
 
             {previewImage && (
-                <Box
-                    sx={{
-                        borderRadius: 1,
-                        border: '4px solid #EEE',
-                        textAlign: 'center',
-                        textTransform: 'uppercase',
-                        marginY: 4,
-                        width: '100%',
-                        '& img': {
-                            maxWidth: '100%',
-                            display: 'block',
-                        },
-                    }}>
-                    <Typography>Preview</Typography>
+                <>
                     <Box
                         sx={{
+                            borderRadius: 1,
+                            border: '4px solid #EEE',
+                            textAlign: 'center',
+                            textTransform: 'uppercase',
+                            marginTop: 4,
+                            marginBottom: 2,
                             width: '100%',
-                            backgroundImage:
-                                'linear-gradient(45deg, #BBB 25%, transparent 25%), linear-gradient(-45deg, #BBB 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #BBB 75%), linear-gradient(-45deg, transparent 75%, #BBB 75%), linear-gradient(0deg, #FFFFFF 0%, #FFFFFF 100%)',
-                            backgroundSize: '20px 20px',
-                            backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                            '& img': {
+                                maxWidth: '100%',
+                                display: 'block',
+                            },
                         }}>
-                        <img src={previewImage} alt="" width="100%" />
+                        <Typography>Preview</Typography>
+                        <Box
+                            sx={{
+                                width: '100%',
+                                backgroundImage:
+                                    'linear-gradient(45deg, #BBB 25%, transparent 25%), linear-gradient(-45deg, #BBB 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #BBB 75%), linear-gradient(-45deg, transparent 75%, #BBB 75%), linear-gradient(0deg, #FFFFFF 0%, #FFFFFF 100%)',
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                            }}>
+                            <img src={previewImage} alt="" width="100%" />
+                        </Box>
                     </Box>
-                </Box>
+                    <Button
+                        variant="outlined"
+                        endIcon={<Download />}
+                        sx={{ mb: 2 }}
+                        onClick={async () => {
+                            await triggerFileDownload(previewImage, `${'OpenPlanner'}`)
+                        }}>
+                        Download
+                    </Button>
+                </>
             )}
 
             <LoadingButton variant="contained" onClick={onSaveClick} disabled={uploading} loading={uploading}>
