@@ -1,7 +1,6 @@
 import FileType from 'file-type'
 
 export const checkFileTypes = async (buffer: Buffer, fileName: string) => {
-    console.log(fileName)
     if (fileName.endsWith('.svg')) {
         return {
             mime: 'image/svg+xml',

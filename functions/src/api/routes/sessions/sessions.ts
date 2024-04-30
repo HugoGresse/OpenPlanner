@@ -21,18 +21,21 @@ import { uploadBufferToStorage } from '../file/files'
 const ShortVid = Type.Object({
     shortVidType: Type.String(),
     updateSession: Type.Boolean(),
+    frame: Type.Optional(Type.Number()),
     settings: Type.Object({
         backgroundColor: Type.String(),
         title: Type.String(),
         startingDate: Type.String(),
         logoUrl: Type.String(),
         location: Type.String(),
-        speaker: Type.Object({
-            pictureUrl: Type.String(),
-            name: Type.String(),
-            company: Type.String(),
-            job: Type.String(),
-        }),
+        speakers: Type.Array(
+            Type.Object({
+                pictureUrl: Type.String(),
+                name: Type.String(),
+                company: Type.String(),
+                job: Type.String(),
+            })
+        ),
     }),
 })
 
@@ -91,8 +94,15 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
             const updateSession = request.body.updateSession
             const shortVidType = request.body.shortVidType
             const shortVidSettings = request.body.settings
+            const frame = request.body.frame
 
-            const shortVidResponse = await fetch(`https://api.shortvid.io/${shortVidType}`, {
+            const isFrameGeneration = Number.isInteger(frame)
+
+            const url = isFrameGeneration
+                ? `https://api.shortvid.io/frame/${shortVidType}/${frame}`
+                : `https://api.shortvid.io/${shortVidType}`
+
+            const shortVidResponse = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -108,6 +118,9 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
                 reply.code(400).send({ error: 'ShortVid API error, ' + shortVidResponse.statusText, success: false })
                 return
             }
+
+            // const text = await shortVidResponse.text()
+            // console.log("error", text)
 
             const videoArrayBuffer = await shortVidResponse.arrayBuffer()
             const videoBuffer = Buffer.from(videoArrayBuffer)
@@ -128,10 +141,17 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
             }
 
             if (updateSession) {
-                await SessionDao.updateSession(fastify.firebase, eventId, {
-                    id: sessionId,
-                    teaserUrl: publicFileUrlOrError,
-                })
+                if (isFrameGeneration) {
+                    await SessionDao.updateSession(fastify.firebase, eventId, {
+                        id: sessionId,
+                        teaserImageUrl: publicFileUrlOrError,
+                    })
+                } else {
+                    await SessionDao.updateSession(fastify.firebase, eventId, {
+                        id: sessionId,
+                        teaserVideoUrl: publicFileUrlOrError,
+                    })
+                }
             }
             reply.status(201).send({
                 shortVidUrl: publicFileUrlOrError,

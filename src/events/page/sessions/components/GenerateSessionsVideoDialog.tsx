@@ -68,8 +68,9 @@ export const GenerateSessionsVideoDialog = ({
             <DialogContent sx={{ minHeight: '80vh' }}>
                 <Typography variant="h5">Generate announcement videos for each session</Typography>
                 <Typography>
-                    This will do generate a video for each session using shortvid.io. Only sessions with speakers will
-                    be generated.
+                    This will do generate a video (and an image) for each session using shortvid.io. Only sessions with
+                    speakers will be generated. The template only apply for one or two speakers and will not render
+                    correctly for 3 or more.
                     <br />
                     ⚠️ Please fill the event details & theme info in the settings page before generating the videos. ⚠️
                     Please don't spam this service, as video generation is compute heavy and is not free.
@@ -99,16 +100,16 @@ export const GenerateSessionsVideoDialog = ({
                     )}
                     {generatingState.progress && ` (${generatingState.progress})`}
                 </Button>
-                <Button variant="outlined" disabled={disabledButton} onClick={generateAllVideos}>
+                <Button variant="outlined" disabled={disabledButton} onClick={generateAllVideos} sx={{ marginLeft: 1 }}>
                     {finalGeneration.generatingState.generationState === 'GENERATING' ? (
                         <>
                             Generating...
                             <CircularProgress />
                         </>
                     ) : (
-                        `Generate all videos (${convertSecondsToMinutes(
-                            sessionToGenerateFor.length * 20
-                        )} minutes) using ShortVid.io`
+                        `Generate all videos (${convertSecondsToMinutes(sessionToGenerateFor.length * 20)} minutes, ${
+                            sessionToGenerateFor.length
+                        } sessions) using ShortVid.io`
                     )}
                     {finalGeneration.generatingState.progress && ` (${finalGeneration.generatingState.progress})`}
                 </Button>
@@ -126,7 +127,13 @@ export const GenerateSessionsVideoDialog = ({
                                 generatingState.results.results.map((result, index) => {
                                     return (
                                         <Box key={index}>
-                                            <video src={result.videoUrl} controls width="100%" />
+                                            <video
+                                                src={result.videoUrl}
+                                                controls
+                                                width="100%"
+                                                style={{ maxWidth: '400px', marginRight: 14 }}
+                                            />
+                                            <img src={result.imageUrl} width="100%" style={{ maxWidth: '400px' }} />
                                         </Box>
                                     )
                                 })}
@@ -144,7 +151,7 @@ export const GenerateSessionsVideoDialog = ({
                             ) : (
                                 `Generate all videos (${convertSecondsToMinutes(
                                     sessionToGenerateFor.length * 20
-                                )} minutes) using ShortVid.io`
+                                )} minutes, ${sessionToGenerateFor.length} sessions) using ShortVid.io`
                             )}
                             {finalGeneration.generatingState.progress &&
                                 ` (${finalGeneration.generatingState.progress})`}
