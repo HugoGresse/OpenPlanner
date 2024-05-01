@@ -25,7 +25,7 @@ import { Clear } from '@mui/icons-material'
 import { filterSessions } from './filterSessions'
 import { FilterCategory } from './FilterCategory'
 import { FilterFormat } from './FilterFormat'
-import { GenerateSessionsMediaContentDialog } from '../components/GenerateSessionsMediaContentDialog'
+import { GenerateSessionsTextContentDialog } from '../components/GenerateSessionsTextContentDialog'
 import { useSearchParams } from '../../../../hooks/useSearchParams'
 import { GenerateSessionsVideoDialog } from '../components/GenerateSessionsVideoDialog'
 
@@ -181,7 +181,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                 />
             )}
             {generateTextDialogOpen && (
-                <GenerateSessionsMediaContentDialog
+                <GenerateSessionsTextContentDialog
                     isOpen={generateTextDialogOpen}
                     onClose={() => {
                         setGenerateTextDialogOpen(false)

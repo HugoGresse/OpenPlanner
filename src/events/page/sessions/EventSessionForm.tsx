@@ -19,6 +19,7 @@ import { ExpandMore } from '@mui/icons-material'
 import { VideoTextFieldElement } from '../../../components/form/VideoTextFieldElement'
 import { GenerateSessionsVideoDialog } from './components/GenerateSessionsVideoDialog'
 import * as React from 'react'
+import { GenerateSessionsTextContentDialog } from './components/GenerateSessionsTextContentDialog'
 
 export type EventSessionFormProps = {
     event: Event
@@ -28,7 +29,8 @@ export type EventSessionFormProps = {
 export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
     const [_2, setLocation] = useLocation()
-    const [generateVideoOpen, setGenerateVideoOpen] = useState<boolean>(false)
+    const [generateMediaOpen, setGenerateMediaOpen] = useState<boolean>(false)
+    const [generateTextOpen, setGenerateTextOpen] = useState<boolean>(false)
     const [teasingPostsOpen, setTeasingPostsOpen] = useState<boolean>(!!session?.teasingPosts)
     const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
@@ -297,8 +299,8 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                             <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
                                 <ExpandMore />
                             </IconButton>
-                            <Button onClick={() => setGenerateVideoOpen(true)}>Generate media</Button>
-                            <Button>Generate text</Button>
+                            <Button onClick={() => setGenerateMediaOpen(true)}>Generate media</Button>
+                            <Button onClick={() => setGenerateTextOpen(true)}>Generate text</Button>
                         </Grid>
                         <Grid item xs={6}>
                             {/*<LoadingButton>Generate media post</LoadingButton>*/}
@@ -402,11 +404,11 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                 </Grid>
             </Grid>
 
-            {generateVideoOpen && (
+            {generateMediaOpen && (
                 <GenerateSessionsVideoDialog
-                    isOpen={generateVideoOpen}
+                    isOpen={generateMediaOpen}
                     onClose={() => {
-                        setGenerateVideoOpen(false)
+                        setGenerateMediaOpen(false)
                     }}
                     event={event}
                     sessions={session ? [session] : []}
@@ -414,6 +416,23 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     onSuccess={({ imageUrl, videoUrl }) => {
                         formContext.setValue('teaserImageUrl', imageUrl)
                         formContext.setValue('teaserVideoUrl', videoUrl)
+                    }}
+                />
+            )}
+            {generateTextOpen && (
+                <GenerateSessionsTextContentDialog
+                    isOpen={generateTextOpen}
+                    onClose={() => {
+                        setGenerateTextOpen(false)
+                    }}
+                    event={event}
+                    sessions={session ? [session] : []}
+                    forceGenerate={true}
+                    onSuccess={(data) => {
+                        Object.keys(data).forEach((key) => {
+                            // @ts-ignore
+                            formContext.setValue(`teasingPosts.${key}`, data[key])
+                        })
                     }}
                 />
             )}

@@ -13,16 +13,20 @@ import {
 import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 import { useNotification } from '../../../../hooks/notificationHook'
 
-export const GenerateSessionsMediaContentDialog = ({
+export const GenerateSessionsTextContentDialog = ({
     isOpen,
     onClose,
     event,
     sessions,
+    onSuccess,
+    forceGenerate = false,
 }: {
     isOpen: boolean
     onClose: () => void
     event: Event
     sessions: Session[]
+    onSuccess?: (texts: { [socialNetworkName: string]: string }) => void
+    forceGenerate?: boolean
 }) => {
     const { createNotification } = useNotification()
     const llmSettings: GenerateSessionTeasingTextsSettings = {
@@ -38,6 +42,38 @@ export const GenerateSessionsMediaContentDialog = ({
         GenerateSessionTeasingTextsSettings,
         GeneratedSessionTeasingTextAnswer
     >(event, generateSessionTeasingTexts)
+
+    const sessionToGenerateFor = sessions
+
+    const generateAll = () => {
+        const updateDoc = !onSuccess
+        finalGeneration.generate(sessionToGenerateFor, updateDoc, llmSettings).then(({ results, success }) => {
+            if (onSuccess && success && results.length) {
+                onSuccess(results[0].updatedSession.teasingPosts)
+            }
+            onClose()
+            createNotification('Generation done, sessions updated!', { type: 'success' })
+        })
+    }
+
+    const generateAllText = `Generate content on ${sessionToGenerateFor.length} sessions (takes times)`
+
+    const generateAllButton = (
+        <Button
+            variant="contained"
+            disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
+            onClick={generateAll}>
+            {finalGeneration.generatingState.generationState === 'GENERATING' ? (
+                <>
+                    Generating...
+                    <CircularProgress />
+                </>
+            ) : (
+                generateAllText
+            )}
+            {finalGeneration.generatingState.progress && ` (${finalGeneration.generatingState.progress})`}
+        </Button>
+    )
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
@@ -55,20 +91,24 @@ export const GenerateSessionsMediaContentDialog = ({
                     </Typography>
                 )}
 
-                <Button
-                    variant="outlined"
-                    disabled={generatingState.generationState === GenerationStates.GENERATING}
-                    onClick={() => generate(sessions.slice(0, 1), false, llmSettings)}>
-                    {generatingState.generationState === 'GENERATING' ? (
-                        <>
-                            Generating...
-                            <CircularProgress />
-                        </>
-                    ) : (
-                        'Generate preview (1 session)'
-                    )}
-                    {generatingState.progress && ` (${generatingState.progress})`}
-                </Button>
+                {!forceGenerate && (
+                    <Button
+                        variant="outlined"
+                        disabled={generatingState.generationState === GenerationStates.GENERATING}
+                        sx={{ marginRight: 2 }}
+                        onClick={() => generate(sessionToGenerateFor.slice(0, 1), false, llmSettings)}>
+                        {generatingState.generationState === 'GENERATING' ? (
+                            <>
+                                Generating...
+                                <CircularProgress />
+                            </>
+                        ) : (
+                            'Generate preview'
+                        )}
+                        {generatingState.progress && ` (${generatingState.progress})`}
+                    </Button>
+                )}
+                {generateAllButton}
 
                 {generatingState.generationState === GenerationStates.ERROR && (
                     <Typography color="error">{generatingState.message}</Typography>
@@ -102,26 +142,7 @@ export const GenerateSessionsMediaContentDialog = ({
                                 })}
                         </Box>
 
-                        <Button
-                            variant="contained"
-                            disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
-                            onClick={() =>
-                                finalGeneration.generate(sessions, true, llmSettings).then(() => {
-                                    onClose()
-                                    createNotification('Generation done, sessions updated!', { type: 'success' })
-                                })
-                            }>
-                            {finalGeneration.generatingState.generationState === 'GENERATING' ? (
-                                <>
-                                    Generating...
-                                    <CircularProgress />
-                                </>
-                            ) : (
-                                'Generate content on all sessions (takes times)'
-                            )}
-                            {finalGeneration.generatingState.progress &&
-                                ` (${finalGeneration.generatingState.progress})`}
-                        </Button>
+                        {generateAllButton}
                     </>
                 )}
             </DialogContent>
