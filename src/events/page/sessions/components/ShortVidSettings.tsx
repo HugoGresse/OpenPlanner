@@ -1,15 +1,17 @@
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
-import { Box, Grid, Typography } from '@mui/material'
+import { Box, Button, Grid, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../../components/form/SaveShortcut'
-import React from 'react'
+import React, { useState } from 'react'
 import { useFirestoreDocumentMutation } from '../../../../services/hooks/firestoreMutationHooks'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../../services/firebase'
 import { Event, EventShortVidSettings } from '../../../../types'
+import { ExpandMore } from '@mui/icons-material'
 
 export const ShortVidSettings = ({ event }: { event: Event }) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
+    const [formatOpen, setFormatOpen] = useState(false)
 
     const formContext = useForm({
         defaultValues: {
@@ -33,7 +35,7 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
                 <Typography component="h6" variant="h6">
                     ShortVid settings
                 </Typography>
-                <Grid container>
+                <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                         <TextFieldElement
                             margin="dense"
@@ -45,6 +47,27 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
                             variant="filled"
                             disabled={formState.isSubmitting}
                         />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Button endIcon={<ExpandMore />} onClick={() => setFormatOpen(!formatOpen)}>
+                            Expected format
+                        </Button>
+                        {formatOpen && (
+                            <pre>
+                                {` # for each session (already compatible with TalkBranded)
+title: string
+location: string | null
+startingDate: string
+logoUrl: string
+backgroundColor: string
+speakers?: {
+    pictureUrl: string
+    name: string
+    company: string
+    job: string | null
+}[] `}
+                            </pre>
+                        )}
                     </Grid>
 
                     <Grid item xs={12}>

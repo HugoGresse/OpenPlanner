@@ -1,5 +1,5 @@
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Avatar, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
+import { Avatar, Button, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
 import { useState } from 'react'
 import {
     AutocompleteElement,
@@ -17,6 +17,9 @@ import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { ExpandMore } from '@mui/icons-material'
 import { VideoTextFieldElement } from '../../../components/form/VideoTextFieldElement'
+import { GenerateSessionsVideoDialog } from './components/GenerateSessionsVideoDialog'
+import * as React from 'react'
+import { GenerateSessionsTextContentDialog } from './components/GenerateSessionsTextContentDialog'
 
 export type EventSessionFormProps = {
     event: Event
@@ -26,6 +29,8 @@ export type EventSessionFormProps = {
 export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
     const [_2, setLocation] = useLocation()
+    const [generateMediaOpen, setGenerateMediaOpen] = useState<boolean>(false)
+    const [generateTextOpen, setGenerateTextOpen] = useState<boolean>(false)
     const [teasingPostsOpen, setTeasingPostsOpen] = useState<boolean>(!!session?.teasingPosts)
     const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
@@ -294,6 +299,8 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                             <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
                                 <ExpandMore />
                             </IconButton>
+                            <Button onClick={() => setGenerateMediaOpen(true)}>Generate media</Button>
+                            <Button onClick={() => setGenerateTextOpen(true)}>Generate text</Button>
                         </Grid>
                         <Grid item xs={6}>
                             {/*<LoadingButton>Generate media post</LoadingButton>*/}
@@ -396,6 +403,40 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     </LoadingButton>
                 </Grid>
             </Grid>
+
+            {generateMediaOpen && (
+                <GenerateSessionsVideoDialog
+                    isOpen={generateMediaOpen}
+                    onClose={() => {
+                        setGenerateMediaOpen(false)
+                    }}
+                    event={event}
+                    sessions={session ? [session] : []}
+                    forceGenerate={true}
+                    onSuccess={({ imageUrl, videoUrl }) => {
+                        formContext.setValue('teaserImageUrl', imageUrl)
+                        formContext.setValue('teaserVideoUrl', videoUrl)
+                    }}
+                />
+            )}
+            {generateTextOpen && (
+                <GenerateSessionsTextContentDialog
+                    isOpen={generateTextOpen}
+                    onClose={() => {
+                        setGenerateTextOpen(false)
+                    }}
+                    event={event}
+                    sessions={session ? [session] : []}
+                    forceGenerate={true}
+                    onSuccess={(data) => {
+                        Object.keys(data).forEach((key) => {
+                            // @ts-ignore
+                            formContext.setValue(`teasingPosts.${key}`, data[key])
+                        })
+                    }}
+                />
+            )}
+
             <SaveShortcut />
         </FormContainer>
     )

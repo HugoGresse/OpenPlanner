@@ -40,6 +40,7 @@ export const SidePanelVideoPreview = ({
             <Button
                 variant="contained"
                 endIcon={<Download />}
+                disabled={!videoUrl}
                 sx={{ mt: 2 }}
                 onClick={async () => {
                     await triggerFileDownload(videoUrl, `${filePrefix || 'OpenPlanner'}`)

@@ -28,6 +28,7 @@ export const VideoTextFieldElement = <TFieldValues extends FieldValues = FieldVa
                             <InputAdornment position="end">
                                 <IconButton
                                     aria-label="download video"
+                                    disabled={!fieldValue}
                                     onClick={async () => {
                                         await triggerFileDownload(fieldValue, `${filePrefix || 'OpenPlanner'}.mp4`)
                                     }}
