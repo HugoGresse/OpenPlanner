@@ -10,8 +10,9 @@ import {
     GenerateSessionTeasingTextsSettings,
     GeneratedSessionTeasingTextAnswer,
 } from '../../../actions/sessions/generation/generateSessionTeasingTexts'
-import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
+import { BaseAiSettings } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 import { useNotification } from '../../../../hooks/notificationHook'
+import { SessionAISettings } from './SessionAISettings'
 
 export const GenerateSessionsTextContentDialog = ({
     isOpen,
@@ -30,7 +31,7 @@ export const GenerateSessionsTextContentDialog = ({
 }) => {
     const { createNotification } = useNotification()
     const llmSettings: GenerateSessionTeasingTextsSettings = {
-        prompts: GenerateSessionsTeasingContentPrompts,
+        aiSettings: event.aiSettings || BaseAiSettings,
         openApiKey: event.openAPIKey,
     }
 
@@ -83,6 +84,8 @@ export const GenerateSessionsTextContentDialog = ({
                     This will do generate post content using OpenAI ChatGPT3.5-turbo (through OpenAI ChatGPT API)
                     <br />
                 </Typography>
+
+                <SessionAISettings event={event} />
 
                 {!event.openAPIKey && (
                     <Typography>

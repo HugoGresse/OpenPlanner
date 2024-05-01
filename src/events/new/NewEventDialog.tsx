@@ -62,6 +62,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         statusBadgeLink: null,
                         apiKey: null,
                         openAPIKey: null,
+                        aiSettings: null,
                         shortVidSettings: null,
                         locationName: null,
                         locationUrl: null,

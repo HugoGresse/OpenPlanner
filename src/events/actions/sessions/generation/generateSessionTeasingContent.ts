@@ -1,5 +1,6 @@
-import { Session } from '../../../../types'
+import { EventAISettings, Session } from '../../../../types'
 import { BASE_OPENAI_SETTINGS, openAI, OpenAICompletionSettings } from '../../../../services/openai'
+import { isNumber } from '@mui/x-data-grid/internals'
 
 export enum TeasingPostSocials {
     Twitter = 'twitter',
@@ -11,29 +12,34 @@ export enum TeasingPostSocials {
 export const GenerateSessionsTeasingContentPrompts = {
     fr: {
         system: "Tu organises une conférence et tu écris des posts sur XSOCIALX dans lequels tu veux annoncer une session, teaser son contenu et son présentateur de manière brève et qui donne envie d'en savoir plus.",
-        user: `
-            Génère moi un post pour annoncer la session suivante :
-            Titre : XTITLEX
-            Résumé : XABSTRACTX
-            Catégorie : XCATEGORYX
-            Niveau : XLEVELX
-            Présentateur(s) : XPRESENTERX
-            Tags : XTAGSX
-            Format : XFORMATX
-            `,
+        user: `Génère moi un post pour annoncer la session suivante :
+Titre : XTITLEX
+Résumé : XABSTRACTX
+Catégorie : XCATEGORYX
+Niveau : XLEVELX
+Présentateur(s) : XPRESENTERX
+Tags : XTAGSX
+Format : XFORMATX`,
     },
     en: {
         system: 'You are organizing a conference and you are writing posts on XSOCIALX in which you want to announce a session, tease its content and its presenter in a brief way that makes you want to know more.',
-        user: `
-            Generate a post to announce the following session:
-            Title: XTITLEX
-            Abstract: XABSTRACTX
-            Category: XCATEGORYX
-            Level: XLEVELX
-            Presenter(s): XPRESENTERX
-            Tags: XTAGSX
-            Format: XFORMATX
-            `,
+        user: `Generate a post to announce the following session:
+Title: XTITLEX
+Abstract: XABSTRACTX
+Category: XCATEGORYX
+Level: XLEVELX
+Presenter(s): XPRESENTERX
+Tags: XTAGSX
+Format: XFORMATX`,
+    },
+}
+
+export const BaseAiSettings: EventAISettings = {
+    model: BASE_OPENAI_SETTINGS.model,
+    temperature: `${BASE_OPENAI_SETTINGS.temperature}`,
+    sessions: {
+        teasingPromptSystem: GenerateSessionsTeasingContentPrompts.fr.system,
+        teasingPromptUser: GenerateSessionsTeasingContentPrompts.fr.user,
     },
 }
 
@@ -69,7 +75,9 @@ export const generateSessionTeasingContent = async (
                 },
             ],
             model: generationSettings.model,
-            temperature: generationSettings.temperature,
+            temperature: isNumber(generationSettings.temperature)
+                ? generationSettings.temperature
+                : parseFloat(generationSettings.temperature as string),
         })
         .then((result) => result.choices[0].message.content)
 }

@@ -104,6 +104,14 @@ export interface EventFiles {
 export interface EventShortVidSettings {
     template: string | null
 }
+export interface EventAISettings {
+    model: string
+    temperature: string
+    sessions: {
+        teasingPromptSystem: string
+        teasingPromptUser: string
+    }
+}
 
 export interface Event {
     id: string
@@ -124,6 +132,7 @@ export interface Event {
     statusBadgeImage: string | null
     statusBadgeLink: string | null
     openAPIKey: string | null
+    aiSettings: EventAISettings | null
     shortVidSettings: EventShortVidSettings | null
     locationName: string | null
     locationUrl: string | null

@@ -58,6 +58,7 @@ const addNewEventInternal = async (
         statusBadgeLink: null,
         statusBadgeImage: null,
         openAPIKey: null,
+        aiSettings: null,
         shortVidSettings: null,
         color: null,
         colorSecondary: null,
