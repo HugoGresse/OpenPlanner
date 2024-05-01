@@ -13,7 +13,7 @@ import { useLocation } from 'wouter'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
-import { Event, Session } from '../../../types'
+import { Event, Session, TeasingPosts } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { ExpandMore } from '@mui/icons-material'
 import { VideoTextFieldElement } from '../../../components/form/VideoTextFieldElement'
@@ -64,6 +64,12 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
         <FormContainer
             formContext={formContext}
             onSuccess={async (data) => {
+                const teasingPosts: TeasingPosts = {
+                    linkedin: data.teasingPosts?.linkedin || null,
+                    twitter: data.teasingPosts?.twitter || null,
+                    instagram: data.teasingPosts?.instagram || null,
+                    facebook: data.teasingPosts?.facebook || null,
+                }
                 return onSubmit({
                     title: data.title,
                     speakers: data.speakers || [],
@@ -79,7 +85,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     level: data.level,
                     note: data.note,
                     teasingHidden: data.teasingHidden,
-                    teasingPosts: data.teasingPosts,
+                    teasingPosts: teasingPosts,
                     extendHeight: data.extendHeight,
                     extendWidth: data.extendWidth,
                     teaserVideoUrl: data.teaserVideoUrl,
