@@ -1,5 +1,5 @@
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Avatar, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
+import { Avatar, Button, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
 import { useState } from 'react'
 import {
     AutocompleteElement,
@@ -17,6 +17,8 @@ import { Event, Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { ExpandMore } from '@mui/icons-material'
 import { VideoTextFieldElement } from '../../../components/form/VideoTextFieldElement'
+import { GenerateSessionsVideoDialog } from './components/GenerateSessionsVideoDialog'
+import * as React from 'react'
 
 export type EventSessionFormProps = {
     event: Event
@@ -26,6 +28,7 @@ export type EventSessionFormProps = {
 export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
     const [_2, setLocation] = useLocation()
+    const [generateVideoOpen, setGenerateVideoOpen] = useState<boolean>(false)
     const [teasingPostsOpen, setTeasingPostsOpen] = useState<boolean>(!!session?.teasingPosts)
     const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
@@ -294,6 +297,8 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                             <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
                                 <ExpandMore />
                             </IconButton>
+                            <Button onClick={() => setGenerateVideoOpen(true)}>Generate media</Button>
+                            <Button>Generate text</Button>
                         </Grid>
                         <Grid item xs={6}>
                             {/*<LoadingButton>Generate media post</LoadingButton>*/}
@@ -396,6 +401,23 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     </LoadingButton>
                 </Grid>
             </Grid>
+
+            {generateVideoOpen && (
+                <GenerateSessionsVideoDialog
+                    isOpen={generateVideoOpen}
+                    onClose={() => {
+                        setGenerateVideoOpen(false)
+                    }}
+                    event={event}
+                    sessions={session ? [session] : []}
+                    forceGenerate={true}
+                    onSuccess={({ imageUrl, videoUrl }) => {
+                        formContext.setValue('teaserImageUrl', imageUrl)
+                        formContext.setValue('teaserVideoUrl', videoUrl)
+                    }}
+                />
+            )}
+
             <SaveShortcut />
         </FormContainer>
     )

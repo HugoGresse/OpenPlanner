@@ -45,54 +45,68 @@ export const useSessionsGenerationGeneric = <
         results: null,
     })
 
-    const generate = useCallback(async (sessions: Session[], updateDoc = false, settings: GenerateSettings) => {
-        const sessionsCount = sessions.length
+    const generate = useCallback(
+        async (
+            sessions: Session[],
+            updateDoc = false,
+            settings: GenerateSettings
+        ): Promise<{
+            success: boolean
+            results: any[]
+        }> => {
+            const sessionsCount = sessions.length
 
-        setState({
-            ...state,
-            generationState: GenerationStates.GENERATING,
-            progress: `0/${sessionsCount}`,
-        })
-
-        const answer: AnswerType = await generateFunction(sessions, settings, (totalCount, doneCount) => {
-            setState((newState) => ({
-                ...newState,
-                progress: `${doneCount}/${totalCount}`,
-            }))
-        })
-
-        if (!answer.success) {
             setState({
                 ...state,
-                generationState: GenerationStates.ERROR,
-                progress: `${answer.results.length}/${sessionsCount}`,
-                message: answer.message || 'Error',
+                generationState: GenerationStates.GENERATING,
+                progress: `0/${sessionsCount}`,
             })
-            return
-        }
 
-        if (updateDoc) {
-            const newSessions = sessions.map((session) => {
-                const result = answer.results.find((r) => r.baseSession.id === session.id)
-                if (!result) {
-                    return session
-                }
+            const answer: AnswerType = await generateFunction(sessions, settings, (totalCount, doneCount) => {
+                setState((newState) => ({
+                    ...newState,
+                    progress: `${doneCount}/${totalCount}`,
+                }))
+            })
+
+            if (!answer.success) {
+                setState({
+                    ...state,
+                    generationState: GenerationStates.ERROR,
+                    progress: `${answer.results.length}/${sessionsCount}`,
+                    message: answer.message || 'Error',
+                })
                 return {
-                    id: session.id,
-                    ...result.updatedSession,
+                    success: false,
+                    results: [],
                 }
-            })
-            await updateSessions(event.id, newSessions)
-        }
+            }
 
-        setState({
-            ...state,
-            generationState: GenerationStates.SUCCESS,
-            progress: ``,
-            message: '',
-            results: answer,
-        })
-    }, [])
+            if (updateDoc) {
+                const newSessions = sessions.map((session) => {
+                    const result = answer.results.find((r) => r.baseSession.id === session.id)
+                    if (!result) {
+                        return session
+                    }
+                    return {
+                        id: session.id,
+                        ...result.updatedSession,
+                    }
+                })
+                await updateSessions(event.id, newSessions)
+            }
+
+            setState({
+                ...state,
+                generationState: GenerationStates.SUCCESS,
+                progress: ``,
+                message: '',
+                results: answer,
+            })
+            return answer
+        },
+        []
+    )
 
     return { generatingState: state, generate }
 }
