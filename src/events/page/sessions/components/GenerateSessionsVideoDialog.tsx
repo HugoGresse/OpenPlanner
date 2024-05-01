@@ -63,6 +63,10 @@ export const GenerateSessionsVideoDialog = ({
             })
     }
 
+    const generateAllText = `Generate all videos (${convertSecondsToMinutes(
+        sessionToGenerateFor.length * 20
+    )} minutes, ${sessionToGenerateFor.length} sessions) using ShortVid.io, and save them to the sessions`
+
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
             <DialogContent sx={{ minHeight: '80vh' }}>
@@ -96,7 +100,7 @@ export const GenerateSessionsVideoDialog = ({
                             <CircularProgress />
                         </>
                     ) : (
-                        'Generate 1 session video using ShortVid.io (~20s)'
+                        'Preview (~20s)'
                     )}
                     {generatingState.progress && ` (${generatingState.progress})`}
                 </Button>
@@ -107,9 +111,7 @@ export const GenerateSessionsVideoDialog = ({
                             <CircularProgress />
                         </>
                     ) : (
-                        `Generate all videos (${convertSecondsToMinutes(sessionToGenerateFor.length * 20)} minutes, ${
-                            sessionToGenerateFor.length
-                        } sessions) using ShortVid.io`
+                        generateAllText
                     )}
                     {finalGeneration.generatingState.progress && ` (${finalGeneration.generatingState.progress})`}
                 </Button>
@@ -149,9 +151,7 @@ export const GenerateSessionsVideoDialog = ({
                                     <CircularProgress />
                                 </>
                             ) : (
-                                `Generate all videos (${convertSecondsToMinutes(
-                                    sessionToGenerateFor.length * 20
-                                )} minutes, ${sessionToGenerateFor.length} sessions) using ShortVid.io`
+                                generateAllText
                             )}
                             {finalGeneration.generatingState.progress &&
                                 ` (${finalGeneration.generatingState.progress})`}
