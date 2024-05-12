@@ -34,6 +34,8 @@ enum ExportType {
     EmailCommaSeparated = 'email-comma',
     AllXLSX = 'all',
     AllJson = 'all-json',
+    DisplayedXLSX = 'displayed',
+    DisplayedJson = 'displayed-json',
 }
 
 export const EventSpeakers = ({ event }: EventSpeakersProps) => {
@@ -86,6 +88,14 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                 const fileName = 'speakers.json'
                 triggerJsonDownloadFromData(json, fileName)
                 break
+            case ExportType.DisplayedXLSX:
+                downloadJsonToXLSX(displayedSpeakers, 'speakers.xlsx')
+                break
+            case ExportType.DisplayedJson:
+                const displayedJson = JSON.stringify(displayedSpeakers, null, 4)
+                const displayedFileName = 'speakers.json'
+                triggerJsonDownloadFromData(displayedJson, displayedFileName)
+                break
             default:
                 console.warn('Unknown type', type)
                 break
@@ -122,6 +132,8 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     </MenuItem>
                     <MenuItem onClick={closeExportMenu(ExportType.AllXLSX)}>All speakers (XLSX)</MenuItem>
                     <MenuItem onClick={closeExportMenu(ExportType.AllJson)}>All speakers (JSON)</MenuItem>
+                    <MenuItem onClick={closeExportMenu(ExportType.DisplayedXLSX)}>Displayed speakers (XLSX)</MenuItem>
+                    <MenuItem onClick={closeExportMenu(ExportType.DisplayedJson)}>Displayed speakers (JSON)</MenuItem>
                 </Menu>
                 <Button href="/speakers/new" variant="contained">
                     Add speaker
