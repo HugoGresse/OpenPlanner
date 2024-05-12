@@ -10,23 +10,28 @@ import {
     GenerateSessionTeasingTextsSettings,
     GeneratedSessionTeasingTextAnswer,
 } from '../../../actions/sessions/generation/generateSessionTeasingTexts'
-import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
+import { BaseAiSettings } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 import { useNotification } from '../../../../hooks/notificationHook'
+import { SessionAISettings } from './SessionAISettings'
 
-export const GenerateSessionsMediaContentDialog = ({
+export const GenerateSessionsTextContentDialog = ({
     isOpen,
     onClose,
     event,
     sessions,
+    onSuccess,
+    forceGenerate = false,
 }: {
     isOpen: boolean
     onClose: () => void
     event: Event
     sessions: Session[]
+    onSuccess?: (texts: { [socialNetworkName: string]: string }) => void
+    forceGenerate?: boolean
 }) => {
     const { createNotification } = useNotification()
     const llmSettings: GenerateSessionTeasingTextsSettings = {
-        prompts: GenerateSessionsTeasingContentPrompts,
+        aiSettings: event.aiSettings || BaseAiSettings,
         openApiKey: event.openAPIKey,
     }
 
@@ -39,6 +44,38 @@ export const GenerateSessionsMediaContentDialog = ({
         GeneratedSessionTeasingTextAnswer
     >(event, generateSessionTeasingTexts)
 
+    const sessionToGenerateFor = sessions
+
+    const generateAll = () => {
+        const updateDoc = !onSuccess
+        finalGeneration.generate(sessionToGenerateFor, updateDoc, llmSettings).then(({ results, success }) => {
+            if (onSuccess && success && results.length) {
+                onSuccess(results[0].updatedSession.teasingPosts)
+            }
+            onClose()
+            createNotification('Generation done, sessions updated!', { type: 'success' })
+        })
+    }
+
+    const generateAllText = `Generate content on ${sessionToGenerateFor.length} sessions (takes times)`
+
+    const generateAllButton = (
+        <Button
+            variant="contained"
+            disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
+            onClick={generateAll}>
+            {finalGeneration.generatingState.generationState === 'GENERATING' ? (
+                <>
+                    Generating...
+                    <CircularProgress />
+                </>
+            ) : (
+                generateAllText
+            )}
+            {finalGeneration.generatingState.progress && ` (${finalGeneration.generatingState.progress})`}
+        </Button>
+    )
+
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
             <DialogContent sx={{ minHeight: '80vh' }}>
@@ -48,6 +85,8 @@ export const GenerateSessionsMediaContentDialog = ({
                     <br />
                 </Typography>
 
+                <SessionAISettings event={event} />
+
                 {!event.openAPIKey && (
                     <Typography>
                         You need to set up an OpenRouter.ai API key in the event settings to use this feature.
@@ -55,20 +94,24 @@ export const GenerateSessionsMediaContentDialog = ({
                     </Typography>
                 )}
 
-                <Button
-                    variant="outlined"
-                    disabled={generatingState.generationState === GenerationStates.GENERATING}
-                    onClick={() => generate(sessions.slice(0, 1), false, llmSettings)}>
-                    {generatingState.generationState === 'GENERATING' ? (
-                        <>
-                            Generating...
-                            <CircularProgress />
-                        </>
-                    ) : (
-                        'Generate preview (1 session)'
-                    )}
-                    {generatingState.progress && ` (${generatingState.progress})`}
-                </Button>
+                {!forceGenerate && (
+                    <Button
+                        variant="outlined"
+                        disabled={generatingState.generationState === GenerationStates.GENERATING}
+                        sx={{ marginRight: 2 }}
+                        onClick={() => generate(sessionToGenerateFor.slice(0, 1), false, llmSettings)}>
+                        {generatingState.generationState === 'GENERATING' ? (
+                            <>
+                                Generating...
+                                <CircularProgress />
+                            </>
+                        ) : (
+                            'Generate preview'
+                        )}
+                        {generatingState.progress && ` (${generatingState.progress})`}
+                    </Button>
+                )}
+                {generateAllButton}
 
                 {generatingState.generationState === GenerationStates.ERROR && (
                     <Typography color="error">{generatingState.message}</Typography>
@@ -102,26 +145,7 @@ export const GenerateSessionsMediaContentDialog = ({
                                 })}
                         </Box>
 
-                        <Button
-                            variant="contained"
-                            disabled={finalGeneration.generatingState.generationState === GenerationStates.GENERATING}
-                            onClick={() =>
-                                finalGeneration.generate(sessions, true, llmSettings).then(() => {
-                                    onClose()
-                                    createNotification('Generation done, sessions updated!', { type: 'success' })
-                                })
-                            }>
-                            {finalGeneration.generatingState.generationState === 'GENERATING' ? (
-                                <>
-                                    Generating...
-                                    <CircularProgress />
-                                </>
-                            ) : (
-                                'Generate content on all sessions (takes times)'
-                            )}
-                            {finalGeneration.generatingState.progress &&
-                                ` (${finalGeneration.generatingState.progress})`}
-                        </Button>
+                        {generateAllButton}
                     </>
                 )}
             </DialogContent>

@@ -1,5 +1,5 @@
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Avatar, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
+import { Avatar, Button, Chip, CircularProgress, Grid, IconButton, Typography } from '@mui/material'
 import { useState } from 'react'
 import {
     AutocompleteElement,
@@ -13,9 +13,13 @@ import { useLocation } from 'wouter'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
-import { Event, Session } from '../../../types'
+import { Event, Session, TeasingPosts } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { ExpandMore } from '@mui/icons-material'
+import { VideoTextFieldElement } from '../../../components/form/VideoTextFieldElement'
+import { GenerateSessionsVideoDialog } from './components/GenerateSessionsVideoDialog'
+import * as React from 'react'
+import { GenerateSessionsTextContentDialog } from './components/GenerateSessionsTextContentDialog'
 
 export type EventSessionFormProps = {
     event: Event
@@ -25,6 +29,8 @@ export type EventSessionFormProps = {
 export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormProps) => {
     const speakers = useSpeakers(event.id)
     const [_2, setLocation] = useLocation()
+    const [generateMediaOpen, setGenerateMediaOpen] = useState<boolean>(false)
+    const [generateTextOpen, setGenerateTextOpen] = useState<boolean>(false)
     const [teasingPostsOpen, setTeasingPostsOpen] = useState<boolean>(!!session?.teasingPosts)
     const track = event.tracks.find((t) => t.id === session?.trackId)?.name || null
     const formContext = useForm({
@@ -37,11 +43,14 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                   language: session.language || undefined,
                   level: session.level || undefined,
                   note: session.note || undefined,
-                  showInFeedback: session.showInFeedback,
+                  showInFeedback: session.showInFeedback || false,
+                  teasingHidden: session.teasingHidden || false,
+                  hideTrackTitle: session.hideTrackTitle || false,
               } as Session)
             : ({
                   showInFeedback: true,
                   hideTrackTitle: false,
+                  teasingHidden: false,
               } as Session),
     })
     const { formState } = formContext
@@ -55,6 +64,12 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
         <FormContainer
             formContext={formContext}
             onSuccess={async (data) => {
+                const teasingPosts: TeasingPosts = {
+                    linkedin: data.teasingPosts?.linkedin || null,
+                    twitter: data.teasingPosts?.twitter || null,
+                    instagram: data.teasingPosts?.instagram || null,
+                    facebook: data.teasingPosts?.facebook || null,
+                }
                 return onSubmit({
                     title: data.title,
                     speakers: data.speakers || [],
@@ -70,10 +85,11 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     level: data.level,
                     note: data.note,
                     teasingHidden: data.teasingHidden,
-                    teasingPosts: data.teasingPosts,
+                    teasingPosts: teasingPosts,
                     extendHeight: data.extendHeight,
                     extendWidth: data.extendWidth,
-                    teaserUrl: data.teaserUrl,
+                    teaserVideoUrl: data.teaserVideoUrl,
+                    teaserImageUrl: data.teaserImageUrl,
                 } as Session)
             }}>
             <Grid container spacing={4}>
@@ -289,6 +305,8 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                             <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
                                 <ExpandMore />
                             </IconButton>
+                            <Button onClick={() => setGenerateMediaOpen(true)}>Generate media</Button>
+                            <Button onClick={() => setGenerateTextOpen(true)}>Generate text</Button>
                         </Grid>
                         <Grid item xs={6}>
                             {/*<LoadingButton>Generate media post</LoadingButton>*/}
@@ -296,15 +314,28 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
 
                         {teasingPostsOpen && (
                             <>
-                                <Grid item xs={12}>
-                                    <TextFieldElement
+                                <Grid item xs={12} sm={6}>
+                                    <VideoTextFieldElement
                                         margin="dense"
                                         fullWidth
-                                        multiline
                                         minRows={4}
                                         maxRows={40}
-                                        label="Teaser url (video?)"
-                                        name="teaserUrl"
+                                        label="Teaser video url"
+                                        name="teaserVideoUrl"
+                                        variant="filled"
+                                        disabled={false}
+                                        filePrefix={session?.id || session?.title || undefined}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <ImageTextFieldElement
+                                        event={event}
+                                        margin="dense"
+                                        fullWidth
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Teaser image url"
+                                        name="teaserImageUrl"
                                         variant="filled"
                                         disabled={false}
                                     />
@@ -378,6 +409,40 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     </LoadingButton>
                 </Grid>
             </Grid>
+
+            {generateMediaOpen && (
+                <GenerateSessionsVideoDialog
+                    isOpen={generateMediaOpen}
+                    onClose={() => {
+                        setGenerateMediaOpen(false)
+                    }}
+                    event={event}
+                    sessions={session ? [session] : []}
+                    forceGenerate={true}
+                    onSuccess={({ imageUrl, videoUrl }) => {
+                        formContext.setValue('teaserImageUrl', imageUrl)
+                        formContext.setValue('teaserVideoUrl', videoUrl)
+                    }}
+                />
+            )}
+            {generateTextOpen && (
+                <GenerateSessionsTextContentDialog
+                    isOpen={generateTextOpen}
+                    onClose={() => {
+                        setGenerateTextOpen(false)
+                    }}
+                    event={event}
+                    sessions={session ? [session] : []}
+                    forceGenerate={true}
+                    onSuccess={(data) => {
+                        Object.keys(data).forEach((key) => {
+                            // @ts-ignore
+                            formContext.setValue(`teasingPosts.${key}`, data[key])
+                        })
+                    }}
+                />
+            )}
+
             <SaveShortcut />
         </FormContainer>
     )

@@ -21,6 +21,7 @@ export type GeneratedSessionVideoAnswer = {
         baseSession: Session
         updatedSession: Partial<Session>
         videoUrl: string
+        imageUrl: string
     }[]
 } & GenerateBaseResultAnswer
 
@@ -44,8 +45,21 @@ export const generateShortVid = async (
             results: [],
         }
     }
+    if (!settings.colorBackground || !settings.logoUrl || !settings.locationName || !settings.eventStartDate) {
+        return {
+            success: false,
+            message:
+                'Missing settings, ensure those are set in the event settings: colorBackground, logoUrl, locationName, eventStartDate',
+            results: [],
+        }
+    }
 
-    const videoSessionMapping: { [key: string]: string } = {}
+    const videoSessionMapping: {
+        [key: string]: {
+            video: string
+            image: string
+        }
+    } = {}
 
     let progress = 0
     for (const session of sessions) {
@@ -55,36 +69,50 @@ export const generateShortVid = async (
             startingDate: session.dates?.start?.toISO() || settings.eventStartDate?.toISOString() || '',
             logoUrl: settings.logoUrl,
             location: settings.locationName,
-            speaker: (session.speakersData || []).map((speaker) => {
+            speakers: (session.speakersData || []).map((speaker) => {
                 return {
                     pictureUrl: speaker.photoUrl || '',
                     name: speaker.name,
                     company: speaker.company || '',
                     job: speaker.jobTitle || '',
                 }
-            })[0],
+            }),
         }
 
-        const { success, error, shortVidUrl } = await shortVidAPI(
-            settings.eventId,
-            session.id,
-            apiKey,
-            settings.template,
-            settings.updateSession,
-            sessionSettings
-        )
+        const [videoResult, frameResult] = await Promise.all([
+            shortVidAPI(
+                settings.eventId,
+                session.id,
+                apiKey,
+                settings.template,
+                settings.updateSession,
+                sessionSettings
+            ),
+            shortVidAPI(
+                settings.eventId,
+                session.id,
+                apiKey,
+                settings.template,
+                settings.updateSession,
+                sessionSettings,
+                -1
+            ),
+        ])
 
-        if (!success) {
+        if (!videoResult.success || !frameResult.success) {
             return {
                 success: false,
-                message: error,
+                message: videoResult.message || frameResult.message,
                 results: [],
             }
         }
 
         progress++
 
-        videoSessionMapping[session.id] = shortVidUrl
+        videoSessionMapping[session.id] = {
+            video: videoResult.shortVidUrl,
+            image: frameResult.shortVidUrl,
+        }
 
         progressCallback(sessionsCount, progress)
     }
@@ -95,9 +123,11 @@ export const generateShortVid = async (
             baseSession: session,
             updatedSession: {
                 id: session.id,
-                teaserUrl: videoSessionMapping[session.id],
+                teaserImageUrl: videoSessionMapping[session.id].image,
+                teaserVideoUrl: videoSessionMapping[session.id].video,
             },
-            videoUrl: videoSessionMapping[session.id],
+            videoUrl: videoSessionMapping[session.id].video,
+            imageUrl: videoSessionMapping[session.id].image,
         })),
     }
 }

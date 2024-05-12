@@ -63,6 +63,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         apiKey: null,
                         openAPIKey: null,
                         enableVoxxrin: false,
+                        aiSettings: null,
                         shortVidSettings: null,
                         locationName: null,
                         locationUrl: null,

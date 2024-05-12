@@ -26,6 +26,10 @@ export const NewSession = ({ event }: NewEventProps) => {
                 <EventSessionForm
                     event={event}
                     onSubmit={(session) => {
+                        if (!session.title) {
+                            alert('Title is required')
+                            return
+                        }
                         return mutation
                             .mutate({
                                 ...session,

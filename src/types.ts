@@ -84,7 +84,8 @@ export interface Session {
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
-    teaserUrl: string | null
+    teaserVideoUrl: string | null
+    teaserImageUrl: string | null
     teasingHidden: boolean
     teasingPosts: TeasingPosts | null
     extendHeight?: number
@@ -105,6 +106,14 @@ export interface EventFiles {
 
 export interface EventShortVidSettings {
     template: string | null
+}
+export interface EventAISettings {
+    model: string
+    temperature: string
+    sessions: {
+        teasingPromptSystem: string
+        teasingPromptUser: string
+    }
 }
 
 export interface Event {
@@ -127,6 +136,7 @@ export interface Event {
     statusBadgeLink: string | null
     openAPIKey: string | null
     enableVoxxrin: boolean
+    aiSettings: EventAISettings | null
     shortVidSettings: EventShortVidSettings | null
     locationName: string | null
     locationUrl: string | null

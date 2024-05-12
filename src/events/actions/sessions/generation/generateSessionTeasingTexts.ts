@@ -1,4 +1,4 @@
-import { Session } from '../../../../types'
+import { EventAISettings, Session } from '../../../../types'
 import pLimit from 'p-limit'
 import { generateSessionTeasingContent, TeasingPostSocials } from './generateSessionTeasingContent'
 import { GenerateBaseResultAnswer, GenerateBaseSettings } from './useSessionsGenerationGeneric'
@@ -10,12 +10,7 @@ const PARALLEL_REQUEST = 4
 const limitRunner = pLimit(PARALLEL_REQUEST)
 
 export type GenerateSessionTeasingTextsSettings = {
-    prompts: {
-        [lang: string]: {
-            system: string
-            user: string
-        }
-    }
+    aiSettings: EventAISettings
     openApiKey: string | null
 } & GenerateBaseSettings
 
@@ -33,8 +28,8 @@ export const generateSessionTeasingTexts = async (
     settings: GenerateSessionTeasingTextsSettings,
     progressCallback: (totalCount: number, doneCount: number) => void
 ): Promise<GeneratedSessionTeasingTextAnswer> => {
-    const promptSystem = settings.prompts.fr.system
-    const promptUser = settings.prompts.fr.user
+    const promptSystem = settings.aiSettings.sessions.teasingPromptSystem
+    const promptUser = settings.aiSettings.sessions.teasingPromptUser
 
     const sessionsCount = sessions.length
 

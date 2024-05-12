@@ -16,7 +16,6 @@ export type ShortVidSpeakerInput = {
 }
 
 export type ShortVidSettings = {
-    speaker?: ShortVidSpeakerInput
     speakers?: ShortVidSpeakerInput[]
 } & ShortVidDesignSetting
 
@@ -26,31 +25,40 @@ export const shortVidAPI = async (
     eventApiKey: string,
     shortVidType: string,
     updateSession: boolean,
-    settings: ShortVidSettings
+    settings: ShortVidSettings,
+    frame?: number
 ) => {
     const url = new URL(API_URL as string)
     url.pathname += `v1/${eventId}/sessions/${sessionId}/shortvid`
 
     url.searchParams.append('apiKey', eventApiKey)
 
-    const response = await fetch(url.href, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            shortVidType,
-            updateSession,
-            settings,
-        }),
-    })
+    try {
+        const response = await fetch(url.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                shortVidType,
+                updateSession,
+                settings,
+                frame,
+            }),
+        })
+        if (!response.ok) {
+            return {
+                success: false,
+                message: `Error: ${response.statusText} - ${response.status} - ${response.type}`,
+            }
+        }
 
-    if (!response.ok) {
+        return await response.json()
+    } catch (error: any) {
         return {
             success: false,
-            error: response.statusText,
+            message: `Error: ${error!.message}`,
+            results: [],
         }
     }
-
-    return await response.json()
 }

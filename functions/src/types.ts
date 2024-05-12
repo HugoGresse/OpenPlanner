@@ -69,7 +69,8 @@ export interface Session {
     format: string | null
     category: string | null
     image: string | null
-    teaserUrl: string | null
+    teaserVideoUrl: string | null
+    teaserImageUrl: string | null
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
