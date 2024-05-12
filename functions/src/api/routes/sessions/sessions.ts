@@ -122,6 +122,7 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
             // const text = await shortVidResponse.text()
             // console.log("error", text)
 
+            const cloneResponseInCaseOfError = shortVidResponse.clone()
             const videoArrayBuffer = await shortVidResponse.arrayBuffer()
             const videoBuffer = Buffer.from(videoArrayBuffer)
 
@@ -133,10 +134,12 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
             )
 
             if (!success) {
+                const text = await cloneResponseInCaseOfError.text()
+                console.error('ShortVid API error', text)
                 return reply.status(400).send({
                     success: false,
                     // @ts-ignore
-                    error: publicFileUrlOrError,
+                    error: publicFileUrlOrError + ' ' + text,
                 })
             }
 
