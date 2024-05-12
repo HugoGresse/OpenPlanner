@@ -1,6 +1,10 @@
+export const hexContrastColor = (color: string) => {
+    return `#${hexContrast(color)}`
+}
+
 export const hexContrast = (color: string) => {
     const hexColor = color.startsWith('#') ? color.substring(1) : color
-    return luma(hexColor) >= 165 ? '000' : 'fff'
+    return luma(hexColor) >= 165 ? '000000' : 'ffffff'
 }
 
 /**

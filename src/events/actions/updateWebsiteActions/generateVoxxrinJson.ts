@@ -1,6 +1,6 @@
 import { Event, Session, Speaker, SponsorCategory } from '../../../types'
 import { getIndividualDays } from '../../../utils/dates/diffDays'
-import { hexContrast } from '../../../utils/colors/hexContrast'
+import { hexContrastColor } from '../../../utils/colors/hexContrast'
 
 export const generateVoxxrinJson = (
     event: Event,
@@ -100,20 +100,20 @@ export const generateVoxxrinJson = (
         timezone: eventTimezone,
         start: event.dates.start?.toISOString(),
         end: event.dates.end?.toISOString(),
-        days: days.map((day) => ({
-            id: day.start.toISO() || Math.random().toString(),
-            localDate: day.start.toLocaleString(),
+        days: days.map((day, index) => ({
+            id: day.start.toLocaleString() || `${index}`,
+            localDate: day.start.isValid ? `${day.start.toISODate()}` : '??? date invalid',
         })),
         logoUrl: logoUrl,
         backgroundUrl: backgroundUrl,
         theming: {
             colors: {
                 primaryHex: event.color || '#F78125',
-                primaryContrastHex: hexContrast(event.color || '#F78125'),
+                primaryContrastHex: hexContrastColor(event.color || '#F78125'),
                 secondaryHex: event.colorSecondary || '#3880FF',
-                secondaryContrastHex: hexContrast(event.colorSecondary || '#3880FF'),
+                secondaryContrastHex: hexContrastColor(event.colorSecondary || '#3880FF'),
                 tertiaryHex: event.colorBackground || '#202020',
-                tertiaryContrastHex: hexContrast(event.colorBackground || '#202020'),
+                tertiaryContrastHex: hexContrastColor(event.colorBackground || '#202020'),
             },
         },
         supportedTalkLanguages: supportedTalkLanguages,
@@ -173,7 +173,7 @@ export const generateVoxxrinJson = (
 
         const categoryName = session.category
             ? event.categories.find((category) => category.id === session.category)?.name
-            : []
+            : null
 
         if (categoryName) {
             tags.push(categoryName)
@@ -184,9 +184,14 @@ export const generateVoxxrinJson = (
             tags: tags,
             title: session.title,
             id: session.id,
+            categoryName: categoryName,
+            categoryId: session.category,
+            formatId: session.format,
+            abstract: session.abstract,
+            trackId: session.trackId,
+            trackTitle: event.tracks.find((track) => track.id === session.trackId)?.name,
             startTime: session.dates?.start?.toISO(),
             endTime: session.dates?.end?.toISO(),
-            trackTitle: event.tracks.find((track) => track.id === session.trackId)?.name,
         }
     })
 
@@ -196,6 +201,8 @@ export const generateVoxxrinJson = (
             photoUrl: speaker.photoUrl,
             socials: speaker.socials,
             id: speaker.id,
+            bio: speaker.bio,
+            company: speaker.company,
         }
     })
 
