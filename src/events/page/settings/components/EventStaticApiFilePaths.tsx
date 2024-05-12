@@ -58,7 +58,7 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
                     <Box bgcolor={'#88888888'} p={1} mt={2} borderRadius={1}>
                         <Typography>
                             You may want to add a cache busting param to the url to force refresh the cache:
-                            "?t=Date.now()"
+                            "?t=Date.now()". The <b>Static API</b> is updated only when you press "Update website".
                         </Typography>
                     </Box>
                 </Box>

@@ -21,7 +21,7 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/Fire
 import { EventSessionItem } from '../EventSessionItem'
 import { RequireConferenceHallConnections } from '../../../../components/RequireConferenceHallConnections'
 import { SessionsImporterFromConferenceHallDialog } from '../components/SessionsImporterFromConferenceHallDialog'
-import { Clear } from '@mui/icons-material'
+import { Clear, ExpandMore } from '@mui/icons-material'
 import { filterSessions } from './filterSessions'
 import { FilterCategory } from './FilterCategory'
 import { FilterFormat } from './FilterFormat'
@@ -79,7 +79,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginBottom={1}>
                 <Typography>
                     {isFiltered
                         ? `${displayedSessions.length}/${sessionsData.length} sessions`
@@ -88,7 +88,9 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                 <RequireConferenceHallConnections event={event}>
                     <Button onClick={() => setSessionsImportOpen(true)}>Import proposals from ConferenceHall</Button>
                 </RequireConferenceHallConnections>
-                <Button onClick={(event) => setGenerateAnchorEl(event.currentTarget)}>Generate</Button>
+                <Button onClick={(event) => setGenerateAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
+                    Generate
+                </Button>
                 <Menu
                     id="basic-menu"
                     anchorEl={generateAnchorEl}

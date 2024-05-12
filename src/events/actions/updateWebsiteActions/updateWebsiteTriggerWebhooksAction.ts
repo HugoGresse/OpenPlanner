@@ -3,6 +3,7 @@ import { CreateNotificationOption } from '../../../context/SnackBarProvider'
 import { generateStaticJson } from './generateStaticJson'
 import { triggerWebhooks } from './triggerWebhooks'
 import { updateStaticJson } from './updateStaticJson'
+import { updateEvent } from '../updateEvent'
 
 export const updateWebsiteTriggerWebhooksAction = async (
     event: Event,
@@ -22,5 +23,6 @@ const updateWebsiteTriggerWebhooksActionInternal = async (event: Event) => {
 
     const fileNames = await updateStaticJson(event, outputPublic, outputPrivate, outputOpenFeedback)
 
-    return await triggerWebhooks(event, fileNames)
+    await triggerWebhooks(event, fileNames)
+    await updateEvent(event.id, { updatedAt: new Date() })
 }
