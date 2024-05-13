@@ -15,6 +15,7 @@ export interface Category {
     id: string
     name: string
     color?: string
+    colorSecondary?: string
 }
 
 export interface Format {
