@@ -85,7 +85,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                 </RequireConferenceHallConnections>
                 <Button onClick={() => setSpeakersStatsOpen(true)}>Stats</Button>
                 <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
-                    Export{' '}
+                    Export
                 </Button>
                 <Menu
                     id="basic-menu"
