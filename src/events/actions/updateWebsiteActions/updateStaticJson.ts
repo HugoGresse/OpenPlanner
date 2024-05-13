@@ -19,9 +19,14 @@ export const updateStaticJson = async (
     const outputRefPrivate = ref(storage, fileNames.private)
     const outputRefOpenFeedback = ref(storage, fileNames.openfeedback)
 
-    await uploadString(outputRefPublic, JSON.stringify(outputPublic), undefined, metadata)
-    await uploadString(outputRefPrivate, JSON.stringify(outputPrivate), undefined, metadata)
-    await uploadString(outputRefOpenFeedback, JSON.stringify(outputOpenFeedback), undefined, metadata)
+    // noinspection ES6MissingAwait
+    const promiseArray = [
+        uploadString(outputRefPublic, JSON.stringify(outputPublic), undefined, metadata),
+        uploadString(outputRefPrivate, JSON.stringify(outputPrivate), undefined, metadata),
+        uploadString(outputRefOpenFeedback, JSON.stringify(outputOpenFeedback), undefined, metadata),
+    ]
+
+    await Promise.all(promiseArray)
 
     return fileNames
 }
