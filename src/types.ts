@@ -15,6 +15,7 @@ export interface Category {
     id: string
     name: string
     color?: string
+    colorSecondary?: string
 }
 
 export interface Format {
@@ -44,6 +45,7 @@ export interface Speaker {
     phone: string | null
     conferenceHallId: string | null
     name: string
+    pronouns: string | null
     jobTitle: string | null
     bio: string | null
     company: string | null

@@ -26,8 +26,8 @@ export const CategoriesFields = ({ control, isSubmitting }: CategoriesFieldsProp
             <Box paddingLeft={2}>
                 {fields.map((category: CategoryWithKey, index) => (
                     <Box display="flex" key={category.key}>
-                        <Grid container sx={{ alignItems: 'center' }}>
-                            <Grid item sm={12} md={6}>
+                        <Grid container sx={{ alignItems: 'center' }} spacing={1}>
+                            <Grid item sm={12} md={5}>
                                 <TextFieldElement
                                     id={category.key}
                                     label={`id: ${category.id}`}
@@ -37,9 +37,10 @@ export const CategoriesFields = ({ control, isSubmitting }: CategoriesFieldsProp
                                     size="small"
                                     margin="dense"
                                     disabled={isSubmitting}
+                                    fullWidth
                                 />
                             </Grid>
-                            <Grid item sm={10} md={4}>
+                            <Grid item sm={5} md={2}>
                                 <TextFieldElement
                                     id={category.key + 'color'}
                                     label="Color"
@@ -50,7 +51,23 @@ export const CategoriesFields = ({ control, isSubmitting }: CategoriesFieldsProp
                                     margin="dense"
                                     type="color"
                                     disabled={isSubmitting}
-                                    sx={{ minWidth: 100 }}
+                                    sx={{ minWidth: 80 }}
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                            </Grid>
+                            <Grid item sm={5} md={3}>
+                                <TextFieldElement
+                                    id={category.key + 'colorSecondary'}
+                                    label="Secondary color"
+                                    name={`categories.${index}.colorSecondary`}
+                                    control={control}
+                                    variant="filled"
+                                    size="small"
+                                    margin="dense"
+                                    type="color"
+                                    disabled={isSubmitting}
+                                    sx={{ minWidth: 120 }}
+                                    InputLabelProps={{ shrink: true }}
                                 />
                             </Grid>
                             <Grid item sm={2} md={2}>

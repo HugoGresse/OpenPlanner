@@ -96,6 +96,7 @@ export const generateStaticJson = async (event: Event) => {
         speakers: speakers.map((s) => ({
             id: s.id,
             name: s.name,
+            pronouns: s.pronouns,
             jobTitle: s.jobTitle,
             bio: s.bio,
             company: s.company,

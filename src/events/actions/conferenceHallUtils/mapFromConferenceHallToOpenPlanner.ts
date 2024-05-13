@@ -43,6 +43,7 @@ export const mapConferenceHallSpeakerToOpenPlanner = (
             phone: chSpeaker.phone || null,
             conferenceHallId: chSpeaker.uid || null,
             name: chSpeaker.displayName || 'Unknown',
+            pronouns: null,
             bio: chSpeaker.bio || null,
             company: chSpeaker.company || null,
             geolocation: chSpeaker.address?.formattedAddress || null,
