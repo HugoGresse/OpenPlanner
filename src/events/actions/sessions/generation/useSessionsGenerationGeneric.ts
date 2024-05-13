@@ -1,6 +1,7 @@
 import { Event, Session } from '../../../../types'
 import { useCallback, useState } from 'react'
 import { updateSessions } from '../updateSession'
+import { useConfirmBrowserClose } from '../../../../hooks/useConfirmBrowserClose'
 
 export enum GenerationStates {
     IDLE = 'IDLE',
@@ -44,6 +45,8 @@ export const useSessionsGenerationGeneric = <
         message: '',
         results: null,
     })
+
+    useConfirmBrowserClose(state.generationState === GenerationStates.GENERATING, 'Generation in progress')
 
     const generate = useCallback(
         async (
