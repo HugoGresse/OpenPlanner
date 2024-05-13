@@ -25,17 +25,10 @@ import { SpeakersStatsDialog } from './components/SpeakersStatsDialog'
 import { useNotification } from '../../../hooks/notificationHook'
 import { downloadJsonToXLSX } from '../../../utils/downloadJsonToXLSX'
 import { triggerJsonDownloadFromData } from '../../../utils/triggerFileDownload'
+import { exportSpeakersAction, SpeakersExportType } from './actions/exportSpeakersAction'
 
 export type EventSpeakersProps = {
     event: Event
-}
-
-enum ExportType {
-    EmailCommaSeparated = 'email-comma',
-    AllXLSX = 'all',
-    AllJson = 'all-json',
-    DisplayedXLSX = 'displayed',
-    DisplayedJson = 'displayed-json',
 }
 
 export const EventSpeakers = ({ event }: EventSpeakersProps) => {
@@ -69,37 +62,12 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
         )
     }, [speakersData, search])
 
-    const closeExportMenu = (type: string) => () => {
+    const closeExportMenu = (type: SpeakersExportType | null) => () => {
         setExportAnchorEl(null)
-        switch (type) {
-            case ExportType.EmailCommaSeparated:
-                const emails = speakersData
-                    .map((s) => s.email)
-                    .filter(Boolean)
-                    .join(', ')
-                navigator.clipboard.writeText(emails)
-                createNotification('Emails copied to clipboard', { type: 'success' })
-                break
-            case ExportType.AllXLSX:
-                downloadJsonToXLSX(speakersData, 'speakers.xlsx')
-                break
-            case ExportType.AllJson:
-                const json = JSON.stringify(speakersData, null, 4)
-                const fileName = 'speakers.json'
-                triggerJsonDownloadFromData(json, fileName)
-                break
-            case ExportType.DisplayedXLSX:
-                downloadJsonToXLSX(displayedSpeakers, 'speakers.xlsx')
-                break
-            case ExportType.DisplayedJson:
-                const displayedJson = JSON.stringify(displayedSpeakers, null, 4)
-                const displayedFileName = 'speakers.json'
-                triggerJsonDownloadFromData(displayedJson, displayedFileName)
-                break
-            default:
-                console.warn('Unknown type', type)
-                break
+        if (!type) {
+            return
         }
+        exportSpeakersAction(speakersData, displayedSpeakers, type, createNotification)
     }
 
     if (speakers.isLoading) {
@@ -123,17 +91,21 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     id="basic-menu"
                     anchorEl={exportAnchorEl}
                     open={isExportMenuOpen}
-                    onClose={closeExportMenu('')}
+                    onClose={closeExportMenu(null)}
                     MenuListProps={{
                         'aria-labelledby': 'basic-button',
                     }}>
-                    <MenuItem onClick={closeExportMenu(ExportType.EmailCommaSeparated)}>
+                    <MenuItem onClick={closeExportMenu(SpeakersExportType.EmailCommaSeparated)}>
                         Copy emails (comma separated) to clipboard
                     </MenuItem>
-                    <MenuItem onClick={closeExportMenu(ExportType.AllXLSX)}>All speakers (XLSX)</MenuItem>
-                    <MenuItem onClick={closeExportMenu(ExportType.AllJson)}>All speakers (JSON)</MenuItem>
-                    <MenuItem onClick={closeExportMenu(ExportType.DisplayedXLSX)}>Displayed speakers (XLSX)</MenuItem>
-                    <MenuItem onClick={closeExportMenu(ExportType.DisplayedJson)}>Displayed speakers (JSON)</MenuItem>
+                    <MenuItem onClick={closeExportMenu(SpeakersExportType.AllXLSX)}>All speakers (XLSX)</MenuItem>
+                    <MenuItem onClick={closeExportMenu(SpeakersExportType.AllJson)}>All speakers (JSON)</MenuItem>
+                    <MenuItem onClick={closeExportMenu(SpeakersExportType.DisplayedXLSX)}>
+                        Displayed speakers (XLSX)
+                    </MenuItem>
+                    <MenuItem onClick={closeExportMenu(SpeakersExportType.DisplayedJson)}>
+                        Displayed speakers (JSON)
+                    </MenuItem>
                 </Menu>
                 <Button href="/speakers/new" variant="contained">
                     Add speaker
