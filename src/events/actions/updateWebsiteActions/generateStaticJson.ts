@@ -6,10 +6,12 @@ import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
 import { getTeam } from '../getTeam'
 
 export const generateStaticJson = async (event: Event) => {
-    const sessions = await getSessions(event.id)
-    const speakers = await getSpeakers(event.id)
-    const sponsors = await getSponsors(event.id)
-    const team = await getTeam(event.id)
+    const [sessions, speakers, sponsors, team] = await Promise.all([
+        getSessions(event.id),
+        getSpeakers(event.id),
+        getSponsors(event.id),
+        getTeam(event.id),
+    ])
 
     const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
 
