@@ -164,36 +164,34 @@ export const generateVoxxrinJson = (
         speakers: {},
     }
 
-    sessions.forEach((session) => {
-        if (!session.showInFeedback) {
-            return
-        }
+    sessions
+        .filter((session) => session.dates && session.dates.start && session.dates.end)
+        .forEach((session) => {
+            const tags = []
 
-        const tags = []
+            const categoryName = session.category
+                ? event.categories.find((category) => category.id === session.category)?.name
+                : null
 
-        const categoryName = session.category
-            ? event.categories.find((category) => category.id === session.category)?.name
-            : null
+            if (categoryName) {
+                tags.push(categoryName)
+            }
 
-        if (categoryName) {
-            tags.push(categoryName)
-        }
-
-        voxxrinJson.sessions[session.id] = {
-            speakers: session.speakers,
-            tags: tags,
-            title: session.title,
-            id: session.id,
-            categoryName: categoryName,
-            categoryId: session.category,
-            formatId: session.format,
-            abstract: session.abstract,
-            trackId: session.trackId,
-            trackTitle: event.tracks.find((track) => track.id === session.trackId)?.name,
-            startTime: session.dates?.start?.toISO(),
-            endTime: session.dates?.end?.toISO(),
-        }
-    })
+            voxxrinJson.sessions[session.id] = {
+                speakers: session.speakers,
+                tags: tags,
+                title: session.title,
+                id: session.id,
+                categoryName: categoryName,
+                categoryId: session.category,
+                formatId: session.format,
+                abstract: session.abstract,
+                trackId: session.trackId,
+                trackTitle: event.tracks.find((track) => track.id === session.trackId)?.name,
+                startTime: session.dates?.start?.toISO(),
+                endTime: session.dates?.end?.toISO(),
+            }
+        })
 
     speaker.forEach((speaker) => {
         voxxrinJson.speakers[speaker.id] = {
