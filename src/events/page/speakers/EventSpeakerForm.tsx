@@ -51,16 +51,31 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                             size="small"
                         />
                     )}
-                    <TextFieldElement
-                        margin="dense"
-                        required={true}
-                        fullWidth
-                        label="Name"
-                        name="name"
-                        variant="filled"
-                        disabled={isSubmitting}
-                        size="small"
-                    />
+                    <Grid container spacing={1}>
+                        <Grid item xs={9}>
+                            <TextFieldElement
+                                margin="dense"
+                                required={true}
+                                fullWidth
+                                label="Name"
+                                name="name"
+                                variant="filled"
+                                disabled={isSubmitting}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={3}>
+                            <TextFieldElement
+                                margin="dense"
+                                fullWidth
+                                label="Pronoun(s)"
+                                name="pronouns"
+                                variant="filled"
+                                disabled={isSubmitting}
+                                size="small"
+                            />
+                        </Grid>
+                    </Grid>
                     <TextFieldElement
                         margin="dense"
                         fullWidth

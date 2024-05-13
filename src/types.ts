@@ -45,6 +45,7 @@ export interface Speaker {
     phone: string | null
     conferenceHallId: string | null
     name: string
+    pronouns: string | null
     jobTitle: string | null
     bio: string | null
     company: string | null
