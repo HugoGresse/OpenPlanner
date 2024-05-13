@@ -28,6 +28,7 @@ import { FilterFormat } from './FilterFormat'
 import { GenerateSessionsTextContentDialog } from '../components/GenerateSessionsTextContentDialog'
 import { useSearchParams } from '../../../../hooks/useSearchParams'
 import { GenerateSessionsVideoDialog } from '../components/GenerateSessionsVideoDialog'
+import { exportSessionsAction, SessionsExportType } from './actions/exportSessionsActions'
 
 export type EventSessionsProps = {
     event: Event
@@ -41,7 +42,9 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     const [selectedFormat, setSelectedFormat] = useState<string>(searchParams.get('format') || '')
     const [onlyWithoutSpeaker, setOnlyWithoutSpeaker] = useState<boolean>(false)
     const [generateAnchorEl, setGenerateAnchorEl] = React.useState<null | HTMLElement>(null)
-    const open = Boolean(generateAnchorEl)
+    const isGenerateMenuOpen = Boolean(generateAnchorEl)
+    const [exportAnchorEl, setExportAnchorEl] = React.useState<null | HTMLElement>(null)
+    const isExportMenuOpen = Boolean(exportAnchorEl)
     const [generateTextDialogOpen, setGenerateTextDialogOpen] = useState(false)
     const [generateVideoDialogOpen, setGenerateVideoDialogOpen] = useState(false)
 
@@ -73,6 +76,13 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
         }
     }
 
+    const closeExportMenu = (type: SessionsExportType | null) => () => {
+        setExportAnchorEl(null)
+        if (!type) return
+
+        exportSessionsAction(sessionsData, displayedSessions, type)
+    }
+
     if (sessions.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sessions} />
     }
@@ -94,13 +104,23 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                 <Menu
                     id="basic-menu"
                     anchorEl={generateAnchorEl}
-                    open={open}
+                    open={isGenerateMenuOpen}
                     onClose={closeGenerateMenu('')}
                     MenuListProps={{
                         'aria-labelledby': 'basic-button',
                     }}>
                     <MenuItem onClick={closeGenerateMenu('text')}>Teasing for socials</MenuItem>
                     <MenuItem onClick={closeGenerateMenu('video')}>Teasing video using ShortVid.io</MenuItem>
+                </Menu>
+                <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
+                    Export
+                </Button>
+                <Menu anchorEl={exportAnchorEl} open={isExportMenuOpen} onClose={closeExportMenu(null)}>
+                    {Object.entries(SessionsExportType).map(([key, value]) => (
+                        <MenuItem key={key} onClick={closeExportMenu(value)}>
+                            {value}
+                        </MenuItem>
+                    ))}
                 </Menu>
                 <Button href="/sessions/new" variant="contained">
                     Add session
