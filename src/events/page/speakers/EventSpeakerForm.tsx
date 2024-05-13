@@ -35,6 +35,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                     ...data,
                     photoUrl: data.photoUrl || speaker?.photoUrl || null,
                     note: data.note || speaker?.note || null,
+                    pronouns: data.pronouns || speaker?.pronouns || null,
                 })
             }}>
             <Grid container spacing={4}>
