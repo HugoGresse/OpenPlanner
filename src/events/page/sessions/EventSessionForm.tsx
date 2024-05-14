@@ -193,7 +193,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                 variant="filled"
                                 options={event.formats.map((f) => ({
                                     id: f.id,
-                                    label: f.name,
+                                    label: `${f.name} (${f.durationMinutes} min)`,
                                 }))}
                             />
                         </Grid>

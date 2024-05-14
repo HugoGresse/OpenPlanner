@@ -11,7 +11,7 @@ const hydrateSession = (event: Event, sp: UseQueryResult<SpeakersMap>, data: Ses
                   .map((speakerId) => (sp.data ? sp.data[speakerId] : undefined))
                   .filter((s) => !!s) as Speaker[])
             : undefined,
-        formatText: event.formats ? event.formats.find((f) => session.format === f.id)?.name : null,
+        formatText: getSessionFormatText(event, session),
         categoryObject: event.categories ? event.categories.find((c) => session.category === c.id) : null,
     }))
 }
@@ -28,4 +28,12 @@ export const useSessions = (event: Event): UseQueryResult<Session[]> => {
         ...sessionsQueryResult,
         data: hydrateSession(event, sp, sessionsQueryResult.data || []),
     }
+}
+
+export const getSessionFormatText = (event: Event, session: Session) => {
+    const format = (event.formats || []).find((format) => session.format === format.id)
+
+    if (!format) return null
+
+    return `${format.name} (${format.durationMinutes} min)`
 }

@@ -1,11 +1,12 @@
 import { collections } from '../firebase'
 import { Event, Session, Speaker } from '../../types'
 import { useFirestoreCollection, UseQueryResult } from './firestoreQueryHook'
+import { getSessionFormatText } from './useSessions'
 
 const hydrateSession = (event: Event, data: Session[]) => {
     return data.map((session: Session) => ({
         ...session,
-        formatText: event.formats ? event.formats.find((f) => session.format === f.id)?.name : null,
+        formatText: getSessionFormatText(event, session),
         categoryObject: event.categories ? event.categories.find((c) => session.category === c.id) : null,
     }))
 }

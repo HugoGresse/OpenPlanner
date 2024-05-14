@@ -7,7 +7,8 @@ export const updateStaticJson = async (
     event: Event,
     outputPublic: {},
     outputPrivate: {},
-    outputOpenFeedback: { sessions: { [p: string]: any }; speakers: { [p: string]: any } }
+    outputOpenFeedback: { sessions: { [p: string]: any }; speakers: { [p: string]: any } },
+    outputVoxxrin: {} | null
 ) => {
     const fileNames = await getFilesNames(event)
 
@@ -18,6 +19,7 @@ export const updateStaticJson = async (
     const outputRefPublic = ref(storage, fileNames.public)
     const outputRefPrivate = ref(storage, fileNames.private)
     const outputRefOpenFeedback = ref(storage, fileNames.openfeedback)
+    const outputRefVoxxrin = ref(storage, fileNames.voxxrin || undefined)
 
     // noinspection ES6MissingAwait
     const promiseArray = [
@@ -25,6 +27,10 @@ export const updateStaticJson = async (
         uploadString(outputRefPrivate, JSON.stringify(outputPrivate), undefined, metadata),
         uploadString(outputRefOpenFeedback, JSON.stringify(outputOpenFeedback), undefined, metadata),
     ]
+
+    if (outputVoxxrin !== null) {
+        promiseArray.push(uploadString(outputRefVoxxrin, JSON.stringify(outputVoxxrin), undefined, metadata))
+    }
 
     await Promise.all(promiseArray)
 

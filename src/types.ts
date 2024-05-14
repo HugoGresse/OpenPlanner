@@ -5,6 +5,7 @@ export interface Track {
     id: string
     name: string
 }
+
 export interface Webhooks {
     lastAnswer: string | null
     url: string
@@ -28,6 +29,7 @@ export interface DateType {
     start: Date | null
     end: Date | null
 }
+
 export interface DateTimeType {
     start: DateTime | null
     end: DateTime | null
@@ -101,6 +103,7 @@ export interface EventFiles {
     private: string
     imageFolder: string
     openfeedback: string
+    voxxrin: string | null
 }
 
 export interface EventShortVidSettings {
@@ -134,6 +137,7 @@ export interface Event {
     statusBadgeImage: string | null
     statusBadgeLink: string | null
     openAPIKey: string | null
+    enableVoxxrin: boolean
     aiSettings: EventAISettings | null
     shortVidSettings: EventShortVidSettings | null
     locationName: string | null
@@ -224,6 +228,7 @@ export interface ConferenceHallEvent {
         name: string
     }[]
 }
+
 export interface ConferenceHallOrganization {
     id: string
     name: string
@@ -243,6 +248,7 @@ export interface ConferenceHallProposal {
         [key: string]: boolean
     }
 }
+
 export enum ConferenceHallProposalState {
     submitted = 'submitted',
     accepted = 'accepted',
