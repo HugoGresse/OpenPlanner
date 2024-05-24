@@ -5,6 +5,7 @@ import { getAuth } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
 import { Auth } from '@firebase/auth'
 import {
+    adminUserConverter,
     eventConverter,
     faqConverter,
     sessionConverter,
@@ -41,6 +42,8 @@ export const collections = {
         collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
     team: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'team').withConverter(teamConverter),
     faq: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'faq').withConverter(faqConverter),
+
+    adminsUsers: collection(instanceFirestore, 'admins', 'users', 'admins').withConverter(adminUserConverter),
 }
 
 export const getOpenPlannerAuth = (): Auth => {

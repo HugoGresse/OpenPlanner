@@ -12,6 +12,7 @@ import { NotificationProvider } from './context/SnackBarProvider'
 import { SuspenseLoader } from './components/SuspenseLoader'
 import { PublicApp } from './public/PublicApp'
 import { ForgotPasswordScreen } from './auth/ForgotPasswordScreen'
+import { AdminScreen } from './events/admin/AdminScreen'
 
 const EventsScreen = lazy(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
@@ -73,6 +74,11 @@ export const App = ({}) => {
                                     <Route path="/">
                                         <Suspense fallback={<SuspenseLoader />}>
                                             <EventsScreen />
+                                        </Suspense>
+                                    </Route>
+                                    <Route path="/admins">
+                                        <Suspense fallback={<SuspenseLoader />}>
+                                            <AdminScreen />
                                         </Suspense>
                                     </Route>
                                     <Route path="/events/">

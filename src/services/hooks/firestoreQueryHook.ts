@@ -42,15 +42,31 @@ export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = 
 
         try {
             if (subscribe) {
-                unsubcribeFunc = onSnapshot(query, (querySnapshot) => {
-                    docTransformer(querySnapshot)
-                    setLoading(false)
-                })
+                unsubcribeFunc = onSnapshot(
+                    query,
+                    (querySnapshot) => {
+                        docTransformer(querySnapshot)
+                        setLoading(false)
+                    },
+                    (error) => {
+                        console.log(error)
+                        setError(error.message)
+                        setLoading(false)
+                    }
+                )
             } else {
-                getDocs(query).then((querySnapshot) => {
-                    docTransformer(querySnapshot)
-                    setLoading(false)
-                })
+                getDocs(query)
+                    .then((querySnapshot) => {
+                        docTransformer(querySnapshot)
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                        setLoading(false)
+                        setError(error.message)
+                    })
+                    .finally(() => {
+                        setLoading(false)
+                    })
             }
         } catch (error: any) {
             console.log(error)
@@ -101,15 +117,30 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
 
         try {
             if (subscribe) {
-                unsubcribeFunc = onSnapshot(ref, (docSnapshot) => {
-                    docTransformer(docSnapshot)
-                    setLoading(false)
-                })
+                unsubcribeFunc = onSnapshot(
+                    ref,
+                    (docSnapshot) => {
+                        docTransformer(docSnapshot)
+                        setLoading(false)
+                    },
+                    (error) => {
+                        console.log(error)
+                        setError(error.message)
+                        setLoading(false)
+                    }
+                )
             } else {
-                getDoc(ref).then((docSnapshot) => {
-                    docTransformer(docSnapshot)
-                    setLoading(false)
-                })
+                getDoc(ref)
+                    .then((docSnapshot) => {
+                        docTransformer(docSnapshot)
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                        setError(error.message)
+                    })
+                    .finally(() => {
+                        setLoading(false)
+                    })
             }
         } catch (error: any) {
             console.log(error)
