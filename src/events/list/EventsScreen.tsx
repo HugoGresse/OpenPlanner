@@ -12,6 +12,7 @@ import { NewEventFromConferenceHallDialog } from '../new/NewEventFromConferenceH
 import { NewEventCreatedDialog } from '../new/NewEventCreatedDialog'
 import { useNotification } from '../../hooks/notificationHook'
 import { NewEventDialog } from '../new/NewEventDialog'
+import { useIsAdmin } from '../../services/hooks/useIsAdmin'
 
 export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdOpenPlanner)
@@ -19,6 +20,7 @@ export const EventsScreen = ({}) => {
     const [newEventCHOpen, setNewEventFromCHOpen] = useState(false)
     const [newEventOpen, setNewEventOpen] = useState(false)
     const [newEventId, setNewEventId] = useState<null | string>(null)
+    const isAdmin = useIsAdmin(userId)
 
     const { createNotification } = useNotification()
 
@@ -51,6 +53,11 @@ export const EventsScreen = ({}) => {
                     <EventsListItem event={event} key={event.id} />
                 ))}
             </Box>
+            {isAdmin && (
+                <Button variant="outlined" size="large" href="/admins">
+                    ADMIN
+                </Button>
+            )}
 
             <NewEventFromConferenceHallDialog isOpen={newEventCHOpen} onClose={onEventCreated} />
             <NewEventDialog isOpen={newEventOpen} onClose={onEventCreated} />

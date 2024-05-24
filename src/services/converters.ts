@@ -19,6 +19,23 @@ export const eventConverter: FirestoreDataConverter<Event | NewEvent> = {
         return event
     },
 }
+export const event2Converter: FirestoreDataConverter<Event> = {
+    fromFirestore(snapshot): Event {
+        const data = snapshot.data()
+
+        return {
+            id: snapshot.id,
+            ...data,
+            dates: {
+                start: data.dates?.start ? data.dates.start.toDate() : null,
+                end: data.dates?.end ? data.dates.end.toDate() : null,
+            },
+        } as Event
+    },
+    toFirestore(event: Event) {
+        return event
+    },
+}
 
 export const sessionConverter: FirestoreDataConverter<Session> = {
     fromFirestore(snapshot): Session {
@@ -113,6 +130,20 @@ export const faqItemConverter: FirestoreDataConverter<Faq> = {
         } as Faq
     },
     toFirestore(data: Faq) {
+        return data
+    },
+}
+
+export const adminUserConverter: FirestoreDataConverter<{ id: string }> = {
+    fromFirestore(snapshot): { id: string } {
+        const data = snapshot.data()
+
+        return {
+            id: snapshot.id,
+            ...data,
+        }
+    },
+    toFirestore(data: any) {
         return data
     },
 }

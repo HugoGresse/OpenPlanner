@@ -7,9 +7,10 @@ service cloud.firestore {
 
         function eventData(eventId) { return get(/databases/$(database)/documents/events/$(eventId)).data; }
         function isAdmin(data) { return data.owner == request.auth.uid || request.auth.uid in data.members;}
+        function isSuperAdmin(userId) { return exists(/databases/$(database)/documents/admins/users/admins/$(userId)); }
 
         match /events/{eventId} {
-            allow read: if authenticated() && isAdmin(resource.data);
+            allow read: if authenticated() && (isAdmin(resource.data) || isSuperAdmin(request.auth.uid));
             allow create: if authenticated();
             allow write: if authenticated() && isAdmin(resource.data);
 
@@ -41,7 +42,12 @@ service cloud.firestore {
                 allow read: if authenticated() && isAdmin(eventData(eventId));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
+        }
 
+        match /admins/users/admins/{userId} {
+        	allow read: if authenticated() && isSuperAdmin(request.auth.uid);
+            allow write: if false;
+            allow create: if false;
         }
 
     }
