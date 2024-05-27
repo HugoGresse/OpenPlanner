@@ -13,6 +13,7 @@ import {
 } from '../../../actions/sessions/generation/generateShortVid'
 import { ShortVidSettings } from './ShortVidSettings'
 import { useNotification } from '../../../../hooks/notificationHook'
+import { ShortVidEndpointDefaultKey } from '../../../actions/sessions/generation/shortVidAPI'
 
 export const GenerateSessionsVideoDialog = ({
     isOpen,
@@ -39,8 +40,9 @@ export const GenerateSessionsVideoDialog = ({
         generateShortVid
     )
 
-    const shortVidSetting = {
+    const shortVidSetting: Omit<ShortVidGenerationSettings, 'updateSession'> = {
         template: event.shortVidSettings?.template || 'TalkBranded',
+        endpoint: (event.shortVidSettings?.server as any) || ShortVidEndpointDefaultKey,
         eventId: event.id,
         eventApiKey: event.apiKey,
         locationName: event.locationName || '',
@@ -65,12 +67,19 @@ export const GenerateSessionsVideoDialog = ({
                 updateSession: updateDoc,
             })
             .then(({ success, results }: GeneratedSessionVideoAnswer) => {
-                if (onSuccess && success && results.length) {
-                    onSuccess(results[0])
+                if (success && results.length) {
+                    const text = onSuccess ? 'Video generation done!' : 'Video generation done, sessions updated!'
+                    if (onSuccess) {
+                        onSuccess(results[0])
+                    }
+                    createNotification(text, { type: 'success' })
+                    onClose()
+                } else {
+                    createNotification(
+                        'Error while generating the video/image, you may want to switch the ShortVid server',
+                        { type: 'error' }
+                    )
                 }
-                onClose()
-                const text = onSuccess ? 'Video generation done!' : 'Video generation done, sessions updated!'
-                createNotification(text, { type: 'success' })
             })
     }
 
