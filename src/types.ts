@@ -108,6 +108,7 @@ export interface EventFiles {
 
 export interface EventShortVidSettings {
     template: string | null
+    server: string | null
 }
 export interface EventAISettings {
     model: string

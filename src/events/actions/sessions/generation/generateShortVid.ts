@@ -2,7 +2,7 @@ import { Session } from '../../../../types'
 import { generateApiKey } from '../../../../utils/generateApiKey'
 import { updateEvent } from '../../updateEvent'
 import { GenerateBaseResultAnswer } from './useSessionsGenerationGeneric'
-import { shortVidAPI, ShortVidSettings } from './shortVidAPI'
+import { shortVidAPI, ShortVidEndpoints, ShortVidSettings } from './shortVidAPI'
 
 export type ShortVidGenerationSettings = {
     template: string
@@ -13,6 +13,7 @@ export type ShortVidGenerationSettings = {
     logoUrl: string
     colorBackground: string
     eventStartDate: Date | null
+    endpoint: keyof typeof ShortVidEndpoints
 }
 
 export type GeneratedSessionVideoAnswer = {
@@ -86,7 +87,8 @@ export const generateShortVid = async (
                 apiKey,
                 settings.template,
                 settings.updateSession,
-                sessionSettings
+                sessionSettings,
+                settings.endpoint
             ),
             shortVidAPI(
                 settings.eventId,
@@ -95,6 +97,7 @@ export const generateShortVid = async (
                 settings.template,
                 settings.updateSession,
                 sessionSettings,
+                settings.endpoint,
                 -1
             ),
         ])

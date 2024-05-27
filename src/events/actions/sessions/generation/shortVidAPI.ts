@@ -19,6 +19,15 @@ export type ShortVidSettings = {
     speakers?: ShortVidSpeakerInput[]
 } & ShortVidDesignSetting
 
+export enum ShortVidEndpoints {
+    'shortvid-openplanner' = 'ShortVid hosted by Hugo Gresse (faster?)',
+    'shortvid-official' = 'ShortVid Official',
+}
+export const ShortVidEndpointDefault = ShortVidEndpoints['shortvid-openplanner']
+export const ShortVidEndpointDefaultKey: keyof typeof ShortVidEndpoints = Object.keys(ShortVidEndpoints)[
+    Object.values(ShortVidEndpoints).indexOf(ShortVidEndpointDefault as any)
+] as any
+
 export const shortVidAPI = async (
     eventId: string,
     sessionId: string,
@@ -26,6 +35,7 @@ export const shortVidAPI = async (
     shortVidType: string,
     updateSession: boolean,
     settings: ShortVidSettings,
+    endpoint: keyof typeof ShortVidEndpoints = ShortVidEndpointDefaultKey,
     frame?: number
 ) => {
     const url = new URL(API_URL as string)
@@ -44,6 +54,7 @@ export const shortVidAPI = async (
                 updateSession,
                 settings,
                 frame,
+                endpoint: endpoint,
             }),
         })
         if (!response.ok) {
