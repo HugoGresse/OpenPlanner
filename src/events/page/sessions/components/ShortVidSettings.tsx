@@ -1,4 +1,4 @@
-import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { FormContainer, SelectElement, TextFieldElement, useForm } from 'react-hook-form-mui'
 import { Box, Button, Grid, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../../components/form/SaveShortcut'
@@ -8,6 +8,7 @@ import { doc } from 'firebase/firestore'
 import { collections } from '../../../../services/firebase'
 import { Event, EventShortVidSettings } from '../../../../types'
 import { ExpandMore } from '@mui/icons-material'
+import { ShortVidEndpointDefaultKey, ShortVidEndpoints } from '../../../actions/sessions/generation/shortVidAPI'
 
 export const ShortVidSettings = ({ event }: { event: Event }) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
@@ -16,6 +17,7 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
     const formContext = useForm({
         defaultValues: {
             template: event.shortVidSettings?.template || 'TalkBranded',
+            server: event.shortVidSettings?.server || ShortVidEndpointDefaultKey,
         },
     })
     const { formState } = formContext
@@ -27,6 +29,7 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
                 onSuccess={async (data) => {
                     const shortVidSettings: EventShortVidSettings = {
                         template: data.template,
+                        server: data.server,
                     }
                     return mutation.mutate({
                         shortVidSettings: shortVidSettings,
@@ -46,6 +49,20 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
                             name="template"
                             variant="filled"
                             disabled={formState.isSubmitting}
+                        />
+                        <SelectElement
+                            margin="dense"
+                            required
+                            fullWidth
+                            label="Server"
+                            name="server"
+                            helperText="The server to used, OpenPlanner is 2x faster but not aligned with the official ShortVid"
+                            variant="filled"
+                            disabled={formState.isSubmitting}
+                            options={Object.keys(ShortVidEndpoints).map((key) => ({
+                                id: key,
+                                label: ShortVidEndpoints[key as keyof typeof ShortVidEndpoints],
+                            }))}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>

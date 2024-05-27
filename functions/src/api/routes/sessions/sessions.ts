@@ -22,6 +22,7 @@ const ShortVid = Type.Object({
     shortVidType: Type.String(),
     updateSession: Type.Boolean(),
     frame: Type.Optional(Type.Number()),
+    endpoint: Type.Optional(Type.String()),
     settings: Type.Object({
         backgroundColor: Type.String(),
         title: Type.String(),
@@ -95,12 +96,16 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
             const shortVidType = request.body.shortVidType
             const shortVidSettings = request.body.settings
             const frame = request.body.frame
+            const endpoint = request.body.endpoint
 
             const isFrameGeneration = Number.isInteger(frame)
 
-            const url = isFrameGeneration
-                ? `https://api.shortvid.io/frame/${shortVidType}/${frame}`
-                : `https://api.shortvid.io/${shortVidType}`
+            const baseUrl =
+                endpoint === 'shortvid-official' ? 'https://api.shortvid.io' : 'https://shortvid-api.minix.gresse.io'
+
+            const url = isFrameGeneration ? `${baseUrl}/frame/${shortVidType}/${frame}` : `${baseUrl}/${shortVidType}`
+
+            console.log(url, shortVidSettings)
 
             const shortVidResponse = await fetch(url, {
                 method: 'POST',
@@ -115,7 +120,7 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
 
             if (!shortVidResponse.ok) {
                 // @ts-ignore
-                reply.code(400).send({ error: 'ShortVid API error, ' + shortVidResponse.statusText, success: false })
+                reply.code(500).send({ error: 'ShortVid API error, ' + shortVidResponse.statusText, success: false })
                 return
             }
 
@@ -136,7 +141,7 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
             if (!success) {
                 const text = await cloneResponseInCaseOfError.text()
                 console.error('ShortVid API error', text)
-                return reply.status(400).send({
+                return reply.status(500).send({
                     success: false,
                     // @ts-ignore
                     error: publicFileUrlOrError + ' ' + text,
