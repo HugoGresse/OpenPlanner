@@ -49,7 +49,6 @@ export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = 
                         setLoading(false)
                     },
                     (error) => {
-                        console.log(error)
                         setError(error.message)
                         setLoading(false)
                     }
@@ -60,7 +59,6 @@ export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = 
                         docTransformer(querySnapshot)
                     })
                     .catch((error) => {
-                        console.log(error)
                         setLoading(false)
                         setError(error.message)
                     })
@@ -69,7 +67,6 @@ export const useFirestoreCollection = <T>(query: Query<T>, subscribe: boolean = 
                     })
             }
         } catch (error: any) {
-            console.log(error)
             setError(error.message)
         }
 
@@ -124,7 +121,6 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
                         setLoading(false)
                     },
                     (error) => {
-                        console.log(error)
                         setError(error.message)
                         setLoading(false)
                     }
@@ -135,7 +131,6 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
                         docTransformer(docSnapshot)
                     })
                     .catch((error) => {
-                        console.log(error)
                         setError(error.message)
                     })
                     .finally(() => {
@@ -143,7 +138,6 @@ export const useFirestoreDocument = <T>(ref: DocumentReference<T>, subscribe: bo
                     })
             }
         } catch (error: any) {
-            console.log(error)
             setError(error.message)
         }
 
