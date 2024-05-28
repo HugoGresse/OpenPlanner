@@ -56,7 +56,7 @@ export const ShortVidSettings = ({ event }: { event: Event }) => {
                             fullWidth
                             label="Server"
                             name="server"
-                            helperText="The server to used, OpenPlanner is 2x faster but not aligned with the official ShortVid"
+                            helperText="The server to use, OpenPlanner is 2x faster but not updated by the ShortVid team"
                             variant="filled"
                             disabled={formState.isSubmitting}
                             options={Object.keys(ShortVidEndpoints).map((key) => ({
