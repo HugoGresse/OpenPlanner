@@ -1,4 +1,5 @@
 import resourceTimeGrid from '@fullcalendar/resource-timegrid'
+import adaptivePlugin from '@fullcalendar/adaptive'
 import interactionPlugin, { DropArg, EventResizeDoneArg } from '@fullcalendar/interaction'
 import { EventContentArg, EventDropArg, EventSourceInput } from '@fullcalendar/core'
 import * as React from 'react'
@@ -19,6 +20,8 @@ type FullCalendarBaseProps = {
     datesSet?: (arg: { start: Date; end: Date }) => void
     eventClassNames?: string
 }
+
+export const FullCalendarSlotLabelInterval = '00:15'
 
 export const FullCalendarBase = ({
     forwardRef,
@@ -46,7 +49,7 @@ export const FullCalendarBase = ({
             nowIndicator
             headerToolbar={{
                 right: 'prev,next',
-                left: 'allDays,changeTemplate',
+                left: 'allDays,changeTemplate,exportToExcel',
                 center: 'title',
             }}
             customButtons={customButtons}
@@ -69,7 +72,7 @@ export const FullCalendarBase = ({
             }}
             locale="fr"
             slotDuration="00:05:00"
-            slotLabelInterval="00:15"
+            slotLabelInterval={FullCalendarSlotLabelInterval}
             height="auto"
             resourceOrder="order"
             resources={event.tracks.map((t, index) => ({

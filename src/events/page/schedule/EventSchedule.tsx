@@ -1,4 +1,4 @@
-import { Box, Button, Card, Link, Typography } from '@mui/material'
+import { Box, Button, Card, Dialog, Link, Typography } from '@mui/material'
 import * as React from 'react'
 import { useRef, useState } from 'react'
 import { Event, Session } from '../../../types'
@@ -12,12 +12,13 @@ import { EventSourceInput } from '@fullcalendar/core'
 import { onFullCalendarEventChange } from './eventScheduleFunctions'
 import { SessionCardContent } from './components/SessionCardContent'
 import { useLocation } from 'wouter'
-import { FullCalendarBase } from './components/FullCalendarBase'
+import { FullCalendarBase, FullCalendarSlotLabelInterval } from './components/FullCalendarBase'
 import { useSessionTemplate } from '../../../services/hooks/useSessionsTemplate'
 import { getSessionBackgroundColor } from './components/getSessionBackgroundColor'
 import { hexOpacity } from '../../../utils/colors/hexOpacity'
 import { hexDarken } from '../../../utils/colors/hexDarken'
 import { TemplateCardContent } from './components/TemplateCardContent'
+import { convertFullCalendarToExcel, convertFullCalendarToHtml } from './components/xlsx/convertFullCalendarToExcel'
 
 export type EventScheduleProps = {
     event: Event
@@ -64,6 +65,36 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const sessionsTemplateArray = sessionsTemplate.data || []
     const startTime = DateTime.fromJSDate(event.dates.start).toFormat('HH:mm')
 
+    if (!sessionsWithDates.length) {
+        return (
+            <Card sx={{ paddingX: 2 }}>
+                <Typography fontWeight="600" mt={2}>
+                    The event does not have any session with dates.
+                </Typography>
+                <Button component={Link} href="/sessions">
+                    Add a session here
+                </Button>
+            </Card>
+        )
+    }
+
+    // const html = convertFullCalendarToHtml(
+    //         sessionsWithDates.map((s: Session) => ({
+    //             title: s.title,
+    //             id: s.id,
+    //             start: s.dates?.start?.toISO(),
+    //             end: s.dates?.end?.toISO(),
+    //             resourceId: s.trackId,
+    //             extendedProps: s,
+    //             backgroundColor: getSessionBackgroundColor(s),
+    //         })) as EventSourceInput,
+    //     FullCalendarSlotLabelInterval,
+    //         event.tracks.map((t, index) => ({
+    //             id: t.id,
+    //             title: t.name,
+    //             order: index,
+    //         }))).outerHTML
+
     const customButtons = {
         allDays: {
             text: 'Display all days',
@@ -92,6 +123,28 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
             click: () => {
                 // Redirect to the template page
                 setLocation(`/schedule/template`)
+            },
+        },
+        exportToExcel: {
+            text: 'Export to Excel',
+            click: () => {
+                convertFullCalendarToExcel(
+                    sessionsWithDates.map((s: Session) => ({
+                        title: s.title,
+                        id: s.id,
+                        start: s.dates?.start?.toISO(),
+                        end: s.dates?.end?.toISO(),
+                        resourceId: s.trackId,
+                        extendedProps: s,
+                        backgroundColor: getSessionBackgroundColor(s),
+                    })) as EventSourceInput,
+                    '00:05',
+                    event.tracks.map((t, index) => ({
+                        id: t.id,
+                        title: t.name,
+                        order: index,
+                    }))
+                )
             },
         },
     }
@@ -196,6 +249,12 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                         />
                     </Box>
                 )}
+
+                {/*{html && (*/}
+                {/*    <Dialog open={true} >*/}
+                {/*        <div dangerouslySetInnerHTML={{ __html: html }} />*/}
+                {/*    </Dialog>*/}
+                {/*)}*/}
             </Box>
         </>
     )
