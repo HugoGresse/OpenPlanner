@@ -6,19 +6,21 @@ import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
 import './eventschedule.css'
-import { diffDays } from '../../../utils/dates/diffDays'
+import { diffDays, getIndividualDays } from '../../../utils/dates/diffDays'
 import { DateTime } from 'luxon'
 import { EventSourceInput } from '@fullcalendar/core'
 import { onFullCalendarEventChange } from './eventScheduleFunctions'
 import { SessionCardContent } from './components/SessionCardContent'
 import { useLocation } from 'wouter'
-import { FullCalendarBase, FullCalendarSlotLabelInterval } from './components/FullCalendarBase'
+import { FullCalendarBase } from './components/FullCalendarBase'
 import { useSessionTemplate } from '../../../services/hooks/useSessionsTemplate'
 import { getSessionBackgroundColor } from './components/getSessionBackgroundColor'
 import { hexOpacity } from '../../../utils/colors/hexOpacity'
 import { hexDarken } from '../../../utils/colors/hexDarken'
 import { TemplateCardContent } from './components/TemplateCardContent'
-import { convertFullCalendarToExcel, convertFullCalendarToHtml } from './components/xlsx/convertFullCalendarToExcel'
+import { downloadOrCopyFullCalendarToExcel } from './components/xlsx/getFullCalendarToExcel'
+import { Resource } from '@fullcalendar/resource/internal'
+import { useNotification } from '../../../hooks/notificationHook'
 
 export type EventScheduleProps = {
     event: Event
@@ -31,6 +33,8 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const sessions = useSessions(event)
     const sessionsTemplate = useSessionTemplate(event)
     const [daysToDisplay, setDaysToDisplay] = useState<number>(1)
+    const [exportDialogOpen, setExportDialogOpen] = useState(false)
+    const { createNotification } = useNotification()
 
     if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
         return (
@@ -78,23 +82,6 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
         )
     }
 
-    // const html = convertFullCalendarToHtml(
-    //         sessionsWithDates.map((s: Session) => ({
-    //             title: s.title,
-    //             id: s.id,
-    //             start: s.dates?.start?.toISO(),
-    //             end: s.dates?.end?.toISO(),
-    //             resourceId: s.trackId,
-    //             extendedProps: s,
-    //             backgroundColor: getSessionBackgroundColor(s),
-    //         })) as EventSourceInput,
-    //     FullCalendarSlotLabelInterval,
-    //         event.tracks.map((t, index) => ({
-    //             id: t.id,
-    //             title: t.name,
-    //             order: index,
-    //         }))).outerHTML
-
     const customButtons = {
         allDays: {
             text: 'Display all days',
@@ -125,28 +112,33 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                 setLocation(`/schedule/template`)
             },
         },
-        exportToExcel: {
-            text: 'Export to Excel',
+        export: {
+            text: 'Export',
             click: () => {
-                convertFullCalendarToExcel(
-                    sessionsWithDates.map((s: Session) => ({
-                        title: s.title,
-                        id: s.id,
-                        start: s.dates?.start?.toISO(),
-                        end: s.dates?.end?.toISO(),
-                        resourceId: s.trackId,
-                        extendedProps: s,
-                        backgroundColor: getSessionBackgroundColor(s),
-                    })) as EventSourceInput,
-                    '00:05',
-                    event.tracks.map((t, index) => ({
-                        id: t.id,
-                        title: t.name,
-                        order: index,
-                    }))
-                )
+                setExportDialogOpen(true)
             },
         },
+    }
+
+    const getExportParameters = (): [Event, EventSourceInput, string, Partial<Resource>[]] => {
+        return [
+            event,
+            sessionsWithDates.map((s: Session) => ({
+                title: s.title,
+                id: s.id,
+                start: s.dates?.start?.toISO(),
+                end: s.dates?.end?.toISO(),
+                resourceId: s.trackId,
+                extendedProps: s,
+                backgroundColor: getSessionBackgroundColor(s),
+            })) as EventSourceInput,
+            '00:05',
+            event.tracks.map((t, index) => ({
+                id: t.id,
+                title: t.name,
+                order: index,
+            })),
+        ]
     }
 
     return (
@@ -250,11 +242,58 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                     </Box>
                 )}
 
-                {/*{html && (*/}
-                {/*    <Dialog open={true} >*/}
-                {/*        <div dangerouslySetInnerHTML={{ __html: html }} />*/}
-                {/*    </Dialog>*/}
-                {/*)}*/}
+                <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
+                    <Box sx={{ padding: 2 }}>
+                        <Typography variant="h6">Export</Typography>
+                        <Button
+                            variant={'contained'}
+                            sx={{ mt: 1 }}
+                            onClick={() => {
+                                // @ts-ignore
+                                downloadOrCopyFullCalendarToExcel(...getExportParameters(), false)
+                            }}>
+                            Download Excel/XLSX
+                        </Button>
+
+                        <br />
+
+                        {
+                            // for each day, add a button
+                            Array.from(Array(numberOfDays).keys()).map((day) => {
+                                return (
+                                    <Button
+                                        key={day}
+                                        variant="outlined"
+                                        sx={{ mt: 1, mr: 1 }}
+                                        onClick={() => {
+                                            const dayOfTheMonth = getIndividualDays(event.dates.start, event.dates.end)[
+                                                day
+                                            ]
+                                            downloadOrCopyFullCalendarToExcel(
+                                                // @ts-ignore
+                                                ...getExportParameters(),
+                                                true,
+                                                dayOfTheMonth.start.toJSDate().getDay()
+                                            )
+                                            createNotification('Table copied to clipboard')
+                                        }}>
+                                        Copy table for day {day + 1}
+                                    </Button>
+                                )
+                            })
+                        }
+                        <br />
+
+                        <Button
+                            sx={{ mt: 4 }}
+                            variant={'contained'}
+                            onClick={() => {
+                                setExportDialogOpen(false)
+                            }}>
+                            Close
+                        </Button>
+                    </Box>
+                </Dialog>
             </Box>
         </>
     )

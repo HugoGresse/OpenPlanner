@@ -1,5 +1,4 @@
 import resourceTimeGrid from '@fullcalendar/resource-timegrid'
-import adaptivePlugin from '@fullcalendar/adaptive'
 import interactionPlugin, { DropArg, EventResizeDoneArg } from '@fullcalendar/interaction'
 import { EventContentArg, EventDropArg, EventSourceInput } from '@fullcalendar/core'
 import * as React from 'react'
@@ -49,7 +48,7 @@ export const FullCalendarBase = ({
             nowIndicator
             headerToolbar={{
                 right: 'prev,next',
-                left: 'allDays,changeTemplate,exportToExcel',
+                left: 'allDays,changeTemplate,export',
                 center: 'title',
             }}
             customButtons={customButtons}

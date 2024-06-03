@@ -1,7 +1,9 @@
 import { EventSourceInput } from '@fullcalendar/core'
 import { utils, writeFile } from 'xlsx-js-style'
 import { FullCalendarSlotLabelInterval } from '../FullCalendarBase'
-import { convertTableToXLSX } from './htmlToExcel'
+import { convertTableToExcelWorkSheet } from './htmlToExcel'
+import { getIndividualDays } from '../../../../../utils/dates/diffDays'
+import { Event } from '../../../../../types'
 
 type Resource = {
     id: string
@@ -18,15 +20,45 @@ type Events = {
     backgroundColor: string
 }
 
-export const convertFullCalendarToExcel = (
+export const downloadOrCopyFullCalendarToExcel = (
+    event: Event,
+    events: EventSourceInput | Events[],
+    slotLabelInterval = '00:15',
+    resources: Resource[],
+    copyToClipboard = false,
+    selectedDayOfTheMonth?: number // only for copy
+) => {
+    const workbook = getFullCalendarToExcelWorkbook(event, events, slotLabelInterval, resources)
+    if (copyToClipboard) {
+        const htmlTable = convertFullCalendarToHtml(events, slotLabelInterval, resources, selectedDayOfTheMonth)
+        const clipboardItem = new ClipboardItem({ 'text/html': new Blob([htmlTable.outerHTML], { type: 'text/html' }) })
+        navigator.clipboard.write([clipboardItem])
+    } else {
+        writeFile(workbook, `${event.name} schedule.xlsx`)
+    }
+}
+
+export const getFullCalendarToExcelWorkbook = (
+    event: Event,
     events: EventSourceInput | Events[],
     slotLabelInterval = '00:15',
     resources: Resource[]
 ) => {
-    const html = convertFullCalendarToHtml(events, slotLabelInterval, resources)
+    const days = getIndividualDays(event.dates.start, event.dates.end)
 
-    const workbook = convertTableToXLSX(html)
-    writeFile(workbook, 'fileName.xlsx')
+    const worksheets = days.map((day) => {
+        const selectedDayOfTheMonth = day.start.toJSDate().getDate()
+        return convertFullCalendarToHtml(events, slotLabelInterval, resources, selectedDayOfTheMonth)
+    })
+
+    const workbook = utils.book_new()
+    worksheets.forEach((worksheet, index) => {
+        const worksheetName = `Day ${index + 1}`
+        const worksheetXLSX = convertTableToExcelWorkSheet(worksheet)
+        utils.book_append_sheet(workbook, worksheetXLSX, worksheetName)
+    })
+
+    return workbook
 }
 
 const getRow = (time: Date, endTime: Date, resources: Resource[], eventsArray: Events[]) => {
@@ -59,7 +91,8 @@ const getRow = (time: Date, endTime: Date, resources: Resource[], eventsArray: E
 export const convertFullCalendarToHtml = (
     events: EventSourceInput | Events[],
     slotLabelInterval = FullCalendarSlotLabelInterval,
-    resources: Resource[]
+    resources: Resource[],
+    selectedDayOfTheMonth?: number
 ) => {
     const table = document.createElement('table')
     const thead = document.createElement('thead')
@@ -80,10 +113,8 @@ export const convertFullCalendarToHtml = (
     // Create table body
     const eventsArrayBase = events as Events[]
     const eventsArrayAllDay = eventsArrayBase.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-    // Day1
-    const eventsArray = eventsArrayAllDay.filter(
-        (e) => new Date(e.start).getDate() === new Date(eventsArrayAllDay[0].start).getDate()
-    )
+    const dayOfTheMonthToExport = selectedDayOfTheMonth || new Date(eventsArrayAllDay[0].start).getDate()
+    const eventsArray = eventsArrayAllDay.filter((e) => new Date(e.start).getDate() === dayOfTheMonthToExport)
 
     const startTime = new Date(eventsArray[0].start)
     const endTime = new Date(eventsArray[eventsArray.length - 1].end)

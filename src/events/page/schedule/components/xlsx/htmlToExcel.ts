@@ -1,6 +1,6 @@
-import { CellObject, utils, WorkBook } from 'xlsx-js-style'
+import { CellObject, utils, WorkSheet } from 'xlsx-js-style'
 
-export const rgbToHex = (tdElement: HTMLTableCellElement): string => {
+const rgbToHex = (tdElement: HTMLTableCellElement): string => {
     const rgb = tdElement.style.backgroundColor
 
     // Extract RGB values from the string
@@ -21,8 +21,7 @@ export const rgbToHex = (tdElement: HTMLTableCellElement): string => {
     return 'FFFFFF'
 }
 
-export const convertTableToXLSX = (table: HTMLTableElement): WorkBook => {
-    const workbook = utils.book_new()
+export const convertTableToExcelWorkSheet = (table: HTMLTableElement): WorkSheet => {
     const worksheet = utils.aoa_to_sheet([])
 
     const rows = table.rows
@@ -34,8 +33,6 @@ export const convertTableToXLSX = (table: HTMLTableElement): WorkBook => {
         for (let j = 0; j < cells.length; j++) {
             const cell = cells[j] as HTMLTableCellElement
             const cellValue = cell.innerText
-
-            console.log(rgbToHex(cell))
 
             const cellObject: Partial<CellObject> = {
                 v: cellValue,
@@ -52,6 +49,5 @@ export const convertTableToXLSX = (table: HTMLTableElement): WorkBook => {
         utils.sheet_add_aoa(worksheet, [rowData], { origin: -1 })
     }
 
-    utils.book_append_sheet(workbook, worksheet, 'Sheet1')
-    return workbook
+    return worksheet
 }
