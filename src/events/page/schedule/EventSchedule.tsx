@@ -257,31 +257,26 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
 
                         <br />
 
-                        {
-                            // for each day, add a button
-                            Array.from(Array(numberOfDays).keys()).map((day) => {
-                                return (
-                                    <Button
-                                        key={day}
-                                        variant="outlined"
-                                        sx={{ mt: 1, mr: 1 }}
-                                        onClick={() => {
-                                            const dayOfTheMonth = getIndividualDays(event.dates.start, event.dates.end)[
-                                                day
-                                            ]
-                                            downloadOrCopyFullCalendarToExcel(
-                                                // @ts-ignore
-                                                ...getExportParameters(),
-                                                true,
-                                                dayOfTheMonth.start.toJSDate().getDay()
-                                            )
-                                            createNotification('Table copied to clipboard')
-                                        }}>
-                                        Copy table for day {day + 1}
-                                    </Button>
-                                )
-                            })
-                        }
+                        {Array.from(Array(numberOfDays).keys()).map((day) => {
+                            return (
+                                <Button
+                                    key={day}
+                                    variant="outlined"
+                                    sx={{ mt: 1, mr: 1 }}
+                                    onClick={() => {
+                                        const dayOfTheMonth = getIndividualDays(event.dates.start, event.dates.end)[day]
+                                        downloadOrCopyFullCalendarToExcel(
+                                            // @ts-ignore
+                                            ...getExportParameters(),
+                                            true,
+                                            dayOfTheMonth.start.toJSDate().getDay()
+                                        )
+                                        createNotification('Table copied to clipboard')
+                                    }}>
+                                    Copy table for day {day + 1}
+                                </Button>
+                            )
+                        })}
                         <br />
 
                         <Button
