@@ -16,6 +16,7 @@ type Events = {
     id: string
     start: string
     end: string
+    speakers: string
     resourceId: string
     backgroundColor: string
 }
@@ -79,7 +80,7 @@ const getRow = (time: Date, endTime: Date, resources: Resource[], eventsArray: E
             (e) => e.resourceId === resource.id && new Date(e.start) <= time && new Date(e.end) > time
         )
         if (event) {
-            cell.textContent = event.title
+            cell.textContent = event.title + ' - ' + event.speakers
             cell.style.backgroundColor = event.backgroundColor
         }
         row.appendChild(cell)

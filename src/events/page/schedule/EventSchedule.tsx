@@ -128,6 +128,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                 id: s.id,
                 start: s.dates?.start?.toISO(),
                 end: s.dates?.end?.toISO(),
+                speakers: (s.speakersData || []).map((speaker) => speaker.name).join(', '),
                 resourceId: s.trackId,
                 extendedProps: s,
                 backgroundColor: getSessionBackgroundColor(s),
