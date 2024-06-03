@@ -1,4 +1,4 @@
-import { Box, Button, Card, Link, Typography } from '@mui/material'
+import { Box, Button, Card, Dialog, Link, Typography } from '@mui/material'
 import * as React from 'react'
 import { useRef, useState } from 'react'
 import { Event, Session } from '../../../types'
@@ -6,7 +6,7 @@ import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { NoDatesSessionsPicker } from './NoDatesSessionsPicker'
 import './eventschedule.css'
-import { diffDays } from '../../../utils/dates/diffDays'
+import { diffDays, getIndividualDays } from '../../../utils/dates/diffDays'
 import { DateTime } from 'luxon'
 import { EventSourceInput } from '@fullcalendar/core'
 import { onFullCalendarEventChange } from './eventScheduleFunctions'
@@ -18,6 +18,9 @@ import { getSessionBackgroundColor } from './components/getSessionBackgroundColo
 import { hexOpacity } from '../../../utils/colors/hexOpacity'
 import { hexDarken } from '../../../utils/colors/hexDarken'
 import { TemplateCardContent } from './components/TemplateCardContent'
+import { downloadOrCopyFullCalendarToExcel } from './components/xlsx/getFullCalendarToExcel'
+import { Resource } from '@fullcalendar/resource/internal'
+import { useNotification } from '../../../hooks/notificationHook'
 
 export type EventScheduleProps = {
     event: Event
@@ -30,6 +33,8 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const sessions = useSessions(event)
     const sessionsTemplate = useSessionTemplate(event)
     const [daysToDisplay, setDaysToDisplay] = useState<number>(1)
+    const [exportDialogOpen, setExportDialogOpen] = useState(false)
+    const { createNotification } = useNotification()
 
     if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
         return (
@@ -64,6 +69,19 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const sessionsTemplateArray = sessionsTemplate.data || []
     const startTime = DateTime.fromJSDate(event.dates.start).toFormat('HH:mm')
 
+    if (!sessionsWithDates.length) {
+        return (
+            <Card sx={{ paddingX: 2 }}>
+                <Typography fontWeight="600" mt={2}>
+                    The event does not have any session with dates.
+                </Typography>
+                <Button component={Link} href="/sessions">
+                    Add a session here
+                </Button>
+            </Card>
+        )
+    }
+
     const customButtons = {
         allDays: {
             text: 'Display all days',
@@ -94,6 +112,34 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                 setLocation(`/schedule/template`)
             },
         },
+        export: {
+            text: 'Export',
+            click: () => {
+                setExportDialogOpen(true)
+            },
+        },
+    }
+
+    const getExportParameters = (): [Event, EventSourceInput, string, Partial<Resource>[]] => {
+        return [
+            event,
+            sessionsWithDates.map((s: Session) => ({
+                title: s.title,
+                id: s.id,
+                start: s.dates?.start?.toISO(),
+                end: s.dates?.end?.toISO(),
+                speakers: (s.speakersData || []).map((speaker) => speaker.name).join(', '),
+                resourceId: s.trackId,
+                extendedProps: s,
+                backgroundColor: getSessionBackgroundColor(s),
+            })) as EventSourceInput,
+            '00:05',
+            event.tracks.map((t, index) => ({
+                id: t.id,
+                title: t.name,
+                order: index,
+            })),
+        ]
     }
 
     return (
@@ -196,6 +242,54 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                         />
                     </Box>
                 )}
+
+                <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)}>
+                    <Box sx={{ padding: 2 }}>
+                        <Typography variant="h6">Export</Typography>
+                        <Button
+                            variant={'contained'}
+                            sx={{ mt: 1 }}
+                            onClick={() => {
+                                // @ts-ignore
+                                downloadOrCopyFullCalendarToExcel(...getExportParameters(), false)
+                            }}>
+                            Download Excel/XLSX
+                        </Button>
+
+                        <br />
+
+                        {Array.from(Array(numberOfDays).keys()).map((day) => {
+                            return (
+                                <Button
+                                    key={day}
+                                    variant="outlined"
+                                    sx={{ mt: 1, mr: 1 }}
+                                    onClick={() => {
+                                        const dayOfTheMonth = getIndividualDays(event.dates.start, event.dates.end)[day]
+                                        downloadOrCopyFullCalendarToExcel(
+                                            // @ts-ignore
+                                            ...getExportParameters(),
+                                            true,
+                                            dayOfTheMonth.start.toJSDate().getDay()
+                                        )
+                                        createNotification('Table copied to clipboard')
+                                    }}>
+                                    Copy table for day {day + 1}
+                                </Button>
+                            )
+                        })}
+                        <br />
+
+                        <Button
+                            sx={{ mt: 4 }}
+                            variant={'contained'}
+                            onClick={() => {
+                                setExportDialogOpen(false)
+                            }}>
+                            Close
+                        </Button>
+                    </Box>
+                </Dialog>
             </Box>
         </>
     )

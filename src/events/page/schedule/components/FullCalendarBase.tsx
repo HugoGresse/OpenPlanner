@@ -20,6 +20,8 @@ type FullCalendarBaseProps = {
     eventClassNames?: string
 }
 
+export const FullCalendarSlotLabelInterval = '00:15'
+
 export const FullCalendarBase = ({
     forwardRef,
     event,
@@ -46,7 +48,7 @@ export const FullCalendarBase = ({
             nowIndicator
             headerToolbar={{
                 right: 'prev,next',
-                left: 'allDays,changeTemplate',
+                left: 'allDays,changeTemplate,export',
                 center: 'title',
             }}
             customButtons={customButtons}
@@ -69,7 +71,7 @@ export const FullCalendarBase = ({
             }}
             locale="fr"
             slotDuration="00:05:00"
-            slotLabelInterval="00:15"
+            slotLabelInterval={FullCalendarSlotLabelInterval}
             height="auto"
             resourceOrder="order"
             resources={event.tracks.map((t, index) => ({
