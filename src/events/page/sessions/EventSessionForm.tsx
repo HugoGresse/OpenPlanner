@@ -266,6 +266,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                 variant="filled"
                                 disabled={isSubmitting}
                                 maxImageSize={1500}
+                                fileSuffix={session?.title}
                             />
                         </Grid>
                     </Grid>
@@ -337,6 +338,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         label="Teaser image url"
                                         name="teaserImageUrl"
                                         variant="filled"
+                                        fileSuffix={session?.title}
                                         disabled={false}
                                     />
                                 </Grid>
