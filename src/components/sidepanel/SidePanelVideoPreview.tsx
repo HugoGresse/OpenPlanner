@@ -34,11 +34,8 @@ export const SidePanelVideoPreview = ({
                     border: '4px solid #EEE',
                 }}
             />
-            <a href={videoUrl} download={'video.mp4'}>
-                Download
-            </a>
             <Button
-                variant="contained"
+                variant="outlined"
                 endIcon={<Download />}
                 disabled={!videoUrl}
                 sx={{ mt: 2 }}
