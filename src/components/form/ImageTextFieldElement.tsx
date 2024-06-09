@@ -39,7 +39,7 @@ export const ImageTextFieldElement = <TFieldValues extends FieldValues = FieldVa
                                         onClick={async () => {
                                             await triggerFileDownload(
                                                 fieldValue,
-                                                `OpenPlanner-session-${fileSuffix}.${fieldValueExtension}`
+                                                `OpenPlanner-${fileSuffix}.${fieldValueExtension}`
                                             )
                                         }}
                                         edge="end">

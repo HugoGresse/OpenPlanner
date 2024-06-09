@@ -338,7 +338,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         label="Teaser image url"
                                         name="teaserImageUrl"
                                         variant="filled"
-                                        fileSuffix={session?.title}
+                                        fileSuffix={'session-' + session?.title}
                                         disabled={false}
                                     />
                                 </Grid>
