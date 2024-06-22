@@ -9,8 +9,9 @@ import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../../services/hooks/firestoreMutationHooks'
-import { DeleteRounded, DragHandle } from '@mui/icons-material'
+import { DeleteRounded, Download, DragHandle } from '@mui/icons-material'
 import { Draggable, DraggingStyle, NotDraggingStyle } from '@hello-pangea/dnd'
+import { downloadImages } from '../../../../utils/images/downloadImages'
 
 export type SponsorCategoryProps = {
     category: SponsorCategory
@@ -45,10 +46,27 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                             <IconButton
                                 aria-label="Delete sponsor category"
                                 onClick={() => {
-                                    deleteCategory.mutate()
+                                    if (confirm('Are you sure you want to delete?')) {
+                                        deleteCategory.mutate()
+                                        return
+                                    }
                                 }}
                                 edge="end">
                                 <DeleteRounded />
+                            </IconButton>
+                            <IconButton
+                                aria-label="Download"
+                                onClick={() => {
+                                    downloadImages(
+                                        `${category.name}`,
+                                        category.sponsors.map((s) => ({
+                                            name: s.name,
+                                            url: s.logoUrl,
+                                        }))
+                                    )
+                                }}
+                                edge="end">
+                                <Download />
                             </IconButton>
                         </Typography>
 
