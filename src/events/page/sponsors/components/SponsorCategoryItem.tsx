@@ -1,6 +1,6 @@
-import { Box, Button, IconButton, Typography } from '@mui/material'
+import { Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import * as React from 'react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { SponsorCategory } from '../../../../types'
 import { SponsorItem } from './SponsorItem'
 import { collections } from '../../../../services/firebase'
@@ -23,6 +23,7 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
     const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(eventId), category.id))
     const deleteCategory = useFirestoreDocumentDeletion(doc(collections.sponsors(eventId), category.id))
     const ref = useRef(null)
+    const [dwnloadMenuAnchor, setDownloadMenuAnchor] = useState<null | HTMLElement>(null)
 
     const getItemStyle = (isDragging: boolean, draggableStyle: DraggingStyle | NotDraggingStyle | undefined): any => ({
         userSelect: 'none',
@@ -55,16 +56,9 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                                 <DeleteRounded />
                             </IconButton>
                             <IconButton
+                                id="download-button"
                                 aria-label="Download"
-                                onClick={() => {
-                                    downloadImages(
-                                        `${category.name}`,
-                                        category.sponsors.map((s) => ({
-                                            name: s.name,
-                                            url: s.logoUrl,
-                                        }))
-                                    )
-                                }}
+                                onClick={(event) => setDownloadMenuAnchor(event.currentTarget)}
                                 edge="end">
                                 <Download />
                             </IconButton>
@@ -91,6 +85,41 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                             sx={{ marginY: 1 }}>
                             Add sponsor to {category.name}
                         </Button>
+
+                        <Menu
+                            anchorEl={dwnloadMenuAnchor}
+                            open={!!dwnloadMenuAnchor}
+                            onClose={() => setDownloadMenuAnchor(null)}
+                            MenuListProps={{
+                                'aria-labelledby': 'download-button',
+                            }}>
+                            <MenuItem
+                                onClick={() => {
+                                    downloadImages(
+                                        `${category.name}`,
+                                        category.sponsors.map((s) => ({
+                                            name: s.name,
+                                            url: s.logoUrl,
+                                        })),
+                                        false
+                                    )
+                                }}>
+                                Mixed/native formats
+                            </MenuItem>
+                            <MenuItem
+                                onClick={() => {
+                                    downloadImages(
+                                        `${category.name}`,
+                                        category.sponsors.map((s) => ({
+                                            name: s.name,
+                                            url: s.logoUrl,
+                                        })),
+                                        true
+                                    )
+                                }}>
+                                Raster (svg are converted to png)
+                            </MenuItem>
+                        </Menu>
                     </Box>
                 </div>
             )}

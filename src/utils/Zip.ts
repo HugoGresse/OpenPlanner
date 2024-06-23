@@ -1,3 +1,5 @@
+import { convertSvgToPng as convertSvgToPngFunc } from './images/convertSvgToPng'
+
 /**
  * Modified from https://github.com/pwasystem/zip/blob/main/zip.js
  */
@@ -46,6 +48,11 @@ export class Zip {
         if (fileType) {
             const fileTypeExtension = fileType.split('/').pop()
             if (fileTypeExtension) {
+                // if contain "+", only take the first part : svg+xml for example
+                if (fileTypeExtension.includes('+')) {
+                    const [firstPart] = fileTypeExtension.split('+')
+                    return firstPart
+                }
                 return fileTypeExtension
             }
         }
@@ -59,16 +66,32 @@ export class Zip {
         return null
     }
 
-    async fetch2Zip(filesArray: { url: string; name: string }[], folder: string = ''): Promise<void> {
+    async fetch2Zip(
+        filesArray: { url: string; name: string }[],
+        folder: string = '',
+        convertSvgToPng = false
+    ): Promise<void> {
         for (const file of filesArray) {
             const fetchResponse = await fetch(file.url)
-            const buffer = await fetchResponse.arrayBuffer()
+            let fileExtension = this.getFileExtension(file.url, fetchResponse.headers.get('Content-Type'))
+
+            console.log('fileExtension', fileExtension, convertSvgToPng)
+
+            const buffer =
+                fileExtension === 'svg' && convertSvgToPng
+                    ? await convertSvgToPngFunc(await fetchResponse.text())
+                    : await fetchResponse.arrayBuffer()
+
+            if (fileExtension === 'svg' && convertSvgToPng) {
+                fileExtension = 'png'
+            }
+
             let uint = [...new Uint8Array(buffer)] as unknown as Uint8Array & {
                 modTime: string
                 fileUrl: string
             }
+
             uint.modTime = fetchResponse.headers.get('Last-Modified') || new Date().toUTCString()
-            const fileExtension = this.getFileExtension(file.url, fetchResponse.headers.get('Content-Type'))
             uint.fileUrl = `${this.name}/${folder}${file.name}.${fileExtension || ''}`
             this.zip[file.name] = uint
         }
