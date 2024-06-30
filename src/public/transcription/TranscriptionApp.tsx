@@ -140,7 +140,7 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
             <iframe
                 id={selectedTalk?.id}
                 key={selectedTalk?.id}
-                src={`https://openplanner.fr/gladia.html?token=${gladiaAPIKey}&source_language=french&font_size=40`}
+                src={`https://openplanner.fr/gladia.html?token=${gladiaAPIKey}&font_size=40`}
                 width="100%"
                 height={`${iframeHeight}px`}
                 allow="camera; microphone"
