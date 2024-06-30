@@ -262,7 +262,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 variant="filled"
                                 disabled={formState.isSubmitting}
                             />
-                            {event.transcriptionPassword && (
+                            {event.transcriptionPassword && event.transcriptionPassword.length > 0 ? (
                                 <p>
                                     <a
                                         target="_blank"
@@ -270,7 +270,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                         Transcription page url
                                     </a>
                                 </p>
-                            )}
+                            ) : null}
                         </Grid>
                     </Grid>
                     <Grid container spacing={4}>

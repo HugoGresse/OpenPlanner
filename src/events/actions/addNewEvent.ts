@@ -58,6 +58,8 @@ const addNewEventInternal = async (
         statusBadgeLink: null,
         statusBadgeImage: null,
         openAPIKey: null,
+        gladiaAPIKey: null,
+        transcriptionPassword: null,
         enableVoxxrin: false,
         aiSettings: null,
         shortVidSettings: null,
