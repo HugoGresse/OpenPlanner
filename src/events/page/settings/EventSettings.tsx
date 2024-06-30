@@ -247,7 +247,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 margin="normal"
                                 fullWidth
                                 id="gladiaAPIKey"
-                                label="Gladia.io API key"
+                                label="Gladia.io API key or token"
                                 name="gladiaAPIKey"
                                 variant="filled"
                                 helperText="Used for the transcription pages. Don't forget to set the password below or the Gladia.io API Key could be accessed freely"
@@ -262,6 +262,15 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 variant="filled"
                                 disabled={formState.isSubmitting}
                             />
+                            {event.transcriptionPassword && (
+                                <p>
+                                    <a
+                                        target="_blank"
+                                        href={`https://openplanner.fr/public/event/${event.id}/transcription`}>
+                                        Transcription page url
+                                    </a>
+                                </p>
+                            )}
                         </Grid>
                     </Grid>
                     <Grid container spacing={4}>
