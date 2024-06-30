@@ -62,6 +62,8 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         statusBadgeLink: null,
                         apiKey: null,
                         openAPIKey: null,
+                        gladiaAPIKey: null,
+                        transcriptionPassword: null,
                         enableVoxxrin: false,
                         aiSettings: null,
                         shortVidSettings: null,
