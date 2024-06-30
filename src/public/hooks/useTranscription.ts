@@ -1,7 +1,6 @@
 import { PublicJSON, TranscriptionReply } from '../publicTypes'
 import { BaseAPIUrl } from './constants'
 import { useEffect, useState } from 'react'
-import { DateTime } from 'luxon'
 
 export const useTranscription = (
     eventId: string,
@@ -18,8 +17,6 @@ export const useTranscription = (
         data: null,
         eventData: null,
     })
-
-    // const dateNow = DateTime.fromISO('2023-07-05T016:00:00.000Z')
 
     useEffect(() => {
         const load = async () => {

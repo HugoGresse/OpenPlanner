@@ -28,7 +28,7 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
 
     if (!pagePassword || pagePassword.length === 0) {
         return (
-            <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+            <Container maxWidth="xl" sx={{ mt: '90%', mb: 4 }}>
                 <TextField
                     label="Page password"
                     variant="filled"
@@ -99,6 +99,29 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
                 <Typography variant="h1">Transcription</Typography>
                 <Typography>Select a talk first...</Typography>
+                <Button
+                    variant="contained"
+                    onClick={() => {
+                        setSelectedTrack('')
+                    }}>
+                    Change track
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={() => {
+                        setSelectedTalk({
+                            id: 'no-preconfigured-talk' + Date.now(),
+                            title: 'No preconfigured talk',
+                            dateStart: DateTime.now().toISO(),
+                            dateEnd: DateTime.now().plus({ hours: 1 }).toISO(),
+                            abstract: [],
+                            showInFeedback: true,
+                            speakersIds: [],
+                            trackId: selectedTrack,
+                        })
+                    }}>
+                    Use without talk
+                </Button>
                 <Button variant="contained" onClick={() => saveStuffInLocalStorage('', '')}>
                     Clear password & track
                 </Button>
@@ -115,6 +138,8 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
     return (
         <Box>
             <iframe
+                id={selectedTalk?.id}
+                key={selectedTalk?.id}
                 src={`https://openplanner.fr/gladia.html?token=${gladiaAPIKey}&source_language=french&font_size=40`}
                 width="100%"
                 height={`${iframeHeight}px`}

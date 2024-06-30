@@ -25,6 +25,8 @@ export const useTalkSelection = (
         if (!eventData || !selectedTrack || selectedTrack.length === 0) {
             return
         }
+        // const dateNow = DateTime.fromISO('2024-07-05T17:05:00.000+02:00')
+        const dateNow = DateTime.now()
         const eventForSelectedTrack = eventData?.sessions
             .filter((s) => {
                 const trackMatch = s.trackId === selectedTrack
@@ -39,22 +41,29 @@ export const useTalkSelection = (
                     return false
                 }
 
-                // Filter upcoming or ongoing sessions based on the date
+                const dateStart = DateTime.fromISO(s.dateStart)
                 const dateEnd = DateTime.fromISO(s.dateEnd)
 
-                const isPastSessionForMoreThanOneHour = dateEnd < DateTime.now().minus({ hours: 1 })
+                const isPastDay = dateStart < dateNow.set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+
+                if (isPastDay) {
+                    return false
+                }
+
+                // Filter upcoming or ongoing sessions based on the date
+                const isPastSessionForMoreThanOneHour = dateEnd < dateNow.minus({ hours: 1 })
 
                 if (isPastSessionForMoreThanOneHour) {
                     return false
                 }
 
-                // const isOngoingSession = dateStart < DateTime.now() && dateEnd > DateTime.now()
+                // const isOngoingSession = dateStart < dateNow && dateEnd > dateNow
                 return true
             })
             .sort((a, b) => {
                 const dateStartA = DateTime.fromISO(a.dateStart)
                 const dateStartB = DateTime.fromISO(b.dateStart)
-                return dateStartA.diff(DateTime.now()).milliseconds - dateStartB.diff(DateTime.now()).milliseconds
+                return dateStartA.diff(dateNow).milliseconds - dateStartB.diff(dateNow).milliseconds
             })
 
         setUpComingOnOngoingSessionsForThisTrack(eventForSelectedTrack)
