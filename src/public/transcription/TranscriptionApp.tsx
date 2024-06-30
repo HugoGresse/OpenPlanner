@@ -28,7 +28,7 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
 
     if (!pagePassword || pagePassword.length === 0) {
         return (
-            <Container maxWidth="xl" sx={{ mt: '90%', mb: 4 }}>
+            <Container maxWidth="xl" sx={{ mt: '90vh', mb: 4 }}>
                 <TextField
                     label="Page password"
                     variant="filled"
