@@ -32,6 +32,8 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         end: data.dates.end ? (DateTime.fromISO(data.dates.end).toJSDate() as Date) : null,
     }
     const openAPIKey = data.openAPIKey || ''
+    const gladiaAPIKey = data.gladiaAPIKey || ''
+    const transcriptionPassword = data.transcriptionPassword || ''
 
     return {
         ...event,
@@ -51,6 +53,8 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         formats,
         categories,
         openAPIKey,
+        gladiaAPIKey,
+        transcriptionPassword,
     }
 }
 

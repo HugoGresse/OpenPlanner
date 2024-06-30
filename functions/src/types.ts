@@ -107,6 +107,8 @@ export interface Event {
     files: EventFiles | null
     statusBadgeImage: string | null
     statusBadgeLink: string | null
+    gladiaAPIKey: string | null
+    transcriptionPassword: string | null
 }
 
 export interface SponsorResponse {

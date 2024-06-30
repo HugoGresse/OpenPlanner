@@ -6,6 +6,7 @@ type FetchMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 interface FetchOptions {
     method: FetchMethod
     body?: any
+    headers?: { [key: string]: string }
 }
 
 export const useFetch = <T>(url: string, options: FetchOptions): UseQueryResult<T> => {
@@ -22,6 +23,7 @@ export const useFetch = <T>(url: string, options: FetchOptions): UseQueryResult<
                 method: options.method,
                 headers: {
                     'Content-Type': 'application/json',
+                    ...(options.headers || {}),
                 },
                 body: JSON.stringify(options.body),
             })

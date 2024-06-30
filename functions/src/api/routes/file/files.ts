@@ -3,8 +3,8 @@ import { Static, Type } from '@sinclair/typebox'
 import { extractMultipartFormData } from './parseMultipartFiles'
 import { v4 as uuidv4 } from 'uuid'
 import firebase from 'firebase-admin'
-import { defineString } from 'firebase-functions/params'
 import { checkFileTypes } from '../../other/checkFileTypes'
+import { getStorageBucketName } from '../../dao/firebasePlugin'
 
 export const NewFile = Type.Any()
 
@@ -100,12 +100,7 @@ export const uploadBufferToStorage = async (
     eventId: string,
     fileName: string
 ): Promise<[boolean, string]> => {
-    const storageBucketParam = defineString('BUCKET', {
-        input: { resource: { resource: { type: 'storage.googleapis.com/Bucket' } } },
-        description:
-            'This will automatically populate the selector field with the deploying Cloud Project’s  storage buckets',
-    })
-    const storageBucket = storageBucketParam.value()
+    const storageBucket = getStorageBucketName()
 
     const fileType = await checkFileTypes(buffer, fileName)
 

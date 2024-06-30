@@ -16,6 +16,7 @@ import { filesRoutes } from './routes/file/files'
 import { faqRoutes } from './routes/faq/faq'
 import { helloRoute } from './routes/hello/hello'
 import { sessionsRoutes } from './routes/sessions/sessions'
+import { transcriptionRoutes } from './routes/transcription/transcription'
 
 type Firebase = firebaseApp.App
 
@@ -48,6 +49,7 @@ registerSwagger(fastify)
 fastify.register(sponsorsRoutes)
 fastify.register(sessionsRoutes)
 fastify.register(faqRoutes)
+fastify.register(transcriptionRoutes)
 fastify.register(filesRoutes)
 fastify.register(helloRoute)
 
