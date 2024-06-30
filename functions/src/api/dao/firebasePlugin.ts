@@ -1,6 +1,7 @@
 import fp from 'fastify-plugin'
 import fb, { credential } from 'firebase-admin'
 import { FastifyInstance } from 'fastify'
+import { defineString } from 'firebase-functions/params'
 
 function firebase(fastify: FastifyInstance, options: any, next: () => void) {
     const cert = process.env.FIREBASE_SERVICE_ACCOUNT
@@ -25,3 +26,12 @@ export const firebasePlugin = fp(firebase, {
     fastify: '>=1.1.0',
     name: 'fastify-firebase',
 })
+
+export const getStorageBucketName = () => {
+    const storageBucketParam = defineString('BUCKET', {
+        input: { resource: { resource: { type: 'storage.googleapis.com/Bucket' } } },
+        description:
+            'This will automatically populate the selector field with the deploying Cloud Project’s  storage buckets',
+    })
+    return storageBucketParam.value()
+}

@@ -32,6 +32,7 @@
         "@mui/x-data-grid": "^6.19.6",
         "@mui/x-date-pickers": "^6.19.7",
         "@reduxjs/toolkit": "^1.9.7",
+        "@uidotdev/usehooks": "^2.4.1",
         "@uiw/react-md-editor": "^4.0.1",
         "data-uri-to-buffer": "^6.0.2",
         "firebase": "^10.5.2",

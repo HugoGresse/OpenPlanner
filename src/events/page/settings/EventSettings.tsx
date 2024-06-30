@@ -242,6 +242,26 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 variant="filled"
                                 disabled={formState.isSubmitting}
                             />
+
+                            <TextFieldElement
+                                margin="normal"
+                                fullWidth
+                                id="gladiaAPIKey"
+                                label="Gladia.io API key"
+                                name="gladiaAPIKey"
+                                variant="filled"
+                                helperText="Used for the transcription pages. Don't forget to set the password below or the Gladia.io API Key could be accessed freely"
+                                disabled={formState.isSubmitting}
+                            />
+                            <TextFieldElement
+                                margin="normal"
+                                fullWidth
+                                id="transcriptionPassword"
+                                label="Password to access transcription"
+                                name="transcriptionPassword"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                            />
                         </Grid>
                     </Grid>
                     <Grid container spacing={4}>

@@ -138,6 +138,8 @@ export interface Event {
     statusBadgeImage: string | null
     statusBadgeLink: string | null
     openAPIKey: string | null
+    gladiaAPIKey: string | null
+    transcriptionPassword: string | null
     enableVoxxrin: boolean
     aiSettings: EventAISettings | null
     shortVidSettings: EventShortVidSettings | null
