@@ -75,7 +75,11 @@ export class Zip {
             const fetchResponse = await fetch(file.url)
             let fileExtension = this.getFileExtension(file.url, fetchResponse.headers.get('Content-Type'))
 
-            console.log('fileExtension', fileExtension, convertSvgToPng)
+            if (!fetchResponse.ok) {
+                console.warn('Error while fetching file', file.url, fetchResponse.status)
+                alert(`Error while fetching file ${file.name}, status: ${fetchResponse.status}`)
+                continue
+            }
 
             const buffer =
                 fileExtension === 'svg' && convertSvgToPng
@@ -94,22 +98,6 @@ export class Zip {
             uint.modTime = fetchResponse.headers.get('Last-Modified') || new Date().toUTCString()
             uint.fileUrl = `${this.name}/${folder}${file.name}.${fileExtension || ''}`
             this.zip[file.name] = uint
-        }
-    }
-
-    files2zip(files: File[], folder: string = ''): void {
-        for (let i = 0; i < files.length; i++) {
-            files[i].arrayBuffer().then((data) => {
-                let uint = [...new Uint8Array(data)] as unknown as Uint8Array & {
-                    name: string
-                    modTime: Date
-                    fileUrl: string
-                }
-                uint.name = files[i].name
-                uint.modTime = new Date(files[i].lastModified)
-                uint.fileUrl = `${this.name}/${folder}${files[i].name}`
-                this.zip[uint.fileUrl] = uint
-            })
         }
     }
 
@@ -134,7 +122,8 @@ export class Zip {
             let crc = this.crc32(zip[name])
             let size = this.reverse(zip[name].length.toString(16).padStart(8, '0'))
             let nameFile = this.str2hex(zip[name].fileUrl).join(' ')
-            let nameSize = this.reverse(zip[name].fileUrl.length.toString(16).padStart(4, '0'))
+            let nameBytes = new TextEncoder().encode(zip[name].fileUrl)
+            let nameSize = this.reverse(nameBytes.length.toString(16).padStart(4, '0'))
             let fileHeader = `50 4B 03 04 14 00 00 00 00 00 ${modTime()} ${crc} ${size} ${size} ${nameSize} 00 00 ${nameFile}`
             let fileHeaderBuffer = this.hex2buf(fileHeader)
             directoryInit = directoryInit + fileHeaderBuffer.length + zip[name].length
