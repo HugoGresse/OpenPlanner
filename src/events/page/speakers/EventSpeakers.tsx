@@ -23,8 +23,6 @@ import { Clear, ExpandMore } from '@mui/icons-material'
 import { useSessionsRaw } from '../../../services/hooks/useSessions'
 import { SpeakersStatsDialog } from './components/SpeakersStatsDialog'
 import { useNotification } from '../../../hooks/notificationHook'
-import { downloadJsonToXLSX } from '../../../utils/downloadJsonToXLSX'
-import { triggerJsonDownloadFromData } from '../../../utils/triggerFileDownload'
 import { exportSpeakersAction, SpeakersExportType } from './actions/exportSpeakersAction'
 
 export type EventSpeakersProps = {
