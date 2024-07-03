@@ -1,6 +1,6 @@
 import { useLocalStorage } from '@uidotdev/usehooks'
-import { Box, Button, Container, TextField, Typography } from '@mui/material'
-import { useState } from 'react'
+import { Box, Button, Checkbox, Container, FormControlLabel, TextField, Typography } from '@mui/material'
+import React, { useState } from 'react'
 import { useTranscription } from '../hooks/useTranscription'
 import { useTalkSelection } from './useTalkSelection'
 import { DateTime } from 'luxon'
@@ -13,6 +13,15 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
     const [pagePassword, savePagePassword] = useLocalStorage<string>('pagePassword', '')
     const [selectedTrack, setSelectedTrack] = useLocalStorage<string>('selectedTrack', '')
     const [tempPagePassword, saveTempPagePassword] = useState<string>('')
+    const [options, setOptions] = useState<{
+        backgroundColor: string
+        textColor: string
+        fontSize: number
+    }>({
+        backgroundColor: '00ff00',
+        textColor: 'ffffff',
+        fontSize: 40,
+    })
 
     const [gladiaAPIKey, eventData, isLoading, error] = useTranscription(eventId, pagePassword)
 
@@ -138,9 +147,8 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
     return (
         <Box>
             <iframe
-                id={selectedTalk?.id}
-                key={selectedTalk?.id}
-                src={`https://openplanner.fr/gladia.html?token=${gladiaAPIKey}&font_size=40`}
+                key={`${selectedTalk?.id}-${options.backgroundColor}-${options.textColor}`}
+                src={`https://openplanner.fr/gladia.html?token=${gladiaAPIKey}&font_size=40&background_color=${options.backgroundColor}&text_color=${options.textColor}`}
                 width="100%"
                 height={`${iframeHeight}px`}
                 allow="camera; microphone"
@@ -169,6 +177,19 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
                 <Button size="small" variant="contained" onClick={() => saveStuffInLocalStorage('', '')}>
                     Clear password
                 </Button>
+
+                <FormControlLabel
+                    control={<Checkbox />}
+                    checked={options.backgroundColor === '00ff00'}
+                    label="Green background"
+                    labelPlacement="start"
+                    onChange={(e: any) => {
+                        setOptions({
+                            ...options,
+                            backgroundColor: e.target.checked ? '00ff00' : '000000',
+                        })
+                    }}
+                />
             </Box>
         </Box>
     )
