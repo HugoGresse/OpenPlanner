@@ -8,7 +8,7 @@ var OAuth2 = google.auth.OAuth2
 // at ~/.credentials/youtube-nodejs-quickstart.json
 var SCOPES = ['https://www.googleapis.com/auth/youtube']
 var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + '/.credentials/'
-var TOKEN_PATH = TOKEN_DIR + 'youtube-nodejs-quickstart.json'
+var TOKEN_PATH = TOKEN_DIR + 'youtube.credentials.json'
 
 export const initYoutube = () => {
     return new Promise((resolve, reject) => {

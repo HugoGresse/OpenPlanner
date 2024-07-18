@@ -14,7 +14,7 @@ import fs from 'fs'
  *
  * Pre-requisites:
  * - Upload videos to youtube with the same title as in OpenPlanner
- * - Generate thumbnails using https://fill-my-slides.web.app/ (you can get the correct format by uncomenting the line in the main : "return formatFillMySlidesData(openPlannerContent)", then put them in the "miniature" folder on the scripts folder.
+ * - Generate thumbnails using https://fill-my-slides.web.app/ (you can get the correct format by uncomenting the line in the main : "return formatFillMySlidesData(openPlannerContent)", then put them in the "miniature" folder on the scripts folder. Don't forget to set Two images as avatar for co-speakers cases and specify which track was filmed in the "captedTrackIds" array.
  * - change the playlist id "playlistId" to the one you want to edit (create it on youtube first)
  * - get the full data from open planner as "openplanner.json" in scripts/openplanner.json
  * - get the `scripts/client_secret.json` from https://console.developers.google.com/
@@ -24,6 +24,9 @@ import fs from 'fs'
  * - cd scripts
  * - npm install
  * - node youtubeBatchEdit.js
+ *
+ * Help:
+ * - the youtube credential code looks like 4/0AcvDMrBXVxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx in the url
  */
 
 const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) => {
@@ -98,7 +101,7 @@ const formatYoutubeDescription = (video, openPlannerContent) => {
 }
 
 const formatFillMySlidesData = (openPlannerContent) => {
-    const captedTrackIds = ['lamour', 'amphi-106', 'amphi-108']
+    const captedTrackIds = ['lavande-lamour', 'coquelicot-amphi-106', 'olivier-amphi-108']
     const keepedSessions = openPlannerContent.sessions.filter((session) => {
         return session.speakerIds.length > 0 && captedTrackIds.includes(session.trackId)
     })
@@ -120,7 +123,7 @@ const formatFillMySlidesData = (openPlannerContent) => {
                 0: session.title,
                 1: speakers.reverse().join(', '),
                 2: speakersAvatar[0],
-                3: speakersAvatar[1] || 'https://i.ibb.co/NyxKRgx/1280px-HD-transparent-picture.png',
+                3: speakersAvatar[1] || 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Clear.gif',
             }
         })
         .filter((session) => !!session)
@@ -130,7 +133,7 @@ const formatFillMySlidesData = (openPlannerContent) => {
 const main = async () => {
     const { auth, channelId } = await initYoutube()
 
-    const playlistId = 'PLz7aCyCbFOu-5OE0ajDUVjlqBFq1y9XiQ'
+    const playlistId = 'PLz7aCyCbFOu8_3w6EydaKkjHDiZ9Az1XR'
     const videoCategoryId = '27' // use await listVideoCategories(auth)
     const openPlannerFileName = 'openplanner.json'
     const openPlannerContent = JSON.parse(fs.readFileSync(openPlannerFileName))
