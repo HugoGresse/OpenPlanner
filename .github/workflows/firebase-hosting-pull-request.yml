@@ -12,6 +12,8 @@ jobs:
             - uses: actions/checkout@v3
             - name: Install bun
               uses: oven-sh/setup-bun@v1
+            - name: Copy .firebaserc.example to .firebaserc
+              run: cp .firebaserc.example .firebaserc
             - run: bun install --frozen-lockfile && bun run build
               env:
                   VITE_FIREBASE_OPEN_PLANNER_PROJECT_ID: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID }}

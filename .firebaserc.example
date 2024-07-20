@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "conferencecenterr"
+  },
+  "targets": {
+    "conferencecenterr": {
+      "hosting": {
+        "conferencecenterr": [
+          "conferencecenterr"
+        ],
+        "apiopenplanner": [
+          "apiopenplanner"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
