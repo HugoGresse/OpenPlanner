@@ -28,3 +28,4 @@ dist-ssr
 .env.**
 
 /.firebase/*.cache
+.firebaserc
