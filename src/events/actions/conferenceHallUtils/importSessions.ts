@@ -1,3 +1,4 @@
+import { ImportSessionsOptions } from '../../../types'
 import { doc, setDoc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { mapConferenceHallProposalsToOpenPlanner } from './mapFromConferenceHallToOpenPlanner'
@@ -14,13 +15,14 @@ export const UPDATE_FIELDS_SESSIONS = [
     'durationMinutes',
     'category',
 ]
+
 export const importSessions = async (
     eventId: string,
     proposals: ConferenceHallProposal[],
     formats: Format[],
     speakersMappingFromConferenceHall: { [id: string]: string },
     progress: (progress: string) => void,
-    shouldUpdateSession: boolean = false
+    options: ImportSessionsOptions
 ): Promise<[sessionIds: string[], error: string[]]> => {
     const errors = []
     const [sessionsToCreate, sessionsErrors] = mapConferenceHallProposalsToOpenPlanner(
@@ -32,7 +34,7 @@ export const importSessions = async (
     const createdSessionIds = []
     let countSessionsAdded = 1
     for (const session of sessionsToCreate) {
-        if (shouldUpdateSession) {
+        if (options.shouldUpdateSession) {
             const sessionToUpdate: { [key: string]: any } = {}
             for (const field of UPDATE_FIELDS_SESSIONS) {
                 // @ts-ignore

@@ -1,4 +1,4 @@
-import { ConferenceHallProposal, Event } from '../../../types'
+import { ConferenceHallProposal, Event, ImportSessionsOptions } from '../../../types'
 import { loadConferenceHallSpeakers } from '../../../conferencehall/firebase/loadFromConferenceHallUtils'
 import { importSpeakers } from '../conferenceHallUtils/importSpeakers'
 import { importSessions } from '../conferenceHallUtils/importSessions'
@@ -27,13 +27,23 @@ export const addSessionsFromCH = async (
     errors.push(...newSpeakersErrors)
 
     // 3. Add the proposals
-    const [_, sessionErrors] = await importSessions(
+    const importOptions: ImportSessionsOptions = {
+        shouldUpdateSession: true,
+        defaultAnnouncedOn: {
+            twitter: false,
+            linkedin: false,
+            facebook: false,
+            instagram: false,
+        },
+    }
+
+    const [sessionIds, sessionErrors] = await importSessions(
         event.id,
         proposals,
         event.formats,
         speakersMappingFromConferenceHall,
         progressCallback,
-        true
+        importOptions
     )
     errors.push(...sessionErrors)
 

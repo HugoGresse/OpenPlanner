@@ -1,10 +1,12 @@
 import { Session } from '../../../../types'
+import { TeasingPostSocials } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 
 export type SessionsFilters = {
     search: string
     category: string | null
     format: string | null
     withoutSpeaker: boolean
+    notAnnouncedOn: TeasingPostSocials[]
 }
 
 export const filterSessions = (sessions: Session[], filters: SessionsFilters): Session[] => {
@@ -18,6 +20,10 @@ export const filterSessions = (sessions: Session[], filters: SessionsFilters): S
         }
         if (filters.withoutSpeaker && s.speakers.length > 0) {
             return false
+        }
+
+        if (filters.notAnnouncedOn.length > 0) {
+            return filters.notAnnouncedOn.some((social) => !s.announcedOn?.[social])
         }
 
         if (s.title.toLowerCase().includes(searchFiltered)) {

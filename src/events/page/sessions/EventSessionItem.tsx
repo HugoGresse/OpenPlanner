@@ -1,7 +1,8 @@
 import { Edit } from '@mui/icons-material'
-import { Button, Chip, Grid, Link, Typography, useTheme } from '@mui/material'
+import { Box, Button, Chip, Grid, Link, Typography, useTheme } from '@mui/material'
 import { Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
+import { Twitter, LinkedIn, Facebook, Instagram } from '@mui/icons-material'
 
 type EventSessionItem = {
     selectFormat: (formatId: string) => void
@@ -45,6 +46,14 @@ export const EventSessionItem = ({ selectFormat, session }: EventSessionItem) =>
                     onClick={() => selectFormat(session.format || '')}
                 />
                 {session.tags.length ? 'tags: ' + session.tags.map((t) => <Chip label={t} size="small" />) : ''}
+                {session.announcedOn && (
+                    <Box>
+                        {session.announcedOn.twitter && <Twitter fontSize="small" />}
+                        {session.announcedOn.linkedin && <LinkedIn fontSize="small" />}
+                        {session.announcedOn.facebook && <Facebook fontSize="small" />}
+                        {session.announcedOn.instagram && <Instagram fontSize="small" />}
+                    </Box>
+                )}
             </Grid>
             <Grid item sm={12} md={3}>
                 <Typography variant="caption">

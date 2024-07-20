@@ -3,18 +3,25 @@ import {
     Button,
     Card,
     Container,
+    Divider,
+    FormControl,
     FormControlLabel,
+    FormGroup,
     Grid,
     IconButton,
     InputAdornment,
+    InputLabel,
     Menu,
     MenuItem,
+    Select,
+    SelectChangeEvent,
     Switch,
     TextField,
     Typography,
+    Checkbox,
 } from '@mui/material'
 import * as React from 'react'
-import { useMemo, useState } from 'react'
+import { ChangeEvent, useMemo, useState } from 'react'
 import { Event, Session } from '../../../../types'
 import { useSessions } from '../../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -29,6 +36,7 @@ import { GenerateSessionsTextContentDialog } from '../components/GenerateSession
 import { useSearchParams } from '../../../../hooks/useSearchParams'
 import { GenerateSessionsVideoDialog } from '../components/GenerateSessionsVideoDialog'
 import { exportSessionsAction, SessionsExportType } from './actions/exportSessionsActions'
+import { TeasingPostSocials } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 
 export type EventSessionsProps = {
     event: Event
@@ -47,6 +55,11 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     const isExportMenuOpen = Boolean(exportAnchorEl)
     const [generateTextDialogOpen, setGenerateTextDialogOpen] = useState(false)
     const [generateVideoDialogOpen, setGenerateVideoDialogOpen] = useState(false)
+    const [selectedNotAnnouncedOn, setSelectedNotAnnouncedOn] = useState<TeasingPostSocials[]>([])
+
+    const handleNotAnnouncedOnChange = (social: TeasingPostSocials, checked: boolean) => {
+        setSelectedNotAnnouncedOn((prev) => (checked ? [...prev, social] : prev.filter((s) => s !== social)))
+    }
 
     const sessionsData = useMemo(() => sessions.data || [], [sessions.data])
 
@@ -56,8 +69,9 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
             category: selectedCategory,
             format: selectedFormat,
             withoutSpeaker: onlyWithoutSpeaker,
+            notAnnouncedOn: selectedNotAnnouncedOn,
         })
-    }, [sessionsData, search, selectedCategory, selectedFormat, onlyWithoutSpeaker])
+    }, [sessionsData, search, selectedCategory, selectedFormat, onlyWithoutSpeaker, selectedNotAnnouncedOn])
 
     const isFiltered = displayedSessions.length !== sessionsData.length
 
@@ -177,7 +191,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             }}
                         />
                     </Grid>
-                    <Grid item xs={6} md={3} sx={{ marginTop: 0 }}>
+                    <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
                         <FormControlLabel
                             control={
                                 <Switch
@@ -187,8 +201,32 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             }
                             label="Without speaker"
                         />
+                        <Box display="flex" alignItems="center" ml={2}>
+                            <Typography variant="body1" sx={{ marginRight: 2 }}>
+                                Not announced on:
+                            </Typography>
+                            <FormGroup row>
+                                {Object.values(TeasingPostSocials).map((social) => (
+                                    <FormControlLabel
+                                        key={social}
+                                        control={
+                                            <Checkbox
+                                                checked={selectedNotAnnouncedOn.includes(social)}
+                                                onChange={(event) =>
+                                                    handleNotAnnouncedOnChange(social, event.target.checked)
+                                                }
+                                                size="small"
+                                            />
+                                        }
+                                        label={social}
+                                        sx={{ marginRight: 1 }}
+                                    />
+                                ))}
+                            </FormGroup>
+                        </Box>
                     </Grid>
                 </Grid>
+                <Divider sx={{ my: 2 }} />
                 {displayedSessions.map((session: Session) => (
                     <EventSessionItem key={session.id} session={session} selectFormat={setSelectedFormat} />
                 ))}

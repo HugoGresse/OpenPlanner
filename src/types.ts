@@ -96,6 +96,12 @@ export interface Session {
     speakersData?: Speaker[]
     formatText?: string | null
     categoryObject?: Category | null
+    announcedOn?: {
+        twitter?: boolean
+        linkedin?: boolean
+        facebook?: boolean
+        instagram?: boolean
+    }
 }
 
 export interface EventFiles {
@@ -275,4 +281,14 @@ export interface ConferenceHallSpeaker {
     address: {
         formattedAddress: string
     } | null
+}
+
+export type ImportSessionsOptions = {
+    shouldUpdateSession: boolean
+    defaultAnnouncedOn: {
+        twitter: boolean
+        linkedin: boolean
+        facebook: boolean
+        instagram: boolean
+    }
 }

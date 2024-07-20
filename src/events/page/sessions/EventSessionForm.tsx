@@ -90,6 +90,12 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     extendWidth: data.extendWidth,
                     teaserVideoUrl: data.teaserVideoUrl,
                     teaserImageUrl: data.teaserImageUrl,
+                    announcedOn: {
+                        twitter: data.announcedOn?.twitter || false,
+                        linkedin: data.announcedOn?.linkedin || false,
+                        facebook: data.announcedOn?.facebook || false,
+                        instagram: data.announcedOn?.instagram || false,
+                    },
                 } as Session)
             }}>
             <Grid container spacing={4}>
@@ -398,6 +404,24 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                         )}
                     </Grid>
                 </Grid>
+                <Grid item xs={12}>
+                    <Grid container spacing={1}></Grid>
+                    <Typography variant="h6">Announced on:</Typography>
+                    <Grid container spacing={2}>
+                        <Grid item xs={3}>
+                            <CheckboxElement label="Twitter" name="announcedOn.twitter" />
+                        </Grid>
+                        <Grid item xs={3}>
+                            <CheckboxElement label="LinkedIn" name="announcedOn.linkedin" />
+                        </Grid>
+                        <Grid item xs={3}>
+                            <CheckboxElement label="Facebook" name="announcedOn.facebook" />
+                        </Grid>
+                        <Grid item xs={3}>
+                            <CheckboxElement label="Instagram" name="announcedOn.instagram" />
+                        </Grid>
+                    </Grid>
+                </Grid>
 
                 <Grid item xs={12}>
                     <LoadingButton
@@ -444,7 +468,6 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     }}
                 />
             )}
-
             <SaveShortcut />
         </FormContainer>
     )
