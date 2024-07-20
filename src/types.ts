@@ -285,7 +285,7 @@ export interface ConferenceHallSpeaker {
 
 export type ImportSessionsOptions = {
     shouldUpdateSession: boolean
-    defaultAnnouncedOn: {
+    defaultAnnouncedOn?: {
         twitter: boolean
         linkedin: boolean
         facebook: boolean

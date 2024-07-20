@@ -59,7 +59,10 @@ export const reImportSessionsSpeakersFromConferenceHall = async (event: Event, r
         console.error(speakerErrors)
     }
 
-    const [_, sessionErrors] = await importSessions(event.id, proposals, formats, speakerMapToCC, () => null)
+    const [_, sessionErrors] = await importSessions(event.id, proposals, formats, speakerMapToCC, () => null, {
+        shouldUpdateSession: false,
+    })
+
     if (sessionErrors.length) {
         console.error(sessionErrors)
     }

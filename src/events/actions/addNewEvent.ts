@@ -91,7 +91,10 @@ const addNewEventInternal = async (
         proposals,
         formats,
         speakersMappingFromConferenceHall,
-        progress
+        progress,
+        {
+            shouldUpdateSession: false,
+        }
     )
     errors.push(...sessionErrors)
 
