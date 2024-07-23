@@ -19,6 +19,11 @@ export const registerSwagger = (fastify: FastifyInstance) => {
                     name: 'apiKey',
                     in: 'query',
                 },
+                password: {
+                    type: 'apiKey',
+                    name: 'Transcription password',
+                    in: 'headers',
+                },
             },
         },
     })
