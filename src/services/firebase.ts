@@ -25,6 +25,7 @@ const config = {
 }
 
 export const storageBucket = config.storageBucket
+export const baseStorageUrl = `https://storage.googleapis.com/${storageBucket}`
 
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)

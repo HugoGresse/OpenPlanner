@@ -4,24 +4,20 @@ import {
     Card,
     Container,
     Divider,
-    FormControl,
     FormControlLabel,
     FormGroup,
     Grid,
     IconButton,
     InputAdornment,
-    InputLabel,
     Menu,
     MenuItem,
-    Select,
-    SelectChangeEvent,
     Switch,
     TextField,
     Typography,
     Checkbox,
 } from '@mui/material'
 import * as React from 'react'
-import { ChangeEvent, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Event, Session } from '../../../../types'
 import { useSessions } from '../../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -37,6 +33,7 @@ import { useSearchParams } from '../../../../hooks/useSearchParams'
 import { GenerateSessionsVideoDialog } from '../components/GenerateSessionsVideoDialog'
 import { exportSessionsAction, SessionsExportType } from './actions/exportSessionsActions'
 import { TeasingPostSocials } from '../../../actions/sessions/generation/generateSessionTeasingContent'
+import { MoveImagesAlert } from '../components/MoveImagesAlert'
 
 export type EventSessionsProps = {
     event: Event
@@ -103,6 +100,8 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <MoveImagesAlert event={event} sessionsData={sessionsData} />
+
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginBottom={1}>
                 <Typography>
                     {isFiltered
