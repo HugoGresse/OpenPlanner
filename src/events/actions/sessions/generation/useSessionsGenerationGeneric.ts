@@ -56,6 +56,7 @@ export const useSessionsGenerationGeneric = <
         ): Promise<{
             success: boolean
             results: any[]
+            message?: string
         }> => {
             const sessionsCount = sessions.length
 
@@ -82,6 +83,9 @@ export const useSessionsGenerationGeneric = <
                 return {
                     success: false,
                     results: [],
+                    message:
+                        answer.message ||
+                        'Unknown error while generating the video/image, you may want to switch the ShortVid server',
                 }
             }
 

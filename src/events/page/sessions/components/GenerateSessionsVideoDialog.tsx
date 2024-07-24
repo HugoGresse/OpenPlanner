@@ -66,7 +66,7 @@ export const GenerateSessionsVideoDialog = ({
                 ...shortVidSetting,
                 updateSession: updateDoc,
             })
-            .then(({ success, results }: GeneratedSessionVideoAnswer) => {
+            .then(({ success, results, message }: GeneratedSessionVideoAnswer) => {
                 if (success && results.length) {
                     const text = onSuccess ? 'Video generation done!' : 'Video generation done, sessions updated!'
                     if (onSuccess) {
@@ -76,7 +76,7 @@ export const GenerateSessionsVideoDialog = ({
                     onClose()
                 } else {
                     createNotification(
-                        'Error while generating the video/image, you may want to switch the ShortVid server',
+                        message || 'Error while generating the video/image, you may want to switch the ShortVid server',
                         { type: 'error' }
                     )
                 }
@@ -144,6 +144,9 @@ export const GenerateSessionsVideoDialog = ({
 
                 {generatingState.generationState === GenerationStates.ERROR && (
                     <Typography color="error">{generatingState.message}</Typography>
+                )}
+                {finalGeneration.generatingState.generationState === GenerationStates.ERROR && (
+                    <Typography color="error">{finalGeneration.generatingState.message}</Typography>
                 )}
 
                 {generatingState.generationState === GenerationStates.SUCCESS && (
