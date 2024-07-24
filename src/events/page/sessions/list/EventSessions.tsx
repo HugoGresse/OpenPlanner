@@ -4,24 +4,21 @@ import {
     Card,
     Container,
     Divider,
-    FormControl,
     FormControlLabel,
     FormGroup,
     Grid,
     IconButton,
     InputAdornment,
-    InputLabel,
     Menu,
     MenuItem,
-    Select,
-    SelectChangeEvent,
     Switch,
     TextField,
     Typography,
     Checkbox,
+    Alert,
 } from '@mui/material'
 import * as React from 'react'
-import { ChangeEvent, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Event, Session } from '../../../../types'
 import { useSessions } from '../../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -37,6 +34,7 @@ import { useSearchParams } from '../../../../hooks/useSearchParams'
 import { GenerateSessionsVideoDialog } from '../components/GenerateSessionsVideoDialog'
 import { exportSessionsAction, SessionsExportType } from './actions/exportSessionsActions'
 import { TeasingPostSocials } from '../../../actions/sessions/generation/generateSessionTeasingContent'
+import { useMoveAllImagesToOpenPlannerStorage } from '../../../actions/speakers/useMoveAllImagesToOpenPlannerStorage'
 
 export type EventSessionsProps = {
     event: Event
@@ -62,6 +60,8 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     }
 
     const sessionsData = useMemo(() => sessions.data || [], [sessions.data])
+
+    const moveAllImagesToOpenPlannerStorageState = useMoveAllImagesToOpenPlannerStorage(event, sessionsData)
 
     const displayedSessions = useMemo(() => {
         return filterSessions(sessionsData, {
@@ -103,6 +103,40 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            {moveAllImagesToOpenPlannerStorageState.shouldUpdateImageStorage && (
+                <Alert variant="filled" severity="info" sx={{ marginBottom: 2 }}>
+                    {moveAllImagesToOpenPlannerStorageState.total} session/speaker images are stored in OpenPlanner but
+                    not in the storage bucket. This may cause issues due to the image not being accessible in some code
+                    (ShortVid.io) or being moved later on making it unavailable.
+                    <br />
+                    You can migrate the images to OpenPlanner at once now:
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        disabled={moveAllImagesToOpenPlannerStorageState.isLoading}
+                        onClick={() => {
+                            moveAllImagesToOpenPlannerStorageState.moveAllImagesToOpenPlannerStorage()
+                        }}>
+                        Migrate images{' '}
+                        {moveAllImagesToOpenPlannerStorageState.isLoading
+                            ? `${moveAllImagesToOpenPlannerStorageState.progress}/${moveAllImagesToOpenPlannerStorageState.total}`
+                            : ''}
+                    </Button>
+                    {moveAllImagesToOpenPlannerStorageState.error.length > 0 && (
+                        <>
+                            <Typography>Error(s):</Typography>
+                            <ul>
+                                {moveAllImagesToOpenPlannerStorageState.error.map((error) => (
+                                    <li key={error}>{error}</li>
+                                ))}
+                            </ul>
+                            <Typography>
+                                Common errors could be linked to CORS issues, please check the console for more details.
+                            </Typography>
+                        </>
+                    )}
+                </Alert>
+            )}
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginBottom={1}>
                 <Typography>
                     {isFiltered
