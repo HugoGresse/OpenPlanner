@@ -1,3 +1,4 @@
+import './other/typeBoxAdditionalsFormats'
 import { onRequest } from 'firebase-functions/v2/https'
 import Fastify from 'fastify'
 import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
@@ -17,6 +18,7 @@ import { faqRoutes } from './routes/faq/faq'
 import { helloRoute } from './routes/hello/hello'
 import { sessionsRoutes } from './routes/sessions/sessions'
 import { transcriptionRoutes } from './routes/transcription/transcription'
+import { overwriteSpeakerSponsors } from './routes/overwriteSpeakerSponsors/overwriteSpeakerSponsors'
 
 type Firebase = firebaseApp.App
 
@@ -51,6 +53,7 @@ fastify.register(sessionsRoutes)
 fastify.register(faqRoutes)
 fastify.register(transcriptionRoutes)
 fastify.register(filesRoutes)
+fastify.register(overwriteSpeakerSponsors)
 fastify.register(helloRoute)
 
 fastify.setErrorHandler(fastifyErrorHandler)

@@ -26,9 +26,7 @@ export const fastifyErrorHandler = (
                 })
             )
         } else {
-            reply.status(400).send(JSON.stringify({ error: error.message }))
-
-            console.log('toto')
+            reply.status(400).send(JSON.stringify({ error: error.message, reason: error.toString() }))
         }
     }
 }
