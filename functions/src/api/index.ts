@@ -44,6 +44,11 @@ fastify.register(apiKeyPlugin)
 fastify.register(cors, {
     origin: '*',
 })
+
+fastify.addHook('onSend', (_, reply, _2, done: () => void) => {
+    reply.header('Cache-Control', 'must-revalidate,no-cache,no-store')
+    done()
+})
 registerSwagger(fastify)
 
 fastify.register(sponsorsRoutes)
@@ -56,7 +61,7 @@ fastify.register(helloRoute)
 fastify.setErrorHandler(fastifyErrorHandler)
 
 if (isNodeEnvDev) {
-    fastify.listen({ port: 3000 }, function (err, address) {
+    fastify.listen({ port: 3000 }, function (err) {
         if (err) {
             fastify.log.error(err)
             console.error('error starting fastify server', err)
