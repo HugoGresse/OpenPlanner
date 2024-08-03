@@ -41,6 +41,7 @@ export interface Speaker {
     phone: string | null
     conferenceHallId: string | null
     name: string
+    pronouns: string | null
     jobTitle: string | null
     bio: string | null
     company: string | null
@@ -69,17 +70,32 @@ export interface Session {
     format: string | null
     category: string | null
     image: string | null
-    teaserVideoUrl: string | null
-    teaserImageUrl: string | null
     showInFeedback: boolean
     hideTrackTitle: boolean
     note: string | null
+    teaserVideoUrl: string | null
+    teaserImageUrl: string | null
+    teasingHidden: boolean
+    teasingPosts: TeasingPosts | null
     extendHeight?: number
     extendWidth?: number
     // Hydrated data during load, removed in mapSessionToFirestoreSession.ts
     speakersData?: Speaker[]
     formatText?: string | null
     categoryObject?: Category | null
+    announcedOn?: {
+        twitter?: boolean
+        linkedin?: boolean
+        facebook?: boolean
+        instagram?: boolean
+    }
+}
+
+export interface TeasingPosts {
+    twitter?: string | null
+    linkedin?: string | null
+    facebook?: string | null
+    instagram?: string | null
 }
 
 export interface EventFiles {
