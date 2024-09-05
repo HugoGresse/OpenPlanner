@@ -18,7 +18,7 @@ import { faqRoutes } from './routes/faq/faq'
 import { helloRoute } from './routes/hello/hello'
 import { sessionsRoutes } from './routes/sessions/sessions'
 import { transcriptionRoutes } from './routes/transcription/transcription'
-import { overwriteSpeakerSponsors } from './routes/overwriteSpeakerSponsors/overwriteSpeakerSponsors'
+import { overwriteSpeakerSessions } from './routes/overwriteSpeakerSponsors/overwriteSpeakerSessions'
 
 type Firebase = firebaseApp.App
 
@@ -53,7 +53,7 @@ fastify.register(sessionsRoutes)
 fastify.register(faqRoutes)
 fastify.register(transcriptionRoutes)
 fastify.register(filesRoutes)
-fastify.register(overwriteSpeakerSponsors)
+fastify.register(overwriteSpeakerSessions)
 fastify.register(helloRoute)
 
 fastify.setErrorHandler(fastifyErrorHandler)

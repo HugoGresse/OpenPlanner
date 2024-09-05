@@ -2,6 +2,9 @@ import { FastifyInstance } from 'fastify'
 import { FormatRegistry, Static, Type } from '@sinclair/typebox'
 import { DateTime } from 'luxon'
 import { verifyOverwriteData } from './verifyOverwriteData'
+import { EventDao } from '../../dao/eventDao'
+import { SessionDao } from '../../dao/sessionDao'
+import { SpeakerDao } from '../../dao/speakerDao'
 
 const MAX_STRING_LENGTH = 10000
 
@@ -63,7 +66,7 @@ export const OverwriteSpeakerType = Type.Object({
                             maxLength: MAX_STRING_LENGTH,
                         }),
                         icon: Type.String(),
-                        link: Type.Optional(Type.String({ format: 'uri' })),
+                        link: Type.String({ format: 'uri' }),
                     })
                 )
             ),
@@ -142,6 +145,7 @@ export const OverwriteSpeakerType = Type.Object({
                     maxLength: MAX_STRING_LENGTH,
                 })
             ),
+            categoryColor: Type.Optional(Type.String()),
             showInFeedback: Type.Optional(Type.Boolean()),
             hideTrackTitle: Type.Optional(Type.Boolean()),
             note: Type.Optional(Type.String()),
@@ -157,14 +161,15 @@ interface IQuerystring {
     reUploadAssets?: boolean
 }
 
-export const overwriteSpeakerSponsors = (fastify: FastifyInstance, options: any, done: () => any) => {
+export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.post<{ Querystring: IQuerystring; Body: OverwriteSpeakerSessionsType; Reply: string }>(
         '/v1/:eventId/overwriteSpeakerSponsors',
         {
             schema: {
                 tags: ['speakers', 'sessions'],
                 summary:
-                    'Overwrite sessions and speakers: if any data exist before, each filed given in the body will rewrite the corresponding data. Tracks, formats and categories will only be created if none exist before. If track, format or category does exist, the ID will be matched again the trackName or the trackId, same for categories and formats.',
+                    'Overwrite sessions and speakers: if any data exist before, each filed given in the body will rewrite the corresponding data. ' +
+                    'Tracks, formats and categories will only be created if none exist before and if you provide an id. If track, format or category does exist, the ID will be matched again the trackName or the trackId, same for categories and formats.',
                 body: OverwriteSpeakerType,
                 querystring: {
                     type: 'object',
@@ -192,7 +197,66 @@ export const overwriteSpeakerSponsors = (fastify: FastifyInstance, options: any,
             const { eventId } = request.params as { eventId: string }
             const {} = request.query
 
-            verifyOverwriteData(request.body)
+            const existingEvent = await EventDao.getEvent(fastify.firebase, eventId)
+            console.log(`overwriteSpeakerSessions for event ${eventId} ${existingEvent.name}`)
+
+            const { tracksToCreate, categoriesToCreate, formatsToCreate } = verifyOverwriteData(
+                request.body,
+                existingEvent
+            )
+
+            console.log(
+                `Creating tracks: ${tracksToCreate.length}, categories: ${categoriesToCreate.length}, formats: ${formatsToCreate.length}`
+            )
+            for (const track of tracksToCreate) {
+                try {
+                    await EventDao.createTrack(fastify.firebase, eventId, track)
+                } catch (error) {
+                    console.error('error creating track', error)
+                    reply.status(400).send((error as object).toString())
+                    return
+                }
+            }
+            for (const category of categoriesToCreate) {
+                try {
+                    await EventDao.createCategory(fastify.firebase, eventId, category)
+                } catch (error) {
+                    console.error('error creating category', error)
+                    reply.status(400).send((error as object).toString())
+                    return
+                }
+            }
+            for (const format of formatsToCreate) {
+                try {
+                    await EventDao.createFormat(fastify.firebase, eventId, format)
+                } catch (error) {
+                    console.error('error creating format', error)
+                    reply.status(400).send((error as object).toString())
+                    return
+                }
+            }
+
+            // Sessions
+            for (const session of request.body.sessions) {
+                try {
+                    await SessionDao.updateOrCreateSession(fastify.firebase, eventId, session)
+                } catch (error) {
+                    console.error('error creating session', error)
+                    reply.status(400).send((error as object).toString())
+                    return
+                }
+            }
+
+            // Speakers
+            for (const speaker of request.body.speakers) {
+                try {
+                    await SpeakerDao.updateOrCreateSpeaker(fastify.firebase, eventId, speaker)
+                } catch (error) {
+                    console.error('error creating speaker', error)
+                    reply.status(400).send((error as object).toString())
+                    return
+                }
+            }
 
             reply.status(201).send(eventId)
         }
