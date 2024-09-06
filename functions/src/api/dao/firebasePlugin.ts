@@ -3,7 +3,7 @@ import fb, { credential } from 'firebase-admin'
 import { FastifyInstance } from 'fastify'
 import { defineString } from 'firebase-functions/params'
 
-function firebase(fastify: FastifyInstance, options: any, next: () => void) {
+export function setupFirebase(fastify: FastifyInstance, options: any, next: () => void) {
     const cert = process.env.FIREBASE_SERVICE_ACCOUNT
         ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string)
         : undefined
@@ -22,7 +22,7 @@ function firebase(fastify: FastifyInstance, options: any, next: () => void) {
     next()
 }
 
-export const firebasePlugin = fp(firebase, {
+export const firebasePlugin = fp(setupFirebase, {
     fastify: '>=1.1.0',
     name: 'fastify-firebase',
 })
