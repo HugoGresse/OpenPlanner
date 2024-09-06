@@ -157,12 +157,16 @@ export const OverwriteSessionsSpeakersType = Type.Object({
 })
 
 export type OverwriteSpeakerSessionsType = Static<typeof OverwriteSessionsSpeakersType>
+
 interface IQuerystring {}
 
-const ReplyType = Type.Object({
-    success: Type.Optional(Type.Boolean()),
-    error: Type.Optional(Type.Any()),
-})
+const ReplyType = Type.Union([
+    Type.Object({
+        success: Type.Optional(Type.Boolean()),
+        error: Type.Optional(Type.Any()),
+    }),
+    Type.String(),
+])
 
 export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.post<{ Querystring: IQuerystring; Body: OverwriteSpeakerSessionsType; Reply: Static<typeof ReplyType> }>(

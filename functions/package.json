@@ -38,7 +38,6 @@
         "eslint": "^8.9.0",
         "eslint-config-google": "^0.14.0",
         "eslint-plugin-import": "^2.25.4",
-        "firebase-functions-test": "^3.3.0",
         "light-my-request": "^6.0.0",
         "nodemon": "^3.0.2",
         "ts-node": "^10.9.1",

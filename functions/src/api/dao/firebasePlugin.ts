@@ -29,7 +29,7 @@ export const firebasePlugin = fp(setupFirebase, {
 
 export const getStorageBucketName = () => {
     const storageBucketParam = defineString('BUCKET', {
-        input: { resource: { resource: { type: 'storage.googleapis.com/Bucket' } } },
+        input: { resource: { type: 'storage.googleapis.com/Bucket' } },
         description:
             'This will automatically populate the selector field with the deploying Cloud Project’s  storage buckets',
     })
