@@ -43,6 +43,10 @@ export const setupFastify = () => {
     fastify.register(cors, {
         origin: '*',
     })
+    fastify.addHook('onSend', (_, reply, _2, done: () => void) => {
+        reply.header('Cache-Control', 'must-revalidate,no-cache,no-store')
+        done()
+    })
     registerSwagger(fastify)
 
     fastify.register(sponsorsRoutes)
