@@ -1,9 +1,6 @@
-import { ConferenceHallProposalsPicker } from './ConferenceHallProposalsPicker'
-import React, { useState } from 'react'
+import React from 'react'
 import { ConferenceHallProposal, Format } from '../../types'
-import { ConferenceHallFormatsMapping } from './ConferenceHallFormatsMapping'
-import { useConferenceHallProposals } from '../hooks/useConferenceHallProposals'
-import { mapConferenceHallFormatsToOpenPlanner } from '../../events/actions/conferenceHallUtils/mapFromConferenceHallToOpenPlanner'
+import { Typography } from '@mui/material'
 
 type ConferenceHallProposalsPickerConnectedProps = {
     conferenceHallEventId: string
@@ -27,24 +24,12 @@ export const ConferenceHallProposalsPickerConnected = ({
     onSubmit,
     submitText,
 }: ConferenceHallProposalsPickerConnectedProps) => {
-    const proposals = useConferenceHallProposals(conferenceHallEventId)
-    const [formats, setFormatDurations] = useState<Format[]>(mapConferenceHallFormatsToOpenPlanner(chFormats))
-
-    const submitSelectedProposalsAndFormats = (proposals: ConferenceHallProposal[]) => {
-        return onSubmit({
-            proposals,
-            formats: formats,
-        })
-    }
-
     return (
         <>
-            <ConferenceHallFormatsMapping formats={formats} setFormatDurations={setFormatDurations} />
-            <ConferenceHallProposalsPicker
-                onSubmit={submitSelectedProposalsAndFormats}
-                proposals={proposals}
-                submitText={submitText}
-            />
+            <Typography fontWeight="600" mt={2}>
+                Conference Hall integration is disabled (major revamp needed for Conference Hall v2). You can track the
+                status here https://github.com/HugoGresse/OpenPlanner/issues/133
+            </Typography>
         </>
     )
 }

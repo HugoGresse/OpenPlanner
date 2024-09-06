@@ -338,7 +338,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     open={reImportOpen}
                     title="Re-import from Conference Hall?"
                     acceptButton="Re-import"
-                    disabled={loading}
+                    disabled={true}
                     loading={loading}
                     cancelButton="cancel"
                     handleClose={() => setReimportOpen(false)}
