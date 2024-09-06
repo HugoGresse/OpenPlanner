@@ -26,6 +26,4 @@ jobs:
                   npm run build
             - name: Test serverless functions
               working-directory: ./functions
-              run: |
-                  npm install
-                  npm run test
+              run: npm run test
