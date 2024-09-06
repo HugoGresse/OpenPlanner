@@ -23,7 +23,7 @@ FormatRegistry.Set('dateIso8601', function (value: string) {
     return false
 })
 
-export const OverwriteSpeakerType = Type.Object({
+export const OverwriteSessionsSpeakersType = Type.Object({
     speakers: Type.Array(
         Type.Object({
             id: Type.String({
@@ -156,21 +156,24 @@ export const OverwriteSpeakerType = Type.Object({
     ),
 })
 
-export type OverwriteSpeakerSessionsType = Static<typeof OverwriteSpeakerType>
-interface IQuerystring {
-    reUploadAssets?: boolean
-}
+export type OverwriteSpeakerSessionsType = Static<typeof OverwriteSessionsSpeakersType>
+interface IQuerystring {}
+
+const ReplyType = Type.Object({
+    success: Type.Optional(Type.Boolean()),
+    error: Type.Optional(Type.Any()),
+})
 
 export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.post<{ Querystring: IQuerystring; Body: OverwriteSpeakerSessionsType; Reply: string }>(
+    fastify.post<{ Querystring: IQuerystring; Body: OverwriteSpeakerSessionsType; Reply: Static<typeof ReplyType> }>(
         '/v1/:eventId/overwriteSpeakerSponsors',
         {
             schema: {
                 tags: ['speakers', 'sessions'],
                 summary:
                     'Overwrite sessions and speakers: if any data exist before, each filed given in the body will rewrite the corresponding data. ' +
-                    'Tracks, formats and categories will only be created if none exist before and if you provide an id. If track, format or category does exist, the ID will be matched again the trackName or the trackId, same for categories and formats.',
-                body: OverwriteSpeakerType,
+                    'Tracks, formats and categories will only be created if none exist before and if you provide an id and a name. If track, format or category does exist, the ID will be matched again the trackName or the trackId, same for categories and formats.',
+                body: OverwriteSessionsSpeakersType,
                 querystring: {
                     type: 'object',
                     additionalProperties: false,
@@ -182,7 +185,7 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                     },
                 },
                 response: {
-                    201: Type.String(),
+                    201: ReplyType,
                     400: Type.String(),
                 },
                 security: [
@@ -195,7 +198,6 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
         },
         async (request, reply) => {
             const { eventId } = request.params as { eventId: string }
-            const {} = request.query
 
             const existingEvent = await EventDao.getEvent(fastify.firebase, eventId)
             console.log(`overwriteSpeakerSessions for event ${eventId} ${existingEvent.name}`)
@@ -213,7 +215,12 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                     await EventDao.createTrack(fastify.firebase, eventId, track)
                 } catch (error) {
                     console.error('error creating track', error)
-                    reply.status(400).send((error as object).toString())
+                    // @ts-ignore
+                    reply.status(400).send(
+                        JSON.stringify({
+                            error: (error as object).toString(),
+                        })
+                    )
                     return
                 }
             }
@@ -222,16 +229,27 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                     await EventDao.createCategory(fastify.firebase, eventId, category)
                 } catch (error) {
                     console.error('error creating category', error)
-                    reply.status(400).send((error as object).toString())
+                    // @ts-ignore
+                    reply.status(400).send(
+                        JSON.stringify({
+                            error: (error as object).toString(),
+                        })
+                    )
                     return
                 }
             }
             for (const format of formatsToCreate) {
                 try {
+                    console.log('creating format', format)
                     await EventDao.createFormat(fastify.firebase, eventId, format)
                 } catch (error) {
                     console.error('error creating format', error)
-                    reply.status(400).send((error as object).toString())
+                    // @ts-ignore
+                    reply.status(400).send(
+                        JSON.stringify({
+                            error: (error as object).toString(),
+                        })
+                    )
                     return
                 }
             }
@@ -242,7 +260,12 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                     await SessionDao.updateOrCreateSession(fastify.firebase, eventId, session)
                 } catch (error) {
                     console.error('error creating session', error)
-                    reply.status(400).send((error as object).toString())
+                    // @ts-ignore
+                    reply.status(400).send(
+                        JSON.stringify({
+                            error: (error as object).toString(),
+                        })
+                    )
                     return
                 }
             }
@@ -253,12 +276,19 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                     await SpeakerDao.updateOrCreateSpeaker(fastify.firebase, eventId, speaker)
                 } catch (error) {
                     console.error('error creating speaker', error)
-                    reply.status(400).send((error as object).toString())
+                    // @ts-ignore
+                    reply.status(400).send(
+                        JSON.stringify({
+                            error: (error as object).toString(),
+                        })
+                    )
                     return
                 }
             }
 
-            reply.status(201).send(eventId)
+            reply.status(201).send({
+                success: true,
+            })
         }
     )
     done()

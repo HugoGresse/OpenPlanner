@@ -60,7 +60,7 @@ export class EventDao {
             .doc(eventId)
             .update({
                 formats: FieldValue.arrayUnion({
-                    id: format,
+                    id: format.id,
                     name: format.name,
                     durationMinutes: format.durationMinutes,
                 }),

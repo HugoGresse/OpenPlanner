@@ -41,35 +41,33 @@ export const verifyOverwriteData = (overwriteData: OverwriteSpeakerSessionsType,
             if (!isValidDateEnd) {
                 throw new FormatError(400, 'FST_ERR_VALIDATION', 'dateEnd is not a valid ISO 8601 date')
             }
+        }
 
-            const track = ensureIdOrNameFit(event, session.trackId, session.trackName, 'tracks')
-            if (track.needToCreate) {
-                tracksToCreates.set(track.id, {
-                    id: track.id,
-                    name: session.trackName || track.id,
-                })
-            }
+        const track = ensureIdOrNameFit(event, session.trackId, session.trackName, 'tracks')
+        if (track.needToCreate) {
+            tracksToCreates.set(track.id, {
+                id: track.id,
+                name: session.trackName || track.id,
+            })
+        }
 
-            const category = ensureIdOrNameFit(event, session.categoryId, session.categoryName, 'categories')
-            if (category.needToCreate) {
-                categoriesToCreates.set(category.id, {
-                    id: category.id,
-                    name: session.categoryName || category.id,
-                    color: session.categoryColor || randomColor(),
-                })
-            }
+        const category = ensureIdOrNameFit(event, session.categoryId, session.categoryName, 'categories')
+        if (category.needToCreate) {
+            categoriesToCreates.set(category.id, {
+                id: category.id,
+                name: session.categoryName || category.id,
+                color: session.categoryColor || randomColor(),
+            })
+        }
 
-            const format = ensureIdOrNameFit(event, session.formatId, session.formatName, 'formats')
-            if (format.needToCreate) {
-                formatsToCreates.set(format.id, {
-                    id: format.id,
-                    name: session.formatName || format.id,
-                    durationMinutes:
-                        isNaN(<number>session.durationMinutes) || !session.durationMinutes
-                            ? 20
-                            : session.durationMinutes,
-                })
-            }
+        const format = ensureIdOrNameFit(event, session.formatId, session.formatName, 'formats')
+        if (format.needToCreate) {
+            formatsToCreates.set(format.id, {
+                id: format.id,
+                name: session.formatName || format.id,
+                durationMinutes:
+                    isNaN(<number>session.durationMinutes) || !session.durationMinutes ? 20 : session.durationMinutes,
+            })
         }
     }
 
@@ -99,6 +97,21 @@ const ensureIdOrNameFit = (
         return {
             needToCreate: false,
             id: undefined,
+        }
+    }
+
+    if (!event[type]) {
+        if (id) {
+            return {
+                needToCreate: true,
+                id: id,
+            }
+        } else {
+            throw new FormatError(
+                400,
+                'FST_ERR_VALIDATION',
+                `${type} ${id} does not exist, and no id was provided to create it`
+            )
         }
     }
 

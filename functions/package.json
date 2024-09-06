@@ -8,7 +8,8 @@
         "shell": "npm run build && firebase functions:shell",
         "start": "npm run shell",
         "logs": "firebase functions:log",
-        "apiOnly": "NODE_ENV=development nodemon src/api/index.ts"
+        "apiOnly": "NODE_ENV=development nodemon src/api/index.ts",
+        "test": "vitest"
     },
     "engines": {
         "node": "20"
@@ -37,10 +38,13 @@
         "eslint": "^8.9.0",
         "eslint-config-google": "^0.14.0",
         "eslint-plugin-import": "^2.25.4",
-        "firebase-functions-test": "^3.1.0",
+        "firebase-functions-test": "^3.3.0",
+        "light-my-request": "^6.0.0",
         "nodemon": "^3.0.2",
         "ts-node": "^10.9.1",
-        "typescript": "^5.2.2"
+        "tsx": "^4.19.0",
+        "typescript": "^5.2.2",
+        "vitest": "^2.0.5"
     },
     "private": true
 }
