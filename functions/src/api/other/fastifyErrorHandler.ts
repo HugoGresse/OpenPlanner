@@ -26,7 +26,7 @@ export const fastifyErrorHandler = (
                 })
             )
         } else {
-            reply.status(400).send(JSON.stringify({ error: error.message, reason: error.toString() }))
+            reply.status(400).send(JSON.stringify({ error: error, reason: error.message || JSON.stringify(error) }))
         }
     }
 }

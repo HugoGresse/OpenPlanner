@@ -9,7 +9,7 @@
         "start": "npm run shell",
         "logs": "firebase functions:log",
         "apiOnly": "NODE_ENV=development nodemon src/api/index.ts",
-        "test": "vitest"
+        "test": "vitest --dir src"
     },
     "engines": {
         "node": "20"

@@ -267,7 +267,8 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                     // @ts-ignore
                     reply.status(400).send(
                         JSON.stringify({
-                            error: (error as object).toString(),
+                            error: 'Failed to save session',
+                            reason: (error as object).toString(),
                         })
                     )
                     return
@@ -283,7 +284,8 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                     // @ts-ignore
                     reply.status(400).send(
                         JSON.stringify({
-                            error: (error as object).toString(),
+                            error: 'Failed to save speaker',
+                            reason: (error as object).toString(),
                         })
                     )
                     return

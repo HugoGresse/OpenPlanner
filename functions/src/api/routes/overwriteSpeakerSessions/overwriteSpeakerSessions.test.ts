@@ -514,9 +514,315 @@ describe('overwriteSpeakerSessions', () => {
         })
     })
 
-    // TODO : test incorrect date for session start and end
-    // TODO : test session creation error
-    // TODO : test speaker creation error
+    test('should throw error if date is not correctly formatted', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: vi.fn(() =>
+                            Promise.resolve({
+                                data: () =>
+                                    ({
+                                        id: eventId,
+                                        apiKey: 'xxx',
+                                        categories: [],
+                                    } as Partial<Event>),
+                                exists: true,
+                            })
+                        ),
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'oldCategoryId',
+                        categoryName: 'oldCategoryName',
+                        dateStart: '2023-01-01-ddzadzdzadza',
+                        dateEnd: 'ddzadzdzadza',
+                    },
+                ],
+                speakers: [],
+            },
+        })
+        expect(res.statusCode).to.equal(400)
+        expect(JSON.parse(res.body)).toMatchObject({
+            error: 'FST_ERR_VALIDATION',
+            reason: 'FormatError: dateStart is not a valid ISO 8601 date',
+        })
+        expect(updateSpy).toHaveBeenCalledTimes(0)
+    })
+
+    test('should throw error if date end is not correctly formatted', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: vi.fn(() =>
+                            Promise.resolve({
+                                data: () =>
+                                    ({
+                                        id: eventId,
+                                        apiKey: 'xxx',
+                                        categories: [],
+                                    } as Partial<Event>),
+                                exists: true,
+                            })
+                        ),
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'oldCategoryId',
+                        categoryName: 'oldCategoryName',
+                        dateStart: '2023-01-01',
+                        dateEnd: 'ddzadzdzadza',
+                    },
+                ],
+                speakers: [],
+            },
+        })
+        expect(res.statusCode).to.equal(400)
+        expect(JSON.parse(res.body)).toMatchObject({
+            error: 'FST_ERR_VALIDATION',
+            reason: 'FormatError: dateEnd is not a valid ISO 8601 date',
+        })
+        expect(updateSpy).toHaveBeenCalledTimes(0)
+    })
+    test('should throw error if date end on a second session is not correctly formatted', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: vi.fn(() =>
+                            Promise.resolve({
+                                data: () =>
+                                    ({
+                                        id: eventId,
+                                        apiKey: 'xxx',
+                                        categories: [],
+                                    } as Partial<Event>),
+                                exists: true,
+                            })
+                        ),
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'oldCategoryId',
+                        categoryName: 'oldCategoryName',
+                        dateStart: '2023-01-01',
+                        dateEnd: '2023-01-01',
+                    },
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'oldCategoryId',
+                        categoryName: 'oldCategoryName',
+                        dateStart: '2023-01-01',
+                        dateEnd: 'ddzadzdzadza',
+                    },
+                ],
+                speakers: [],
+            },
+        })
+        expect(res.statusCode).to.equal(400)
+        expect(JSON.parse(res.body)).toMatchObject({
+            error: 'FST_ERR_VALIDATION',
+            reason: 'FormatError: dateEnd is not a valid ISO 8601 date',
+        })
+        expect(updateSpy).toHaveBeenCalledTimes(0)
+    })
+    test('should throw error if session failed to be saved', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: vi.fn(() =>
+                            Promise.reject({
+                                error: 'Some random error',
+                                exists: false,
+                            })
+                        ),
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'oldCategoryId',
+                        categoryName: 'oldCategoryName',
+                        dateStart: '2023-01-01',
+                        dateEnd: '2023-01-01',
+                    },
+                ],
+                speakers: [],
+            },
+        })
+        expect(res.statusCode).to.equal(400)
+        expect(JSON.parse(res.body)).toMatchObject({
+            reason: '{"error":"Some random error","exists":false}',
+            error: {
+                error: 'Some random error',
+                exists: false,
+            },
+        })
+        expect(updateSpy).toHaveBeenCalledTimes(0)
+    })
+    test('should throw error if session failed to be saved2', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: 2,
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'oldCategoryId',
+                        categoryName: 'oldCategoryName',
+                        dateStart: '2023-01-01',
+                        dateEnd: '2023-01-01',
+                    },
+                ],
+                speakers: [],
+            },
+        })
+        expect(res.statusCode).to.equal(400)
+        expect(JSON.parse(res.body)).toMatchObject({
+            reason: 'db.collection(...).doc(...).get is not a function',
+            error: {},
+        })
+        expect(updateSpy).toHaveBeenCalledTimes(0)
+    })
+    test('should throw error if speaker failed to be saved', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: vi.fn(() =>
+                            Promise.resolve({
+                                data: () =>
+                                    ({
+                                        id: eventId,
+                                        apiKey: 'xxx',
+                                        categories: [],
+                                    } as Partial<Event>),
+                                exists: true,
+                            })
+                        ),
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'oldCategoryId',
+                        categoryName: 'oldCategoryName',
+                        speakers: ['speakerId'],
+                    },
+                ],
+                speakers: [
+                    {
+                        id: 'speakerId',
+                        name: 'speakerName',
+                        pronouns: 'speakerPronouns',
+                        jobTitle: 'speakerJobTitle',
+                        company: 'speakerCompany',
+                        companyLogoUrl: 'https://example.com/speakerCompanyLogoUrl',
+                        geolocation: 'speakerGeolocation',
+                        photoUrl: 'https://example.comspeakerPhotoUrl',
+                        socials: [],
+                    },
+                ],
+            },
+        })
+        expect(res.statusCode).to.equal(400)
+        expect(JSON.parse(res.body)).toMatchObject({
+            error: 'Failed to save speaker',
+            reason: 'TypeError: db.collection(...).doc(...).set is not a function',
+        })
+        expect(updateSpy).toHaveBeenCalledTimes(2)
+    })
+
     // TODO : test success update of sessions
     // TODO : test success update of speakers
 })
