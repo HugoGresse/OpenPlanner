@@ -1,7 +1,3 @@
-import firebase from 'firebase-admin'
-
-type Timestamp = firebase.firestore.Timestamp
-
 export interface Track {
     id: string
     name: string
@@ -25,8 +21,8 @@ export interface Format {
 }
 
 export interface DateType {
-    start: Date | null
-    end: Date | null
+    start: Date | string | null
+    end: Date | string | null
 }
 
 export interface Social {
@@ -57,7 +53,7 @@ export interface Session {
     conferenceHallId: string | null
     title: string
     abstract: string | null
-    dates: Timestamp | null
+    dates: DateType | null
     durationMinutes: number
     speakers: string[]
     trackId: string | null
@@ -66,7 +62,6 @@ export interface Session {
     presentationLink: string | null
     videoLink: string | null
     imageUrl: string | null
-    tags: string[]
     format: string | null
     category: string | null
     image: string | null
@@ -113,8 +108,8 @@ export interface Event {
     members: string[]
     conferenceHallId: string | null
     dates: DateType
-    formats: Format[]
-    categories: Category[]
+    formats: Format[] | null
+    categories: Category[] | null
     tracks: Track[]
     webhooks: Webhooks[]
     createdAt: Date

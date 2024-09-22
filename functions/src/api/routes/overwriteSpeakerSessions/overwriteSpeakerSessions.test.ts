@@ -145,21 +145,49 @@ describe('overwriteSpeakerSessions', () => {
             return Promise.resolve({})
         })
 
+        const baseEvent = Promise.resolve({
+            data: () =>
+                ({
+                    id: eventId,
+                    name: 'eventTestfull',
+                    apiKey: 'xxx',
+                } as Partial<Event>),
+            exists: true,
+        })
+        // First call, get the somewhat empty event
+        // Second call, get the updated event
+        const getEventSpy = vi.fn(() => baseEvent)
+
+        getEventSpy
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return Promise.resolve({
+                    data: () =>
+                        ({
+                            id: eventId,
+                            apiKey: 'xxx',
+                            tracks: [
+                                {
+                                    id: 'newTrackId',
+                                    name: 'newTrackName',
+                                },
+                            ],
+                        } as Partial<Event>),
+                    exists: true,
+                })
+            })
+
         vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
             return getMockedFirestore(
                 {},
                 {
                     doc: vi.fn(() => ({
-                        get: vi.fn(() =>
-                            Promise.resolve({
-                                data: () =>
-                                    ({
-                                        id: eventId,
-                                        apiKey: 'xxx',
-                                    } as Partial<Event>),
-                                exists: true,
-                            })
-                        ),
+                        get: getEventSpy,
                         update: updateSpy,
                     })),
                 }
@@ -199,7 +227,6 @@ describe('overwriteSpeakerSessions', () => {
             id: 'sessionId',
             title: 'sessionTitle',
             trackId: 'newTrackId',
-            trackName: 'newTrackName',
             updatedAt: expect.any(Object),
         })
     })
@@ -258,7 +285,6 @@ describe('overwriteSpeakerSessions', () => {
             id: 'sessionId',
             title: 'sessionTitle',
             trackId: 'oldTrackId',
-            trackName: 'oldTrackName',
             updatedAt: expect.any(Object),
         })
     })
@@ -269,21 +295,50 @@ describe('overwriteSpeakerSessions', () => {
             return Promise.resolve({})
         })
 
+        const baseEvent = Promise.resolve({
+            data: () =>
+                ({
+                    id: eventId,
+                    name: 'eventTestfull',
+                    apiKey: 'xxx',
+                } as Partial<Event>),
+            exists: true,
+        })
+        // First call, get the somewhat empty event
+        // Second call, get the updated event
+        const getEventSpy = vi.fn(() => baseEvent)
+
+        getEventSpy
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return Promise.resolve({
+                    data: () =>
+                        ({
+                            id: eventId,
+                            apiKey: 'xxx',
+                            formats: [
+                                {
+                                    id: 'newFormatId',
+                                    name: 'newFormatName',
+                                    durationMinutes: 20,
+                                },
+                            ],
+                        } as Partial<Event>),
+                    exists: true,
+                })
+            })
+
         vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
             return getMockedFirestore(
                 {},
                 {
                     doc: vi.fn(() => ({
-                        get: vi.fn(() =>
-                            Promise.resolve({
-                                data: () =>
-                                    ({
-                                        id: eventId,
-                                        apiKey: 'xxx',
-                                    } as Partial<Event>),
-                                exists: true,
-                            })
-                        ),
+                        get: getEventSpy,
                         update: updateSpy,
                     })),
                 }
@@ -323,8 +378,7 @@ describe('overwriteSpeakerSessions', () => {
         expect(updateSpy).toHaveBeenNthCalledWith(2, {
             id: 'sessionId',
             title: 'sessionTitle',
-            formatId: 'newFormatId',
-            formatName: 'newFormatName',
+            format: 'newFormatId',
             updatedAt: expect.any(Object),
         })
     })
@@ -382,13 +436,12 @@ describe('overwriteSpeakerSessions', () => {
         expect(updateSpy).toHaveBeenNthCalledWith(1, {
             id: 'sessionId',
             title: 'sessionTitle',
-            formatId: 'oldFormatId',
-            formatName: 'oldFormatName',
+            format: 'oldFormatId',
             updatedAt: expect.any(Object),
         })
     })
     // Category
-    test('should create the session with a new category', async () => {
+    test('should create the session with category null as the getEvent returned no category', async () => {
         const updateSpy = vi.fn(() => {
             return Promise.resolve({})
         })
@@ -448,9 +501,100 @@ describe('overwriteSpeakerSessions', () => {
         expect(updateSpy).toHaveBeenNthCalledWith(2, {
             id: 'sessionId',
             title: 'sessionTitle',
-            categoryId: 'newCategoryId',
-            categoryName: 'newCategoryName',
-            categoryColor: '#124590',
+            category: undefined,
+            updatedAt: expect.any(Object),
+        })
+    })
+    test('should create the session with a new category', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        const baseEvent = Promise.resolve({
+            data: () =>
+                ({
+                    id: eventId,
+                    name: 'eventTestfull',
+                    apiKey: 'xxx',
+                } as Partial<Event>),
+            exists: true,
+        })
+        // First call, get the somewhat empty event
+        // Second call, get the updated event
+        const getEventSpy = vi.fn(() => baseEvent)
+
+        getEventSpy
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return Promise.resolve({
+                    data: () =>
+                        ({
+                            id: eventId,
+                            apiKey: 'xxx',
+                            categories: [
+                                {
+                                    id: 'newCategoryId',
+                                    name: 'newCategoryName',
+                                    color: '#124590',
+                                },
+                            ],
+                        } as Partial<Event>),
+                    exists: true,
+                })
+            })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: getEventSpy,
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        categoryId: 'newCategoryId',
+                        categoryName: 'newCategoryName',
+                        categoryColor: '#124590',
+                    },
+                ],
+                speakers: [],
+            },
+        })
+        expect(res.statusCode).to.equal(201)
+        expect(JSON.parse(res.body)).toMatchObject({
+            success: true,
+        })
+        expect(updateSpy).toHaveBeenCalledTimes(2)
+        expect(updateSpy).toHaveBeenNthCalledWith(1, {
+            categories: {
+                elements: [
+                    {
+                        id: 'newCategoryId',
+                        name: 'newCategoryName',
+                        color: '#124590',
+                    },
+                ],
+            },
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(2, {
+            id: 'sessionId',
+            title: 'sessionTitle',
+            category: 'newCategoryId',
             updatedAt: expect.any(Object),
         })
     })
@@ -508,8 +652,7 @@ describe('overwriteSpeakerSessions', () => {
         expect(updateSpy).toHaveBeenNthCalledWith(1, {
             id: 'sessionId',
             title: 'sessionTitle',
-            categoryId: 'oldCategoryId',
-            categoryName: 'oldCategoryName',
+            category: 'oldCategoryId',
             updatedAt: expect.any(Object),
         })
     })
@@ -830,22 +973,87 @@ describe('overwriteSpeakerSessions', () => {
         const setSpy = vi.fn(() => {
             return Promise.resolve({})
         })
+        // First call, get the somewhat empty event
+        // Second call, get the updated event
+        const getEventSpy = vi.fn(() => {
+            return Promise.resolve({
+                data: () =>
+                    ({
+                        id: eventId,
+                        apiKey: 'xxx',
+                        shouldntBe: 'here',
+                    } as Partial<Event>),
+                exists: true,
+            })
+        })
+
+        const baseEvent = Promise.resolve({
+            data: () =>
+                ({
+                    id: eventId,
+                    name: 'eventTestfull',
+                    apiKey: 'xxx',
+                } as Partial<Event>),
+            exists: true,
+        })
+        getEventSpy
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return baseEvent
+            })
+            .mockImplementationOnce(() => {
+                return Promise.resolve({
+                    data: () =>
+                        ({
+                            id: eventId,
+                            apiKey: 'xxx',
+                            formats: [
+                                {
+                                    id: 'newFormatId',
+                                    name: 'newFormatName',
+                                    durationMinutes: 20,
+                                },
+                                {
+                                    id: 'newFormatId2',
+                                    name: 'newFormatName2',
+                                    durationMinutes: 20,
+                                },
+                            ],
+                            categories: [
+                                {
+                                    id: 'newCategoryId',
+                                    name: 'newCategoryName',
+                                    color: '#053aa7',
+                                },
+                                {
+                                    id: 'newCategoryId2',
+                                    name: 'newCategoryName2',
+                                    color: '#123123',
+                                },
+                            ],
+                            tracks: [
+                                {
+                                    id: 'newTrackId',
+                                    name: 'newTrackName',
+                                },
+                                {
+                                    id: 'newTrackId2',
+                                    name: 'newTrackName2',
+                                },
+                            ],
+                        } as Partial<Event>),
+                    exists: true,
+                })
+            })
 
         vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
             return getMockedFirestore(
                 {},
                 {
                     doc: vi.fn(() => ({
-                        get: vi.fn(() =>
-                            Promise.resolve({
-                                data: () =>
-                                    ({
-                                        id: eventId,
-                                        apiKey: 'xxx',
-                                    } as Partial<Event>),
-                                exists: true,
-                            })
-                        ),
+                        get: getEventSpy,
                         set: setSpy,
                         update: updateSpy,
                     })),
@@ -910,6 +1118,7 @@ describe('overwriteSpeakerSessions', () => {
             success: true,
         })
         expect(res.statusCode).to.equal(201)
+        expect(getEventSpy).toHaveBeenCalledTimes(13)
         expect(updateSpy).toHaveBeenCalledTimes(8)
         expect(updateSpy).toHaveBeenNthCalledWith(1, {
             tracks: {
@@ -976,15 +1185,19 @@ describe('overwriteSpeakerSessions', () => {
             },
         })
         expect(updateSpy).toHaveBeenNthCalledWith(7, {
-            categoryName: 'newCategoryName',
-            categoryId: 'newCategoryId',
-            categoryColor: '#053aa7',
-            formatId: 'newFormatId',
-            formatName: 'newFormatName',
+            category: 'newCategoryId',
+            format: 'newFormatId',
             id: 'sessionId',
             title: 'sessionTitle',
             trackId: 'newTrackId',
-            trackName: 'newTrackName',
+            updatedAt: expect.any(Object),
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(8, {
+            category: 'newCategoryId2',
+            format: 'newFormatId2',
+            id: 'sessionId2',
+            title: 'sessionTitle2',
+            trackId: 'newTrackId2',
             updatedAt: expect.any(Object),
         })
         expect(setSpy).toHaveBeenCalledTimes(2)

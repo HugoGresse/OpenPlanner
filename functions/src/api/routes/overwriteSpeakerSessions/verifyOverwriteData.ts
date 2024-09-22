@@ -115,8 +115,8 @@ const ensureIdOrNameFit = (
         }
     }
 
-    const existWithName = event[type].find((t) => t.name === name)
-    const existWithId = event[type].find((t) => t.id === id)
+    const existWithName = (event[type] || []).find((t) => t.name === name)
+    const existWithId = (event[type] || []).find((t) => t.id === id)
 
     if (!existWithName && !existWithId) {
         if (!id) {
