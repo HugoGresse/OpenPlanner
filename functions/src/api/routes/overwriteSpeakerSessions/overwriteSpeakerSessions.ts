@@ -5,6 +5,7 @@ import { verifyOverwriteData } from './verifyOverwriteData'
 import { EventDao } from '../../dao/eventDao'
 import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
+import { convertBodySessionToSession } from './convertBodySessionToSession'
 
 const MAX_STRING_LENGTH = 10000
 
@@ -258,10 +259,16 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
                 }
             }
 
+            const updatedEvent = await EventDao.getEvent(fastify.firebase, eventId)
+
             // Sessions
             for (const session of request.body.sessions) {
                 try {
-                    await SessionDao.updateOrCreateSession(fastify.firebase, eventId, session)
+                    await SessionDao.updateOrCreateSession(
+                        fastify.firebase,
+                        eventId,
+                        convertBodySessionToSession(session, updatedEvent)
+                    )
                 } catch (error) {
                     console.error('error creating session', error)
                     // @ts-ignore
