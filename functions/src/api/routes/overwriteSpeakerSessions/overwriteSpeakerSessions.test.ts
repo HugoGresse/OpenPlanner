@@ -761,7 +761,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         expect(updateSpy).toHaveBeenCalledTimes(0)
     })
-    test('should throw error if speaker failed to be saved', async () => {
+    test('should throw error if speaker failed to be saved3', async () => {
         const updateSpy = vi.fn(() => {
             return Promise.resolve({})
         })
@@ -823,6 +823,194 @@ describe('overwriteSpeakerSessions', () => {
         expect(updateSpy).toHaveBeenCalledTimes(2)
     })
 
-    // TODO : test success update of sessions
-    // TODO : test success update of speakers
+    test('should create the sessions, tracks, categories and formats, and speakers', async () => {
+        const updateSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+        const setSpy = vi.fn(() => {
+            return Promise.resolve({})
+        })
+
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(() => {
+            return getMockedFirestore(
+                {},
+                {
+                    doc: vi.fn(() => ({
+                        get: vi.fn(() =>
+                            Promise.resolve({
+                                data: () =>
+                                    ({
+                                        id: eventId,
+                                        apiKey: 'xxx',
+                                    } as Partial<Event>),
+                                exists: true,
+                            })
+                        ),
+                        set: setSpy,
+                        update: updateSpy,
+                    })),
+                }
+            )
+        })
+        const res = await fastify.inject({
+            method: 'post',
+            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            payload: {
+                sessions: [
+                    {
+                        id: 'sessionId',
+                        title: 'sessionTitle',
+                        formatId: 'newFormatId',
+                        formatName: 'newFormatName',
+                        trackId: 'newTrackId',
+                        trackName: 'newTrackName',
+                        categoryId: 'newCategoryId',
+                        categoryName: 'newCategoryName',
+                        categoryColor: '#053aa7',
+                    },
+                    {
+                        id: 'sessionId2',
+                        title: 'sessionTitle2',
+                        formatId: 'newFormatId2',
+                        formatName: 'newFormatName2',
+                        trackId: 'newTrackId2',
+                        trackName: 'newTrackName2',
+                        categoryId: 'newCategoryId2',
+                        categoryName: 'newCategoryName2',
+                        categoryColor: '#123123',
+                    },
+                ],
+                speakers: [
+                    {
+                        id: 'speakerId',
+                        name: 'speakerName',
+                        pronouns: 'speakerPronouns',
+                        jobTitle: 'speakerJobTitle',
+                        company: 'speakerCompany',
+                        companyLogoUrl: 'https://example.com/speakerCompanyLogoUrl',
+                        geolocation: 'speakerGeolocation',
+                        photoUrl: 'https://example.comspeakerPhotoUrl',
+                        socials: [],
+                    },
+                    {
+                        id: 'speakerId2',
+                        name: 'speakerName2',
+                        pronouns: 'speakerPronouns2',
+                        jobTitle: 'speakerJobTitle2',
+                        company: 'speakerCompany2',
+                        companyLogoUrl: 'https://example.com/speakerCompanyLogoUrl2',
+                        geolocation: 'speakerGeolocation2',
+                        photoUrl: 'https://example.comspeakerPhotoUrl2',
+                        socials: [],
+                    },
+                ],
+            },
+        })
+        expect(JSON.parse(res.body)).toMatchObject({
+            success: true,
+        })
+        expect(res.statusCode).to.equal(201)
+        expect(updateSpy).toHaveBeenCalledTimes(8)
+        expect(updateSpy).toHaveBeenNthCalledWith(1, {
+            tracks: {
+                elements: [
+                    {
+                        id: 'newTrackId',
+                        name: 'newTrackName',
+                    },
+                ],
+            },
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(2, {
+            tracks: {
+                elements: [
+                    {
+                        id: 'newTrackId2',
+                        name: 'newTrackName2',
+                    },
+                ],
+            },
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(3, {
+            categories: {
+                elements: [
+                    {
+                        id: 'newCategoryId',
+                        name: 'newCategoryName',
+                        color: '#053aa7',
+                    },
+                ],
+            },
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(4, {
+            categories: {
+                elements: [
+                    {
+                        id: 'newCategoryId2',
+                        name: 'newCategoryName2',
+                        color: '#123123',
+                    },
+                ],
+            },
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(5, {
+            formats: {
+                elements: [
+                    {
+                        id: 'newFormatId',
+                        name: 'newFormatName',
+                        durationMinutes: 20,
+                    },
+                ],
+            },
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(6, {
+            formats: {
+                elements: [
+                    {
+                        id: 'newFormatId2',
+                        name: 'newFormatName2',
+                        durationMinutes: 20,
+                    },
+                ],
+            },
+        })
+        expect(updateSpy).toHaveBeenNthCalledWith(7, {
+            categoryName: 'newCategoryName',
+            categoryId: 'newCategoryId',
+            categoryColor: '#053aa7',
+            formatId: 'newFormatId',
+            formatName: 'newFormatName',
+            id: 'sessionId',
+            title: 'sessionTitle',
+            trackId: 'newTrackId',
+            trackName: 'newTrackName',
+            updatedAt: expect.any(Object),
+        })
+        expect(setSpy).toHaveBeenCalledTimes(2)
+        expect(setSpy).toHaveBeenNthCalledWith(1, {
+            id: 'speakerId',
+            name: 'speakerName',
+            pronouns: 'speakerPronouns',
+            jobTitle: 'speakerJobTitle',
+            company: 'speakerCompany',
+            companyLogoUrl: 'https://example.com/speakerCompanyLogoUrl',
+            geolocation: 'speakerGeolocation',
+            photoUrl: 'https://example.comspeakerPhotoUrl',
+            socials: [],
+            updatedAt: expect.any(Object),
+        })
+        expect(setSpy).toHaveBeenNthCalledWith(2, {
+            id: 'speakerId2',
+            name: 'speakerName2',
+            pronouns: 'speakerPronouns2',
+            jobTitle: 'speakerJobTitle2',
+            company: 'speakerCompany2',
+            companyLogoUrl: 'https://example.com/speakerCompanyLogoUrl2',
+            geolocation: 'speakerGeolocation2',
+            photoUrl: 'https://example.comspeakerPhotoUrl2',
+            socials: [],
+            updatedAt: expect.any(Object),
+        })
+    })
 })
