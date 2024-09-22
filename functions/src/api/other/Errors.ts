@@ -11,3 +11,9 @@ export class NotFoundError extends HttpError {
         super(404, message || 'Not Found')
     }
 }
+
+export class FormatError extends CustomError {
+    public constructor(public statusCode: number, public code: string, public reason: string) {
+        super(reason)
+    }
+}

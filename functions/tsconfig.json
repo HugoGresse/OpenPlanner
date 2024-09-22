@@ -12,5 +12,6 @@
         "typeRoots": ["./node_modules/@types"]
     },
     "compileOnSave": true,
-    "include": ["src"]
+    "include": ["src"],
+    "exclude": ["src/api/testUtils", "src/**/*.test.ts"]
 }
