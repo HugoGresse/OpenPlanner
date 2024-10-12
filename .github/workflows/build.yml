@@ -1,10 +1,10 @@
-name: Build project
+name: Build & test front & functions project
 
 on: [push, pull_request]
 
 jobs:
     build:
-        name: Build front project
+        name: Build & test front & functions project
         runs-on: ubuntu-latest
 
         steps:
@@ -14,10 +14,11 @@ jobs:
             - run: bun install --frozen-lockfile
             - run: bun run build
             - run: bun run tscheck
+
             - name: Setup Node.js environment
               uses: actions/setup-node@v4
               with:
-                  node-version-file: .nvmrc
+                  node-version-file: ./functions/.nvmrc
 
             - name: Build serverless functions
               working-directory: ./functions

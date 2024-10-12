@@ -6,11 +6,12 @@ import { useFirestoreCollection, UseQueryResult } from './firestoreQueryHook'
 const hydrateSession = (event: Event, sp: UseQueryResult<SpeakersMap>, data: Session[]) => {
     return data.map((session: Session) => ({
         ...session,
-        speakersData: sp.data
-            ? (session.speakers
-                  .map((speakerId) => (sp.data ? sp.data[speakerId] : undefined))
-                  .filter((s) => !!s) as Speaker[])
-            : undefined,
+        speakersData:
+            sp.data && session.speakers
+                ? (session.speakers
+                      .map((speakerId) => (sp.data ? sp.data[speakerId] : undefined))
+                      .filter((s) => !!s) as Speaker[])
+                : undefined,
         formatText: getSessionFormatText(event, session),
         categoryObject: event.categories ? event.categories.find((c) => session.category === c.id) : null,
     }))
