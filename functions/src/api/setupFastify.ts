@@ -12,7 +12,7 @@ import { sessionsRoutes } from './routes/sessions/sessions'
 import { faqRoutes } from './routes/faq/faq'
 import { transcriptionRoutes } from './routes/transcription/transcription'
 import { filesRoutes } from './routes/file/files'
-import { overwriteSpeakerSessions } from './routes/overwriteSpeakerSessions/overwriteSpeakerSessions'
+import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 
@@ -51,10 +51,10 @@ export const setupFastify = () => {
 
     fastify.register(sponsorsRoutes)
     fastify.register(sessionsRoutes)
+    fastify.register(sessionsSpeakers)
     fastify.register(faqRoutes)
     fastify.register(transcriptionRoutes)
     fastify.register(filesRoutes)
-    fastify.register(overwriteSpeakerSessions)
     fastify.register(helloRoute)
 
     fastify.setErrorHandler(fastifyErrorHandler)

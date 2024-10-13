@@ -1,5 +1,5 @@
 import { Session, Event } from '../../../types'
-import { OverwriteSpeakerSessionsType } from './overwriteSpeakerSessions'
+import { OverwriteSpeakerSessionsType } from './sessionsSpeakers'
 
 type ElementType<T> = T extends (infer U)[] ? U : never
 

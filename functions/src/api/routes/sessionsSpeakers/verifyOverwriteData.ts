@@ -1,4 +1,4 @@
-import { OverwriteSpeakerSessionsType } from './overwriteSpeakerSessions'
+import { OverwriteSpeakerSessionsType } from './sessionsSpeakers'
 import { Value } from '@sinclair/typebox/value'
 import { Type } from '@sinclair/typebox'
 import { FormatError } from '../../other/Errors'
