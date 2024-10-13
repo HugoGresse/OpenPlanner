@@ -172,7 +172,7 @@ const ReplyType = Type.Union([
 
 export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.post<{ Querystring: IQuerystring; Body: StaticTypeOfSpeakerSessionsType; Reply: Static<typeof ReplyType> }>(
-        '/v1/:eventId/sessionsSpeakers',
+        '/v1/:eventId/sessions-speakers',
         {
             schema: {
                 tags: ['speakers', 'sessions'],
