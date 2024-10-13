@@ -79,7 +79,7 @@ export interface Session {
     presentationLink: string | null
     videoLink: string | null
     imageUrl: string | null
-    tags: string[]
+    tags?: string[]
     format: string | null
     category: string | null
     image: string | null
