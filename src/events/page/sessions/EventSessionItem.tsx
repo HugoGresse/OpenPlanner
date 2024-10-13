@@ -45,7 +45,9 @@ export const EventSessionItem = ({ selectFormat, session }: EventSessionItem) =>
                     size="small"
                     onClick={() => selectFormat(session.format || '')}
                 />
-                {session.tags.length ? 'tags: ' + session.tags.map((t) => <Chip label={t} size="small" />) : ''}
+                {(session.tags || []).length
+                    ? 'tags: ' + (session.tags || []).map((t) => <Chip label={t} size="small" />)
+                    : ''}
                 {session.announcedOn && (
                     <Box>
                         {session.announcedOn.twitter && <Twitter fontSize="small" />}

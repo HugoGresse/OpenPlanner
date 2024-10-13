@@ -58,7 +58,7 @@ export const generateSessionTeasingContent = async (
         .replace('XCATEGORYX', session.category || '')
         .replace('XLEVELX', session.level || '')
         .replace('XPRESENTERX', (session.speakersData || []).map((s) => s.name).join(', '))
-        .replace('XTAGSX', session.tags.join(', '))
+        .replace('XTAGSX', (session.tags || []).join(', '))
         .replace('XFORMATX', session.format || '')
 
     openAI.apiKey = apiKey
