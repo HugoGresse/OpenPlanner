@@ -158,7 +158,7 @@ export const SpeakersSessionsType = Type.Object({
     ),
 })
 
-export type SpeakerSessionsType = Static<typeof SpeakersSessionsType>
+export type StaticTypeOfSpeakerSessionsType = Static<typeof SpeakersSessionsType>
 
 interface IQuerystring {}
 
@@ -171,7 +171,7 @@ const ReplyType = Type.Union([
 ])
 
 export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.post<{ Querystring: IQuerystring; Body: SpeakerSessionsType; Reply: Static<typeof ReplyType> }>(
+    fastify.post<{ Querystring: IQuerystring; Body: StaticTypeOfSpeakerSessionsType; Reply: Static<typeof ReplyType> }>(
         '/v1/:eventId/sessionsSpeakers',
         {
             schema: {
