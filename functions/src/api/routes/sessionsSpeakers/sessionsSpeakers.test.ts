@@ -13,7 +13,7 @@ vi.mock('../../dao/firebasePlugin', async (importOriginal) => {
     }
 })
 
-describe('overwriteSpeakerSessions', () => {
+describe('sessionsSpeakers', () => {
     const eventId = 'xEventIdx'
     let fastify = setupFastify()
 
@@ -22,7 +22,7 @@ describe('overwriteSpeakerSessions', () => {
     })
 
     test('should return a 400 if body is not provided', async () => {
-        const res = await fastify.inject({ method: 'post', url: `/v1/${eventId}/overwriteSpeakerSponsors` })
+        const res = await fastify.inject({ method: 'post', url: `/v1/${eventId}/sessions-speakers` })
         expect(res.statusCode).to.equal(400)
         expect(JSON.parse(res.body)).toMatchObject({
             error: 'FST_ERR_VALIDATION',
@@ -31,7 +31,7 @@ describe('overwriteSpeakerSessions', () => {
     test('should return a 401 if no apiKey is provided but the body has a valid content', async () => {
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors`,
+            url: `/v1/${eventId}/sessions-speakers`,
             payload: {
                 sessions: [],
                 speakers: [],
@@ -51,7 +51,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [],
                 speakers: [],
@@ -71,7 +71,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -116,7 +116,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -195,7 +195,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -263,7 +263,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -346,7 +346,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -415,7 +415,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -468,7 +468,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -561,7 +561,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -631,7 +631,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -685,7 +685,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -736,7 +736,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -786,7 +786,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -839,7 +839,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -882,7 +882,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -932,7 +932,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {
@@ -1062,7 +1062,7 @@ describe('overwriteSpeakerSessions', () => {
         })
         const res = await fastify.inject({
             method: 'post',
-            url: `/v1/${eventId}/overwriteSpeakerSponsors?apiKey=xxx`,
+            url: `/v1/${eventId}/sessions-speakers?apiKey=xxx`,
             payload: {
                 sessions: [
                     {

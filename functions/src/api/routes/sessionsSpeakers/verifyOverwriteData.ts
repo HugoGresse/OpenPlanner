@@ -1,4 +1,4 @@
-import { OverwriteSpeakerSessionsType } from './overwriteSpeakerSessions'
+import { StaticTypeOfSpeakerSessionsType } from './sessionsSpeakers'
 import { Value } from '@sinclair/typebox/value'
 import { Type } from '@sinclair/typebox'
 import { FormatError } from '../../other/Errors'
@@ -16,7 +16,7 @@ import { randomColor } from '../../other/randomColor'
  * @param overwriteData
  * @param event
  */
-export const verifyOverwriteData = (overwriteData: OverwriteSpeakerSessionsType, event: Event) => {
+export const verifyOverwriteData = (overwriteData: StaticTypeOfSpeakerSessionsType, event: Event) => {
     const tracksToCreates = new Map<string, Track>()
     const categoriesToCreates = new Map<string, Category>()
     const formatsToCreates = new Map<string, Format>()

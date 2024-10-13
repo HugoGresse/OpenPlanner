@@ -6,6 +6,7 @@ import { EventDao } from '../../dao/eventDao'
 import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { convertBodySessionToSession } from './convertBodySessionToSession'
+import { Speaker } from '../../../types'
 
 const MAX_STRING_LENGTH = 10000
 
@@ -24,7 +25,7 @@ FormatRegistry.Set('dateIso8601', function (value: string) {
     return false
 })
 
-export const OverwriteSessionsSpeakersType = Type.Object({
+export const SpeakersSessionsType = Type.Object({
     speakers: Type.Array(
         Type.Object({
             id: Type.String({
@@ -66,7 +67,7 @@ export const OverwriteSessionsSpeakersType = Type.Object({
                         name: Type.String({
                             maxLength: MAX_STRING_LENGTH,
                         }),
-                        icon: Type.String(),
+                        icon: Type.Optional(Type.String()),
                         link: Type.String({ format: 'uri' }),
                     })
                 )
@@ -157,7 +158,7 @@ export const OverwriteSessionsSpeakersType = Type.Object({
     ),
 })
 
-export type OverwriteSpeakerSessionsType = Static<typeof OverwriteSessionsSpeakersType>
+export type StaticTypeOfSpeakerSessionsType = Static<typeof SpeakersSessionsType>
 
 interface IQuerystring {}
 
@@ -169,16 +170,16 @@ const ReplyType = Type.Union([
     Type.String(),
 ])
 
-export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.post<{ Querystring: IQuerystring; Body: OverwriteSpeakerSessionsType; Reply: Static<typeof ReplyType> }>(
-        '/v1/:eventId/overwriteSpeakerSponsors',
+export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: () => any) => {
+    fastify.post<{ Querystring: IQuerystring; Body: StaticTypeOfSpeakerSessionsType; Reply: Static<typeof ReplyType> }>(
+        '/v1/:eventId/sessions-speakers',
         {
             schema: {
                 tags: ['speakers', 'sessions'],
                 summary:
                     'Overwrite sessions and speakers: if any data exist before, each filed given in the body will rewrite the corresponding data. ' +
                     'Tracks, formats and categories will only be created if none exist before and if you provide an id and a name. If track, format or category does exist, the ID will be matched again the trackName or the trackId, same for categories and formats.',
-                body: OverwriteSessionsSpeakersType,
+                body: SpeakersSessionsType,
                 querystring: {
                     type: 'object',
                     additionalProperties: false,
@@ -285,7 +286,15 @@ export const overwriteSpeakerSessions = (fastify: FastifyInstance, options: any,
             // Speakers
             for (const speaker of request.body.speakers) {
                 try {
-                    await SpeakerDao.updateOrCreateSpeaker(fastify.firebase, eventId, speaker)
+                    const speakerWithAllFields: Partial<Speaker> & { id: string } = {
+                        ...speaker,
+                        socials: (speaker.socials || []).map((social) => ({
+                            name: social.name,
+                            icon: social.icon || social.name.toLowerCase().trim().replace(' ', '-'),
+                            link: social.link,
+                        })),
+                    }
+                    await SpeakerDao.updateOrCreateSpeaker(fastify.firebase, eventId, speakerWithAllFields)
                 } catch (error) {
                     console.error('error creating speaker', error)
                     // @ts-ignore

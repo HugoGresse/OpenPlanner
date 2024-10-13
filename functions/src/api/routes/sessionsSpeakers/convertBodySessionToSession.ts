@@ -1,10 +1,10 @@
 import { Session, Event } from '../../../types'
-import { OverwriteSpeakerSessionsType } from './overwriteSpeakerSessions'
+import { StaticTypeOfSpeakerSessionsType } from './sessionsSpeakers'
 
 type ElementType<T> = T extends (infer U)[] ? U : never
 
 export const convertBodySessionToSession = (
-    session: ElementType<OverwriteSpeakerSessionsType['sessions']>,
+    session: ElementType<StaticTypeOfSpeakerSessionsType['sessions']>,
     event: Event
 ): Session => {
     const realSession: Partial<Session> = {
