@@ -1,6 +1,7 @@
-import firebase, { firestore } from 'firebase-admin'
+import firebase from 'firebase-admin'
 import { Category, Event, Format, Track } from '../../types'
-import FieldValue = firestore.FieldValue
+
+const { FieldValue } = firebase.firestore
 import { randomColor } from '../other/randomColor'
 
 export class EventDao {
@@ -22,7 +23,8 @@ export class EventDao {
     ): Promise<any> {
         const db = firebaseApp.firestore()
 
-        db.collection(`events`)
+        return await db
+            .collection(`events`)
             .doc(eventId)
             .update({
                 categories: FieldValue.arrayUnion({
@@ -40,7 +42,8 @@ export class EventDao {
     public static async createTrack(firebaseApp: firebase.app.App, eventId: string, track: Track): Promise<any> {
         const db = firebaseApp.firestore()
 
-        db.collection(`events`)
+        return await db
+            .collection(`events`)
             .doc(eventId)
             .update({
                 tracks: FieldValue.arrayUnion({
@@ -56,7 +59,8 @@ export class EventDao {
     public static async createFormat(firebaseApp: firebase.app.App, eventId: string, format: Format): Promise<any> {
         const db = firebaseApp.firestore()
 
-        db.collection(`events`)
+        return await db
+            .collection(`events`)
             .doc(eventId)
             .update({
                 formats: FieldValue.arrayUnion({
