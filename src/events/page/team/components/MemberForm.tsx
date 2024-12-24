@@ -18,6 +18,7 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
             ? member
             : {
                   name: '',
+                  bio: '',
                   photoUrl: '',
                   role: '',
                   socials: [],
@@ -33,6 +34,7 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                 const socials = (data.socials || []).filter((social) => social.link && social.link.length)
                 const newData = {
                     name: data.name,
+                    bio: data.bio,
                     role: data.role,
                     photoUrl: data.photoUrl,
                     socials,
@@ -67,6 +69,20 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                         variant="filled"
                         disabled={isSubmitting}
                     />
+
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        maxRows={40}
+                        label="Bio"
+                        name="bio"
+                        variant="filled"
+                        disabled={isSubmitting}
+                        size="small"
+                    />
+
                     <TextFieldElement
                         margin="dense"
                         fullWidth
