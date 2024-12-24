@@ -193,6 +193,7 @@ export interface SponsorCategory {
 export interface TeamMember {
     id: string
     name: string
+    bio: string | null
     role: string
     photoUrl: string | null
     socials?: Social[]
