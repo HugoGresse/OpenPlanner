@@ -1,11 +1,11 @@
 import { addDoc, CollectionReference, deleteDoc, doc, DocumentReference, setDoc } from 'firebase/firestore'
 import { useCallback, useState } from 'react'
 
-export type UseMutationResult<T = unknown> = {
+export type UseMutationResult<T = unknown, IdType = string | undefined> = {
     isLoading: boolean
     error: { message: string } | null
     isError: boolean
-    mutate: (data: object, id?: string) => any
+    mutate: (data: object, id?: IdType) => any
 }
 
 export const useFirestoreCollectionMutation = (ref: CollectionReference): UseMutationResult => {
@@ -55,6 +55,32 @@ export const useFirestoreDocumentMutation = (ref: DocumentReference): UseMutatio
         },
         [ref]
     )
+
+    return {
+        isLoading,
+        error,
+        isError: error !== null,
+        mutate,
+    }
+}
+
+export const useFirestoreDocumentMutationWithId = (ref: CollectionReference): UseMutationResult<unknown, string> => {
+    const [isLoading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
+
+    const mutate = useCallback(
+        async (data: object, id: string) => {
+            try {
+                setLoading(true)
+                const docRef = doc(ref, id)
+                await setDoc(docRef, data, { merge: true })
+            } catch (error: any) {
+                setError(error)
+            }
+            setLoading(false)
+        },
+        [ref]
+    ) as UseMutationResult<unknown, string>['mutate']
 
     return {
         isLoading,

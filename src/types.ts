@@ -195,6 +195,7 @@ export interface TeamMember {
     name: string
     bio: string | null
     role: string
+    team: string
     photoUrl: string | null
     socials?: Social[]
 }
