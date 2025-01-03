@@ -46,6 +46,8 @@ export const EventMember = ({ event }: EventMemberProps) => {
                     event={event}
                     member={member}
                     onSubmit={async (data) => {
+                        console.log('data', data)
+
                         await mutation.mutate(data)
                     }}
                 />

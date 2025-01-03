@@ -2,11 +2,23 @@ import { Event, TeamMember } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { Box, Button, Card, Container, Menu, MenuItem, Stack, Typography } from '@mui/material'
 import { useTeamByTeams } from '../../../services/hooks/useTeam'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ExpandMore, ImportExport as ImportIcon } from '@mui/icons-material'
 import { downloadImages } from '../../../utils/images/downloadImages'
 import { TeamImportDialog } from './components/TeamImportDialog'
 import { TeamGroup } from './components/TeamGroup'
+import {
+    DndContext,
+    DragEndEvent,
+    KeyboardSensor,
+    PointerSensor,
+    closestCenter,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useFirestoreDocumentMutationWithId } from '../../../services/hooks/firestoreMutationHooks'
+import { collections } from '../../../services/firebase'
 
 export type EventTeamProps = {
     event: Event
@@ -18,9 +30,49 @@ export const EventTeam = ({ event }: EventTeamProps) => {
     const teams = useTeamByTeams([event.id])
     const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+    const [teamOrder, setTeamOrder] = useState<string[]>([])
+    const memberMutation = useFirestoreDocumentMutationWithId(collections.team(event.id))
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
 
     const teamData = teams.data || {}
     const totalMembers = Object.values(teamData).reduce((acc, members) => acc + members.length, 0)
+
+    useEffect(() => {
+        setTeamOrder(Object.keys(teamData))
+    }, [teamData])
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+        if (!over || active.id === over.id) return
+
+        setTeamOrder((items) => {
+            const oldIndex = items.indexOf(active.id.toString())
+            const newIndex = items.indexOf(over.id.toString())
+            const newOrder = arrayMove(items, oldIndex, newIndex)
+
+            // Update all teams with their new order
+            newOrder.forEach((teamName, index) => {
+                const members = teamData[teamName] || []
+                members.forEach((member) => {
+                    const editedMember: TeamMember = {
+                        ...member,
+                        teamOrder: index,
+                    }
+                    console.log(member.name, index)
+
+                    memberMutation.mutate(editedMember, member.name)
+                })
+            })
+
+            return newOrder
+        })
+    }
 
     const closeExportMenu = (type: TeamExportType | null) => () => {
         setExportAnchorEl(null)
@@ -68,9 +120,18 @@ export const EventTeam = ({ event }: EventTeamProps) => {
                 </Menu>
             </Box>
             <Card sx={{ padding: 2, minHeight: '50vh' }}>
-                {Object.entries(teamData).map(([teamName, members]) => (
-                    <TeamGroup key={teamName} teamName={teamName} members={members} event={event} />
-                ))}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={teamOrder} strategy={verticalListSortingStrategy}>
+                        {teamOrder.map((teamName) => (
+                            <TeamGroup
+                                key={teamName + teamData[teamName].length}
+                                teamName={teamName}
+                                members={teamData[teamName] || []}
+                                event={event}
+                            />
+                        ))}
+                    </SortableContext>
+                </DndContext>
             </Card>
             <Box marginY={2}>
                 <Button href={`/team/new`}>Add member</Button>
