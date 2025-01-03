@@ -1,12 +1,12 @@
 import { Event, TeamMember } from '../../../types'
-import * as React from 'react'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { Box, Button, Card, Container, Menu, MenuItem, Typography } from '@mui/material'
+import { Box, Button, Card, Container, Menu, MenuItem, Stack, Typography } from '@mui/material'
 import { useTeam } from '../../../services/hooks/useTeam'
 import { Member } from './components/Member'
 import { useState } from 'react'
-import { ExpandMore } from '@mui/icons-material'
+import { ExpandMore, ImportExport as ImportIcon } from '@mui/icons-material'
 import { downloadImages } from '../../../utils/images/downloadImages'
+import { TeamImportDialog } from './components/TeamImportDialog'
 
 export type EventTeamProps = {
     event: Event
@@ -17,6 +17,7 @@ export enum TeamExportType {
 export const EventTeam = ({ event }: EventTeamProps) => {
     const team = useTeam(event.id)
     const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
+    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
 
     const teamData = team.data || []
 
@@ -42,12 +43,14 @@ export const EventTeam = ({ event }: EventTeamProps) => {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
                 <Typography>{team.data?.length} members</Typography>
-                <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
-                    Export
-                </Button>
-                <Box marginY={2}>
-                    <Button href={`/team/new`}>Add member</Button>
-                </Box>
+                <Stack direction="row" spacing={1}>
+                    <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
+                        Export
+                    </Button>
+                    <Button onClick={() => setIsImportDialogOpen(true)} startIcon={<ImportIcon />}>
+                        Import Team
+                    </Button>
+                </Stack>
                 <Menu
                     id="basic-menu"
                     anchorEl={exportAnchorEl}
@@ -76,6 +79,11 @@ export const EventTeam = ({ event }: EventTeamProps) => {
             <Box marginY={2}>
                 <Button href={`/team/new`}>Add member</Button>
             </Box>
+            <TeamImportDialog
+                open={isImportDialogOpen}
+                onClose={() => setIsImportDialogOpen(false)}
+                currentEventId={event.id}
+            />
         </Container>
     )
 }
