@@ -22,8 +22,6 @@ import { Event, Session } from '../../../../types'
 import { useSessions } from '../../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventSessionItem } from '../EventSessionItem'
-import { RequireConferenceHallConnections } from '../../../../components/RequireConferenceHallConnections'
-import { SessionsImporterFromConferenceHallDialog } from '../components/SessionsImporterFromConferenceHallDialog'
 import { Clear, ExpandMore } from '@mui/icons-material'
 import { filterSessions } from './filterSessions'
 import { FilterCategory } from './FilterCategory'
@@ -41,7 +39,6 @@ export type EventSessionsProps = {
 export const EventSessions = ({ event }: EventSessionsProps) => {
     const [searchParams, setSearchParams] = useSearchParams()
     const sessions = useSessions(event)
-    const [sessionsImportOpen, setSessionsImportOpen] = useState(false)
     const [search, setSearch] = useState<string>('')
     const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || '')
     const [selectedFormat, setSelectedFormat] = useState<string>(searchParams.get('format') || '')
@@ -108,9 +105,6 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                         ? `${displayedSessions.length}/${sessionsData.length} sessions`
                         : `${sessionsData.length} sessions`}
                 </Typography>
-                <RequireConferenceHallConnections event={event}>
-                    <Button onClick={() => setSessionsImportOpen(true)}>Import proposals from ConferenceHall</Button>
-                </RequireConferenceHallConnections>
                 <Button onClick={(event) => setGenerateAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
                     Generate
                 </Button>
@@ -230,15 +224,6 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     <EventSessionItem key={session.id} session={session} selectFormat={setSelectedFormat} />
                 ))}
             </Card>
-            {sessionsImportOpen && (
-                <SessionsImporterFromConferenceHallDialog
-                    event={event}
-                    isOpen={sessionsImportOpen}
-                    onClose={() => {
-                        setSessionsImportOpen(false)
-                    }}
-                />
-            )}
             {generateTextDialogOpen && (
                 <GenerateSessionsTextContentDialog
                     isOpen={generateTextDialogOpen}

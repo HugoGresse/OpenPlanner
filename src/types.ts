@@ -304,13 +304,3 @@ export interface ConferenceHallSpeaker {
         formattedAddress: string
     } | null
 }
-
-export type ImportSessionsOptions = {
-    shouldUpdateSession: boolean
-    defaultAnnouncedOn?: {
-        twitter: boolean
-        linkedin: boolean
-        facebook: boolean
-        instagram: boolean
-    }
-}

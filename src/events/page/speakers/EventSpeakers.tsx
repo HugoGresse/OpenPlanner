@@ -11,14 +11,11 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { Event, Speaker } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventSpeakerItem } from './EventSpeakerItem'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
-import { RequireConferenceHallConnections } from '../../../components/RequireConferenceHallConnections'
-import { SpeakersFromConferenceHallUpdaterDialog } from './components/SpeakersFromConferenceHallUpdaterDialog'
 import { Clear, ExpandMore } from '@mui/icons-material'
 import { useSessionsRaw } from '../../../services/hooks/useSessions'
 import { SpeakersStatsDialog } from './components/SpeakersStatsDialog'
@@ -32,7 +29,6 @@ export type EventSpeakersProps = {
 export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const speakers = useSpeakers(event.id)
     const sessions = useSessionsRaw(event.id)
-    const [updaterDialogOpen, setUpdaterDialogOpen] = useState(false)
     const [speakersStatsOpen, setSpeakersStatsOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
@@ -76,11 +72,6 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginBottom={1}>
                 <Typography>{speakers.data?.length} speakers</Typography>
-                <RequireConferenceHallConnections event={event}>
-                    <Button onClick={() => setUpdaterDialogOpen(true)}>
-                        Update speakers infos from ConferenceHall
-                    </Button>
-                </RequireConferenceHallConnections>
                 <Button onClick={() => setSpeakersStatsOpen(true)}>Stats</Button>
                 <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
                     Export
@@ -139,16 +130,6 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     <EventSpeakerItem key={speaker.id} speaker={speaker} sessions={sessions.data || []} />
                 ))}
             </Card>
-            {updaterDialogOpen && (
-                <SpeakersFromConferenceHallUpdaterDialog
-                    event={event}
-                    speakers={speakers.data || []}
-                    isOpen={updaterDialogOpen}
-                    onClose={() => {
-                        setUpdaterDialogOpen(false)
-                    }}
-                />
-            )}
             {speakersStatsOpen && (
                 <SpeakersStatsDialog
                     isOpen={speakersStatsOpen}
