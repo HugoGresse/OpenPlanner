@@ -1,13 +1,18 @@
 import { Box, TextField, Typography } from '@mui/material'
 import { Event, TeamMember } from '../../../../types'
 import { Member } from './Member'
-import { useState, useEffect } from 'react'
-import { useFirestoreDocumentMutationWithId } from '../../../../services/hooks/firestoreMutationHooks'
+import { useState, useEffect, useCallback } from 'react'
+import {
+    useFirestoreDocumentDeletion,
+    useFirestoreDocumentMutationWithId,
+} from '../../../../services/hooks/firestoreMutationHooks'
 import { collections } from '../../../../services/firebase'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 import { DragHandle } from '@mui/icons-material'
+import { ConfirmTooltipButton } from '../../../../components/ConfirmTooltipButton'
+import { Delete as DeleteIcon } from '@mui/icons-material'
 
 export type TeamGroupProps = {
     event: Event
@@ -21,6 +26,7 @@ export const TeamGroup = ({ event, teamName, members, isTeamBeingDragged }: Team
     const [editedName, setEditedName] = useState(teamName)
     const [orderedMembers, setOrderedMembers] = useState<TeamMember[]>([])
     const mutation = useFirestoreDocumentMutationWithId(collections.team(event.id))
+    const deleteTeamMutation = useFirestoreDocumentDeletion(collections.team(event.id))
 
     useEffect(() => {
         setOrderedMembers(members.sort((a, b) => a.order - b.order))
@@ -66,6 +72,12 @@ export const TeamGroup = ({ event, teamName, members, isTeamBeingDragged }: Team
         }
     }
 
+    const handleDeleteTeam = useCallback(async () => {
+        for (const member of members) {
+            await deleteTeamMutation.mutate(member.id)
+        }
+    }, [deleteTeamMutation, teamName])
+
     return (
         <Box sx={{ mb: 4 }} ref={setNodeRef} style={style}>
             <Box component="form" onSubmit={handleChangeTeamName}>
@@ -91,6 +103,15 @@ export const TeamGroup = ({ event, teamName, members, isTeamBeingDragged }: Team
                         <Typography variant="h5" onClick={handleTeamNamePress}>
                             {teamName}
                         </Typography>
+                        <ConfirmTooltipButton
+                            confirmMessage="Are you sure you want to delete this team?"
+                            confirmButtonText="Delete"
+                            buttonType="iconButton"
+                            onClick={() => {
+                                handleDeleteTeam()
+                            }}>
+                            <DeleteIcon />
+                        </ConfirmTooltipButton>
                     </Box>
                 )}
             </Box>

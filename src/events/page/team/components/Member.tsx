@@ -1,5 +1,4 @@
-import * as React from 'react'
-import { Avatar, Box, IconButton, Link, Typography } from '@mui/material'
+import { Avatar, Box, IconButton, Link, Stack, Typography } from '@mui/material'
 import { DeleteRounded } from '@mui/icons-material'
 import EditIcon from '@mui/icons-material/Edit'
 import { Event, TeamMember } from '../../../../types'
@@ -8,6 +7,7 @@ import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { ConfirmTooltipButton } from '../../../../components/ConfirmTooltipButton'
 
 export type MemberProps = {
     event: Event
@@ -56,7 +56,7 @@ export const Member = ({ event, member }: MemberProps) => {
                 />
                 <Typography variant="h6">{member.name}</Typography>
             </Box>
-            <Box display="flex" paddingX={2}>
+            <Stack direction="row" spacing={1} paddingX={2}>
                 <IconButton
                     aria-label="Edit member"
                     component={Link}
@@ -65,16 +65,19 @@ export const Member = ({ event, member }: MemberProps) => {
                     onClick={(e) => e.stopPropagation()}>
                     <EditIcon />
                 </IconButton>
-                <IconButton
+
+                <ConfirmTooltipButton
                     aria-label="Delete member"
+                    confirmMessage="Are you sure you want to delete this member?"
+                    confirmButtonText="Delete"
+                    buttonType="iconButton"
                     onClick={async (e) => {
                         e.stopPropagation()
                         await deletion.mutate()
-                    }}
-                    edge="end">
+                    }}>
                     <DeleteRounded />
-                </IconButton>
-            </Box>
+                </ConfirmTooltipButton>
+            </Stack>
         </Box>
     )
 }
