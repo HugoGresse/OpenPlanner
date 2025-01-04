@@ -195,6 +195,7 @@ export interface TeamMember {
     name: string
     bio: string | null
     role: string
+    order: number
     team: string
     teamOrder: number
     photoUrl: string | null

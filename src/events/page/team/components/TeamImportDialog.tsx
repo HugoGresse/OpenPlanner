@@ -52,7 +52,11 @@ export function TeamImportDialog({ open, onClose, currentEventId }: TeamImportDi
         setIsImporting(true)
         try {
             for (const member of teamToImport) {
-                await mutation.mutate(member, member.id)
+                const newMember: TeamMember = {
+                    ...member,
+                    id: slugify(member.name),
+                }
+                await mutation.mutate(newMember, newMember.id)
             }
 
             onClose()

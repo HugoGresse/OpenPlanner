@@ -26,6 +26,7 @@ export type EventTeamProps = {
 export enum TeamExportType {
     images = 'images',
 }
+
 export const EventTeam = ({ event }: EventTeamProps) => {
     const teams = useTeamByTeams([event.id])
     const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
@@ -56,7 +57,6 @@ export const EventTeam = ({ event }: EventTeamProps) => {
             const newIndex = items.indexOf(over.id.toString())
             const newOrder = arrayMove(items, oldIndex, newIndex)
 
-            // Update all teams with their new order
             newOrder.forEach((teamName, index) => {
                 const members = teamData[teamName] || []
                 members.forEach((member) => {
@@ -64,9 +64,7 @@ export const EventTeam = ({ event }: EventTeamProps) => {
                         ...member,
                         teamOrder: index,
                     }
-                    console.log(member.name, index)
-
-                    memberMutation.mutate(editedMember, member.name)
+                    memberMutation.mutate(editedMember, member.id)
                 })
             })
 

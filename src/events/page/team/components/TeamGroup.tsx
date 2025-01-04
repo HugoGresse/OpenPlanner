@@ -31,7 +31,7 @@ export type TeamGroupProps = {
 export const TeamGroup = ({ event, teamName, members }: TeamGroupProps) => {
     const [isEditing, setIsEditing] = useState(false)
     const [editedName, setEditedName] = useState(teamName)
-    const [orderedMembers, setOrderedMembers] = useState<TeamMember[]>(members)
+    const [orderedMembers, setOrderedMembers] = useState<TeamMember[]>(members.sort((a, b) => a.order - b.order))
     const mutation = useFirestoreDocumentMutationWithId(collections.team(event.id))
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -58,7 +58,16 @@ export const TeamGroup = ({ event, teamName, members }: TeamGroupProps) => {
         setOrderedMembers((items) => {
             const oldIndex = items.findIndex((m) => m.id === active.id)
             const newIndex = items.findIndex((m) => m.id === over.id)
-            return arrayMove(items, oldIndex, newIndex)
+            const newOrder = arrayMove(items, oldIndex, newIndex)
+
+            newOrder.forEach((member, index) => {
+                const editedMember: TeamMember = {
+                    ...member,
+                    order: index,
+                }
+                mutation.mutate(editedMember, member.id)
+            })
+            return newOrder
         })
     }
 
