@@ -57,41 +57,39 @@ export const App = ({}) => {
     )
 
     return (
-        <Router>
-            <Provider store={reduxStore}>
-                <ThemeProvider theme={theme}>
-                    <CssBaseline enableColorScheme />
-                    <NotificationProvider>
-                        <Switch>
-                            <Route path="/public/event/:eventId/:page*">
-                                <PublicApp />
-                            </Route>
-                            <Route path="/auth/reset">
-                                <ForgotPasswordScreen />
-                            </Route>
-                            <RequireLogin>
-                                <Switch>
-                                    <Route path="/">
-                                        <Suspense fallback={<SuspenseLoader />}>
-                                            <EventsScreen />
-                                        </Suspense>
-                                    </Route>
-                                    <Route path="/admins">
-                                        <Suspense fallback={<SuspenseLoader />}>
-                                            <AdminScreen />
-                                        </Suspense>
-                                    </Route>
-                                    <Route path="/events/">
-                                        <Redirect to="/" />
-                                    </Route>
-                                    <EventRouter />
-                                    <Route>404, Not Found!</Route>
-                                </Switch>
-                            </RequireLogin>
-                        </Switch>
-                    </NotificationProvider>
-                </ThemeProvider>
-            </Provider>
-        </Router>
+        <Provider store={reduxStore}>
+            <ThemeProvider theme={theme}>
+                <CssBaseline enableColorScheme />
+                <NotificationProvider>
+                    <Switch>
+                        <Route path="/public/event/:eventId/:page*">
+                            <PublicApp />
+                        </Route>
+                        <Route path="/auth/reset">
+                            <ForgotPasswordScreen />
+                        </Route>
+                        <RequireLogin>
+                            <Switch>
+                                <Route path="/">
+                                    <Suspense fallback={<SuspenseLoader />}>
+                                        <EventsScreen />
+                                    </Suspense>
+                                </Route>
+                                <Route path="/admins">
+                                    <Suspense fallback={<SuspenseLoader />}>
+                                        <AdminScreen />
+                                    </Suspense>
+                                </Route>
+                                <Route path="/events/">
+                                    <Redirect to="/" />
+                                </Route>
+                                <EventRouter />
+                                <Route>404, Not Found!</Route>
+                            </Switch>
+                        </RequireLogin>
+                    </Switch>
+                </NotificationProvider>
+            </ThemeProvider>
+        </Provider>
     )
 }
