@@ -1,38 +1,30 @@
 import { Box, TextField, Typography } from '@mui/material'
 import { Event, TeamMember } from '../../../../types'
 import { Member } from './Member'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useFirestoreDocumentMutationWithId } from '../../../../services/hooks/firestoreMutationHooks'
 import { collections } from '../../../../services/firebase'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-    DndContext,
-    DragEndEvent,
-    KeyboardSensor,
-    PointerSensor,
-    closestCenter,
-    useSensor,
-    useSensors,
-} from '@dnd-kit/core'
-import {
-    SortableContext,
-    arrayMove,
-    horizontalListSortingStrategy,
-    sortableKeyboardCoordinates,
-} from '@dnd-kit/sortable'
+import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
+import { DragHandle } from '@mui/icons-material'
 
 export type TeamGroupProps = {
     event: Event
     teamName: string
     members: TeamMember[]
+    isTeamBeingDragged?: boolean
 }
 
-export const TeamGroup = ({ event, teamName, members }: TeamGroupProps) => {
+export const TeamGroup = ({ event, teamName, members, isTeamBeingDragged }: TeamGroupProps) => {
     const [isEditing, setIsEditing] = useState(false)
     const [editedName, setEditedName] = useState(teamName)
-    const [orderedMembers, setOrderedMembers] = useState<TeamMember[]>(members.sort((a, b) => a.order - b.order))
+    const [orderedMembers, setOrderedMembers] = useState<TeamMember[]>([])
     const mutation = useFirestoreDocumentMutationWithId(collections.team(event.id))
+
+    useEffect(() => {
+        setOrderedMembers(members.sort((a, b) => a.order - b.order))
+    }, [members])
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: teamName,
@@ -42,33 +34,6 @@ export const TeamGroup = ({ event, teamName, members }: TeamGroupProps) => {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-    }
-
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    )
-
-    const handleMemberDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event
-        if (!over || active.id === over.id) return
-
-        setOrderedMembers((items) => {
-            const oldIndex = items.findIndex((m) => m.id === active.id)
-            const newIndex = items.findIndex((m) => m.id === over.id)
-            const newOrder = arrayMove(items, oldIndex, newIndex)
-
-            newOrder.forEach((member, index) => {
-                const editedMember: TeamMember = {
-                    ...member,
-                    order: index,
-                }
-                mutation.mutate(editedMember, member.id)
-            })
-            return newOrder
-        })
     }
 
     const handleTeamNamePress = () => {
@@ -86,7 +51,7 @@ export const TeamGroup = ({ event, teamName, members }: TeamGroupProps) => {
                     ...member,
                     team: editedName,
                 }
-                await mutation.mutate(editedMember, member.name)
+                await mutation.mutate(editedMember, member.id)
             }
         }
         setIsEditing(false)
@@ -116,31 +81,39 @@ export const TeamGroup = ({ event, teamName, members }: TeamGroupProps) => {
                         inputProps={{ style: { fontSize: '1.5rem', fontWeight: 400 } }}
                     />
                 ) : (
-                    <Typography
-                        variant="h5"
-                        sx={{ mb: 2, cursor: 'move' }}
-                        onClick={handleTeamNamePress}
-                        {...attributes}
-                        {...listeners}>
-                        {teamName}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Box
+                            {...attributes}
+                            {...listeners}
+                            sx={{ cursor: 'grab', display: 'flex', alignItems: 'center' }}>
+                            <DragHandle />
+                        </Box>
+                        <Typography variant="h5" onClick={handleTeamNamePress}>
+                            {teamName}
+                        </Typography>
+                    </Box>
                 )}
             </Box>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleMemberDragEnd}>
-                <SortableContext items={orderedMembers.map((m) => m.id)} strategy={horizontalListSortingStrategy}>
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            flexWrap: 'wrap',
-                            gap: 2,
-                        }}>
-                        {orderedMembers.map((member) => (
-                            <Member key={member.id} member={member} event={event} />
-                        ))}
-                    </Box>
-                </SortableContext>
-            </DndContext>
+            <SortableContext items={orderedMembers.map((m) => m.id)} strategy={rectSortingStrategy}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        gap: 2,
+                        minHeight: '100px',
+                        padding: 2,
+                        bgcolor: isDragging || isTeamBeingDragged ? 'action.hover' : 'transparent',
+                        borderRadius: 1,
+                        border: '2px dashed transparent',
+                        borderColor: isDragging ? 'primary.main' : 'transparent',
+                        transition: 'all 0.2s ease',
+                    }}>
+                    {orderedMembers.map((member) => (
+                        <Member key={member.id} member={member} event={event} />
+                    ))}
+                </Box>
+            </SortableContext>
         </Box>
     )
 }

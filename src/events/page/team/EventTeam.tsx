@@ -1,144 +1,79 @@
-import { Event, TeamMember } from '../../../types'
+import { Event, TeamDragItem } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { Box, Button, Card, Container, Menu, MenuItem, Stack, Typography } from '@mui/material'
+import { Box, Button, Card, Container, Typography } from '@mui/material'
 import { useTeamByTeams } from '../../../services/hooks/useTeam'
-import { useState, useEffect } from 'react'
-import { ExpandMore, ImportExport as ImportIcon } from '@mui/icons-material'
-import { downloadImages } from '../../../utils/images/downloadImages'
-import { TeamImportDialog } from './components/TeamImportDialog'
+import { useEffect } from 'react'
 import { TeamGroup } from './components/TeamGroup'
-import {
-    DndContext,
-    DragEndEvent,
-    KeyboardSensor,
-    PointerSensor,
-    closestCenter,
-    useSensor,
-    useSensors,
-} from '@dnd-kit/core'
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { useFirestoreDocumentMutationWithId } from '../../../services/hooks/firestoreMutationHooks'
-import { collections } from '../../../services/firebase'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { TeamActions } from './components/TeamActions'
+import { TeamDndContext } from './components/TeamDndContext'
+import { useTeamDragAndDrop } from './hooks/useTeamDragAndDrop'
 
 export type EventTeamProps = {
     event: Event
 }
-export enum TeamExportType {
-    images = 'images',
-}
 
 export const EventTeam = ({ event }: EventTeamProps) => {
     const teams = useTeamByTeams([event.id])
-    const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
-    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-    const [teamOrder, setTeamOrder] = useState<string[]>([])
-    const memberMutation = useFirestoreDocumentMutationWithId(collections.team(event.id))
-
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    )
+    const {
+        activeItem,
+        teamOrder,
+        localTeamData,
+        setTeamOrder,
+        setLocalTeamData,
+        collisionDetectionStrategy,
+        handleDragStart,
+        handleDragOver,
+        handleDragEnd,
+    } = useTeamDragAndDrop(event.id)
 
     const teamData = teams.data || {}
-    const totalMembers = Object.values(teamData).reduce((acc, members) => acc + members.length, 0)
+    const totalMembers = Object.values(localTeamData).reduce((acc, members) => acc + members.length, 0)
 
     useEffect(() => {
+        setLocalTeamData(teamData)
         setTeamOrder(Object.keys(teamData))
-    }, [teamData])
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event
-        if (!over || active.id === over.id) return
-
-        setTeamOrder((items) => {
-            const oldIndex = items.indexOf(active.id.toString())
-            const newIndex = items.indexOf(over.id.toString())
-            const newOrder = arrayMove(items, oldIndex, newIndex)
-
-            newOrder.forEach((teamName, index) => {
-                const members = teamData[teamName] || []
-                members.forEach((member) => {
-                    const editedMember: TeamMember = {
-                        ...member,
-                        teamOrder: index,
-                    }
-                    memberMutation.mutate(editedMember, member.id)
-                })
-            })
-
-            return newOrder
-        })
-    }
-
-    const closeExportMenu = (type: TeamExportType | null) => () => {
-        setExportAnchorEl(null)
-        if (!type) {
-            return
-        }
-        const allMembers = Object.values(teamData).flat()
-        const membersWithPhotos = allMembers.filter(
-            (member): member is TeamMember & { photoUrl: string } => !!member.photoUrl
-        )
-        downloadImages(
-            `${event.name}-team`,
-            membersWithPhotos.map((t) => ({
-                name: t.name,
-                url: t.photoUrl,
-            }))
-        )
-    }
+    }, [teamData, setLocalTeamData, setTeamOrder])
 
     if (teams.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={teams} />
     }
 
+    // Get all member IDs for the sortable context
+    const allMemberIds = Object.values(localTeamData)
+        .flat()
+        .map((member) => member.id)
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
                 <Typography>{totalMembers} members</Typography>
-                <Stack direction="row" spacing={1}>
-                    <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
-                        Export
-                    </Button>
-                    <Button onClick={() => setIsImportDialogOpen(true)} startIcon={<ImportIcon />}>
-                        Import Team
-                    </Button>
-                </Stack>
-                <Menu
-                    id="basic-menu"
-                    anchorEl={exportAnchorEl}
-                    open={!!exportAnchorEl}
-                    onClose={closeExportMenu(null)}
-                    MenuListProps={{
-                        'aria-labelledby': 'basic-button',
-                    }}>
-                    <MenuItem onClick={closeExportMenu(TeamExportType.images)}>Download images</MenuItem>
-                </Menu>
+                <TeamActions eventId={event.id} eventName={event.name} teamData={localTeamData} />
             </Box>
             <Card sx={{ padding: 2, minHeight: '50vh' }}>
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={teamOrder} strategy={verticalListSortingStrategy}>
+                <TeamDndContext
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
+                    collisionDetection={collisionDetectionStrategy}>
+                    <SortableContext items={[...teamOrder, ...allMemberIds]} strategy={verticalListSortingStrategy}>
                         {teamOrder.map((teamName) => (
                             <TeamGroup
-                                key={teamName + teamData[teamName].length}
+                                key={teamName + localTeamData[teamName].length}
                                 teamName={teamName}
-                                members={teamData[teamName] || []}
+                                members={localTeamData[teamName] || []}
                                 event={event}
+                                isTeamBeingDragged={
+                                    activeItem?.type === 'team' && (activeItem as TeamDragItem).teamName === teamName
+                                }
                             />
                         ))}
                     </SortableContext>
-                </DndContext>
+                </TeamDndContext>
             </Card>
             <Box marginY={2}>
                 <Button href={`/team/new`}>Add member</Button>
             </Box>
-            <TeamImportDialog
-                open={isImportDialogOpen}
-                onClose={() => setIsImportDialogOpen(false)}
-                currentEventId={event.id}
-            />
         </Container>
     )
 }

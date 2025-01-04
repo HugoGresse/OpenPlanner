@@ -202,6 +202,24 @@ export interface TeamMember {
     socials?: Social[]
 }
 
+export type DraggableItemType = 'team' | 'member'
+
+export interface DraggableItem {
+    id: string
+    type: DraggableItemType
+}
+
+export interface TeamDragItem extends DraggableItem {
+    type: 'team'
+    teamName: string
+}
+
+export interface MemberDragItem extends DraggableItem {
+    type: 'member'
+    memberId: string
+    sourceTeam: string
+}
+
 export interface FaqCategory {
     id: string
     name: string
