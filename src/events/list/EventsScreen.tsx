@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { EventsLayout } from './EventsLayout'
 import { useEvents } from '../../services/hooks/useEvents'
@@ -7,8 +6,7 @@ import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventsListItem } from './EventsListItem'
 import { Event } from '../../types'
-import { Box, Button } from '@mui/material'
-import { NewEventFromConferenceHallDialog } from '../new/NewEventFromConferenceHallDialog'
+import { Alert, Box, Button } from '@mui/material'
 import { NewEventCreatedDialog } from '../new/NewEventCreatedDialog'
 import { useNotification } from '../../hooks/notificationHook'
 import { NewEventDialog } from '../new/NewEventDialog'
@@ -17,7 +15,6 @@ import { useIsAdmin } from '../../services/hooks/useIsAdmin'
 export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdOpenPlanner)
     const events = useEvents(userId)
-    const [newEventCHOpen, setNewEventFromCHOpen] = useState(false)
     const [newEventOpen, setNewEventOpen] = useState(false)
     const [newEventId, setNewEventId] = useState<null | string>(null)
     const isAdmin = useIsAdmin(userId)
@@ -29,7 +26,6 @@ export const EventsScreen = ({}) => {
             setNewEventId(eventId)
             createNotification('Event created', { type: 'success' })
         }
-        setNewEventFromCHOpen(false)
         setNewEventOpen(false)
     }
 
@@ -38,11 +34,6 @@ export const EventsScreen = ({}) => {
             <FirestoreQueryLoaderAndErrorDisplay hookResult={events} />
 
             <Box component="ul" display="flex" flexWrap="wrap" padding={0}>
-                <Box key="importch" component="li" marginRight={1} marginBottom={1} sx={{ listStyle: 'none' }}>
-                    <Button variant="outlined" size="large" onClick={() => setNewEventFromCHOpen(true)}>
-                        New event from Conference Center
-                    </Button>
-                </Box>
                 <Box key="new" component="li" marginRight={1} marginBottom={1} sx={{ listStyle: 'none' }}>
                     <Button variant="outlined" size="large" onClick={() => setNewEventOpen(true)}>
                         New event
@@ -59,7 +50,10 @@ export const EventsScreen = ({}) => {
                 </Button>
             )}
 
-            <NewEventFromConferenceHallDialog isOpen={newEventCHOpen} onClose={onEventCreated} />
+            <Alert severity="info">
+                ConferenceHall integration is now directly managed within ConferenceHall, using OpenPlanner API key.
+            </Alert>
+
             <NewEventDialog isOpen={newEventOpen} onClose={onEventCreated} />
 
             {newEventId && <NewEventCreatedDialog eventId={newEventId} onClose={() => setNewEventId(null)} />}
