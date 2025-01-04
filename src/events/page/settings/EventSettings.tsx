@@ -297,7 +297,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     cancelButton="cancel"
                     handleClose={() => setDeleteOpen(false)}
                     handleAccept={async () => {
-                        await deleteSessionsAndSpeakers(event, false)
+                        await deleteSessionsAndSpeakers(event)
                         await documentDeletion.mutate()
                         setDeleteOpen(false)
                         createNotification('Event deleted', { type: 'success' })
