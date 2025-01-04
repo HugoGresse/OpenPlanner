@@ -6,7 +6,7 @@ import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventsListItem } from './EventsListItem'
 import { Event } from '../../types'
-import { Box, Button } from '@mui/material'
+import { Alert, Box, Button } from '@mui/material'
 import { NewEventCreatedDialog } from '../new/NewEventCreatedDialog'
 import { useNotification } from '../../hooks/notificationHook'
 import { NewEventDialog } from '../new/NewEventDialog'
@@ -49,6 +49,10 @@ export const EventsScreen = ({}) => {
                     ADMIN
                 </Button>
             )}
+
+            <Alert severity="info">
+                ConferenceHall integration is now directly managed within ConferenceHall, using OpenPlanner API key.
+            </Alert>
 
             <NewEventDialog isOpen={newEventOpen} onClose={onEventCreated} />
 
