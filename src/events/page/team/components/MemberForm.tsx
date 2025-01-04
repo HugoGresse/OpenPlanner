@@ -1,11 +1,13 @@
 import * as React from 'react'
 import { Event, TeamMember } from '../../../../types'
-import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
-import { Grid } from '@mui/material'
+import { AutocompleteElement, FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { Grid, IconButton, InputAdornment } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { ImageTextFieldElement } from '../../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../../components/form/SaveShortcut'
 import { TeamSocialFields } from './TeamSocialFields'
+import { useTeamByTeams } from '../../../../services/hooks/useTeam'
+import { useMemo } from 'react'
 
 export type MemberFormProps = {
     event: Event
@@ -13,6 +15,12 @@ export type MemberFormProps = {
     onSubmit: (member: TeamMember) => void
 }
 export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
+    const teams = useTeamByTeams([event.id])
+    const teamOptions = useMemo(() => {
+        if (!teams.data) return []
+        return Object.keys(teams.data).map((team) => ({ id: team, label: team }))
+    }, [teams.data])
+
     const formContext = useForm({
         defaultValues: member
             ? member
@@ -21,6 +29,7 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                   bio: '',
                   photoUrl: '',
                   role: '',
+                  team: '',
                   socials: [],
               },
     })
@@ -36,9 +45,11 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                     name: data.name,
                     bio: data.bio,
                     role: data.role,
+                    team: (data.team as unknown as { label: string })?.label || data.team || 'default',
                     photoUrl: data.photoUrl,
                     socials,
                 }
+
                 if (member) {
                     return onSubmit({
                         id: member?.id,
@@ -68,6 +79,25 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                         name="name"
                         variant="filled"
                         disabled={isSubmitting}
+                    />
+
+                    <AutocompleteElement
+                        name="team"
+                        label="Team"
+                        options={teamOptions}
+                        loading={teams.isLoading}
+                        textFieldProps={{
+                            margin: 'dense',
+                            variant: 'filled',
+                            disabled: isSubmitting,
+                        }}
+                        autocompleteProps={{
+                            freeSolo: true,
+                            fullWidth: true,
+                        }}
+                        transform={{
+                            input: (val) => val ?? [],
+                        }}
                     />
 
                     <TextFieldElement

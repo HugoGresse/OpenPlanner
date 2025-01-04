@@ -142,7 +142,9 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                     value.map((option, index) => {
                                         return (
                                             <Chip
-                                                avatar={<Avatar alt={option?.label} src={option?.photoUrl} />}
+                                                avatar={
+                                                    <Avatar alt={option?.label} src={option.photoUrl || undefined} />
+                                                }
                                                 label={option?.label || 'Deleted'}
                                                 onClick={() => {
                                                     setLocation(`/speakers/${option?.id}?fromSession=true`)

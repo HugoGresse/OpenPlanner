@@ -195,8 +195,29 @@ export interface TeamMember {
     name: string
     bio: string | null
     role: string
+    order: number
+    team: string
+    teamOrder: number
     photoUrl: string | null
     socials?: Social[]
+}
+
+export type DraggableItemType = 'team' | 'member'
+
+export interface DraggableItem {
+    id: string
+    type: DraggableItemType
+}
+
+export interface TeamDragItem extends DraggableItem {
+    type: 'team'
+    teamName: string
+}
+
+export interface MemberDragItem extends DraggableItem {
+    type: 'member'
+    memberId: string
+    sourceTeam: string
 }
 
 export interface FaqCategory {

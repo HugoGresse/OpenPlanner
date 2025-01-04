@@ -1,77 +1,75 @@
-import { Event, TeamMember } from '../../../types'
-import * as React from 'react'
+import { Event, TeamDragItem } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { Box, Button, Card, Container, Menu, MenuItem, Typography } from '@mui/material'
-import { useTeam } from '../../../services/hooks/useTeam'
-import { Member } from './components/Member'
-import { useState } from 'react'
-import { ExpandMore } from '@mui/icons-material'
-import { downloadImages } from '../../../utils/images/downloadImages'
+import { Box, Button, Card, Container, Typography } from '@mui/material'
+import { useTeamByTeams } from '../../../services/hooks/useTeam'
+import { useEffect } from 'react'
+import { TeamGroup } from './components/TeamGroup'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { TeamActions } from './components/TeamActions'
+import { TeamDndContext } from './components/TeamDndContext'
+import { useTeamDragAndDrop } from './hooks/useTeamDragAndDrop'
 
 export type EventTeamProps = {
     event: Event
 }
-export enum TeamExportType {
-    images = 'images',
-}
+
 export const EventTeam = ({ event }: EventTeamProps) => {
-    const team = useTeam(event.id)
-    const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
+    const teams = useTeamByTeams([event.id])
+    const {
+        activeItem,
+        teamOrder,
+        localTeamData,
+        setTeamOrder,
+        setLocalTeamData,
+        collisionDetectionStrategy,
+        handleDragStart,
+        handleDragOver,
+        handleDragEnd,
+    } = useTeamDragAndDrop(event.id)
 
-    const teamData = team.data || []
+    const teamData = teams.data || {}
+    const totalMembers = Object.values(localTeamData).reduce((acc, members) => acc + members.length, 0)
 
-    const closeExportMenu = (type: TeamExportType | null) => () => {
-        setExportAnchorEl(null)
-        if (!type) {
-            return
-        }
-        downloadImages(
-            `${event.name}-team`,
-            teamData.map((t: TeamMember) => ({
-                name: t.name,
-                url: t.photoUrl,
-            }))
-        )
+    useEffect(() => {
+        setLocalTeamData(teamData)
+        setTeamOrder(Object.keys(teamData))
+    }, [teamData, setLocalTeamData, setTeamOrder])
+
+    if (teams.isLoading) {
+        return <FirestoreQueryLoaderAndErrorDisplay hookResult={teams} />
     }
 
-    if (team.isLoading) {
-        return <FirestoreQueryLoaderAndErrorDisplay hookResult={team} />
-    }
+    // Get all member IDs for the sortable context
+    const allMemberIds = Object.values(localTeamData)
+        .flat()
+        .map((member) => member.id)
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
-                <Typography>{team.data?.length} members</Typography>
-                <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
-                    Export
-                </Button>
-                <Box marginY={2}>
-                    <Button href={`/team/new`}>Add member</Button>
-                </Box>
-                <Menu
-                    id="basic-menu"
-                    anchorEl={exportAnchorEl}
-                    open={!!exportAnchorEl}
-                    onClose={closeExportMenu(null)}
-                    MenuListProps={{
-                        'aria-labelledby': 'basic-button',
-                    }}>
-                    <MenuItem onClick={closeExportMenu(TeamExportType.images)}>Download images</MenuItem>
-                </Menu>
+                <Typography>{totalMembers} members</Typography>
+                <TeamActions eventId={event.id} eventName={event.name} teamData={localTeamData} />
             </Box>
-            <Card
-                sx={{
-                    padding: 2,
-                    minHeight: '50vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    flexFlow: 'row',
-                    flexWrap: 'wrap',
-                    alignContent: 'flex-start',
-                }}>
-                {teamData.map((member: TeamMember) => (
-                    <Member key={member.id} member={member} event={event} />
-                ))}
+            <Card sx={{ padding: 2, minHeight: '50vh' }}>
+                <TeamDndContext
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
+                    collisionDetection={collisionDetectionStrategy}>
+                    <SortableContext items={[...teamOrder, ...allMemberIds]} strategy={verticalListSortingStrategy}>
+                        {teamOrder.map((teamName) => (
+                            <TeamGroup
+                                key={teamName + localTeamData[teamName].length}
+                                teamName={teamName}
+                                members={localTeamData[teamName] || []}
+                                event={event}
+                                isTeamBeingDragged={
+                                    activeItem?.type === 'team' && (activeItem as TeamDragItem).teamName === teamName
+                                }
+                            />
+                        ))}
+                    </SortableContext>
+                </TeamDndContext>
             </Card>
             <Box marginY={2}>
                 <Button href={`/team/new`}>Add member</Button>

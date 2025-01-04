@@ -3,16 +3,16 @@ import { getSessions } from '../sessions/getSessions'
 import { getSpeakers } from '../getSpeakers'
 import { getSponsors } from '../getSponsors'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
-import { getTeam } from '../getTeam'
+import { getTeams } from '../getTeam'
 import { getFaq } from '../getFaq'
 import { generateVoxxrinJson } from './generateVoxxrinJson'
 
 export const generateStaticJson = async (event: Event) => {
-    const [sessions, speakers, sponsors, team, faq] = await Promise.all([
+    const [sessions, speakers, sponsors, { team, teams }, faq] = await Promise.all([
         getSessions(event.id),
         getSpeakers(event.id),
         getSponsors(event.id),
-        getTeam(event.id),
+        getTeams(event.id),
         getFaq(event.id),
     ])
 
@@ -109,6 +109,7 @@ export const generateStaticJson = async (event: Event) => {
         sessions: outputSessions,
         sponsors: outputSponsor,
         team: team,
+        teams: teams,
         faq: faqPublic,
         generatedAt: new Date().toISOString(),
     }
