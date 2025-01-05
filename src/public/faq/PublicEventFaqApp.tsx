@@ -4,13 +4,12 @@ import { useEffect } from 'react'
 import { Box, Typography } from '@mui/material'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { PublicEventFaq } from './PublicEventFaq'
-import * as React from 'react'
 
 export type PublicEventFaqAppProps = {
     eventId: string
 }
 export const PublicEventFaqApp = ({ eventId }: PublicEventFaqAppProps) => {
-    const [_, params] = useRoute('/:subRoute/:privateId*')
+    const [_, params] = useRoute('/:subRoute/:privateId')
 
     const faq = usePublicEventFaq(eventId, params?.privateId)
 
@@ -30,10 +29,10 @@ export const PublicEventFaqApp = ({ eventId }: PublicEventFaqAppProps) => {
 
     return (
         <Switch>
-            <Route path="/faq">
+            <Route path="/faq/:privateId/" nest>
                 <PublicEventFaq faqReply={faqData} />
             </Route>
-            <Route path="/faq/:privateId">
+            <Route path="/faq" nest>
                 <PublicEventFaq faqReply={faqData} />
             </Route>
 

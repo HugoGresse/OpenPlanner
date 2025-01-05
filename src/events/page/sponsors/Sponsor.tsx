@@ -15,7 +15,7 @@ export type SponsorProps = {
     event: Event
 }
 export const Sponsor = ({ event }: SponsorProps) => {
-    const [_, params] = useRoute('/:routeName/:sponsorId*')
+    const [_, params] = useRoute('/:routeName/:sponsorId/*?')
     const sponsors = useSponsors(event.id)
     const [_2, setLocation] = useLocation()
 

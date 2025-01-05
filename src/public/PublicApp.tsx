@@ -7,7 +7,7 @@ import { PublicEventFaqApp } from './faq/PublicEventFaqApp'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
-    const [_, params] = useRoute('/public/event/:eventId/:subRoute*')
+    const [_, params] = useRoute('/public/event/:eventId/*?')
 
     const eventId = params?.eventId
 

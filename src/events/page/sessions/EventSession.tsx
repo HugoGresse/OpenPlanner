@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { Event } from '../../../types'
 import { Box, Button, Card, Container, DialogContentText, Typography } from '@mui/material'
@@ -11,7 +10,6 @@ import { EventSessionForm } from './EventSessionForm'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
-import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
 import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
@@ -21,8 +19,9 @@ export type EventSessionProps = {
     event: Event
 }
 export const EventSession = ({ event }: EventSessionProps) => {
-    const [_, params] = useRoute('/:routeName/:sessionId*')
+    const [_, params] = useRoute('/:routeName/:sessionId/*?')
     const [_2, setLocation] = useLocation()
+
     const sessionId = params?.sessionId || ''
     const sessionResult = useSession(event.id, sessionId)
     const [deleteOpen, setDeleteOpen] = useState(false)
@@ -36,12 +35,10 @@ export const EventSession = ({ event }: EventSessionProps) => {
     const session = sessionResult.data
     const isSessionInSchedule = session.dates && !!session.dates.start
 
-    const goBack = () => navigateBackOrFallbackTo('/sessions', setLocation)
-
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Button onClick={goBack} startIcon={<ArrowBack />}>
-                {getQueryParams().backTo ? getQueryParams().backTo : 'All sessions'}
+            <Button onClick={() => setLocation('/sessions')} startIcon={<ArrowBack />}>
+                All sessions
             </Button>
             <Card sx={{ paddingX: 2 }}>
                 <Typography variant="h2">{session.title}</Typography>
@@ -78,7 +75,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 handleAccept={async () => {
                     await documentDeletion.mutate()
                     setDeleteOpen(false)
-                    goBack()
+                    setLocation('/sessions')
                 }}>
                 <DialogContentText id="alert-dialog-description">
                     {' '}

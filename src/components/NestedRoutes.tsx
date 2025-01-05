@@ -9,7 +9,9 @@ export const NestedRoutes = (props: { children: React.ReactNode; base: string })
     const nestedBase = `${router.base}${props.base}`
 
     // don't render anything outside of the scope
-    if (!parentLocation.startsWith(nestedBase)) return null
+    if (!parentLocation.startsWith(nestedBase)) {
+        return null
+    }
 
     // we need key to make sure the router will remount when base changed
     return (

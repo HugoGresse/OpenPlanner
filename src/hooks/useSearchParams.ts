@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react'
-import { navigate, useSearch } from 'wouter/use-location'
+import { useSearch, useLocation } from 'wouter'
 
 // Based on react-router: https://github.com/remix-run/react-router/blob/main/packages/react-router-dom/index.tsx
 
@@ -45,6 +45,7 @@ export function getSearchParamsForLocation(locationSearch: string, defaultSearch
 }
 
 export function useSearchParams(defaultInit?: URLSearchParamsInit) {
+    const [_, navigate] = useLocation()
     if (typeof URLSearchParams === 'undefined') {
         console.warn(
             `You cannot use the \`useSearchParams\` hook in a browser that does not ` +

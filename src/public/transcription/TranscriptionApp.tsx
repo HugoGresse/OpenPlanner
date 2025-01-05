@@ -50,7 +50,6 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
                     variant="contained"
                     onClick={() => {
                         if (tempPagePassword.length > 0) {
-                            console.log('saving password', tempPagePassword.trim())
                             saveStuffInLocalStorage(tempPagePassword.trim(), selectedTrack)
                         }
                     }}>

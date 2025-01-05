@@ -14,7 +14,7 @@ export type EventMemberProps = {
     event: Event
 }
 export const EventMember = ({ event }: EventMemberProps) => {
-    const [_, params] = useRoute('/:routeName/:memberId*')
+    const [_, params] = useRoute('/:routeName/:memberId/*?')
     const members = useTeam(event.id)
     const [_2, setLocation] = useLocation()
 

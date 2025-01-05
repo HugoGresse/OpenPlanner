@@ -54,13 +54,9 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
     })
-    const { control, formState, reset, watch } = formContext
+    const { control, formState, watch } = formContext
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
-
-    useEffect(() => {
-        reset(convertInputEvent(event))
-    }, [event])
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>

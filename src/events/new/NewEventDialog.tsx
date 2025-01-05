@@ -79,7 +79,6 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                     mutation
                         .mutate(newEventData)
                         .then((eventId: any) => {
-                            console.log('new event created', eventId)
                             onClose(eventId)
                         })
                         .catch((error: Error) => {
