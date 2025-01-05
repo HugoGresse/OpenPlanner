@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { lazy, Suspense } from 'react'
-import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material'
-import { Redirect, Route, Router, Switch } from 'wouter'
+import { Box, createTheme, CssBaseline, Typography, ThemeProvider, useMediaQuery } from '@mui/material'
+import { Link, Redirect, Route, Router, Switch } from 'wouter'
 import { RequireLogin } from './auth/RequireLogin'
 import { Provider } from 'react-redux'
 import { reduxStore } from './reduxStore'
@@ -13,6 +13,7 @@ import { SuspenseLoader } from './components/SuspenseLoader'
 import { PublicApp } from './public/PublicApp'
 import { ForgotPasswordScreen } from './auth/ForgotPasswordScreen'
 import { AdminScreen } from './events/admin/AdminScreen'
+import { EventApp } from './events/page/EventApp'
 
 const EventsScreen = lazy(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
@@ -62,7 +63,7 @@ export const App = ({}) => {
                 <CssBaseline enableColorScheme />
                 <NotificationProvider>
                     <Switch>
-                        <Route path="/public/event/:eventId/:page*">
+                        <Route path="/public/event/:eventId/*?">
                             <PublicApp />
                         </Route>
                         <Route path="/auth/reset">
@@ -83,8 +84,15 @@ export const App = ({}) => {
                                 <Route path="/events/">
                                     <Redirect to="/" />
                                 </Route>
-                                <EventRouter />
-                                <Route>404, Not Found!</Route>
+                                <Route path="/events/:eventId/*?">
+                                    <EventRouter />
+                                </Route>
+                                <Route>
+                                    <Box sx={{ display: 'flex', p: 5, flexDirection: 'column', alignItems: 'center' }}>
+                                        <Typography>404, Not Found!</Typography>
+                                        <Link href="/">Go to home</Link>
+                                    </Box>
+                                </Route>
                             </Switch>
                         </RequireLogin>
                     </Switch>

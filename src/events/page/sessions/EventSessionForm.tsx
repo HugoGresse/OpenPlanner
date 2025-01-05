@@ -147,7 +147,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                                 }
                                                 label={option?.label || 'Deleted'}
                                                 onClick={() => {
-                                                    setLocation(`/speakers/${option?.id}?fromSession=true`)
+                                                    setLocation(`/speakers/${option?.id}?fromSession=${session?.id}`)
                                                 }}
                                                 sx={{ cursor: 'pointer' }}
                                                 {...getTagProps({ index })}

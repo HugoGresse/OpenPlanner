@@ -1,9 +1,8 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { Event } from '../../../types'
 import { Box, Button, Card, Container, DialogContentText, IconButton, Link, Typography } from '@mui/material'
 import { useSpeaker } from '../../../services/hooks/useSpeaker'
-import { useLocation, useRoute } from 'wouter'
+import { useLocation, useRoute, useSearch } from 'wouter'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ArrowBack, ChevronLeft, ChevronRight } from '@mui/icons-material'
 import { EventSpeakerForm } from './EventSpeakerForm'
@@ -11,7 +10,6 @@ import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
-import { navigateBackOrFallbackTo } from '../../../utils/navigateBackOrFallbackTo'
 import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 import {
     useFirestoreDocumentDeletion,
@@ -22,8 +20,9 @@ export type EventSpeakerProps = {
     event: Event
 }
 export const EventSpeaker = ({ event }: EventSpeakerProps) => {
-    const [_, params] = useRoute('/:routeName/:speakerId*')
+    const [_, params] = useRoute('/:routeName/:speakerId/*?')
     const [_2, setLocation] = useLocation()
+    const searchString = useSearch()
     const speakers = useSpeakers(event.id)
     const speakerId = params?.speakerId
     const [deleteOpen, setDeleteOpen] = useState(false)
@@ -61,11 +60,21 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
 
     const [prevLink, nextLink] = goPrevOrNext()
 
+    const fromSession = getQueryParams().fromSession
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} key={speakerId}>
             <Box display="flex" justifyContent="space-between" mt={2}>
-                <Button onClick={() => navigateBackOrFallbackTo('/speakers', setLocation)} startIcon={<ArrowBack />}>
-                    {getQueryParams().fromSession ? 'To session' : 'All speaker'}
+                <Button
+                    onClick={() => {
+                        if (fromSession) {
+                            setLocation(`/sessions/${fromSession}`)
+                        } else {
+                            setLocation('/speakers')
+                        }
+                    }}
+                    startIcon={<ArrowBack />}>
+                    {fromSession ? 'To session' : 'All speaker'}
                 </Button>
                 <Box display="flex" alignItems="center">
                     <Typography>
