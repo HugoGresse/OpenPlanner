@@ -1,22 +1,6 @@
 import { useState } from 'react'
-import {
-    Avatar,
-    Box,
-    CircularProgress,
-    Divider,
-    IconButton,
-    Link,
-    List,
-    ListItem,
-    ListItemAvatar,
-    ListItemText,
-    Toolbar,
-} from '@mui/material'
+import { CircularProgress, Divider, List, ListItemText, Toolbar } from '@mui/material'
 import { EventScreenMenuItems } from '../EventScreenMenuItems'
-import { useSelector } from 'react-redux'
-import { logout, selectUserOpenPlanner } from '../../../auth/authReducer'
-import LogoutIcon from '@mui/icons-material/Logout'
-import { useAppDispatch } from '../../../reduxStore'
 import { LoadingButton } from '@mui/lab'
 import { Event } from '../../../types'
 import { useNotification } from '../../../hooks/notificationHook'
@@ -28,9 +12,7 @@ export type EventDrawerContentProps = {
 }
 
 export const EventDrawerContent = ({ event }: EventDrawerContentProps) => {
-    const dispatch = useAppDispatch()
     const [loading, setLoading] = useState(false)
-    const user = useSelector(selectUserOpenPlanner)
     const { createNotification } = useNotification()
 
     return (
@@ -64,28 +46,6 @@ export const EventDrawerContent = ({ event }: EventDrawerContentProps) => {
                     <ListItemText primary={'Update website'} />
                 </LoadingButton>
             </List>
-            <Box marginTop="auto">
-                <List>
-                    <ListItem
-                        secondaryAction={
-                            <IconButton
-                                edge="end"
-                                aria-label="logout"
-                                component={Link}
-                                href="../../../"
-                                onClick={() => {
-                                    dispatch(logout())
-                                }}>
-                                <LogoutIcon />
-                            </IconButton>
-                        }>
-                        <ListItemAvatar>
-                            <Avatar alt={user?.avatarURL} src={user?.displayName}></Avatar>
-                        </ListItemAvatar>
-                        <ListItemText primary={user?.displayName} />
-                    </ListItem>
-                </List>
-            </Box>
         </>
     )
 }
