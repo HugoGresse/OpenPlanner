@@ -1,13 +1,13 @@
-import * as React from 'react'
 import { Event, TeamMember } from '../../../../types'
-import { AutocompleteElement, FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
-import { Grid, IconButton, InputAdornment } from '@mui/material'
+import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { Grid } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { ImageTextFieldElement } from '../../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../../components/form/SaveShortcut'
 import { TeamSocialFields } from './TeamSocialFields'
 import { useTeamByTeams } from '../../../../services/hooks/useTeam'
 import { useMemo } from 'react'
+import { OPAutocomplete } from '../../../../components/form/OPAutocomplete'
 
 export type MemberFormProps = {
     event: Event
@@ -81,22 +81,16 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                         disabled={isSubmitting}
                     />
 
-                    <AutocompleteElement
+                    <OPAutocomplete
                         name="team"
                         label="Team"
                         options={teamOptions}
                         loading={teams.isLoading}
+                        freeSolo={true}
                         textFieldProps={{
                             margin: 'dense',
                             variant: 'filled',
                             disabled: isSubmitting,
-                        }}
-                        autocompleteProps={{
-                            freeSolo: true,
-                            fullWidth: true,
-                        }}
-                        transform={{
-                            input: (val) => val ?? [],
                         }}
                     />
 

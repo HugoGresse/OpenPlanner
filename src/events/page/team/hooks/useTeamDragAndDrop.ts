@@ -39,8 +39,24 @@ export const useTeamDragAndDrop = (eventId: string) => {
                 })
             }
 
+            // Get both pointer and rect intersections
             const pointerIntersections = pointerWithin(args)
-            const intersections = pointerIntersections.length > 0 ? pointerIntersections : rectIntersection(args)
+            const rectIntersections = rectIntersection(args)
+
+            // Combine both types of intersections, prioritizing pointer intersections
+            const intersections = [...pointerIntersections, ...rectIntersections]
+
+            if (intersections.length === 0) {
+                // If no intersections found and we have a last known position, maintain it
+                // but only if it's still a valid container
+                if (
+                    lastOverId.current &&
+                    args.droppableContainers.find((container) => container.id.toString() === lastOverId.current)
+                ) {
+                    return [{ id: lastOverId.current }]
+                }
+                return []
+            }
 
             let overId = getFirstCollision(intersections, 'id')?.toString()
 
@@ -48,15 +64,15 @@ export const useTeamDragAndDrop = (eventId: string) => {
                 if (teamOrder.includes(overId)) {
                     const teamMembers = localTeamData[overId] || []
                     if (teamMembers.length > 0) {
-                        const closestMember = closestCenter({
+                        const closestMemberCollisions = closestCenter({
                             ...args,
                             droppableContainers: args.droppableContainers.filter((container) =>
                                 teamMembers.some((m) => m.id === container.id.toString())
                             ),
-                        })[0]
+                        })
 
-                        if (closestMember) {
-                            overId = closestMember.id.toString()
+                        if (closestMemberCollisions.length > 0) {
+                            overId = closestMemberCollisions[0].id.toString()
                         }
                     }
                 }
@@ -65,7 +81,7 @@ export const useTeamDragAndDrop = (eventId: string) => {
                 return [{ id: overId }]
             }
 
-            return lastOverId.current ? [{ id: lastOverId.current }] : []
+            return []
         },
         [activeItem, teamOrder, localTeamData]
     )
