@@ -10,7 +10,7 @@ import { collections } from '../../../../services/firebase'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
-import { DragHandle } from '@mui/icons-material'
+import { DragIndicator } from '@mui/icons-material'
 import { ConfirmTooltipButton } from '../../../../components/ConfirmTooltipButton'
 import { Delete as DeleteIcon } from '@mui/icons-material'
 
@@ -98,7 +98,7 @@ export const TeamGroup = ({ event, teamName, members, isTeamBeingDragged }: Team
                             {...attributes}
                             {...listeners}
                             sx={{ cursor: 'grab', display: 'flex', alignItems: 'center' }}>
-                            <DragHandle />
+                            <DragIndicator />
                         </Box>
                         <Typography variant="h5" onClick={handleTeamNamePress}>
                             {teamName}

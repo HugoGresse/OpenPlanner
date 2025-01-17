@@ -10,8 +10,8 @@ export const eventConverter: FirestoreDataConverter<Event | NewEvent> = {
             id: snapshot.id,
             ...data,
             dates: {
-                start: data.dates?.start ? data.dates.start.toDate() : null,
-                end: data.dates?.end ? data.dates.end.toDate() : null,
+                start: data.dates?.start ? data.dates.start?.toDate() : null,
+                end: data.dates?.end ? data.dates.end?.toDate() : null,
             },
         } as Event
     },
@@ -27,8 +27,8 @@ export const event2Converter: FirestoreDataConverter<Event> = {
             id: snapshot.id,
             ...data,
             dates: {
-                start: data.dates?.start ? data.dates.start.toDate() : null,
-                end: data.dates?.end ? data.dates.end.toDate() : null,
+                start: data.dates?.start ? data.dates.start?.toDate() : null,
+                end: data.dates?.end ? data.dates.end?.toDate() : null,
             },
         } as Event
     },
