@@ -1,14 +1,15 @@
 import { UseQueryResult } from '../../services/hooks/firestoreQueryHook'
 import { useCallback, useEffect, useState } from 'react'
 import { BaseAPIUrl } from './constants'
+import { JsonPublicOutput } from '../../events/actions/updateWebsiteActions/jsonTypes'
 
 type EventResponse = {
     eventName: string
     dataUrl: string
 }
 
-export const usePublicEvent = (eventId?: string): UseQueryResult<PublicEventData> => {
-    const [data, setData] = useState<PublicEventData | null>(null)
+export const usePublicEvent = (eventId?: string): UseQueryResult<JsonPublicOutput> => {
+    const [data, setData] = useState<JsonPublicOutput | null>(null)
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
@@ -24,12 +25,13 @@ export const usePublicEvent = (eventId?: string): UseQueryResult<PublicEventData
 
             const eventResponse = await fetch(url.href)
             if (!eventResponse.ok) {
-                throw new Error(`Failed to fetch event: ${eventResponse.statusText}`)
+                const body = await eventResponse.json()
+                throw new Error(`Failed to fetch event: ${eventResponse.statusText}, ${body.error}`)
             }
 
             const eventData = (await eventResponse.json()) as EventResponse
             if (!eventData.dataUrl) {
-                throw new Error('No data URL available')
+                throw new Error('No data URL available, did you forgot to "Update website" once?')
             }
 
             const cacheBuster = new Date().getTime()
@@ -40,7 +42,7 @@ export const usePublicEvent = (eventId?: string): UseQueryResult<PublicEventData
                 throw new Error(`Failed to fetch event data: ${dataResponse.statusText}`)
             }
 
-            const publicData = (await dataResponse.json()) as PublicEventData
+            const publicData = (await dataResponse.json()) as JsonPublicOutput
             setData(publicData)
         } catch (err) {
             console.error(err)
