@@ -27,7 +27,9 @@ export const PublicApp = (props: PublicAppProps) => {
                 <Route path="/transcription">
                     <TranscriptionApp eventId={eventId} />
                 </Route>
-
+                <Route path="/schedule/:day">
+                    <PublicEvent eventId={eventId} />
+                </Route>
                 <Route>
                     <PublicEvent eventId={eventId} />
                 </Route>
