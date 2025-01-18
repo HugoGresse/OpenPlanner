@@ -130,6 +130,7 @@ export interface Event {
     name: string
     owner: string
     scheduleVisible: boolean
+    publicEnabled: boolean
     members: string[]
     conferenceHallId: string | null
     dates: DateType
@@ -169,6 +170,7 @@ export type EventForForm = Omit<Event, 'dates'> & {
 export type EventSettingForForm = {
     webhooks: Webhooks[]
     apiKey: string | null
+    publicEnabled?: boolean
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {

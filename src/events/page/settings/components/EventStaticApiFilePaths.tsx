@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Event } from '../../../../types'
 import { Box, CircularProgress, FormControlLabel, Switch, Typography } from '@mui/material'
@@ -54,15 +53,17 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
             </Typography>
             {filesPath.public ? (
                 <Box>
-                    <Typography>Public (no private information):</Typography>
+                    <Typography sx={{ mt: 2 }}>Public (no private information):</Typography>
                     <TypographyCopyable>{filesPath.public}</TypographyCopyable>
-                    <Typography>Private (all private datas, don't share it or put in another website):</Typography>
+                    <Typography sx={{ mt: 2 }}>
+                        Private (all private datas, don't share it or put in another website):
+                    </Typography>
                     {filesPath.private && <TypographyCopyable>{filesPath.private}</TypographyCopyable>}
-                    <Typography>OpenFeedback.io:</Typography>
+                    <Typography sx={{ mt: 2 }}>OpenFeedback.io:</Typography>
                     {filesPath.openfeedback && <TypographyCopyable>{filesPath.openfeedback}</TypographyCopyable>}
                     {filesPath.voxxrin ? (
                         <>
-                            <Typography>Voxxrin:</Typography>
+                            <Typography sx={{ mt: 2 }}>Voxxrin:</Typography>
                             <TypographyCopyable>{filesPath.voxxrin}</TypographyCopyable>
                         </>
                     ) : (
