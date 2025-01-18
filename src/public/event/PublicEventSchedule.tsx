@@ -69,7 +69,12 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
 
             <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
 
-            <DaySchedule day={selectedDay} sessions={currentSessions} speakersData={event.speakers} />
+            <DaySchedule
+                day={selectedDay}
+                sessions={currentSessions}
+                speakersData={event.speakers}
+                categories={event.event.categories}
+            />
         </Box>
     )
 }

@@ -1,3 +1,5 @@
+import { Category, Track, Format } from '../../../types'
+
 export interface JsonSession {
     id: string
     title: string
@@ -45,9 +47,9 @@ export interface JsonEvent {
     scheduleVisible: boolean
     dateStart: string | undefined
     dateEnd: string | undefined
-    formats: any[] // TODO: Define proper type
-    categories: any[] // TODO: Define proper type
-    tracks: any[] // TODO: Define proper type
+    formats: Format[]
+    categories: Category[]
+    tracks: Track[]
     updatedAt: string
     locationName: string | null | undefined
     locationUrl: string | null | undefined
