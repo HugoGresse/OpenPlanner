@@ -43,8 +43,8 @@ export const MemberForm = ({ event, member, onSubmit }: MemberFormProps) => {
                 const socials = (data.socials || []).filter((social) => social.link && social.link.length)
                 const newData = {
                     name: data.name,
-                    bio: data.bio,
-                    role: data.role,
+                    bio: data.bio || '',
+                    role: data.role || '',
                     team: (data.team as unknown as { label: string })?.label || data.team || 'default',
                     photoUrl: data.photoUrl,
                     socials,
