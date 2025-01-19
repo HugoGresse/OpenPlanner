@@ -13,7 +13,9 @@ A website to
     -   private notes for speaker, email, phone
     -   tracks / rooms
 -   manage sponsors & categories
+-   manage team members
 -   FAQ with admin and public or hidden pages
+-   public schedule website builtin (and optin)
 -   [API](https://api.openplanner.fr/) & webhooks
 
 ## Dev guidelines
