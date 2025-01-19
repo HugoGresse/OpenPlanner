@@ -22,13 +22,12 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
         speakersData
     )
 
-    console.log(gridTemplateColumns)
-
     return (
         <Box>
             <Box
                 sx={{
-                    display: 'grid',
+                    display: isMobile ? 'flex' : 'grid',
+                    flexDirection: isMobile ? 'column' : 'row',
                     gridTemplateColumns,
                     gridAutoRows: 'minmax(100px, auto)',
                     position: 'relative',
@@ -37,7 +36,7 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
                 {/* Empty cell for top-left corner */}
                 <Box sx={{ gridColumn: 1, gridRow: 1 }} />
 
-                {/* Sticky track header container */}
+                {!isMobile && (
                 <Box
                     sx={{
                         gridColumn: '2 / -1',
@@ -83,6 +82,7 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
                         </Box>
                     ))}
                 </Box>
+                )}
 
                 {uniqueTimeSlots.map((time, index) => (
                     <Typography
