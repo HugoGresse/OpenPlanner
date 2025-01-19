@@ -1,6 +1,7 @@
 import { Box, Typography, Avatar, AvatarGroup, Paper, Chip } from '@mui/material'
 import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
 import { Category } from '../../../types'
+import { LanguageFlag } from './LanguageFlag'
 
 type SessionItemProps = {
     session: JsonSession & { speakersData?: JsonSpeaker[] }
@@ -48,7 +49,15 @@ export const SessionItem = ({ session, categories }: SessionItemProps) => {
                     <Typography
                         variant="caption"
                         color="text.secondary"
-                        sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        sx={{
+                            flexGrow: 1,
+                            overflow: 'hidden',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            lineHeight: '1.2em',
+                            maxHeight: '2.4em',
+                        }}>
                         {session.speakersData.map((speaker) => speaker.name).join(', ')}
                     </Typography>
                 </Box>
@@ -59,14 +68,18 @@ export const SessionItem = ({ session, categories }: SessionItemProps) => {
                 </Typography>
             )}
             {category && (
-                <Chip
-                    label={category.name}
-                    size="small"
-                    sx={{
-                        bgcolor: category.color || 'primary.main',
-                        color: 'white',
-                    }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                    <Chip
+                        label={category.name}
+                        size="small"
+                        sx={{
+                            bgcolor: category.color || 'primary.main',
+                            color: 'white',
+                            flexGrow: 1,
+                        }}
+                    />
+                    {session.language && <LanguageFlag language={session.language} size="sm" />}
+                </Box>
             )}
         </Paper>
     )

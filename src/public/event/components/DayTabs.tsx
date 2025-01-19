@@ -15,7 +15,8 @@ export const DayTabs = ({ days, selectedDay, onDayChange }: DayTabsProps) => {
             onChange={onDayChange}
             variant="scrollable"
             scrollButtons="auto"
-            allowScrollButtonsMobile>
+            allowScrollButtonsMobile
+            sx={{ '& .MuiTab-root': { fontSize: '1.2rem' } }}>
             {days.map((day) => (
                 <Tab key={day} value={day} label={DateTime.fromISO(day).toLocaleString({ weekday: 'long' })} />
             ))}

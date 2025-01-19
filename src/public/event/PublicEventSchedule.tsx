@@ -59,11 +59,10 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
     const currentSessions = sessionsByDay.get(selectedDay) || []
 
     return (
-        <Box display="flex" flexDirection="column" gap={2} p={0} mt={2}>
+        <Box display="flex" flexDirection="column" gap={2} p={0} mt={2} justifyContent="center" alignItems="center">
             <ScheduleHeader
                 eventName={event.event.name}
                 logoUrl={event.event.logoUrl}
-                color={event.event.color}
                 colorBackground={event.event.colorBackground}
             />
 

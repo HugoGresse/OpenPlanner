@@ -4,11 +4,10 @@ import { Box, Typography } from '@mui/material'
 type ScheduleHeaderProps = {
     eventName: string
     logoUrl?: string | null
-    color?: string | null
     colorBackground?: string | null
 }
 
-export const ScheduleHeader = ({ eventName, logoUrl, color, colorBackground }: ScheduleHeaderProps) => {
+export const ScheduleHeader = ({ eventName, logoUrl, colorBackground }: ScheduleHeaderProps) => {
     return (
         <Box
             display="flex"
@@ -36,6 +35,12 @@ export const ScheduleHeader = ({ eventName, logoUrl, color, colorBackground }: S
                     variant="h3"
                     sx={{
                         fontWeight: 'bold',
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1, // Set line height to 1 to prevent descenders from affecting alignment
+                        paddingTop: '0.2em', // Add slight padding to visually center text including descenders
                     }}>
                     {eventName}
                 </Typography>
