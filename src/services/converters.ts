@@ -13,6 +13,7 @@ export const eventConverter: FirestoreDataConverter<Event | NewEvent> = {
                 start: data.dates?.start ? data.dates.start?.toDate() : null,
                 end: data.dates?.end ? data.dates.end?.toDate() : null,
             },
+            updatedAt: data.updatedAt ? data.updatedAt?.toDate() : null,
         } as Event
     },
     toFirestore(event: NewEvent) {
@@ -30,6 +31,7 @@ export const event2Converter: FirestoreDataConverter<Event> = {
                 start: data.dates?.start ? data.dates.start?.toDate() : null,
                 end: data.dates?.end ? data.dates.end?.toDate() : null,
             },
+            updatedAt: data.updatedAt ? data.updatedAt?.toDate() : null,
         } as Event
     },
     toFirestore(event: Event) {
