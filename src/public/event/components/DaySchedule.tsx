@@ -2,12 +2,12 @@ import * as React from 'react'
 import { Box, Typography, Paper } from '@mui/material'
 import { DateTime } from 'luxon'
 import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
-import { Category } from '../../../types'
+import { Category, Track } from '../../../types'
 import { SessionItem } from './SessionItem'
 
-// Types
 type DayScheduleProps = {
     day: string
+    tracks: Track[]
     sessions: JsonSession[]
     speakersData: JsonSpeaker[]
     categories: Category[]
@@ -19,7 +19,7 @@ type SessionWithSpeakers = JsonSession & {
 
 type ScheduleGridProps = {
     sessions: SessionWithSpeakers[]
-    tracks: string[]
+    tracks: Track[]
     timeSlots: DateTime[]
     startTime: DateTime
     categories: Category[]
@@ -50,26 +50,44 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
             {/* Empty cell for top-left corner */}
             <Box sx={{ gridColumn: 1, gridRow: 1 }} />
 
-            {/* Track Headers */}
-            {tracks.map((trackId, index) => (
-                <Typography
-                    key={trackId}
-                    variant="subtitle1"
-                    sx={{
-                        textAlign: 'center',
-                        fontWeight: 'bold',
-                        gridColumn: index + 2,
-                        gridRow: 1,
-                        p: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}>
-                    {trackId}
-                </Typography>
+            {tracks.map((track, index) => (
+                <Box key={track.id} sx={{ position: 'relative' }}>
+                    <Typography
+                        variant="subtitle1"
+                        sx={{
+                            textAlign: 'center',
+                            fontWeight: 'bold',
+                            gridColumn: index + 2,
+                            gridRow: 1,
+                            p: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '100%',
+                            height: '100%',
+                            position: 'absolute',
+                            left: '50%',
+                            top: '50%',
+                            transform: 'translate(-50%, -50%)',
+                        }}>
+                        {track.name}
+                    </Typography>
+                    {index < tracks.length - 1 && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                right: 0,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                width: '1px',
+                                height: '70%',
+                                backgroundColor: 'divider',
+                            }}
+                        />
+                    )}
+                </Box>
             ))}
 
-            {/* Time Indicators */}
             {uniqueTimeSlots.map((time, index) => (
                 <Typography
                     key={index}
@@ -97,14 +115,13 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                 </Typography>
             ))}
 
-            {/* Sessions */}
             {sessions.map((session) => {
                 if (!session.dateStart || !session.trackId) return null
 
                 const sessionStart = DateTime.fromISO(session.dateStart)
                 const rowStart =
                     uniqueTimeSlots.findIndex((time) => time.toFormat('HH:mm') === sessionStart.toFormat('HH:mm')) + 2
-                const trackIndex = tracks.indexOf(session.trackId)
+                const trackIndex = tracks.findIndex((track) => track.id === session.trackId)
                 const width = session.extendWidth || 1
 
                 if (rowStart < 2 || trackIndex === -1) return null
@@ -130,18 +147,9 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
     )
 }
 
-// Main component
-export const DaySchedule: React.FC<DayScheduleProps> = ({ day, sessions, speakersData, categories }) => {
-    const tracks = Array.from(
-        new Set(
-            sessions
-                .map((session) => session.trackId)
-                .filter((trackId): trackId is string => trackId !== null && trackId !== undefined)
-        )
-    )
-
+export const DaySchedule: React.FC<DayScheduleProps> = ({ day, tracks, sessions, speakersData, categories }) => {
     const timeSlots = sessions
-        .filter((session) => session.dateStart && session.trackId === tracks[0])
+        .filter((session) => session.dateStart && session.trackId === tracks[0].id)
         .map((session) => DateTime.fromISO(session.dateStart!))
         .sort((a, b) => a.toMillis() - b.toMillis())
 
@@ -154,10 +162,7 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ day, sessions, speaker
 
     return (
         <Box sx={{}}>
-            <Typography variant="h4" gutterBottom>
-                {DateTime.fromISO(day).toFormat('MMMM d, yyyy')}
-            </Typography>
-            <Box sx={{ mt: 4 }}>
+            <Box>
                 <ScheduleGrid
                     sessions={sessionsWithSpeakers}
                     tracks={tracks}

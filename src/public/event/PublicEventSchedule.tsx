@@ -71,6 +71,7 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
 
             <DaySchedule
                 day={selectedDay}
+                tracks={event.event.tracks}
                 sessions={currentSessions}
                 speakersData={event.speakers}
                 categories={event.event.categories}
