@@ -22,6 +22,32 @@ const socialIcons: Record<string, React.ReactNode> = {
     website: <LanguageIcon sx={{ height: iconSize, width: iconSize }} />,
 }
 
+// Add a helper function to check if a URL is valid
+const isValidUrl = (url: string) => {
+    try {
+        new URL(url)
+        return true
+    } catch (_) {
+        return false
+    }
+}
+
+// Add a helper function to reconstruct URLs
+const reconstructUrl = (icon: string, link: string) => {
+    if (isValidUrl(link)) return link
+
+    switch (icon.toLowerCase()) {
+        case 'github':
+            return `https://github.com/${link}`
+        case 'linkedin':
+            return `https://linkedin.com/in/${link}`
+        case 'twitter':
+            return `https://x.com/${link}`
+        default:
+            return link
+    }
+}
+
 export const SpeakerLinks = ({ socials }: SpeakerLinksProps) => {
     if (!socials || socials.length === 0) return null
 
@@ -31,7 +57,7 @@ export const SpeakerLinks = ({ socials }: SpeakerLinksProps) => {
                 <IconButton
                     key={social.icon}
                     size="small"
-                    href={social.link}
+                    href={reconstructUrl(social.icon, social.link)}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={social.name}>
