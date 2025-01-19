@@ -4,7 +4,7 @@ import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteA
 import { Category, Track } from '../../../types'
 import { SessionItem } from './SessionItem'
 import { useScheduleGrid } from '../hooks/useScheduleGrid'
-import { isMobile as isMobileHook } from '../../../hooks/sizesHooks'
+import { isMobile as isMobileHook, isMobileOrTablet } from '../../../hooks/sizesHooks'
 
 type DayScheduleProps = {
     day: string
@@ -15,7 +15,7 @@ type DayScheduleProps = {
 }
 
 export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, speakersData, categories }) => {
-    const isMobile = isMobileHook()
+    const isMobile = isMobileOrTablet()
     const { sessionsWithSpeakers, uniqueTimeSlots, gridTemplateColumns } = useScheduleGrid(
         sessions,
         tracks,
