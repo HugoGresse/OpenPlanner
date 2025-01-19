@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Box, Typography } from '@mui/material'
+import { isMobile as isMobileHook } from '../../../hooks/sizesHooks'
 
 type ScheduleHeaderProps = {
     eventName: string
@@ -8,6 +8,7 @@ type ScheduleHeaderProps = {
 }
 
 export const ScheduleHeader = ({ eventName, logoUrl, colorBackground }: ScheduleHeaderProps) => {
+    const isMobile = isMobileHook()
     return (
         <Box
             display="flex"
@@ -15,24 +16,24 @@ export const ScheduleHeader = ({ eventName, logoUrl, colorBackground }: Schedule
             alignItems="center"
             sx={{
                 backgroundColor: colorBackground || 'transparent',
-                padding: 3,
+                padding: isMobile ? 1.5 : 3,
                 borderRadius: 1,
             }}>
-            <Box display="flex" alignItems="center" gap={3}>
+            <Box display="flex" alignItems="center" gap={isMobile ? 1.5 : 3} flexWrap="wrap">
                 {logoUrl && (
                     <Box
                         component="img"
                         src={logoUrl}
                         alt={`${eventName} logo`}
                         sx={{
-                            height: 60,
+                            height: isMobile ? 40 : 60,
                             width: 'auto',
                             objectFit: 'contain',
                         }}
                     />
                 )}
                 <Typography
-                    variant="h3"
+                    variant={isMobile ? 'h4' : 'h3'}
                     sx={{
                         fontWeight: 'bold',
                         textAlign: 'center',
