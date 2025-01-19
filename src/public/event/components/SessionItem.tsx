@@ -1,15 +1,18 @@
 import { Box, Typography, Avatar, AvatarGroup, Paper, Chip } from '@mui/material'
 import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
-import { Category } from '../../../types'
+import { Category, Track } from '../../../types'
 import { LanguageFlag } from './LanguageFlag'
 
 type SessionItemProps = {
     session: JsonSession & { speakersData?: JsonSpeaker[] }
     categories: Category[]
+    tracks: Track[]
+    isMobile: boolean
 }
 
-export const SessionItem = ({ session, categories }: SessionItemProps) => {
+export const SessionItem = ({ session, categories, tracks, isMobile }: SessionItemProps) => {
     const category = session.categoryId ? categories.find((cat) => cat.id === session.categoryId) : null
+    const track = session.trackId ? tracks.find((t) => t.id === session.trackId) : null
 
     return (
         <Paper
@@ -37,6 +40,11 @@ export const SessionItem = ({ session, categories }: SessionItemProps) => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
                     {session.title}
                 </Typography>
+                {isMobile && track && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                        {track.name}
+                    </Typography>
+                )}
             </Box>
 
             {session.speakersData && session.speakersData.length > 0 && (

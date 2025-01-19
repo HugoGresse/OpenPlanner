@@ -4,7 +4,7 @@ import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteA
 import { Category, Track } from '../../../types'
 import { SessionItem } from './SessionItem'
 import { useScheduleGrid } from '../hooks/useScheduleGrid'
-import { isMobile } from '../../../hooks/sizesHooks'
+import { isMobile as isMobileHook } from '../../../hooks/sizesHooks'
 
 type DayScheduleProps = {
     day: string
@@ -15,12 +15,14 @@ type DayScheduleProps = {
 }
 
 export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, speakersData, categories }) => {
+    const isMobile = isMobileHook()
     const { sessionsWithSpeakers, uniqueTimeSlots, gridTemplateColumns } = useScheduleGrid(
         sessions,
         tracks,
         speakersData
     )
-    const mobile = isMobile()
+
+    console.log(gridTemplateColumns)
 
     return (
         <Box>
@@ -42,8 +44,8 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
                         gridRow: 1,
                         display: 'grid',
                         gridTemplateColumns: `repeat(${tracks.length}, 1fr)`,
-                        position: mobile ? 'relative' : 'sticky',
-                        top: mobile ? 'auto' : 0,
+                        position: isMobile ? 'relative' : 'sticky',
+                        top: isMobile ? 'auto' : 0,
                         backgroundColor: 'background.paper',
                         zIndex: 2,
                         borderBottom: '1px solid',
@@ -135,7 +137,12 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
                                     transform: 'scale(1.02)',
                                 },
                             }}>
-                            <SessionItem session={session} categories={categories} />
+                            <SessionItem
+                                session={session}
+                                categories={categories}
+                                tracks={tracks}
+                                isMobile={isMobile}
+                            />
                         </Box>
                     )
                 })}

@@ -1,11 +1,11 @@
 import { DateTime } from 'luxon'
 import { useMemo } from 'react'
 import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
-import { Category, Track } from '../../../types'
+import { Track } from '../../../types'
 
 export const GRID_CONFIG = {
     TIME_COLUMN_WIDTH: '60px',
-    TRACK_MIN_WIDTH: '200px',
+    TRACK_MIN_WIDTH: '120px',
 } as const
 
 export type SessionWithSpeakers = JsonSession & {
