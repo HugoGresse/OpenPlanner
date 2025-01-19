@@ -114,7 +114,6 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                     <span className="time-minutes">{time.toFormat('mm')}</span>
                 </Typography>
             ))}
-
             {sessions.map((session) => {
                 if (!session.dateStart || !session.trackId) return null
 
@@ -123,6 +122,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                     uniqueTimeSlots.findIndex((time) => time.toFormat('HH:mm') === sessionStart.toFormat('HH:mm')) + 2
                 const trackIndex = tracks.findIndex((track) => track.id === session.trackId)
                 const width = session.extendWidth || 1
+                const height = session.extendHeight || 1
 
                 if (rowStart < 2 || trackIndex === -1) return null
 
@@ -131,7 +131,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                         key={session.id}
                         sx={{
                             gridColumn: `${trackIndex + 2} / span ${width}`,
-                            gridRow: rowStart,
+                            gridRow: `${rowStart} / span ${height}`,
                             m: 0.5,
                             transition: 'all 0.2s ease-in-out',
                             '&:hover': {
