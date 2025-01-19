@@ -11,26 +11,21 @@ export const ResourceLinks = ({ presentationLink, videoLink }: ResourceLinksProp
     if (!presentationLink && !videoLink) return null
 
     return (
-        <Box sx={{ mt: 4 }}>
-            <Typography variant="h6" gutterBottom>
-                Resources
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-                {presentationLink && (
-                    <MuiLink
-                        href={presentationLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{ textDecoration: 'none' }}>
-                        <Chip icon={<PictureAsPdfIcon />} label="Presentation" clickable color="primary" />
-                    </MuiLink>
-                )}
-                {videoLink && (
-                    <MuiLink href={videoLink} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'none' }}>
-                        <Chip icon={<VideoLibraryIcon />} label="Video Recording" clickable color="primary" />
-                    </MuiLink>
-                )}
-            </Box>
+        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+            {presentationLink && (
+                <MuiLink
+                    href={presentationLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ textDecoration: 'none' }}>
+                    <Chip icon={<PictureAsPdfIcon />} label="Presentation" clickable color="primary" />
+                </MuiLink>
+            )}
+            {videoLink && (
+                <MuiLink href={videoLink} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'none' }}>
+                    <Chip icon={<VideoLibraryIcon />} label="Video Recording" clickable color="primary" />
+                </MuiLink>
+            )}
         </Box>
     )
 }
