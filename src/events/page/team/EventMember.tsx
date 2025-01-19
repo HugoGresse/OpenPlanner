@@ -47,6 +47,7 @@ export const EventMember = ({ event }: EventMemberProps) => {
                     member={member}
                     onSubmit={async (data) => {
                         await mutation.mutate(data)
+                        setLocation('/team')
                     }}
                 />
             </Card>
