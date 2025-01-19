@@ -22,12 +22,77 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
         speakersData
     )
 
+    if (isMobile) {
+        return (
+            <Box>
+                {uniqueTimeSlots.map((time, index) => {
+                    const timeFormatted = time.toFormat('HH:mm')
+                    const sessionsForThisTime = sessionsWithSpeakers.filter((session) => {
+                        if (!session.dateStart) return false
+                        const sessionStart = DateTime.fromISO(session.dateStart)
+                        return sessionStart.toFormat('HH:mm') === timeFormatted
+                    })
+
+                    if (sessionsForThisTime.length === 0) return null
+
+                    return (
+                        <Box key={index}>
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    textAlign: 'right',
+                                    pr: 2,
+                                    pt: 2,
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    justifyContent: 'center',
+                                    fontWeight: 500,
+                                    fontSize: '1.6em',
+                                    position: 'sticky',
+                                    top: 0,
+                                    backgroundColor: 'background.paper',
+                                    zIndex: 2,
+                                    '& .time-minutes': {
+                                        fontSize: '0.8em',
+                                        opacity: 0.7,
+                                        ml: 0.5,
+                                        mt: '2px',
+                                    },
+                                }}>
+                                <span>{time.toFormat('HH')}</span>
+                                <span className="time-minutes">{time.toFormat('mm')}</span>
+                            </Typography>
+                            {sessionsForThisTime.map((session) => (
+                                <Box
+                                    key={session.id}
+                                    sx={{
+                                        m: 0.5,
+                                        transition: 'all 0.2s ease-in-out',
+                                        '&:hover': {
+                                            zIndex: 1,
+                                            transform: 'scale(1.02)',
+                                        },
+                                    }}>
+                                    <SessionItem
+                                        session={session}
+                                        categories={categories}
+                                        tracks={tracks}
+                                        isMobile={isMobile}
+                                    />
+                                </Box>
+                            ))}
+                        </Box>
+                    )
+                })}
+            </Box>
+        )
+    }
+
     return (
         <Box>
             <Box
                 sx={{
-                    display: isMobile ? 'flex' : 'grid',
-                    flexDirection: isMobile ? 'column' : 'row',
+                    display: 'grid',
                     gridTemplateColumns,
                     gridAutoRows: 'minmax(100px, auto)',
                     position: 'relative',
@@ -36,15 +101,14 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
                 {/* Empty cell for top-left corner */}
                 <Box sx={{ gridColumn: 1, gridRow: 1 }} />
 
-                {!isMobile && (
                 <Box
                     sx={{
                         gridColumn: '2 / -1',
                         gridRow: 1,
                         display: 'grid',
                         gridTemplateColumns: `repeat(${tracks.length}, 1fr)`,
-                        position: isMobile ? 'relative' : 'sticky',
-                        top: isMobile ? 'auto' : 0,
+                        position: 'sticky',
+                        top: 0,
                         backgroundColor: 'background.paper',
                         zIndex: 2,
                         borderBottom: '1px solid',
@@ -82,8 +146,8 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
                         </Box>
                     ))}
                 </Box>
-                )}
 
+                {/* Time slots and sessions for desktop view */}
                 {uniqueTimeSlots.map((time, index) => (
                     <Typography
                         key={index}
