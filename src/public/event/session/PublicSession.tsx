@@ -6,17 +6,17 @@ import { SpeakerCard } from './components/SpeakerCard'
 import { ResourceLinks } from './components/ResourceLinks'
 import { SessionTags } from './components/SessionTags'
 import { useSessionDateTime } from './hooks/useSessionDateTime'
-import { JsonSpeaker } from '../../../../events/actions/updateWebsiteActions/jsonTypes'
-import { JsonSession } from '../../../../events/actions/updateWebsiteActions/jsonTypes'
-import { Category, Track } from '../../../../types'
-import { isMobile as isMobileHook } from '../../../../hooks/sizesHooks'
-type PublicTalkDetailProps = {
+import { JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonSession } from '../../../events/actions/updateWebsiteActions/jsonTypes'
+import { Category, Track } from '../../../types'
+import { isMobile as isMobileHook } from '../../../hooks/sizesHooks'
+type PublicSessionProps = {
     session: JsonSession & { speakersData?: JsonSpeaker[] }
     categories: Category[]
     tracks: Track[]
 }
 
-export const PublicTalkDetail = ({ session, categories, tracks }: PublicTalkDetailProps) => {
+export const PublicSession = ({ session, categories, tracks }: PublicSessionProps) => {
     const isMobile = isMobileHook()
     const category = useMemo(
         () => (session.categoryId ? categories.find((cat) => cat.id === session.categoryId) ?? null : null),
@@ -78,5 +78,3 @@ export const PublicTalkDetail = ({ session, categories, tracks }: PublicTalkDeta
         </Box>
     )
 }
-
-export default PublicTalkDetail

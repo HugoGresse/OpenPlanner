@@ -1,6 +1,6 @@
 import { Box, Chip } from '@mui/material'
-import { Category } from '../../../../../types'
-import { LanguageFlag } from '../../LanguageFlag'
+import { Category } from '../../../../types'
+import { LanguageFlag } from '../../components/LanguageFlag'
 
 type SessionTagsProps = {
     category: Category | null

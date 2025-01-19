@@ -1,5 +1,5 @@
-import { JsonSession, JsonSpeaker } from '../../../../events/actions/updateWebsiteActions/jsonTypes'
-import { Category, Track } from '../../../../types'
+import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
+import { Category, Track } from '../../../types'
 
 export type PublicTalkDetailProps = {
     session: JsonSession & { speakersData?: JsonSpeaker[] }

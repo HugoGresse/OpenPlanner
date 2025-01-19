@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 import { Route, Switch, useRoute } from 'wouter'
 import { PublicEventLayout } from '../PublicEventLayout'
 import { PublicEvent } from './PublicEvent'
-import PublicTalkDetail from './components/talk/PublicTalkDetail'
+import { PublicSession } from './session/PublicSession'
 
 type PublicEventContainerProps = {
     eventId: string
@@ -14,8 +14,8 @@ type PublicEventContainerProps = {
 export const PublicEventContainer = ({ eventId }: PublicEventContainerProps) => {
     const event = usePublicEvent(eventId)
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
-    const [_, params] = useRoute('/talk/:talkId')
-    const talkId = params?.talkId
+    const [_, params] = useRoute('/session/:sessionId')
+    const sessionId = params?.sessionId
 
     const theme = useMemo(() => {
         if (!event.data) return createTheme({ palette: { mode: prefersDarkMode ? 'dark' : 'light' } })
@@ -45,7 +45,7 @@ export const PublicEventContainer = ({ eventId }: PublicEventContainerProps) => 
         )
     }
 
-    const session = talkId ? event.data.sessions.find((s) => s.id === talkId) : null
+    const session = sessionId ? event.data.sessions.find((s) => s.id === sessionId) : null
     const sessionWithSpeakers = session
         ? {
               ...session,
@@ -57,9 +57,9 @@ export const PublicEventContainer = ({ eventId }: PublicEventContainerProps) => 
         <ThemeProvider theme={theme}>
             <PublicEventLayout>
                 <Switch>
-                    <Route path="/talk/:talkId">
+                    <Route path="/session/:sessionId">
                         {sessionWithSpeakers && (
-                            <PublicTalkDetail
+                            <PublicSession
                                 session={sessionWithSpeakers}
                                 categories={event.data.event.categories}
                                 tracks={event.data.event.tracks}

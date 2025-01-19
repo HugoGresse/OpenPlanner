@@ -17,7 +17,7 @@ export const SessionItem = ({ session, categories, tracks, isMobile }: SessionIt
 
     return (
         <Link
-            href={`/talk/${session.id}`}
+            href={`/session/${session.id}`}
             style={{
                 textDecoration: 'none',
                 display: 'block',
