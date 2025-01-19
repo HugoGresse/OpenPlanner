@@ -53,6 +53,11 @@ export const SessionItem = ({ session, categories }: SessionItemProps) => {
                     </Typography>
                 </Box>
             )}
+            {(!session.speakersData || session.speakersData.length === 0) && !category && session.abstract && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {session.abstract}
+                </Typography>
+            )}
             {category && (
                 <Chip
                     label={category.name}
