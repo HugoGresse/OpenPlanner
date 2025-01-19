@@ -26,13 +26,17 @@ type ScheduleGridProps = {
 }
 
 const GRID_CONFIG = {
-    MINUTES_PER_SLOT: 30, // Time interval between slots
     TIME_COLUMN_WIDTH: '60px',
     TRACK_MIN_WIDTH: '200px',
 } as const
 
 const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots, startTime, categories }) => {
-    console.log(timeSlots.map((time) => time.toFormat('HH:mm')))
+    // Create a map of unique time slots for grid rows
+    const uniqueTimeSlots = Array.from(
+        new Set(sessions.map((session) => DateTime.fromISO(session.dateStart!).toFormat('HH:mm')))
+    )
+        .sort()
+        .map((time) => DateTime.fromFormat(time, 'HH:mm'))
 
     return (
         <Box
@@ -42,7 +46,6 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                 gridAutoRows: 'minmax(100px, auto)',
                 position: 'relative',
                 gap: 1,
-                '& > *': { borderLeft: '1px solid rgba(0, 0, 0, 0.06)' },
             }}>
             {/* Empty cell for top-left corner */}
             <Box sx={{ gridColumn: 1, gridRow: 1 }} />
@@ -67,10 +70,10 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
             ))}
 
             {/* Time Indicators */}
-            {timeSlots.map((time, index) => (
+            {uniqueTimeSlots.map((time, index) => (
                 <Typography
                     key={index}
-                    variant="caption"
+                    variant="h6"
                     sx={{
                         gridColumn: 1,
                         gridRow: index + 2,
@@ -80,9 +83,17 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                         display: 'flex',
                         alignItems: 'flex-start',
                         justifyContent: 'flex-end',
-                        borderRight: '1px solid rgba(0, 0, 0, 0.12)',
+                        fontWeight: 500,
+                        fontSize: '1.6em',
+                        '& .time-minutes': {
+                            fontSize: '0.8em',
+                            opacity: 0.7,
+                            ml: 0.5,
+                            mt: '2px',
+                        },
                     }}>
-                    {time.toFormat('HH:mm')}
+                    <span>{time.toFormat('HH')}</span>
+                    <span className="time-minutes">{time.toFormat('mm')}</span>
                 </Typography>
             ))}
 
@@ -91,9 +102,8 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                 if (!session.dateStart || !session.trackId) return null
 
                 const sessionStart = DateTime.fromISO(session.dateStart)
-                const diffInMinutes = sessionStart.diff(startTime, 'minutes').minutes
-                const rowStart = Math.round(diffInMinutes / GRID_CONFIG.MINUTES_PER_SLOT) + 2
-                const rowSpan = Math.ceil(session.durationMinutes / GRID_CONFIG.MINUTES_PER_SLOT)
+                const rowStart =
+                    uniqueTimeSlots.findIndex((time) => time.toFormat('HH:mm') === sessionStart.toFormat('HH:mm')) + 2
                 const trackIndex = tracks.indexOf(session.trackId)
                 const width = session.extendWidth || 1
 
@@ -104,7 +114,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({ sessions, tracks, timeSlots
                         key={session.id}
                         sx={{
                             gridColumn: `${trackIndex + 2} / span ${width}`,
-                            gridRow: `${rowStart} / span ${rowSpan}`,
+                            gridRow: rowStart,
                             m: 0.5,
                             transition: 'all 0.2s ease-in-out',
                             '&:hover': {
@@ -143,7 +153,7 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ day, sessions, speaker
     }))
 
     return (
-        <Paper elevation={2} sx={{ p: 3 }}>
+        <Box sx={{}}>
             <Typography variant="h4" gutterBottom>
                 {DateTime.fromISO(day).toFormat('MMMM d, yyyy')}
             </Typography>
@@ -156,6 +166,6 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ day, sessions, speaker
                     categories={categories}
                 />
             </Box>
-        </Paper>
+        </Box>
     )
 }
