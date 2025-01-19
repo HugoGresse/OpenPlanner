@@ -75,6 +75,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         color: null,
                         colorSecondary: null,
                         colorBackground: null,
+                        publicEnabled: false,
                     }
                     mutation
                         .mutate(newEventData)

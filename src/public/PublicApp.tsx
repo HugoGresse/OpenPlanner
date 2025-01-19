@@ -1,9 +1,9 @@
-import * as React from 'react'
 import { Route, Switch, useRoute } from 'wouter'
 import { NestedRoutes } from '../components/NestedRoutes'
 import { Typography } from '@mui/material'
 import { TranscriptionApp } from './transcription/TranscriptionApp'
 import { PublicEventFaqApp } from './faq/PublicEventFaqApp'
+import { PublicEvent } from './event/PublicEvent'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
@@ -27,9 +27,11 @@ export const PublicApp = (props: PublicAppProps) => {
                 <Route path="/transcription">
                     <TranscriptionApp eventId={eventId} />
                 </Route>
-
+                <Route path="/schedule/:day">
+                    <PublicEvent eventId={eventId} />
+                </Route>
                 <Route>
-                    <Typography variant="h1">Not implemented!</Typography>
+                    <PublicEvent eventId={eventId} />
                 </Route>
             </Switch>
         </NestedRoutes>

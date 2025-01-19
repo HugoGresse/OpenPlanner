@@ -40,17 +40,20 @@ export const event2Converter: FirestoreDataConverter<Event> = {
 export const sessionConverter: FirestoreDataConverter<Session> = {
     fromFirestore(snapshot): Session {
         const data = snapshot.data()
-
         return {
             id: snapshot.id,
             ...data,
             category: data.category || null,
             dates: {
                 start: data.dates?.start
-                    ? DateTime.fromJSDate(data.dates.start.toDate()).set({ second: 0, millisecond: 0 })
+                    ? typeof data.dates.start === 'string'
+                        ? DateTime.fromISO(data.dates.start).set({ second: 0, millisecond: 0 })
+                        : DateTime.fromJSDate(data.dates.start?.toDate()).set({ second: 0, millisecond: 0 })
                     : null,
                 end: data.dates?.end
-                    ? DateTime.fromJSDate(data.dates.end.toDate()).set({ second: 0, millisecond: 0 })
+                    ? typeof data.dates.end === 'string'
+                        ? DateTime.fromISO(data.dates.end).set({ second: 0, millisecond: 0 })
+                        : DateTime.fromJSDate(data.dates.end?.toDate()).set({ second: 0, millisecond: 0 })
                     : null,
             },
         } as Session

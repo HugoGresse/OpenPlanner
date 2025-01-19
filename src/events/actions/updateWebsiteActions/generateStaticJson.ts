@@ -6,8 +6,9 @@ import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
 import { getTeams } from '../getTeam'
 import { getFaq } from '../getFaq'
 import { generateVoxxrinJson } from './generateVoxxrinJson'
+import { JsonOutput, JsonSession, JsonSessionPrivate, JsonPublicOutput, JsonPrivateOutput } from './jsonTypes'
 
-export const generateStaticJson = async (event: Event) => {
+export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
     const [sessions, speakers, sponsors, { team, teams }, faq] = await Promise.all([
         getSessions(event.id),
         getSpeakers(event.id),
@@ -21,7 +22,7 @@ export const generateStaticJson = async (event: Event) => {
     const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
     const voxxrinJson = event.enableVoxxrin ? generateVoxxrinJson(event, sessions, speakers, sponsors) : null
 
-    const outputSessions = sessions.map((s) => ({
+    const outputSessions: JsonSession[] = sessions.map((s) => ({
         id: s.id,
         title: s.title,
         abstract: s.abstract,
@@ -35,7 +36,7 @@ export const generateStaticJson = async (event: Event) => {
         imageUrl: s.imageUrl,
         presentationLink: s.presentationLink,
         videoLink: s.videoLink,
-        tags: s.tags,
+        tags: s.tags || [],
         formatId: s.format,
         categoryId: s.category,
         showInFeedback: s.showInFeedback,
@@ -45,7 +46,7 @@ export const generateStaticJson = async (event: Event) => {
         teaserVideoUrl: s.teaserVideoUrl,
         teaserImageUrl: s.teaserImageUrl,
     }))
-    const outputSessionsPrivate = sessions.map((s) => ({
+    const outputSessionsPrivate: JsonSessionPrivate[] = sessions.map((s) => ({
         id: s.id,
         title: s.title,
         abstract: s.abstract,
@@ -59,7 +60,7 @@ export const generateStaticJson = async (event: Event) => {
         imageUrl: s.imageUrl,
         presentationLink: s.presentationLink,
         videoLink: s.videoLink,
-        tags: s.tags,
+        tags: s.tags || [],
         formatId: s.format,
         categoryId: s.category,
         showInFeedback: s.showInFeedback,
@@ -82,7 +83,7 @@ export const generateStaticJson = async (event: Event) => {
         formats: event.formats,
         categories: event.categories,
         tracks: event.tracks,
-        updatedAt: event.updatedAt,
+        updatedAt: event.updatedAt.toISOString(),
         locationName: event.locationName,
         locationUrl: event.locationUrl,
         color: event.color,
@@ -93,7 +94,7 @@ export const generateStaticJson = async (event: Event) => {
         backgroundUrl: event.backgroundUrl,
     }
 
-    const outputPublic = {
+    const outputPublic: JsonPublicOutput = {
         event: outputEvent,
         speakers: speakers.map((s) => ({
             id: s.id,
@@ -108,18 +109,19 @@ export const generateStaticJson = async (event: Event) => {
         })),
         sessions: outputSessions,
         sponsors: outputSponsor,
-        team: team,
-        teams: teams,
+        team,
+        teams,
         faq: faqPublic,
         generatedAt: new Date().toISOString(),
     }
-    const outputPrivate = {
+    const outputPrivate: JsonPrivateOutput = {
         event: outputEvent,
-        speakers: speakers,
+        speakers,
         sessions: outputSessionsPrivate,
         sponsors: outputSponsor,
-        team: team,
-        faq: faq,
+        team,
+        teams,
+        faq,
         generatedAt: new Date().toISOString(),
     }
 

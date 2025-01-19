@@ -78,5 +78,6 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
         ...event,
         webhooks,
         apiKey,
+        publicEnabled: data.publicEnabled || false,
     }
 }

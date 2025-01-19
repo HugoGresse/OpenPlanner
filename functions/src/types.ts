@@ -105,6 +105,7 @@ export interface Event {
     name: string
     owner: string
     scheduleVisible: boolean
+    publicEnabled: boolean
     members: string[]
     conferenceHallId: string | null
     dates: DateType

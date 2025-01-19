@@ -5,8 +5,8 @@ import { useEffect } from 'react'
 import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreMutationHooks'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
-import { FormContainer, useForm } from 'react-hook-form-mui'
-import { Card, Container, Grid, Typography } from '@mui/material'
+import { FormContainer, useForm, SwitchElement } from 'react-hook-form-mui'
+import { Card, Container, Grid, Typography, Box, Button } from '@mui/material'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { mapEventDevSettingsFormToMutateObject } from '../settings/mapEventSettingsFormToMutateObject'
 import { WebhooksFields } from '../settings/components/WebhooksFields'
@@ -14,16 +14,33 @@ import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFi
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { TextFieldElementWithGenerateApiKeyButton } from '../../../components/form/TextFieldElementWithGenerateApiKeyButton'
+import { getFaqBaseLinkLink } from '../faq/faqLink'
+import { useFaqs } from '../../../services/hooks/useFaqs'
+import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
+import { TypographyCopyable } from '../../../components/TypographyCopyable'
+import { Link } from 'wouter'
 
 const schema = yup
     .object({
         name: yup.string().required(),
+        publicEnabled: yup.boolean().optional(),
+        apiKey: yup.string().nullable(),
+        webhooks: yup.array().of(
+            yup.object({
+                url: yup.string(),
+                token: yup.string().nullable(),
+                lastAnswer: yup.string().nullable(),
+            })
+        ),
     })
     .required()
 
 const convertInputEvent = (event: Event): EventSettingForForm => {
     return {
         ...event,
+        webhooks: event.webhooks || [],
+        apiKey: event.apiKey,
+        publicEnabled: event.publicEnabled || false,
     }
 }
 
@@ -32,15 +49,27 @@ export type APIProps = {
 }
 export const API = ({ event }: APIProps) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
+    const faqQuery = useFaqs(event)
 
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
     })
-    const { control, formState, reset } = formContext
+    const { control, formState, reset, watch } = formContext
+    const publicEnabled = watch('publicEnabled')
 
     useEffect(() => {
         reset(convertInputEvent(event))
     }, [event])
+
+    const eventPublicUrl = `${window.location.protocol}//${window.location.host}/public/event/${event.id}`
+    const faqBaseUrl = getFaqBaseLinkLink(event)
+
+    if (faqQuery.isLoading) {
+        return <FirestoreQueryLoaderAndErrorDisplay hookResult={faqQuery} />
+    }
+
+    const faqCategories = faqQuery.data || []
+    const privateFaqCount = faqCategories.filter((f) => f.private).length || 0
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -77,7 +106,50 @@ export const API = ({ event }: APIProps) => {
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <Typography component="h2" variant="h5">
+                            <Typography component="h2" variant="h5" gutterBottom>
+                                Website
+                            </Typography>
+                            <Box mb={2}>
+                                <SwitchElement label="Enable public website" name="publicEnabled" />
+                                {publicEnabled && (
+                                    <Box mt={1}>
+                                        <TypographyCopyable>{eventPublicUrl}</TypographyCopyable>
+                                    </Box>
+                                )}
+                            </Box>
+
+                            <Typography component="h2" variant="h5" gutterBottom>
+                                FAQ
+                            </Typography>
+                            <Box>
+                                <Typography variant="body1" gutterBottom>
+                                    Public FAQ:{' '}
+                                    <Button component={Link} to={`/faq`}>
+                                        Edit FAQ
+                                    </Button>
+                                </Typography>
+                                <TypographyCopyable>{faqBaseUrl}</TypographyCopyable>
+
+                                <Typography variant="body1" mt={2} gutterBottom>
+                                    Private FAQ pages: {privateFaqCount}
+                                </Typography>
+
+                                {faqCategories.map(
+                                    (category) =>
+                                        category.private && (
+                                            <Box key={category.id}>
+                                                <Typography variant="subtitle1" gutterBottom>
+                                                    {category.name}
+                                                </Typography>
+                                                <TypographyCopyable singleLine={true}>
+                                                    {`${faqBaseUrl}${category.privateId}`}
+                                                </TypographyCopyable>
+                                            </Box>
+                                        )
+                                )}
+                            </Box>
+
+                            <Typography component="h2" variant="h5" mt={4}>
                                 Deployments
                             </Typography>
                             <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
