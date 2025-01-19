@@ -1,4 +1,4 @@
-import { Category, Track, Format } from '../../../types'
+import { Category, Track, Format, SponsorCategory, TeamMember, FaqCategory, Social } from '../../../types'
 
 export interface JsonSession {
     id: string
@@ -38,7 +38,7 @@ export interface JsonSpeaker {
     company: string | null | undefined
     companyLogoUrl: string | null | undefined
     photoUrl: string | null | undefined
-    socials: any[] // TODO: Define proper type for socials
+    socials: Social[]
 }
 
 export interface JsonEvent {
@@ -65,10 +65,10 @@ export interface JsonPublicOutput {
     event: JsonEvent
     speakers: JsonSpeaker[]
     sessions: JsonSession[]
-    sponsors: any[] // TODO: Define proper type
-    team: any // TODO: Define proper type
-    teams: any[] // TODO: Define proper type
-    faq: any[] // TODO: Define proper type
+    sponsors: SponsorCategory[]
+    team: TeamMember[]
+    teams: { id: string; members: TeamMember[]; order: number }[]
+    faq: FaqCategory[]
     generatedAt: string
 }
 
@@ -79,6 +79,6 @@ export interface JsonPrivateOutput extends Omit<JsonPublicOutput, 'sessions'> {
 export interface JsonOutput {
     outputPublic: JsonPublicOutput
     outputPrivate: JsonPrivateOutput
-    outputOpenFeedback: any // TODO: Define proper type
-    outputVoxxrin: any | null // TODO: Define proper type
+    outputOpenFeedback: { sessions: { [p: string]: any }; speakers: { [p: string]: any } }
+    outputVoxxrin: any | null
 }
