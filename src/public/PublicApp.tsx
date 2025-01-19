@@ -3,7 +3,7 @@ import { NestedRoutes } from '../components/NestedRoutes'
 import { Typography } from '@mui/material'
 import { TranscriptionApp } from './transcription/TranscriptionApp'
 import { PublicEventFaqApp } from './faq/PublicEventFaqApp'
-import { PublicEvent } from './event/PublicEvent'
+import { PublicEventContainer } from './event/PublicEventContainer'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
@@ -27,11 +27,8 @@ export const PublicApp = (props: PublicAppProps) => {
                 <Route path="/transcription">
                     <TranscriptionApp eventId={eventId} />
                 </Route>
-                <Route path="/schedule/:day">
-                    <PublicEvent eventId={eventId} />
-                </Route>
                 <Route>
-                    <PublicEvent eventId={eventId} />
+                    <PublicEventContainer eventId={eventId} />
                 </Route>
             </Switch>
         </NestedRoutes>
