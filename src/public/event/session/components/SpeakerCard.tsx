@@ -1,5 +1,5 @@
 import { Box, Typography, Avatar } from '@mui/material'
-import { JsonSpeaker } from '../../../../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonSpeaker } from '../../../../events/actions/updateWebsiteActions/jsonTypes'
 import MDEditor from '@uiw/react-md-editor'
 import { SpeakerLinks } from './SpeakerLinks'
 type SpeakerCardProps = {
