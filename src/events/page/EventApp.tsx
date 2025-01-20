@@ -11,6 +11,7 @@ import { NewSponsor } from './sponsors/NewSponsor'
 import { NewSession } from './sessions/NewSession'
 import { NewSpeaker } from './speakers/NewSpeaker'
 import { EventSpeaker } from './speakers/EventSpeaker'
+import { EventSocial } from './social/EventSocial'
 
 const EventSettings = lazy(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
@@ -140,6 +141,9 @@ export const EventApp = ({ eventId }: { eventId?: string }) => {
                     <Suspense fallback={<SuspenseLoader />}>
                         <EventAPI event={eventData} />
                     </Suspense>
+                </Route>
+                <Route path="/social">
+                    <EventSocial eventId={eventData.id} />
                 </Route>
                 <Route>
                     <Redirect to={defaultRedirect} />

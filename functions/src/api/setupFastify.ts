@@ -16,7 +16,7 @@ import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/event'
-
+import { bupherRoutes } from './routes/bupher/bupher'
 type Firebase = firebaseApp.App
 declare module 'fastify' {
     interface FastifyInstance {
@@ -58,6 +58,7 @@ export const setupFastify = () => {
     fastify.register(filesRoutes)
     fastify.register(helloRoute)
     fastify.register(eventRoutes)
+    fastify.register(bupherRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
 
