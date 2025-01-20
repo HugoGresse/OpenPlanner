@@ -32,7 +32,7 @@ export const useBupherAuth = (eventId: string) => {
         try {
             const response = await bupherAPI.login(eventId, event.data.apiKey, email, password)
 
-            if (!response.success || !response.cookies) {
+            if (!response.success) {
                 setAuthState({
                     isLoggedIn: false,
                     isLoading: false,
