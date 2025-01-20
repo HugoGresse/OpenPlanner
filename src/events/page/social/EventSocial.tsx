@@ -13,6 +13,7 @@ import {
     Alert,
 } from '@mui/material'
 import { useBupherAuth } from '../../../services/hooks/useBupherAuth'
+import { BUHPER_NAME } from './bupherName'
 
 export type EventSocialProps = {
     eventId: string
@@ -92,7 +93,7 @@ export const EventSocial = ({ eventId }: EventSocialProps) => {
             {isLoggedIn ? (
                 <Box>
                     <Alert severity="success" sx={{ mb: 2 }}>
-                        You are logged in to Bupher!
+                        You are logged in to {BUHPER_NAME}!
                     </Alert>
                     <Button variant="outlined" onClick={logout}>
                         Logout
@@ -100,7 +101,7 @@ export const EventSocial = ({ eventId }: EventSocialProps) => {
                 </Box>
             ) : (
                 <Button variant="contained" onClick={() => setIsLoginDialogOpen(true)}>
-                    Login to Bupher
+                    Login to {BUHPER_NAME}
                 </Button>
             )}
         </Container>

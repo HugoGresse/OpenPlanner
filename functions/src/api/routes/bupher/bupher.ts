@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
+import { extractCookieForHeader } from '../../other/extractCookieForHeader'
+import { EventDao } from '../../dao/eventDao'
 
 const BupherLoginBody = Type.Object({
     email: Type.String(),
@@ -16,13 +18,17 @@ const BupherLoginReply = Type.Object({
 
 type BupherLoginReplyType = Static<typeof BupherLoginReply>
 
+const bupherDomain = 'https://login' + '.' + 'bu' + 'f' + 'f' + 'er' + '.com'
+
 const browserHeaders = {
     'User-Agent':
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.9',
-    Origin: 'https://login.bu' + 'f' + 'f' + 'er' + '.com',
-    Referer: 'https://login.bu' + 'f' + 'f' + 'er' + '.com/login',
+    Origin: bupherDomain,
+    Host: bupherDomain,
+    'X-Target-Domain': bupherDomain,
+    Referer: bupherDomain + '/login',
     'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
     'Sec-Ch-Ua-Mobile': '?0',
     'Sec-Ch-Ua-Platform': '"macOS"',
@@ -33,7 +39,7 @@ const browserHeaders = {
     'Upgrade-Insecure-Requests': '1',
 }
 
-const BASE_URL = 'https://login.bu' + 'f' + 'f' + 'er' + '.com'
+const BASE_URL = 'https://proxy.minix.gresse.io'
 
 export const bupherRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.post<{ Body: BupherLoginBodyType; Reply: BupherLoginReplyType }>(
@@ -69,6 +75,7 @@ export const bupherRoutes = (fastify: FastifyInstance, options: any, done: () =>
         },
         async (request, reply) => {
             try {
+                const { eventId } = request.params as { eventId: string }
                 const { email, password } = request.body
 
                 // Fetch the login page
@@ -78,7 +85,9 @@ export const bupherRoutes = (fastify: FastifyInstance, options: any, done: () =>
                         'Sec-Fetch-Site': 'none',
                     },
                 })
+
                 if (!loginPageResponse.ok) {
+                    console.log('Bupher first fetch:', loginPageResponse.statusText, loginPageResponse.status)
                     return reply.code(500).send({
                         success: false,
                         error: 'Failed to fetch Bupher login page',
@@ -118,24 +127,26 @@ export const bupherRoutes = (fastify: FastifyInstance, options: any, done: () =>
                         email: email,
                         password: password,
                     }).toString(),
-                    redirect: 'follow',
+                    redirect: 'manual',
                 })
 
                 console.log('Bupher login response:', loginResponse.statusText, loginResponse.status)
 
-                if (!loginResponse.ok) {
+                if (loginResponse.status !== 302) {
                     return reply.code(401).send({
                         success: false,
-                        error: 'Invalid credentials or login failed',
+                        error: 'Invalid credentials or login failed, status: ' + loginResponse.status,
                     })
                 }
 
-                // Get the cookies from the successful login response
                 const loginCookies = loginResponse.headers.get('set-cookie')
+
+                const bupherSession = extractCookieForHeader(loginCookies || '')
+
+                await EventDao.saveBupherSession(fastify.firebase, eventId, bupherSession)
 
                 reply.send({
                     success: true,
-                    cookies: loginCookies || undefined,
                 })
             } catch (error) {
                 console.error('Bupher login error:', error)
