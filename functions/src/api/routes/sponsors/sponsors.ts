@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
 import { SponsorDao } from '../../dao/sponsorDao'
 import { uploadBufferToStorage } from '../file/files'
+import { getFileName } from '../../other/getFileName'
 
 export const Sponsor = Type.Object({
     name: Type.String(),
@@ -60,7 +61,7 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
                 console.log('Downloading sponsor logo')
                 const response = await fetch(logoUrl)
                 const arrayBuffer = await response.arrayBuffer()
-                const fileName = logoUrl.split('/').pop() || Date.now().toString() + '.png'
+                const fileName = getFileName(logoUrl)
 
                 console.log("Uploading sponsor's logo", fileName)
                 const [reUploadSuccess, publicLogoUrl] = await uploadBufferToStorage(
