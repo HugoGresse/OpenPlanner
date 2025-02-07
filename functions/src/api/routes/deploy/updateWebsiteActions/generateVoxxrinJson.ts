@@ -1,6 +1,6 @@
-import { Event, Session, Speaker, SponsorCategory } from '../../../types'
-import { getIndividualDays } from '../../../utils/dates/diffDays'
-import { hexContrastColor } from '../../../utils/colors/hexContrast'
+import { Event, Session, Speaker, SponsorCategory } from '../../../../../../src/types'
+import { getIndividualDays } from '../../../../../../src/utils/dates/diffDays'
+import { hexContrastColor } from '../../../../../../src/utils/colors/hexContrast'
 
 export const generateVoxxrinJson = (
     event: Event,

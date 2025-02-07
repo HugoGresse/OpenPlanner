@@ -1,4 +1,4 @@
-import { Event, Session, Speaker } from '../../../types'
+import { Event, Session, Speaker } from '../../../../../../src/types'
 
 export const generateOpenFeedbackJson = (event: Event, sessions: Session[], speaker: Speaker[]) => {
     const feedbackJson: {

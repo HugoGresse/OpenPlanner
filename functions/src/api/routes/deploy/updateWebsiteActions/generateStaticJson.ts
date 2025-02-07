@@ -1,20 +1,21 @@
-import { Event } from '../../../types'
-import { getSessions } from '../sessions/getSessions'
-import { getSpeakers } from '../getSpeakers'
-import { getSponsors } from '../getSponsors'
+import firebase from 'firebase-admin'
+import { Event } from '../../../../../../src/types'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
-import { getTeams } from '../getTeam'
-import { getFaq } from '../getFaq'
 import { generateVoxxrinJson } from './generateVoxxrinJson'
 import { JsonOutput, JsonSession, JsonSessionPrivate, JsonPublicOutput, JsonPrivateOutput } from './jsonTypes'
+import { SessionDao } from '../../../dao/sessionDao'
+import { SpeakerDao } from '../../../dao/speakerDao'
+import { SponsorDao } from '../../../dao/sponsorDao'
+import { TeamDao } from '../../../dao/teamDao'
+import { FaqDao } from '../../../dao/faqDao'
 
-export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
+export const generateStaticJson = async (firebaseApp: firebase.app.App, event: Event): Promise<JsonOutput> => {
     const [sessions, speakers, sponsors, { team, teams }, faq] = await Promise.all([
-        getSessions(event.id),
-        getSpeakers(event.id),
-        getSponsors(event.id),
-        getTeams(event.id),
-        getFaq(event.id),
+        SessionDao.getSessions(firebaseApp, event.id),
+        SpeakerDao.getSpeakers(firebaseApp, event.id),
+        SponsorDao.getSponsors(firebaseApp, event.id),
+        TeamDao.getTeams(firebaseApp, event.id),
+        FaqDao.getFullFaqs(firebaseApp, event.id),
     ])
 
     const faqPublic = faq.filter((f) => !f.private)

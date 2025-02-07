@@ -1,6 +1,7 @@
 import firebase from 'firebase-admin'
 import { v4 as uuidv4 } from 'uuid'
 import { FaqCategoryType, FaqType } from '../routes/faq/faq'
+import { Faq, FaqCategory } from '../../../../src/types'
 import { NotFoundError } from '../other/Errors'
 
 const { FieldValue } = firebase.firestore
@@ -86,5 +87,32 @@ export class FaqDao {
                     id: doc.id,
                 } as FaqType)
         )
+    }
+
+    public static async getFullFaqs(firebaseApp: firebase.app.App, eventId: string): Promise<FaqCategory[]> {
+        const db = firebaseApp.firestore()
+
+        const snapshots = await db.collection(`events/${eventId}/faq`).get()
+
+        const faqCategory: FaqCategory[] = snapshots.docs.map((snapshot) => ({
+            ...(snapshot.data() as FaqCategory),
+        }))
+
+        const faqItems = await Promise.all(
+            faqCategory.map((category) => FaqDao.getFaqItems(firebaseApp, eventId, category.id))
+        )
+
+        return faqCategory.map((category, index) => ({
+            ...category,
+            items: faqItems[index] || [],
+        }))
+    }
+
+    private static async getFaqItems(firebaseApp: firebase.app.App, eventId: string, faqId: string): Promise<Faq[]> {
+        const db = firebaseApp.firestore()
+        const snapshots = await db.collection(`events/${eventId}/faq/${faqId}/items`).get()
+        return snapshots.docs.map((snapshot) => ({
+            ...(snapshot.data() as Faq),
+        }))
     }
 }
