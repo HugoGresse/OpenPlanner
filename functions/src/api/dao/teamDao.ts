@@ -33,7 +33,7 @@ export class TeamDao {
             .map((team) => ({
                 id: team.id,
                 order: team.order,
-                members: team.members.toSorted((a, b) => (a.order || 999) - (b.order || 999)),
+                members: [...team.members].sort((a, b) => (a.order || 999) - (b.order || 999)),
             }))
             .sort((a, b) => a.order - b.order)
 

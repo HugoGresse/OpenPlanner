@@ -3,6 +3,11 @@ import { v4 as uuidv4 } from 'uuid'
 import { getStorageBucketName } from '../../../dao/firebasePlugin'
 import firebase from 'firebase-admin'
 
+export const getUploadFilePathFromEvent = async (firebaseApp: firebase.app.App, event: Event) => {
+    const files = await getFilesNames(firebaseApp, event)
+    return getUploadFilePath(files)
+}
+
 export const getFilesNames = async (firebaseApp: firebase.app.App, event: Event): Promise<EventFiles> => {
     if (!event.files || !event.files.imageFolder || !event.files.openfeedback || !event.files.voxxrin) {
         const publicFile = event.files?.public || `events/${event.id}/${uuidv4()}.json`
@@ -36,11 +41,6 @@ export const getFilesNames = async (firebaseApp: firebase.app.App, event: Event)
         }
     }
     return event.files
-}
-
-export const getUploadFilePathFromEvent = async (firebaseApp: firebase.app.App, event: Event) => {
-    const files = await getFilesNames(firebaseApp, event)
-    return getUploadFilePath(files)
 }
 
 export const getUploadFilePath = (files: EventFiles) => {

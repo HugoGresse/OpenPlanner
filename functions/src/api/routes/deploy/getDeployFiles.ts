@@ -1,42 +1,41 @@
 import { FastifyInstance } from 'fastify'
-import { Type } from '@sinclair/typebox'
+import { Static, Type } from '@sinclair/typebox'
 import { getUploadFilePathFromEvent } from './updateWebsiteActions/getFilesNames'
 import { EventDao } from '../../dao/eventDao'
+import { Error400_401_VerifyRequest, Error400_401_VerifyRequestType } from '../../apiKeyPlugin'
 
 const GetFilesReply = Type.Object({
+    success: Type.Boolean(),
     public: Type.String(),
     private: Type.String(),
     openfeedback: Type.String(),
+    imageFolder: Type.String(),
     voxxrin: Type.Union([Type.String(), Type.Null()]),
 })
 
-type GetFilesReplyType = {
-    public: string
-    private: string
-    openfeedback: string
-    voxxrin: string | null
-}
+type GetFilesReplyType = Static<typeof GetFilesReply>
 
-const ErrorReply = Type.Object({
-    success: Type.Boolean(),
-    message: Type.String(),
-})
-
-type ErrorReplyType = {
-    success: boolean
-    message: string
-}
 export const deployFilesRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.get<{ Reply: GetFilesReplyType | ErrorReplyType }>(
-        '/v1/:eventId/files/paths',
+    fastify.get<{ Reply: GetFilesReplyType | Error400_401_VerifyRequestType }>(
+        '/v1/:eventId/deploy/files',
         {
             schema: {
-                tags: ['files'],
+                tags: ['files', 'deploy'],
                 summary: 'Get all file paths for an event',
+                querystring: {
+                    type: 'object',
+                    additionalProperties: false,
+                    properties: {
+                        apiKey: {
+                            type: 'string',
+                            description: 'The API key of the event',
+                        },
+                    },
+                },
                 response: {
                     200: GetFilesReply,
-                    400: ErrorReply,
-                    401: ErrorReply,
+                    400: Error400_401_VerifyRequest,
+                    401: Error400_401_VerifyRequest,
                 },
                 security: [
                     {
@@ -52,22 +51,17 @@ export const deployFilesRoutes = (fastify: FastifyInstance, options: any, done: 
             try {
                 const event = await EventDao.getEvent(fastify.firebase, eventId)
 
-                if (!event.files) {
-                    reply.status(400).send({
-                        success: false,
-                        message: 'No files available. Please run "Update website" first.',
-                    })
-                    return
-                }
-
                 const filePaths = await getUploadFilePathFromEvent(fastify.firebase, event)
 
-                reply.status(200).send(filePaths)
+                reply.status(200).send({
+                    success: true,
+                    ...filePaths,
+                })
             } catch (error) {
                 console.error('Error getting file paths:', error)
                 reply.status(400).send({
                     success: false,
-                    message: `Error getting file paths: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    error: `Error getting file paths: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 })
             }
         }

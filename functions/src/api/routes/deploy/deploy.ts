@@ -1,12 +1,19 @@
 import { FastifyInstance } from 'fastify'
-import { Type } from '@sinclair/typebox'
-
+import { Type, Static } from '@sinclair/typebox'
+import { Error400_401_VerifyRequest, Error400_401_VerifyRequestType } from '../../apiKeyPlugin'
 interface IQuerystring {
     triggerWebhooks?: boolean
 }
 
+const DeployReply = Type.Object({
+    success: Type.Boolean(),
+    message: Type.String(),
+})
+
+type DeployReplyType = Static<typeof DeployReply>
+
 export const deployRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.post<{ Querystring: IQuerystring; Reply: { success: boolean; message: string } }>(
+    fastify.post<{ Querystring: IQuerystring; Reply: DeployReplyType | Error400_401_VerifyRequestType }>(
         '/v1/:eventId/deploy',
         {
             schema: {
@@ -28,14 +35,9 @@ export const deployRoutes = (fastify: FastifyInstance, options: any, done: () =>
                     },
                 },
                 response: {
-                    200: Type.Object({
-                        success: Type.Boolean(),
-                        message: Type.String(),
-                    }),
-                    400: Type.Object({
-                        success: Type.Boolean(),
-                        message: Type.String(),
-                    }),
+                    200: DeployReply,
+                    400: Error400_401_VerifyRequest,
+                    401: Error400_401_VerifyRequest,
                 },
                 security: [
                     {
@@ -50,10 +52,8 @@ export const deployRoutes = (fastify: FastifyInstance, options: any, done: () =>
             const { triggerWebhooks = true } = request.query
 
             try {
-                // Start deployment process
                 console.log(`Starting deployment for event ${eventId}`)
 
-                // Perform async deployment tasks here
                 await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulated async work
 
                 if (triggerWebhooks) {

@@ -1,4 +1,4 @@
-import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonSession, JsonSpeaker } from '../../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
 import { Category, Track } from '../../../types'
 
 export type PublicTalkDetailProps = {

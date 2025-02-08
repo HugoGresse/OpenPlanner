@@ -1,5 +1,5 @@
 import { Box, Typography, Avatar, AvatarGroup, Paper, Chip } from '@mui/material'
-import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonSession, JsonSpeaker } from '../../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
 import { Category, Track } from '../../../types'
 import { LanguageFlag } from './LanguageFlag'
 import { Link } from 'wouter'
