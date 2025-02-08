@@ -2,7 +2,7 @@ import { useLocation, useRoute } from 'wouter'
 import { DateTime } from 'luxon'
 import { PublicEventSchedule } from './PublicEventSchedule'
 import { useEffect } from 'react'
-import { JsonPublicOutput } from '../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonPublicOutput } from '../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
 
 export type PublicEventProps = {
     eventId: string

@@ -14,7 +14,7 @@
     "engines": {
         "node": "20"
     },
-    "main": "lib/index.js",
+    "main": "lib/functions/src/index.js",
     "dependencies": {
         "@fastify/auth": "^4.4.0",
         "@fastify/cors": "^8.4.2",

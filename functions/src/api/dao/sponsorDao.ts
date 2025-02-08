@@ -2,6 +2,7 @@ import firebase from 'firebase-admin'
 import { SponsorType } from '../routes/sponsors/sponsors'
 import { SponsorResponse } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
+import { SponsorCategory } from '../../../../src/types'
 
 const { FieldValue } = firebase.firestore
 
@@ -53,5 +54,14 @@ export class SponsorDao {
 
         const sponsors = snapshot.data()?.sponsors as SponsorResponse[]
         return sponsors.find((sponsor) => sponsor.id === sponsorId) as SponsorResponse
+    }
+
+    public static async getSponsors(firebaseApp: firebase.app.App, eventId: string): Promise<SponsorCategory[]> {
+        const db = firebaseApp.firestore()
+        const snapshot = await db.collection(`events/${eventId}/sponsors`).get()
+        return snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        })) as SponsorCategory[]
     }
 }

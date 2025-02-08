@@ -1,8 +1,9 @@
-import { Event, Session, Speaker } from '../../../types'
+import { Event, EventFiles, Session, Speaker } from '../../../types'
 import { baseStorageUrl } from '../../../services/firebase'
 import { uploadImage } from '../../../utils/images/uploadImage'
 import { updateSpeaker } from './updateSpeaker'
 import { useCallback, useEffect, useState } from 'react'
+import { useEventFiles } from '../../../services/hooks/useEventFiles'
 
 export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Session[]) => {
     const [state, setState] = useState<{
@@ -13,6 +14,8 @@ export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Ses
         progress: number
         total: number
         isTotalCalculated: boolean
+        isFilesLoading: boolean
+        filesError: string | null
     }>({
         shouldUpdateImageStorage: false,
         isLoading: false,
@@ -21,10 +24,22 @@ export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Ses
         progress: 0,
         total: 0,
         isTotalCalculated: false,
+        isFilesLoading: false,
+        filesError: null,
     })
 
+    const { filesPath, isLoading: isFilesLoading, error: filesError } = useEventFiles(event)
+
     useEffect(() => {
-        if (!state.isTotalCalculated && sessions.length > 0) {
+        setState((prev) => ({
+            ...prev,
+            isFilesLoading,
+            filesError: filesError || null,
+        }))
+    }, [isFilesLoading, filesError])
+
+    useEffect(() => {
+        if (!state.isTotalCalculated && sessions.length > 0 && !state.isFilesLoading && !state.filesError) {
             const total = getTotalImagesToChange(sessions)
             setState((newState) => ({
                 ...newState,
@@ -33,9 +48,14 @@ export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Ses
                 isTotalCalculated: true,
             }))
         }
-    }, [sessions])
+    }, [sessions, state.isFilesLoading, state.filesError])
 
     const moveAllImagesToOpenPlannerStorage = useCallback(async () => {
+        // Don't proceed if files are still loading or there's an error with files
+        if (state.isFilesLoading || state.filesError) {
+            return
+        }
+
         setState((newState) => ({
             ...newState,
             isLoading: true,
@@ -53,7 +73,7 @@ export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Ses
                         speaker.companyLogoUrl && !speaker.companyLogoUrl.startsWith(baseStorageUrl)
 
                     if (shouldUpdatePhotoUrl) {
-                        const result = await downloadAndUpdateSpeakerImage(event, speaker, 'photoUrl')
+                        const result = await downloadAndUpdateSpeakerImage(event, filesPath, speaker, 'photoUrl')
                         if (result.success) {
                             i++
                         } else {
@@ -62,7 +82,7 @@ export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Ses
                     }
 
                     if (shouldUpdateCompanyLogoUrl) {
-                        const result = await downloadAndUpdateSpeakerImage(event, speaker, 'companyLogoUrl')
+                        const result = await downloadAndUpdateSpeakerImage(event, filesPath, speaker, 'companyLogoUrl')
                         if (result.success) {
                             i++
                         } else {
@@ -119,6 +139,7 @@ const getTotalImagesToChange = (sessions: Session[]) => {
 
 const downloadAndUpdateSpeakerImage = async (
     event: Event,
+    filesPath: EventFiles,
     speaker: Speaker,
     fieldName: 'photoUrl' | 'companyLogoUrl'
 ): Promise<
@@ -154,7 +175,7 @@ const downloadAndUpdateSpeakerImage = async (
         }
 
         const imageBlob = await imageFetchResult.blob()
-        const newImageUrl = await uploadImage(event, imageBlob)
+        const newImageUrl = await uploadImage(filesPath.imageFolder, imageBlob)
 
         await updateSpeaker(event.id, {
             id: speaker.id,

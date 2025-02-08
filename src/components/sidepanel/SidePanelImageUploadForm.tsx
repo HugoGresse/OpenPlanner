@@ -15,6 +15,7 @@ export type SidePanelImageUploadFormProps = {
     getInputProps: () => any
     onInputClick: () => void
     onSaveClick: () => void
+    disabled?: boolean
 }
 export const SidePanelImageUploadForm = ({
     fieldName,
@@ -25,6 +26,7 @@ export const SidePanelImageUploadForm = ({
     onInputClick,
     onSaveClick,
     uploading,
+    disabled = false,
 }: SidePanelImageUploadFormProps) => {
     const theme = useTheme()
     const fieldValue = useWatch({ name: fieldName })
@@ -45,6 +47,8 @@ export const SidePanelImageUploadForm = ({
                     padding: 1,
                     marginTop: 1,
                     marginBottom: 1,
+                    opacity: disabled ? 0.5 : 1,
+                    pointerEvents: disabled ? 'none' : 'auto',
                 }}
                 onClick={onInputClick}>
                 <input {...getInputProps()} />
@@ -81,6 +85,7 @@ export const SidePanelImageUploadForm = ({
                 name={fieldName}
                 variant="filled"
                 size="small"
+                disabled={disabled}
             />
 
             {previewImage && (
@@ -123,7 +128,11 @@ export const SidePanelImageUploadForm = ({
                 </>
             )}
 
-            <LoadingButton variant="contained" onClick={onSaveClick} disabled={uploading} loading={uploading}>
+            <LoadingButton
+                variant="contained"
+                onClick={onSaveClick}
+                disabled={uploading || disabled}
+                loading={uploading}>
                 Upload image
             </LoadingButton>
         </>

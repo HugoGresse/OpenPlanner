@@ -1,4 +1,4 @@
-import { Category, Track, Format, SponsorCategory, TeamMember, FaqCategory, Social } from '../../../types'
+import { Category, Track, Format, SponsorCategory, TeamMember, FaqCategory, Social } from '../../../../../../src/types'
 
 export interface JsonSession {
     id: string

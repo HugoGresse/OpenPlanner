@@ -1,6 +1,6 @@
 import { Box } from '@mui/material'
 import { DateTime } from 'luxon'
-import { JsonSession, JsonPublicOutput } from '../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonSession, JsonPublicOutput } from '../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
 import { useLocation, useRoute } from 'wouter'
 import { ScheduleHeader } from './components/ScheduleHeader'
 import { DayTabs } from './components/DayTabs'

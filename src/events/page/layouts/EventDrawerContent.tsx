@@ -4,7 +4,7 @@ import { EventScreenMenuItems } from '../EventScreenMenuItems'
 import { LoadingButton } from '@mui/lab'
 import { Event } from '../../../types'
 import { useNotification } from '../../../hooks/notificationHook'
-import { updateWebsiteTriggerWebhooksAction } from '../../actions/updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
+import { updateWebsiteTriggerWebhooksAction } from '../../actions/updateWebsiteTriggerWebhooksAction'
 import { EventSelector } from '../../../components/EventSelector'
 
 export type EventDrawerContentProps = {

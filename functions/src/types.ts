@@ -1,3 +1,5 @@
+import { Event as EventFrontend } from '../../src/types'
+
 export interface Track {
     id: string
     name: string
@@ -21,8 +23,8 @@ export interface Format {
 }
 
 export interface DateType {
-    start: Date | string | null
-    end: Date | string | null
+    start: Date | null
+    end: Date | null
 }
 
 export interface Social {
@@ -100,28 +102,7 @@ export interface EventFiles {
     openfeedback: string
 }
 
-export interface Event {
-    id: string
-    name: string
-    owner: string
-    scheduleVisible: boolean
-    publicEnabled: boolean
-    members: string[]
-    conferenceHallId: string | null
-    dates: DateType
-    formats: Format[] | null
-    categories: Category[] | null
-    tracks: Track[]
-    webhooks: Webhooks[]
-    createdAt: Date
-    updatedAt: Date
-    apiKey: string | null
-    files: EventFiles | null
-    statusBadgeImage: string | null
-    statusBadgeLink: string | null
-    gladiaAPIKey: string | null
-    transcriptionPassword: string | null
-}
+export type Event = EventFrontend
 
 export interface SponsorResponse {
     id: string

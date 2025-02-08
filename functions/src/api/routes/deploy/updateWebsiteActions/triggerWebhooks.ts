@@ -1,9 +1,8 @@
-import { Event, EventFiles } from '../../../types'
-import { doc, updateDoc } from 'firebase/firestore'
-import { collections } from '../../../services/firebase'
+import { Event, EventFiles } from '../../../../../../src/types'
+import firebase from 'firebase-admin'
 import { getUploadFilePath } from './getFilesNames'
 
-export const triggerWebhooks = async (event: Event, files: EventFiles) => {
+export const triggerWebhooks = async (firebaseApp: firebase.app.App, event: Event, files: EventFiles) => {
     const updatedWebhooks = [...event.webhooks]
 
     const fullyQualifiedUrls = getUploadFilePath(files).public + '?t=' + Date.now()
@@ -47,7 +46,8 @@ export const triggerWebhooks = async (event: Event, files: EventFiles) => {
         }
     }
 
-    await updateDoc(doc(collections.events, event.id), {
+    const db = firebaseApp.firestore()
+    await db.collection('events').doc(event.id).update({
         webhooks: updatedWebhooks,
     })
 }

@@ -1,9 +1,29 @@
 import firebase from 'firebase-admin'
 import { Session } from '../../types'
-
+import { Session as SessionConverted } from '../../../../src/types'
+import { unknownToDateTime } from '../other/dateConverter'
 const { FieldValue } = firebase.firestore
 
 export class SessionDao {
+    public static async getSessions(firebaseApp: firebase.app.App, eventId: string): Promise<SessionConverted[]> {
+        const db = firebaseApp.firestore()
+        const snapshot = await db.collection(`events/${eventId}/sessions`).get()
+        return (
+            snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            })) as Session[]
+        ).map((session) => ({
+            ...session,
+            dates: session.dates
+                ? {
+                      start: unknownToDateTime(session.dates.start),
+                      end: unknownToDateTime(session.dates.end),
+                  }
+                : null,
+        }))
+    }
+
     public static async doesSessionExist(
         firebaseApp: firebase.app.App,
         eventId: string,

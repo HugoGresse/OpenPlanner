@@ -16,6 +16,8 @@ import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/event'
+import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
+import { deployRoutes } from './routes/deploy/deploy'
 
 type Firebase = firebaseApp.App
 declare module 'fastify' {
@@ -50,14 +52,16 @@ export const setupFastify = () => {
     })
     registerSwagger(fastify)
 
+    fastify.register(eventRoutes)
     fastify.register(sponsorsRoutes)
     fastify.register(sessionsRoutes)
     fastify.register(sessionsSpeakers)
     fastify.register(faqRoutes)
     fastify.register(transcriptionRoutes)
     fastify.register(filesRoutes)
+    fastify.register(deployRoutes)
+    fastify.register(deployFilesRoutes)
     fastify.register(helloRoute)
-    fastify.register(eventRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
 

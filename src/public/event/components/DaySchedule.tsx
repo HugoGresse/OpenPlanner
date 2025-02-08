@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { DateTime } from 'luxon'
-import { JsonSession, JsonSpeaker } from '../../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonSession, JsonSpeaker } from '../../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
 import { Category, Track } from '../../../types'
 import { SessionItem } from './SessionItem'
 import { useScheduleGrid } from '../hooks/useScheduleGrid'
