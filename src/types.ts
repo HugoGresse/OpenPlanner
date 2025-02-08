@@ -238,6 +238,8 @@ export interface Faq {
     question: string
     answer: string
     order: number
+    updatedAt: string
+    createdAt: string
 }
 
 export interface ConferenceHallEvent {

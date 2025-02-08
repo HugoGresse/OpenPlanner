@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { FaqCategoryType, FaqType } from '../routes/faq/faq'
 import { Faq, FaqCategory } from '../../../../src/types'
 import { NotFoundError } from '../other/Errors'
+import { dateToString } from '../other/dateConverter'
 
 const { FieldValue } = firebase.firestore
 
@@ -96,6 +97,7 @@ export class FaqDao {
 
         const faqCategory: FaqCategory[] = snapshots.docs.map((snapshot) => ({
             ...(snapshot.data() as FaqCategory),
+            id: snapshot.id,
         }))
 
         const faqItems = await Promise.all(
@@ -111,8 +113,15 @@ export class FaqDao {
     private static async getFaqItems(firebaseApp: firebase.app.App, eventId: string, faqId: string): Promise<Faq[]> {
         const db = firebaseApp.firestore()
         const snapshots = await db.collection(`events/${eventId}/faq/${faqId}/items`).get()
-        return snapshots.docs.map((snapshot) => ({
-            ...(snapshot.data() as Faq),
-        }))
+        return snapshots.docs
+            .map((snapshot) => ({
+                ...(snapshot.data() as Faq),
+                id: snapshot.id,
+            }))
+            .map((faq) => ({
+                ...faq,
+                updatedAt: dateToString(faq.updatedAt),
+                createdAt: dateToString(faq.createdAt),
+            }))
     }
 }

@@ -1,5 +1,6 @@
 import firebase from 'firebase-admin'
 import { TeamMember } from '../../../../src/types'
+
 export class TeamDao {
     public static async getTeams(
         firebaseApp: firebase.app.App,
@@ -9,7 +10,7 @@ export class TeamDao {
         teams: { id: string; members: TeamMember[]; order: number }[]
     }> {
         const db = firebaseApp.firestore()
-        const snapshot = await db.collection(`events/${eventId}/teams`).get()
+        const snapshot = await db.collection(`events/${eventId}/team`).get()
         const members = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
