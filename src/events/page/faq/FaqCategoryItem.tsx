@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Event, Faq, FaqCategory } from '../../../types'
 import { useFaq } from '../../../services/hooks/useFaq'
@@ -24,7 +23,7 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
     const categoryId = props.category.id
     const queryResult = useFaq(props.event, categoryId)
     const [isOpen, setOpen] = useState(false)
-    const [data, setData] = useState<Faq[]>([])
+    const [data, setData] = useState<Omit<Faq, 'updatedAt' | 'createdAt'>[]>([])
     const [deletedItems, setDeletedItems] = useState<string[]>([])
     const [didChange, setDidChange] = useState(false)
     const mutation = useFirestoreCollectionMutation(collection(collections.faq(props.event.id), categoryId, 'items'))
@@ -43,13 +42,13 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={queryResult} />
     }
 
-    const updateLocalState = (newData: Faq[]) => {
+    const updateLocalState = (newData: Omit<Faq, 'updatedAt' | 'createdAt'>[]) => {
         setData(newData)
         setDidChange(JSON.stringify(newData) !== JSON.stringify(queryResult.data))
     }
 
     const addQuestion = () => {
-        const d = [...data]
+        const d: Omit<Faq, 'updatedAt' | 'createdAt'>[] = [...data]
         d.push({
             id: generateFirestoreId(),
             question: '',
