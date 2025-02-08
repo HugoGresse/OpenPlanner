@@ -8,6 +8,7 @@ import { SpeakerDao } from '../../../dao/speakerDao'
 import { SponsorDao } from '../../../dao/sponsorDao'
 import { TeamDao } from '../../../dao/teamDao'
 import { FaqDao } from '../../../dao/faqDao'
+import { dateToString } from '../../../other/dateConverter'
 
 export const generateStaticJson = async (firebaseApp: firebase.app.App, event: Event): Promise<JsonOutput> => {
     const [sessions, speakers, sponsors, { team, teams }, faq] = await Promise.all([
@@ -27,8 +28,8 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         id: s.id,
         title: s.title,
         abstract: s.abstract,
-        dateStart: s.dates?.start?.toISO(),
-        dateEnd: s.dates?.end?.toISO(),
+        dateStart: dateToString(s.dates?.start),
+        dateEnd: dateToString(s.dates?.end),
         durationMinutes: s.durationMinutes,
         speakerIds: s.speakers,
         trackId: s.trackId,
@@ -51,8 +52,8 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         id: s.id,
         title: s.title,
         abstract: s.abstract,
-        dateStart: s.dates?.start?.toISO(),
-        dateEnd: s.dates?.end?.toISO(),
+        dateStart: dateToString(s.dates?.start),
+        dateEnd: dateToString(s.dates?.end),
         durationMinutes: s.durationMinutes,
         speakerIds: s.speakers,
         trackId: s.trackId,
@@ -79,12 +80,12 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         id: event.id,
         name: event.name,
         scheduleVisible: event.scheduleVisible,
-        dateStart: event.dates.start?.toISOString(),
-        dateEnd: event.dates.end?.toISOString(),
+        dateStart: dateToString(event.dates.start),
+        dateEnd: dateToString(event.dates.end),
         formats: event.formats,
         categories: event.categories,
         tracks: event.tracks,
-        updatedAt: event.updatedAt.toISOString(),
+        updatedAt: dateToString(event.updatedAt),
         locationName: event.locationName,
         locationUrl: event.locationUrl,
         color: event.color,
@@ -113,7 +114,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         team,
         teams,
         faq: faqPublic,
-        generatedAt: new Date().toISOString(),
+        generatedAt: dateToString(new Date()),
     }
     const outputPrivate: JsonPrivateOutput = {
         event: outputEvent,
@@ -123,7 +124,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         team,
         teams,
         faq,
-        generatedAt: new Date().toISOString(),
+        generatedAt: dateToString(new Date()),
     }
 
     return {

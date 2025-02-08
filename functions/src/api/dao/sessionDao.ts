@@ -1,7 +1,7 @@
 import firebase from 'firebase-admin'
 import { Session } from '../../types'
 import { Session as SessionConverted } from '../../../../src/types'
-import { DateTime } from 'luxon'
+import { unknownToDateTime } from '../other/dateConverter'
 const { FieldValue } = firebase.firestore
 
 export class SessionDao {
@@ -17,8 +17,8 @@ export class SessionDao {
             ...session,
             dates: session.dates
                 ? {
-                      start: session.dates.start ? DateTime.fromJSDate(session.dates.start) : null,
-                      end: session.dates.end ? DateTime.fromJSDate(session.dates.end) : null,
+                      start: unknownToDateTime(session.dates.start),
+                      end: unknownToDateTime(session.dates.end),
                   }
                 : null,
         }))

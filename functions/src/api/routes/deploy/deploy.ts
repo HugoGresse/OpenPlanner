@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import { Type, Static } from '@sinclair/typebox'
 import { Error400_401_VerifyRequest, Error400_401_VerifyRequestType } from '../../apiKeyPlugin'
+import { updateWebsiteTriggerWebhooksActionInternal } from './updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
+import { EventDao } from '../../dao/eventDao'
 interface IQuerystring {
     triggerWebhooks?: boolean
 }
@@ -54,13 +56,8 @@ export const deployRoutes = (fastify: FastifyInstance, options: any, done: () =>
             try {
                 console.log(`Starting deployment for event ${eventId}`)
 
-                await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulated async work
-
-                if (triggerWebhooks) {
-                    console.log('Triggering webhooks for deployment')
-                    // Add webhook triggering logic here
-                    // You can use the Webhooks interface from types.ts to handle webhook calls
-                }
+                const event = await EventDao.getEvent(fastify.firebase, eventId)
+                await updateWebsiteTriggerWebhooksActionInternal(event, fastify.firebase, triggerWebhooks)
 
                 reply.status(200).send({
                     success: true,
@@ -70,7 +67,7 @@ export const deployRoutes = (fastify: FastifyInstance, options: any, done: () =>
                 console.error('Deployment failed:', error)
                 reply.status(400).send({
                     success: false,
-                    message: `Deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    error: `Deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 })
             }
         }
