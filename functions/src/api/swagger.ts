@@ -9,7 +9,7 @@ export const registerSwagger = (fastify: FastifyInstance) => {
                 title: 'OpenPlanner API',
                 version: '1.0.0',
             },
-            host: 'https://api.openplanner.fr/',
+            host: 'api.openplanner.fr/',
             schemes: ['https'],
             consumes: ['application/json'],
             produces: ['application/json'],
