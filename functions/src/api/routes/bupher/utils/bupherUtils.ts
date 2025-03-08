@@ -2,14 +2,16 @@ import { FastifyReply } from 'fastify'
 import { extractCookieForHeader } from '../../../other/extractCookieForHeader'
 import { EventDao } from '../../../dao/eventDao'
 import firebase from 'firebase-admin'
-import { getBrowserHeaders } from './getBupherBrowserHeaders'
+import { getBrowserHeaders, getBupherGraphQLHeaders } from './getBupherBrowserHeaders'
 // Constants
 export const bupherLoginDomain = 'login' + '.' + 'bu' + 'f' + 'f' + 'er' + '.com'
 export const bupherDomain = 'publish' + '.' + 'bu' + 'f' + 'f' + 'er' + '.com'
+export const bupherGraphQLDomain = 'graph' + '.' + 'bu' + 'f' + 'f' + 'er' + '.com'
 export const BASE_URL = 'https://proxy.minix.gresse.io'
 
 const loginBrowserHeaders = getBrowserHeaders(bupherLoginDomain)
 const publishBrowserHeaders = getBrowserHeaders(bupherDomain)
+const graphQLBrowserHeaders = getBupherGraphQLHeaders(bupherDomain, bupherGraphQLDomain)
 
 // Error response helper
 export const sendErrorResponse = (reply: FastifyReply, statusCode: number, errorMessage: string) => {
@@ -30,6 +32,22 @@ export const getBupherSession = async (firebaseApp: firebase.app.App, eventId: s
     } catch (error) {
         console.error('Error getting Bupher session:', error)
         throw error
+    }
+}
+export const getBupherSessionAndUserId = async (
+    firebaseApp: firebase.app.App,
+    eventId: string
+): Promise<{
+    bupherSession: string
+    bupherOrganizationId: string
+}> => {
+    const event = await EventDao.getEvent(firebaseApp, eventId)
+    if (!event.bupherSession || !event.bupherOrganizationId) {
+        throw new Error('No Bupher session found for this event')
+    }
+    return {
+        bupherSession: event.bupherSession,
+        bupherOrganizationId: event.bupherOrganizationId,
     }
 }
 
@@ -136,16 +154,28 @@ export const makeAuthenticatedBupherRequest = async (
 
     return fetch(`${BASE_URL}${url}`, options)
 }
+const clientId = 'webapp' + '-' + 'publish'
+const clientIdKey = ['x-', 'bu', 'f', 'f', 'er', '-', 'client', '-', 'id'].join('')
+
 export const makePublishRequest = async (path: string, session: string, method: string = 'GET', body?: any) => {
-    const clientId = 'webapp' + '-' + 'publish'
     const headers: Record<string, string> = {
         ...publishBrowserHeaders,
-        'x-buffer-client-id': clientId,
+        [clientIdKey]: clientId,
         Cookie: session,
     }
 
     if (body) {
         headers['Content-Type'] = 'application/json'
+    }
+
+    return fetch(`${BASE_URL}${path}`, { method, headers, body })
+}
+
+export const makeBupherGraphQLRequest = async (path: string, session: string, method: string = 'GET', body?: any) => {
+    const headers: Record<string, string> = {
+        ...graphQLBrowserHeaders,
+        Cookie: session,
+        [clientIdKey]: clientId,
     }
 
     return fetch(`${BASE_URL}${path}`, { method, headers, body })

@@ -84,8 +84,12 @@ export class EventDao {
         return await db.collection(`events`).doc(eventId).update({ bupherSession: session })
     }
 
-    public static async saveBupherUserId(firebaseApp: firebase.app.App, eventId: string, userId: string): Promise<any> {
+    public static async saveBupherOrganizationId(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        organizationId: string
+    ): Promise<any> {
         const db = firebaseApp.firestore()
-        return await db.collection(`events`).doc(eventId).update({ bupherUserId: userId })
+        return await db.collection(`events`).doc(eventId).update({ bupherOrganizationId: organizationId })
     }
 }

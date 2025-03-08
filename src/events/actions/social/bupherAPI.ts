@@ -1,4 +1,5 @@
 import { API_URL } from '../../../env'
+import { BupherScheduledPost } from '../../../services/bupher/useBupherScheduledPosts'
 
 export type BupherLoginResponse = {
     success: boolean
@@ -15,6 +16,12 @@ export type BupherChannelsResponse = {
         handle: string
         formatted_username: string
     }[]
+}
+
+export type BupherScheduledPostsResponse = {
+    success: boolean
+    error?: string
+    posts: BupherScheduledPost[]
 }
 
 export const bupherAPI = {
@@ -54,6 +61,20 @@ export const bupherAPI = {
     getChannels: async (eventId: string, apiKey: string): Promise<BupherChannelsResponse> => {
         const url = new URL(API_URL as string)
         url.pathname += `v1/${eventId}/bupher/channels`
+        url.searchParams.append('apiKey', apiKey)
+
+        const response = await fetch(url.href, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+
+        return await response.json()
+    },
+    getScheduledPosts: async (eventId: string, apiKey: string): Promise<BupherScheduledPostsResponse> => {
+        const url = new URL(API_URL as string)
+        url.pathname += `v1/${eventId}/bupher/scheduled-posts`
         url.searchParams.append('apiKey', apiKey)
 
         const response = await fetch(url.href, {

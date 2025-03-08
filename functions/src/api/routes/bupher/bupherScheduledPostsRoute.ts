@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { Type } from '@sinclair/typebox'
-import { getBupherSession, makeAuthenticatedBupherRequest, sendErrorResponse } from './bupherUtils'
+import { getBupherSessionAndUserId, sendErrorResponse } from './utils/bupherUtils'
+import { getBupherScheduledPost } from './utils/getBupherScheduledPost'
 
 // Schema definitions
 const BupherScheduledPostsResponse = Type.Object({
@@ -37,10 +38,6 @@ export const bupherScheduledPostsRoute = (fastify: FastifyInstance, options: any
                             type: 'string',
                             description: 'The API key of the event',
                         },
-                        channelId: {
-                            type: 'string',
-                            description: 'Optional channel ID to filter posts',
-                        },
                     },
                 },
                 response: {
@@ -60,71 +57,40 @@ export const bupherScheduledPostsRoute = (fastify: FastifyInstance, options: any
         async (request, reply) => {
             try {
                 const { eventId } = request.params as { eventId: string }
-                const { channelId } = request.query as { channelId?: string }
 
                 // Get the Bupher session
-                let bupherSession: string
+                let bupherInfos = {
+                    bupherSession: '',
+                    bupherOrganizationId: '',
+                }
                 try {
-                    bupherSession = await getBupherSession(fastify.firebase, eventId)
+                    bupherInfos = await getBupherSessionAndUserId(fastify.firebase, eventId)
                 } catch (error) {
                     return sendErrorResponse(reply, 401, 'No Bupher session found. Please login first.')
                 }
 
-                // Fetch scheduled posts from Bupher
-                let endpoint = '/api/updates?scheduled=true'
-                if (channelId) {
-                    endpoint += `&profile_id=${channelId}`
+                const postsResponse = await getBupherScheduledPost(
+                    bupherInfos.bupherSession,
+                    bupherInfos.bupherOrganizationId
+                )
+
+                if (!postsResponse.success) {
+                    console.error('Failed to fetch posts', postsResponse.error)
+                    return sendErrorResponse(reply, 500, 'Failed to fetch posts')
                 }
 
-                const postsResponse = await makeAuthenticatedBupherRequest(endpoint, bupherSession)
-
-                if (!postsResponse.ok) {
-                    console.error(
-                        'Failed to fetch Bupher scheduled posts:',
-                        postsResponse.status,
-                        postsResponse.statusText
-                    )
-                    return sendErrorResponse(reply, 500, 'Failed to fetch Bupher scheduled posts')
-                }
-
-                const postsData = await postsResponse.json()
-
-                // Get channels to map channel names
-                const channelsResponse = await makeAuthenticatedBupherRequest('/api/profiles', bupherSession)
-                let channelsMap: Record<string, any> = {}
-
-                if (channelsResponse.ok) {
-                    const channelsData = await channelsResponse.json()
-                    channelsMap = channelsData.profiles.reduce((acc: Record<string, any>, profile: any) => {
-                        acc[profile.id] = {
-                            name: profile.name,
-                            service: profile.service.name,
-                        }
-                        return acc
-                    }, {})
-                }
-
-                // Transform the response to our format
-                const posts = postsData.updates.map((post: any) => ({
-                    id: post.id,
-                    text: post.text,
-                    scheduledAt: post.scheduled_at,
-                    channelId: post.profile_id,
-                    channelName: channelsMap[post.profile_id]?.name || null,
-                    service: channelsMap[post.profile_id]?.service || null,
-                    status: post.status,
-                    imageUrl: post.media?.[0]?.url || null,
-                }))
+                console.log('postsResponse', postsResponse)
+                // todo : finish here
 
                 reply.send({
                     success: true,
-                    posts,
+                    posts: [],
                 })
             } catch (error) {
-                console.error('Bupher scheduled posts error:', error)
+                console.error('Bupher channels error:', error)
                 reply.code(500).send({
                     success: false,
-                    error: 'Internal server error while fetching Bupher scheduled posts',
+                    error: 'Internal server error while fetching Bupher channels',
                 })
             }
         }

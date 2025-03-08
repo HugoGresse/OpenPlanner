@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
 import { loginToBupher } from './utils/bupherUtils'
-import { getBupherUser } from './utils/getBupherUser'
 import { EventDao } from '../../dao/eventDao'
+import { getBupherOrganization } from './utils/getBupherOrganization'
 
 // Schema definitions
 const BupherLoginBody = Type.Object({
@@ -60,10 +60,14 @@ export const bupherLoginRoute = (fastify: FastifyInstance, options: any, done: (
                 const bupherSession = await loginToBupher(email, password, fastify.firebase, eventId, reply)
 
                 if (bupherSession) {
-                    const userResponse = await getBupherUser(bupherSession)
+                    const organizationResponse = await getBupherOrganization(bupherSession)
 
-                    if (userResponse.success) {
-                        await EventDao.saveBupherUserId(fastify.firebase, eventId, userResponse.result.id)
+                    if (organizationResponse.success) {
+                        await EventDao.saveBupherOrganizationId(
+                            fastify.firebase,
+                            eventId,
+                            organizationResponse.result[0].id
+                        )
 
                         reply.send({
                             success: true,
@@ -71,7 +75,7 @@ export const bupherLoginRoute = (fastify: FastifyInstance, options: any, done: (
                     } else {
                         reply.code(400).send({
                             success: false,
-                            error: 'Failed to get Bupher user, ' + userResponse.error,
+                            error: 'Failed to get Bupher organization, ' + organizationResponse.error,
                         })
                     }
                 }

@@ -19,3 +19,23 @@ export const getBrowserHeaders = (domain: string) => {
         'Upgrade-Insecure-Requests': '1',
     }
 }
+export const getBupherGraphQLHeaders = (referer: string, alt: string) => {
+    return {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0',
+        Accept: '*/*',
+        'Accept-Language': 'fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3',
+        Referer: `https://${referer}`,
+        'content-type': 'application/json',
+        Origin: `https://${referer}`,
+        'X-Target-Domain': alt,
+        DNT: '1',
+        'Sec-GPC': '1',
+        'Alt-Used': alt,
+        Connection: 'keep-alive',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        Priority: 'u=0',
+        TE: 'trailers',
+    }
+}
