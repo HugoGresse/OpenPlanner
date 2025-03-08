@@ -11,7 +11,7 @@ import LoadingButton from '@mui/lab/LoadingButton'
 import { NewEvent } from '../../types'
 import { serverTimestamp } from 'firebase/firestore'
 import { useNotification } from '../../hooks/notificationHook'
-
+import { generateApiKey } from '../../utils/generateApiKey'
 export type NewEventDialogProps = {
     isOpen: boolean
     onClose: (eventId: string | null) => void
@@ -60,7 +60,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         files: null,
                         statusBadgeImage: null,
                         statusBadgeLink: null,
-                        apiKey: null,
+                        apiKey: generateApiKey(),
                         openAPIKey: null,
                         gladiaAPIKey: null,
                         transcriptionPassword: null,

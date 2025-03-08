@@ -24,8 +24,7 @@ const config = {
     measurementId: import.meta.env.VITE_FIREBASE_OPEN_PLANNER_MEASUREMENT_ID,
 }
 
-export const storageBucket = config.storageBucket
-export const baseStorageUrl = `https://storage.googleapis.com/${storageBucket}`
+export const baseStorageUrl = `https://storage.googleapis.com/${config.storageBucket}`
 
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)

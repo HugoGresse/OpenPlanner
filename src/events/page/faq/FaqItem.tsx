@@ -5,8 +5,8 @@ import MDEditor from '@uiw/react-md-editor'
 import { DeleteRounded } from '@mui/icons-material'
 
 export type FaqItemProps = {
-    faq: Faq
-    onChange: (data: Faq) => void
+    faq: Omit<Faq, 'updatedAt' | 'createdAt'>
+    onChange: (data: Omit<Faq, 'updatedAt' | 'createdAt'>) => void
     onDelete: () => void
 }
 export const FaqItem = ({ faq, onChange, onDelete }: FaqItemProps) => {

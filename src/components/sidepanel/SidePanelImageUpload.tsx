@@ -9,6 +9,7 @@ import { Event } from '../../types'
 import { useController } from 'react-hook-form'
 import { useNotification } from '../../hooks/notificationHook'
 import { useClipboardImage } from '../form/useClipboardImage'
+import { useEventFiles } from '../../services/hooks/useEventFiles'
 
 export type SidePanelImageUploadProps = {
     event: Event
@@ -26,6 +27,7 @@ export const SidePanelImageUpload = ({
     fieldName,
     maxImageSize = 500,
 }: SidePanelImageUploadProps) => {
+    const { filesPath, isLoading, error } = useEventFiles(event)
     const { field } = useController({ name: fieldName })
     const { createNotification } = useNotification()
     const [upload, setUpload] = useState<{
@@ -33,6 +35,14 @@ export const SidePanelImageUpload = ({
         preview: any
     } | null>(null)
     const [uploading, setUploading] = useState(false)
+
+    useEffect(() => {
+        if (error) {
+            createNotification('Error loading files path. Upload functionality may not work properly.', {
+                type: 'error',
+            })
+        }
+    }, [error, createNotification])
 
     const imageFromClipboard = useClipboardImage(isOpen)
 
@@ -46,12 +56,17 @@ export const SidePanelImageUpload = ({
     }, [imageFromClipboard])
 
     const onSave = async () => {
+        if (!filesPath) {
+            createNotification('Cannot upload image: files path not available', { type: 'error' })
+            return
+        }
+
         setUploading(true)
 
         try {
             if (upload) {
                 const resizedImage = await resizeImage(upload.file, maxImageSize)
-                const imagePath = await uploadImage(event, resizedImage)
+                const imagePath = await uploadImage(filesPath.imageFolder, resizedImage)
                 field.onChange(imagePath)
             }
 
@@ -88,7 +103,7 @@ export const SidePanelImageUpload = ({
     return (
         <SidePanel onClose={onClose} isOpen={isOpen} title={title} containerProps={getRootProps()}>
             <SidePanelImageUploadForm
-                uploading={uploading}
+                uploading={uploading || isLoading}
                 isDragActive={isDragActive}
                 file={upload}
                 getInputProps={getInputProps}
@@ -96,6 +111,7 @@ export const SidePanelImageUpload = ({
                 onInputClick={open}
                 onSaveClick={onSave}
                 helpText="PNG or JPEG image, will be resized in the browser. You can also paste image directly from clipboard."
+                disabled={isLoading || !!error || !filesPath}
             />
         </SidePanel>
     )

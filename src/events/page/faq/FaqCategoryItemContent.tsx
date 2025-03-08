@@ -18,10 +18,10 @@ import { ConfirmDialog } from '../../../components/ConfirmDialog'
 export type FaqCategoryItemContentProps = {
     event: Event
     category: FaqCategory
-    data: Faq[]
+    data: Omit<Faq, 'updatedAt' | 'createdAt'>[]
     deletedItems: string[]
     setDeletedItems: (deletedItems: string[]) => void
-    updateLocalState: (faqItems: Faq[]) => void
+    updateLocalState: (faqItems: Omit<Faq, 'updatedAt' | 'createdAt'>[]) => void
 }
 export const FaqCategoryItemContent = ({
     event,

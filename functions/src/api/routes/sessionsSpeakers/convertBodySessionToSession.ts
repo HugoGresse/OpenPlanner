@@ -1,6 +1,6 @@
 import { Session, Event } from '../../../types'
 import { StaticTypeOfSpeakerSessionsType } from './sessionsSpeakers'
-
+import { DateTime } from 'luxon'
 type ElementType<T> = T extends (infer U)[] ? U : never
 
 export const convertBodySessionToSession = (
@@ -13,8 +13,8 @@ export const convertBodySessionToSession = (
 
     if (session.dateStart && session.dateEnd) {
         realSession.dates = {
-            start: session.dateStart,
-            end: session.dateEnd,
+            start: DateTime.fromISO(session.dateStart).toJSDate(),
+            end: DateTime.fromISO(session.dateEnd).toJSDate(),
         }
     }
 

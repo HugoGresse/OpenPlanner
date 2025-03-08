@@ -4,6 +4,15 @@ import firebase from 'firebase-admin'
 const { FieldValue } = firebase.firestore
 
 export class SpeakerDao {
+    public static async getSpeakers(firebaseApp: firebase.app.App, eventId: string): Promise<Speaker[]> {
+        const db = firebaseApp.firestore()
+        const snapshot = await db.collection(`events/${eventId}/speakers`).get()
+        return snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        })) as Speaker[]
+    }
+
     public static async doesSpeakerExist(
         firebaseApp: firebase.app.App,
         eventId: string,

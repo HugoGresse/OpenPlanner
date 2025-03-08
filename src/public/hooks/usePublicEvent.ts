@@ -1,7 +1,7 @@
 import { UseQueryResult } from '../../services/hooks/firestoreQueryHook'
 import { useCallback, useEffect, useState } from 'react'
 import { BaseAPIUrl } from './constants'
-import { JsonPublicOutput } from '../../events/actions/updateWebsiteActions/jsonTypes'
+import { JsonPublicOutput } from '../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
 
 type EventResponse = {
     eventName: string

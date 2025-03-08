@@ -14,10 +14,10 @@ import {
 } from '@mui/material'
 import { Menu } from '../EventScreenMenuItems'
 import MenuIcon from '@mui/icons-material/Menu'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { useRoute } from 'wouter'
 import { Event } from '../../../types'
 import { EventDrawerContent } from './EventDrawerContent'
+import { EventFilesProvider } from '../../../context/EventFilesContext'
 
 const drawerWidth: number = 240
 
@@ -79,68 +79,70 @@ export const EventLayout = ({ children, event }: EventLayoutProps) => {
     const hideAppBar = menuItem?.href === '/schedule'
 
     return (
-        <Box sx={{ display: 'flex' }}>
-            {!hideAppBar && (
-                <AppBar position="absolute" open={!isMobile || mobileOpen}>
-                    <Toolbar
+        <EventFilesProvider event={event}>
+            <Box sx={{ display: 'flex' }}>
+                {!hideAppBar && (
+                    <AppBar position="absolute" open={!isMobile || mobileOpen}>
+                        <Toolbar
+                            sx={{
+                                pr: '24px', // keep right padding when drawer closed
+                            }}>
+                            <IconButton
+                                edge="start"
+                                color="inherit"
+                                aria-label="open drawer"
+                                onClick={toggleDrawer}
+                                sx={{ mr: 2, display: { sm: 'none' } }}>
+                                <MenuIcon />
+                            </IconButton>
+                            <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
+                                {routeName}
+                            </Typography>
+                        </Toolbar>
+                    </AppBar>
+                )}
+
+                <Box
+                    component="nav"
+                    sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+                    aria-label="mailbox folders">
+                    <Drawer
+                        variant="temporary"
+                        open={mobileOpen}
+                        onTransitionEnd={handleDrawerTransitionEnd}
+                        onClose={handleDrawerClose}
+                        ModalProps={{
+                            keepMounted: true,
+                        }}
                         sx={{
-                            pr: '24px', // keep right padding when drawer closed
+                            display: { xs: 'block', sm: 'none' },
+                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
                         }}>
-                        <IconButton
-                            edge="start"
-                            color="inherit"
-                            aria-label="open drawer"
-                            onClick={toggleDrawer}
-                            sx={{ mr: 2, display: { sm: 'none' } }}>
-                            <MenuIcon />
-                        </IconButton>
-                        <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
-                            {routeName}
-                        </Typography>
-                    </Toolbar>
-                </AppBar>
-            )}
+                        <EventDrawerContent event={event} />
+                    </Drawer>
+                    <Drawer
+                        variant="permanent"
+                        sx={{
+                            display: { xs: 'none', sm: 'block' },
+                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        }}
+                        open>
+                        <EventDrawerContent event={event} />
+                    </Drawer>
+                </Box>
 
-            <Box
-                component="nav"
-                sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-                aria-label="mailbox folders">
-                <Drawer
-                    variant="temporary"
-                    open={mobileOpen}
-                    onTransitionEnd={handleDrawerTransitionEnd}
-                    onClose={handleDrawerClose}
-                    ModalProps={{
-                        keepMounted: true,
-                    }}
+                <Box
+                    component="main"
                     sx={{
-                        display: { xs: 'block', sm: 'none' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        flexGrow: 1,
+                        height: '100vh',
+                        width: { sm: `calc(100% - ${drawerWidth}px)` },
+                        overflow: 'auto',
                     }}>
-                    <EventDrawerContent event={event} />
-                </Drawer>
-                <Drawer
-                    variant="permanent"
-                    sx={{
-                        display: { xs: 'none', sm: 'block' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-                    }}
-                    open>
-                    <EventDrawerContent event={event} />
-                </Drawer>
+                    {!hideAppBar && <Toolbar />}
+                    {children}
+                </Box>
             </Box>
-
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    height: '100vh',
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
-                    overflow: 'auto',
-                }}>
-                {!hideAppBar && <Toolbar />}
-                {children}
-            </Box>
-        </Box>
+        </EventFilesProvider>
     )
 }

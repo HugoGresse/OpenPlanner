@@ -1,39 +1,19 @@
-import { useEffect, useState } from 'react'
-import { Event } from '../../../../types'
 import { Box, CircularProgress, FormControlLabel, Switch, Typography } from '@mui/material'
-import { getUploadFilePathFromEvent } from '../../../actions/updateWebsiteActions/getFilesNames'
+import { Event } from '../../../../types'
 import { TypographyCopyable } from '../../../../components/TypographyCopyable'
 import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
 import { useFirestoreDocumentMutation } from '../../../../services/hooks/firestoreMutationHooks'
+import { useEventFiles } from '../../../../services/hooks/useEventFiles'
+import { useEnsureApiKey } from '../../../../services/hooks/useEnsureApiKey'
 
 export type EventApiFilePathsProps = {
     event: Event
 }
+
 export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
-    const eventMutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
-    const [filesPath, setFilesPaths] = useState<{
-        public: null | string
-        private: null | string
-        openfeedback: null | string
-        voxxrin: null | string
-    }>({
-        public: null,
-        private: null,
-        openfeedback: null,
-        voxxrin: null,
-    })
-
-    const update = async () => {
-        const filesPaths = await getUploadFilePathFromEvent(event)
-        setFilesPaths(filesPaths)
-    }
-
-    useEffect(() => {
-        if (event.files) {
-            update()
-        }
-    }, [event])
+    useEnsureApiKey(event)
+    const { filesPath, isLoading, error } = useEventFiles(event)
 
     if (!event.files) {
         return (
@@ -46,15 +26,25 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
         )
     }
 
+    if (error) {
+        return (
+            <Box>
+                <Typography color="error">Error loading file paths: {error}</Typography>
+            </Box>
+        )
+    }
+
     return (
         <Box>
             <Typography fontWeight="600" mt={2}>
                 Static APIs (very fast, cached, read only)
             </Typography>
-            {filesPath.public ? (
+            {isLoading ? (
+                <CircularProgress />
+            ) : (
                 <Box>
                     <Typography sx={{ mt: 2 }}>Public (no private information):</Typography>
-                    <TypographyCopyable>{filesPath.public}</TypographyCopyable>
+                    {filesPath.public && <TypographyCopyable>{filesPath.public}</TypographyCopyable>}
                     <Typography sx={{ mt: 2 }}>
                         Private (all private datas, don't share it or put in another website):
                     </Typography>
@@ -72,6 +62,9 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
                                 <Switch
                                     checked={event.enableVoxxrin}
                                     onChange={(e) => {
+                                        const eventMutation = useFirestoreDocumentMutation(
+                                            doc(collections.events, event.id)
+                                        )
                                         eventMutation.mutate({ enableVoxxrin: e.target.checked })
                                     }}
                                 />
@@ -87,8 +80,6 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
                         </Typography>
                     </Box>
                 </Box>
-            ) : (
-                <CircularProgress />
             )}
         </Box>
     )

@@ -1,20 +1,22 @@
-import { Event } from '../../../types'
-import { getSessions } from '../sessions/getSessions'
-import { getSpeakers } from '../getSpeakers'
-import { getSponsors } from '../getSponsors'
+import firebase from 'firebase-admin'
+import { Event } from '../../../../../../src/types'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
-import { getTeams } from '../getTeam'
-import { getFaq } from '../getFaq'
 import { generateVoxxrinJson } from './generateVoxxrinJson'
 import { JsonOutput, JsonSession, JsonSessionPrivate, JsonPublicOutput, JsonPrivateOutput } from './jsonTypes'
+import { SessionDao } from '../../../dao/sessionDao'
+import { SpeakerDao } from '../../../dao/speakerDao'
+import { SponsorDao } from '../../../dao/sponsorDao'
+import { TeamDao } from '../../../dao/teamDao'
+import { FaqDao } from '../../../dao/faqDao'
+import { dateToString } from '../../../other/dateConverter'
 
-export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
+export const generateStaticJson = async (firebaseApp: firebase.app.App, event: Event): Promise<JsonOutput> => {
     const [sessions, speakers, sponsors, { team, teams }, faq] = await Promise.all([
-        getSessions(event.id),
-        getSpeakers(event.id),
-        getSponsors(event.id),
-        getTeams(event.id),
-        getFaq(event.id),
+        SessionDao.getSessions(firebaseApp, event.id),
+        SpeakerDao.getSpeakers(firebaseApp, event.id),
+        SponsorDao.getSponsors(firebaseApp, event.id),
+        TeamDao.getTeams(firebaseApp, event.id),
+        FaqDao.getFullFaqs(firebaseApp, event.id),
     ])
 
     const faqPublic = faq.filter((f) => !f.private)
@@ -26,8 +28,8 @@ export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
         id: s.id,
         title: s.title,
         abstract: s.abstract,
-        dateStart: s.dates?.start?.toISO(),
-        dateEnd: s.dates?.end?.toISO(),
+        dateStart: dateToString(s.dates?.start),
+        dateEnd: dateToString(s.dates?.end),
         durationMinutes: s.durationMinutes,
         speakerIds: s.speakers,
         trackId: s.trackId,
@@ -50,8 +52,8 @@ export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
         id: s.id,
         title: s.title,
         abstract: s.abstract,
-        dateStart: s.dates?.start?.toISO(),
-        dateEnd: s.dates?.end?.toISO(),
+        dateStart: dateToString(s.dates?.start),
+        dateEnd: dateToString(s.dates?.end),
         durationMinutes: s.durationMinutes,
         speakerIds: s.speakers,
         trackId: s.trackId,
@@ -78,12 +80,12 @@ export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
         id: event.id,
         name: event.name,
         scheduleVisible: event.scheduleVisible,
-        dateStart: event.dates.start?.toISOString(),
-        dateEnd: event.dates.end?.toISOString(),
+        dateStart: dateToString(event.dates.start),
+        dateEnd: dateToString(event.dates.end),
         formats: event.formats,
         categories: event.categories,
         tracks: event.tracks,
-        updatedAt: event.updatedAt.toISOString(),
+        updatedAt: dateToString(event.updatedAt),
         locationName: event.locationName,
         locationUrl: event.locationUrl,
         color: event.color,
@@ -112,7 +114,7 @@ export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
         team,
         teams,
         faq: faqPublic,
-        generatedAt: new Date().toISOString(),
+        generatedAt: dateToString(new Date()),
     }
     const outputPrivate: JsonPrivateOutput = {
         event: outputEvent,
@@ -122,7 +124,7 @@ export const generateStaticJson = async (event: Event): Promise<JsonOutput> => {
         team,
         teams,
         faq,
-        generatedAt: new Date().toISOString(),
+        generatedAt: dateToString(new Date()),
     }
 
     return {
