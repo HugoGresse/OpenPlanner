@@ -1,8 +1,8 @@
 import { FastifyReply } from 'fastify'
-import { extractCookieForHeader } from '../../other/extractCookieForHeader'
-import { EventDao } from '../../dao/eventDao'
+import { extractCookieForHeader } from '../../../other/extractCookieForHeader'
+import { EventDao } from '../../../dao/eventDao'
 import firebase from 'firebase-admin'
-import { getBrowserHeaders } from './utils/getBupherBrowserHeaders'
+import { getBrowserHeaders } from './getBupherBrowserHeaders'
 // Constants
 export const bupherLoginDomain = 'login' + '.' + 'bu' + 'f' + 'f' + 'er' + '.com'
 export const bupherDomain = 'publish' + '.' + 'bu' + 'f' + 'f' + 'er' + '.com'
@@ -40,7 +40,7 @@ export const loginToBupher = async (
     firebaseApp: firebase.app.App,
     eventId: string,
     reply: FastifyReply
-): Promise<boolean> => {
+): Promise<string | false> => {
     try {
         // Fetch the login page
         const loginPageResponse = await fetch(`${BASE_URL}/login`, {
@@ -101,7 +101,7 @@ export const loginToBupher = async (
         const bupherSession = extractCookieForHeader(loginCookies || '')
 
         await EventDao.saveBupherSession(firebaseApp, eventId, bupherSession)
-        return true
+        return bupherSession
     } catch (error) {
         console.error('Bupher login error:', error)
         sendErrorResponse(reply, 500, 'Internal server error during Bupher login')

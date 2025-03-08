@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { Type } from '@sinclair/typebox'
-import { getBupherSession, makePublishRequest, sendErrorResponse } from './bupherUtils'
+import { getBupherSession, makePublishRequest, sendErrorResponse } from './utils/bupherUtils'
 
 // Schema definitions
 const BupherChannelResponse = Type.Object({

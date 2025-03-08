@@ -12,7 +12,7 @@ export type BupherAuthState = {
 export const useBupherAuth = (event: Event) => {
     const [authState, setAuthState] = useState<BupherAuthState>({
         isLoggedIn: event.bupherSession !== undefined,
-        isLoading: true,
+        isLoading: false,
         error: null,
     })
 
@@ -21,10 +21,14 @@ export const useBupherAuth = (event: Event) => {
             return
         }
 
-        setAuthState({
-            isLoggedIn: event.bupherSession !== undefined,
-            isLoading: false,
-            error: null,
+        setAuthState((state) => {
+            if (state.isLoading) {
+                return state
+            }
+            return {
+                ...state,
+                isLoggedIn: event.bupherSession !== undefined,
+            }
         })
     }, [event])
 

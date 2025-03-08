@@ -15,7 +15,7 @@ export const EventSocial = ({ event }: EventSocialProps) => {
     const { isLoggedIn, isLoading, error, login, logout } = useBupherAuth(event)
 
     useEffect(() => {
-        if (!isLoading && isLoggedIn) {
+        if (!isLoading && isLoggedIn && !error) {
             setIsLoginDialogOpen(false)
         }
     }, [isLoggedIn, isLoading])

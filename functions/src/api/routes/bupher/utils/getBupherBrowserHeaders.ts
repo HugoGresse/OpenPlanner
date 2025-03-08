@@ -8,7 +8,7 @@ export const getBrowserHeaders = (domain: string) => {
         Origin: 'https://' + domain,
         Host: domain,
         'X-Target-Domain': domain,
-        Referer: 'https://' + domain + '.com/login',
+        Referer: 'https://' + domain + '/login',
         'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
         'Sec-Ch-Ua-Mobile': '?0',
         'Sec-Ch-Ua-Platform': '"macOS"',
