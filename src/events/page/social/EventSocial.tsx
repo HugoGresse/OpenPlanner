@@ -1,103 +1,54 @@
-import { useState } from 'react'
-import {
-    Box,
-    Button,
-    Container,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-    Typography,
-    CircularProgress,
-    Alert,
-} from '@mui/material'
-import { useBupherAuth } from '../../../services/hooks/useBupherAuth'
+import { useEffect, useState } from 'react'
+import { Box, Button, Container, Typography, Alert } from '@mui/material'
+import { useBupherAuth } from '../../../services/bupher/useBupherAuth'
 import { BUHPER_NAME } from './bupherName'
+import { BupherLoginDialog } from './BupherLoginDialog'
+import { Event } from '../../../types'
+import { BupherChannels } from './BupherChannels'
 
 export type EventSocialProps = {
-    eventId: string
+    event: Event
 }
 
-export const EventSocial = ({ eventId }: EventSocialProps) => {
-    const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(true)
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const { isLoggedIn, isLoading, error, login, logout } = useBupherAuth(eventId)
+export const EventSocial = ({ event }: EventSocialProps) => {
+    const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+    const { isLoggedIn, isLoading, error, login, logout } = useBupherAuth(event)
 
-    const handleLogin = async () => {
-        const success = await login(email, password)
-        if (success) {
+    useEffect(() => {
+        if (!isLoading && isLoggedIn) {
             setIsLoginDialogOpen(false)
-            setEmail('')
-            setPassword('')
         }
+    }, [isLoggedIn, isLoading])
+
+    const handleLogin = async (email: string, password: string) => {
+        return await login(email, password)
     }
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h2" gutterBottom>
-                Social Media Management
-            </Typography>
+            <Typography gutterBottom>Manage your social publication right from OpenPlanner.</Typography>
 
-            <Dialog open={isLoginDialogOpen && !isLoggedIn} onClose={() => setIsLoginDialogOpen(false)}>
-                <DialogTitle>Login to Bupher</DialogTitle>
-                <DialogContent>
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
-                    <Box
-                        component="form"
-                        sx={{ mt: 2 }}
-                        onSubmit={(e) => {
-                            e.preventDefault()
-                            handleLogin()
-                        }}>
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            label="Email"
-                            type="email"
-                            fullWidth
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={isLoading}
-                        />
-                        <TextField
-                            margin="dense"
-                            label="Password"
-                            type="password"
-                            fullWidth
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isLoading}
-                        />
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setIsLoginDialogOpen(false)} disabled={isLoading}>
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleLogin}
-                        variant="contained"
-                        disabled={isLoading || !email || !password}
-                        startIcon={isLoading ? <CircularProgress size={20} /> : null}>
-                        {isLoading ? 'Logging in...' : 'Login'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <BupherLoginDialog
+                open={isLoginDialogOpen && !isLoggedIn}
+                onClose={() => setIsLoginDialogOpen(false)}
+                onLogin={handleLogin}
+                isLoading={isLoading}
+                error={error}
+            />
 
             {isLoggedIn ? (
-                <Box>
-                    <Alert severity="success" sx={{ mb: 2 }}>
-                        You are logged in to {BUHPER_NAME}!
-                    </Alert>
-                    <Button variant="outlined" onClick={logout}>
-                        Logout
-                    </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                        <Alert severity="success" sx={{ mb: 2 }}>
+                            You are logged in to {BUHPER_NAME}!{'  '}
+                            <Button variant="outlined" onClick={logout}>
+                                Logout
+                            </Button>
+                        </Alert>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                        <BupherChannels event={event} />
+                    </Box>
                 </Box>
             ) : (
                 <Button variant="contained" onClick={() => setIsLoginDialogOpen(true)}>

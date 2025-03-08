@@ -143,7 +143,7 @@ export const EventApp = ({ eventId }: { eventId?: string }) => {
                     </Suspense>
                 </Route>
                 <Route path="/social">
-                    <EventSocial eventId={eventData.id} />
+                    <EventSocial event={eventData} />
                 </Route>
                 <Route>
                     <Redirect to={defaultRedirect} />

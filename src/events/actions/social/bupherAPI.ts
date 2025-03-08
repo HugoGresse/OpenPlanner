@@ -6,6 +6,17 @@ export type BupherLoginResponse = {
     cookies?: string
 }
 
+export type BupherChannelsResponse = {
+    success: boolean
+    error?: string
+    channels: {
+        avatarUrl: string
+        type: string
+        handle: string
+        formatted_username: string
+    }[]
+}
+
 export const bupherAPI = {
     login: async (eventId: string, apiKey: string, email: string, password: string): Promise<BupherLoginResponse> => {
         const url = new URL(API_URL as string)
@@ -39,5 +50,19 @@ export const bupherAPI = {
                 error: `Error: ${error.message}`,
             }
         }
+    },
+    getChannels: async (eventId: string, apiKey: string): Promise<BupherChannelsResponse> => {
+        const url = new URL(API_URL as string)
+        url.pathname += `v1/${eventId}/bupher/channels`
+        url.searchParams.append('apiKey', apiKey)
+
+        const response = await fetch(url.href, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+
+        return await response.json()
     },
 }

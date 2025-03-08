@@ -67,7 +67,7 @@ export const Menu = [
         href: '/social',
         icon: mdiTwitter,
         name: 'Social',
-        requiredEmail: 'hugo.gresse@gmail.com',
+        requiredEmails: ['hugo.gresse@gmail.com', 'service@sunny-tech.io'],
     },
     {
         href: '/settings',
@@ -87,7 +87,7 @@ export const EventScreenMenuItems = () => {
     return (
         <>
             {Menu.map((item) => {
-                if (item.requiredEmail && (!user || user.email !== item.requiredEmail)) {
+                if (item.requiredEmails && (!user || !item.requiredEmails.includes(user.email))) {
                     return null
                 }
                 return (
