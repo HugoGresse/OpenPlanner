@@ -63,7 +63,6 @@ export const setupFastify = () => {
     fastify.register(deployRoutes)
     fastify.register(deployFilesRoutes)
     fastify.register(helloRoute)
-    fastify.register(eventRoutes)
     fastify.register(bupherRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
