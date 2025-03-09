@@ -73,7 +73,7 @@ type Post = {
     __typename: 'Post'
 }
 
-type PostsEdge = {
+export type PostsEdge = {
     node: Post
     __typename: 'PostsEdge'
 }

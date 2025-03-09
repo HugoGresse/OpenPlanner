@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { Type } from '@sinclair/typebox'
 import { getBupherSessionAndUserId, sendErrorResponse } from './utils/bupherUtils'
 import { getBupherScheduledPost } from './utils/getBupherScheduledPost'
+import { PostsEdge } from './utils/BupherScheduledPost'
 
 // Schema definitions
 const BupherScheduledPostsResponse = Type.Object({
@@ -11,12 +12,14 @@ const BupherScheduledPostsResponse = Type.Object({
         Type.Array(
             Type.Object({
                 id: Type.String(),
+                via: Type.String(),
                 text: Type.String(),
-                scheduledAt: Type.String(),
-                channelId: Type.String(),
-                channelName: Type.Optional(Type.String()),
-                service: Type.Optional(Type.String()),
                 status: Type.String(),
+                sentAt: Type.String(),
+                dueAt: Type.String(),
+                channelId: Type.String(),
+                channelName: Type.String(),
+                service: Type.String(),
                 imageUrl: Type.Optional(Type.String()),
             })
         )
@@ -79,12 +82,21 @@ export const bupherScheduledPostsRoute = (fastify: FastifyInstance, options: any
                     return sendErrorResponse(reply, 500, 'Failed to fetch posts')
                 }
 
-                console.log('postsResponse', postsResponse)
-                // todo : finish here
-
                 reply.send({
                     success: true,
-                    posts: [],
+                    posts:
+                        postsResponse.result?.map((post: PostsEdge) => ({
+                            id: post.node.id,
+                            via: post.node.via,
+                            text: post.node.text,
+                            status: post.node.status,
+                            sentAt: post.node.sentAt,
+                            dueAt: post.node.dueAt,
+                            channelId: post.node.channel.id,
+                            channelName: post.node.channel.name,
+                            service: post.node.channel.service,
+                            imageUrl: post.node.assets?.[0]?.image?.thumbnail,
+                        })) || [],
                 })
             } catch (error) {
                 console.error('Bupher channels error:', error)
