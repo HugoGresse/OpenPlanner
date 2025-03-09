@@ -29,7 +29,7 @@ export const fastifyErrorHandler = (
         } else {
             reply.status(400).send(
                 JSON.stringify({
-                    error: error,
+                    error: error.message || error,
                     reason: error.message || JSON.stringify(error),
                     success: false,
                 })

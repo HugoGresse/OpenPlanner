@@ -16,6 +16,7 @@ import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/event'
+import { bupherRoutes } from './routes/bupher/bupher'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
 import { deployRoutes } from './routes/deploy/deploy'
 
@@ -62,6 +63,7 @@ export const setupFastify = () => {
     fastify.register(deployRoutes)
     fastify.register(deployFilesRoutes)
     fastify.register(helloRoute)
+    fastify.register(bupherRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
 
