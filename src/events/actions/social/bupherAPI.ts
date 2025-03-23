@@ -24,6 +24,11 @@ export type BupherScheduledPostsResponse = {
     posts: BupherScheduledPost[]
 }
 
+export type BupherDraftPostResponse = {
+    success: boolean
+    error?: string
+}
+
 export const bupherAPI = {
     login: async (eventId: string, apiKey: string, email: string, password: string): Promise<BupherLoginResponse> => {
         const url = new URL(API_URL as string)
@@ -82,6 +87,28 @@ export const bupherAPI = {
             headers: {
                 'Content-Type': 'application/json',
             },
+        })
+
+        return await response.json()
+    },
+    postDraftPost: async (
+        eventId: string,
+        apiKey: string,
+        channels: string[],
+        text: string,
+        file: File
+    ): Promise<BupherDraftPostResponse> => {
+        const url = new URL(API_URL as string)
+        url.pathname += `v1/${eventId}/bupher/draft-post`
+        url.searchParams.append('apiKey', apiKey)
+        const formData = new FormData()
+        formData.append('channels', JSON.stringify(channels))
+        formData.append('text', text)
+        formData.append('file', file)
+
+        const response = await fetch(url.href, {
+            method: 'POST',
+            body: formData,
         })
 
         return await response.json()

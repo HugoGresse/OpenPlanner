@@ -10,7 +10,7 @@ export const bupherGraphQLDomain = 'graph' + '.' + 'bu' + 'f' + 'f' + 'er' + '.c
 export const BASE_URL = 'https://proxy.minix.gresse.io'
 
 const loginBrowserHeaders = getBrowserHeaders(bupherLoginDomain)
-const publishBrowserHeaders = getBrowserHeaders(bupherDomain)
+export const publishBrowserHeaders = getBrowserHeaders(bupherDomain)
 const graphQLBrowserHeaders = getBupherGraphQLHeaders(bupherDomain, bupherGraphQLDomain)
 
 // Error response helper

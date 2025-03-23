@@ -6,6 +6,7 @@ import { BupherLoginDialog } from './BupherLoginDialog'
 import { Event } from '../../../types'
 import { BupherChannels } from './BupherChannels'
 import { BupherScheduledPosts } from './BupherScheduledPosts'
+import { TestBupherDraftPost } from './TestBupherDraftPost'
 export type EventSocialProps = {
     event: Event
 }
@@ -45,6 +46,7 @@ export const EventSocial = ({ event }: EventSocialProps) => {
                                 Logout
                             </Button>
                         </Alert>
+                        <TestBupherDraftPost event={event} />
                         <BupherScheduledPosts event={event} />
                     </Box>
                     <Box sx={{ flex: 1 }}>
