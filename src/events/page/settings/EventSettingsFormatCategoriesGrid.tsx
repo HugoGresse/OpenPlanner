@@ -107,7 +107,7 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
 
     // Add Other Category row
     rows.push({
-        id: 'other_category',
+        id: '',
         category: 'No category',
         ...event.formats.reduce((acc, format) => {
             return {
