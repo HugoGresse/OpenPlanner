@@ -4,6 +4,7 @@ import { getBupherSessionAndUserId, sendErrorResponse } from './utils/bupherUtil
 import { postBupherFile } from './utils/postBupherFile'
 import { extractMultipartFormData } from '../file/parseMultipartFiles'
 import { checkFileTypes } from '../../other/checkFileTypes'
+import { postBupherDraft } from './utils/postBupherDraft'
 
 const BupherDraftPostResponse = Type.Object({
     success: Type.Boolean(),
@@ -44,6 +45,7 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
         async (request, reply) => {
             try {
                 const { eventId } = request.params as { eventId: string }
+                const { text, profilIds } = request.body as { text: string; profilIds: string[] }
 
                 // Get the Bupher session
                 let bupherInfos = {
@@ -65,6 +67,8 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                     return sendErrorResponse(reply, 400, 'Missing file(s)')
                 }
 
+                console.log('fileParsingResult', fileParsingResult, profilIds, text)
+
                 const firstFileKey = Object.keys(fileParsingResult.uploads)[0] as string
                 const fileBuffer = fileParsingResult.uploads[firstFileKey] as Buffer
                 const fileType = await checkFileTypes(fileBuffer, firstFileKey)
@@ -83,6 +87,19 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                 if (!fileResponse.success) {
                     return sendErrorResponse(reply, 500, 'Failed to post Bupher file')
                 }
+
+                const postDraftResponse = await postBupherDraft(
+                    bupherInfos.bupherSession,
+                    profilIds,
+                    text,
+                    fileResponse.result?.location,
+                    {
+                        width: fileResponse.result?.width ?? 0,
+                        height: fileResponse.result?.height ?? 0,
+                    }
+                )
+
+                console.log('postDraftResponse', postDraftResponse)
 
                 // TODO : post draft
 
