@@ -1,4 +1,4 @@
-import { DataGrid, GRID_STRING_COL_DEF, GridColDef, GridColTypeDef } from '@mui/x-data-grid'
+import { DataGrid, GRID_STRING_COL_DEF, GridColDef, GridColTypeDef, GridAlignment } from '@mui/x-data-grid'
 import * as React from 'react'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { Event } from '../../../types'
@@ -40,12 +40,14 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
         },
     }
 
-    const columns: GridColDef[] = [
+    const columns = [
         {
             ...categoryColumnType,
             field: 'category',
             headerName: 'Category',
             width: 170,
+            headerAlign: 'left',
+            align: 'left',
         },
     ]
         .concat(
@@ -55,6 +57,8 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
                 headerName: format.name,
                 width: 170,
                 type: 'number',
+                headerAlign: 'right',
+                align: 'right',
             }))
         )
         .concat({
@@ -63,6 +67,8 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
             headerName: 'No format',
             width: 170,
             type: 'number',
+            headerAlign: 'right',
+            align: 'right',
         })
         .concat({
             ...categoryColumnType,
@@ -70,7 +76,9 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
             headerName: 'Total',
             type: 'number',
             width: 150,
-        })
+            headerAlign: 'right',
+            align: 'right',
+        }) as GridColDef[]
 
     const rows = event.categories.map((category) => ({
         id: category.id,
