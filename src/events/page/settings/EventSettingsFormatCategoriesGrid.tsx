@@ -59,6 +59,13 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
         )
         .concat({
             ...categoryColumnType,
+            field: 'other_format',
+            headerName: 'No format',
+            width: 170,
+            type: 'number',
+        })
+        .concat({
+            ...categoryColumnType,
             field: 'total',
             headerName: 'Total',
             type: 'number',
@@ -76,15 +83,42 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
                         .length || 0,
             }
         }, {}),
-        total: event.formats.reduce((acc, format) => {
-            return (
-                acc +
-                (sessions.data?.filter((session) => session.category === category.id && session.format === format.id)
-                    .length || 0)
-            )
-        }, 0),
+        other_format:
+            sessions.data?.filter((session) => session.category === category.id && !session.format).length || 0,
+        total:
+            event.formats.reduce((acc, format) => {
+                return (
+                    acc +
+                    (sessions.data?.filter(
+                        (session) => session.category === category.id && session.format === format.id
+                    ).length || 0)
+                )
+            }, 0) +
+            (sessions.data?.filter((session) => session.category === category.id && !session.format).length || 0),
     }))
 
+    // Add Other Category row
+    rows.push({
+        id: 'other_category',
+        category: 'No category',
+        ...event.formats.reduce((acc, format) => {
+            return {
+                ...acc,
+                [format.id]:
+                    sessions.data?.filter((session) => !session.category && session.format === format.id).length || 0,
+            }
+        }, {}),
+        other_format: sessions.data?.filter((session) => !session.category && !session.format).length || 0,
+        total:
+            event.formats.reduce((acc, format) => {
+                return (
+                    acc +
+                    (sessions.data?.filter((session) => !session.category && session.format === format.id).length || 0)
+                )
+            }, 0) + (sessions.data?.filter((session) => !session.category && !session.format).length || 0),
+    })
+
+    // Add Total row
     rows.push({
         id: 'total',
         category: 'Total',
@@ -94,6 +128,7 @@ export const EventSettingsFormatCategoriesGrid = ({ event }: EventSettingsFormat
                 [format.id]: sessions.data?.filter((session) => session.format === format.id).length || 0,
             }
         }, {}),
+        other_format: sessions.data?.filter((session) => !session.format).length || 0,
         total: sessions.data?.length || 0,
     })
 
