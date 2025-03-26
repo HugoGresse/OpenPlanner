@@ -11,7 +11,10 @@
             "rewrites": [
                 {
                     "source": "**/api/**",
-                    "function": "api"
+                    "function": {
+                        "functionId": "api",
+                        "region": "europe-west1"
+                    }
                 },
                 {
                     "source": "**",
@@ -26,7 +29,10 @@
             "rewrites": [
                 {
                     "source": "**",
-                    "function": "api"
+                    "function": {
+                        "functionId": "api",
+                        "region": "europe-west1"
+                    }
                 }
             ]
         }
