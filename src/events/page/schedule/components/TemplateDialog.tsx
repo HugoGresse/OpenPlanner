@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack } from '@mui/material'
 import * as React from 'react'
 import { useSessionTemplate } from '../../../../services/hooks/useSessionsTemplate'
 import { Event } from '../../../../types'
@@ -6,6 +6,9 @@ import { DataGrid, GridColDef, GridValueFormatterParams } from '@mui/x-data-grid
 import { updateSessionsTemplateAtOnce } from '../../../actions/sessions/updateSessionsTemplateAtOnce'
 import { useNotification } from '../../../../hooks/notificationHook'
 import { useSessions } from '../../../../services/hooks/useSessions'
+import { ImportExport as ImportIcon } from '@mui/icons-material'
+import { useState } from 'react'
+import { TemplateImportDialog } from './TemplateImportDialog'
 
 type TemplateDialogProps = {
     event: Event
@@ -17,6 +20,7 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
     const sessionsTemplate = useSessionTemplate(event)
     const sessions = useSessions(event)
     const { createNotification } = useNotification()
+    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
 
     const columns: GridColDef[] = [
         {
@@ -106,6 +110,10 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
                     category and format (and not the template count).
                 </DialogContentText>
 
+                <Button onClick={() => setIsImportDialogOpen(true)} startIcon={<ImportIcon />}>
+                    Import Template
+                </Button>
+
                 <DataGrid
                     rows={rows}
                     columns={columns}
@@ -131,6 +139,12 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
             <DialogActions>
                 <Button onClick={() => onClose()}>Close</Button>
             </DialogActions>
+            <TemplateImportDialog
+                open={isImportDialogOpen}
+                onClose={() => setIsImportDialogOpen(false)}
+                currentEventId={event.id}
+                currentEvent={event}
+            />
         </Dialog>
     )
 }
