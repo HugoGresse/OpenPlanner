@@ -138,6 +138,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     }}
                     speakers={speakers.data || []}
                     sessions={sessions.data || []}
+                    event={event}
                 />
             )}
         </Container>

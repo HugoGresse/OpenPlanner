@@ -1,4 +1,4 @@
-import { Speaker } from '../../../../types'
+import { Speaker, Event } from '../../../../types'
 import { Button, Dialog, DialogContent, Grid, Typography } from '@mui/material'
 import * as React from 'react'
 import { useMemo } from 'react'
@@ -20,23 +20,35 @@ const aggregateFields = <K extends keyof Speaker>(speakers: Speaker[], field: K)
         .sort((a, b) => b.value - a.value)
 }
 
-const getSpeakersWithMultipleTalks = (speakers: Speaker[], sessions: { speakers: string[] }[]) => {
-    const speakerTalkCount = sessions.reduce((acc: Record<string, number>, session) => {
-        session.speakers.forEach((speakerId) => {
-            acc[speakerId] = (acc[speakerId] || 0) + 1
-        })
-        return acc
-    }, {})
+const getSpeakersWithMultipleTalks = (
+    speakers: Speaker[],
+    sessions: { speakers: string[]; format: string | null }[]
+) => {
+    const speakerTalkCount = sessions.reduce(
+        (acc: Record<string, { count: number; formats: Record<string, number> }>, session) => {
+            session.speakers.forEach((speakerId) => {
+                if (!acc[speakerId]) {
+                    acc[speakerId] = { count: 0, formats: {} }
+                }
+                acc[speakerId].count++
+                if (session.format) {
+                    acc[speakerId].formats[session.format] = (acc[speakerId].formats[session.format] || 0) + 1
+                }
+            })
+            return acc
+        },
+        {}
+    )
 
-    return Object.keys(speakerTalkCount)
-        .reduce((acc: (Speaker & { talkCount: number })[], speakerId) => {
-            const count = speakerTalkCount[speakerId]
-            if (count > 1) {
+    return Object.entries(speakerTalkCount)
+        .reduce((acc: (Speaker & { talkCount: number; formats: Record<string, number> })[], [speakerId, data]) => {
+            if (data.count > 1) {
                 const speaker = speakers.find((s) => s.id === speakerId)
                 if (speaker) {
                     acc.push({
                         ...speaker,
-                        talkCount: count,
+                        talkCount: data.count,
+                        formats: data.formats,
                     })
                 }
             }
@@ -78,11 +90,13 @@ export const SpeakersStatsDialog = ({
     onClose,
     speakers,
     sessions,
+    event,
 }: {
     isOpen: boolean
     onClose: () => void
     speakers: Speaker[]
-    sessions: { speakers: string[]; title: string }[]
+    sessions: { speakers: string[]; title: string; format: string | null }[]
+    event: Event
 }) => {
     const stats = useMemo(() => {
         return {
@@ -93,6 +107,11 @@ export const SpeakersStatsDialog = ({
             speakersWithMostEmojis: getSpeakersWithMostEmojis(speakers, sessions),
         }
     }, [speakers, sessions])
+
+    const getFormatName = (formatId: string) => {
+        const format = event.formats?.find((f) => f.id === formatId)
+        return format ? format.name : formatId
+    }
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
@@ -117,6 +136,13 @@ export const SpeakersStatsDialog = ({
                             {stats.speakersWithMultipleTalks.map((speaker) => (
                                 <li key={speaker.id}>
                                     {speaker.name} ({speaker.talkCount} sessions)
+                                    <ul>
+                                        {Object.entries(speaker.formats).map(([formatId, count]) => (
+                                            <li key={formatId}>
+                                                {getFormatName(formatId)}: {count} session{count > 1 ? 's' : ''}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </li>
                             ))}
                         </ul>
