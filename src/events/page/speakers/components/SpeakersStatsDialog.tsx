@@ -83,6 +83,16 @@ export const SpeakersStatsDialog = ({
                         </ul>
                     </Grid>
                     <Grid item xs={12} md={6}>
+                        <Typography variant="h6">Speakers with multiple sessions</Typography>
+                        <ul>
+                            {stats.speakersWithMultipleTalks.map((speaker) => (
+                                <li key={speaker.id}>
+                                    {speaker.name} ({speaker.talkCount} sessions)
+                                </li>
+                            ))}
+                        </ul>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
                         <Typography variant="h6">Job titles ({Object.keys(stats.jobTitles).length})</Typography>
 
                         <ul>
@@ -100,16 +110,6 @@ export const SpeakersStatsDialog = ({
                             {stats.geolocations.map((geolocation) => (
                                 <li key={geolocation.key}>
                                     {geolocation.key} ({geolocation.value})
-                                </li>
-                            ))}
-                        </ul>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        <Typography variant="h6">Speakers with multiple sessions</Typography>
-                        <ul>
-                            {stats.speakersWithMultipleTalks.map((speaker) => (
-                                <li key={speaker.id}>
-                                    {speaker.name} ({speaker.talkCount} sessions)
                                 </li>
                             ))}
                         </ul>
