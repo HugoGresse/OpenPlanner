@@ -45,6 +45,34 @@ const getSpeakersWithMultipleTalks = (speakers: Speaker[], sessions: { speakers:
         .sort((a, b) => b.talkCount - a.talkCount)
 }
 
+const getSpeakersWithMostEmojis = (speakers: Speaker[], sessions: { speakers: string[]; title: string }[]) => {
+    const speakerEmojiCount = sessions.reduce((acc: Record<string, number>, session) => {
+        // Count emojis in the title using a regex that matches emoji characters
+        const emojiCount = (session.title.match(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu) || [])
+            .length
+
+        session.speakers.forEach((speakerId) => {
+            acc[speakerId] = (acc[speakerId] || 0) + emojiCount
+        })
+        return acc
+    }, {})
+
+    return Object.entries(speakerEmojiCount)
+        .reduce((acc: (Speaker & { emojiCount: number })[], [speakerId, count]) => {
+            if (count > 0) {
+                const speaker = speakers.find((s) => s.id === speakerId)
+                if (speaker) {
+                    acc.push({
+                        ...speaker,
+                        emojiCount: count,
+                    })
+                }
+            }
+            return acc
+        }, [])
+        .sort((a, b) => b.emojiCount - a.emojiCount)
+}
+
 export const SpeakersStatsDialog = ({
     isOpen,
     onClose,
@@ -54,7 +82,7 @@ export const SpeakersStatsDialog = ({
     isOpen: boolean
     onClose: () => void
     speakers: Speaker[]
-    sessions: { speakers: string[] }[]
+    sessions: { speakers: string[]; title: string }[]
 }) => {
     const stats = useMemo(() => {
         return {
@@ -62,6 +90,7 @@ export const SpeakersStatsDialog = ({
             jobTitles: aggregateFields(speakers, 'jobTitle'),
             geolocations: aggregateFields(speakers, 'geolocation'),
             speakersWithMultipleTalks: getSpeakersWithMultipleTalks(speakers, sessions),
+            speakersWithMostEmojis: getSpeakersWithMostEmojis(speakers, sessions),
         }
     }, [speakers, sessions])
 
@@ -110,6 +139,16 @@ export const SpeakersStatsDialog = ({
                             {stats.geolocations.map((geolocation) => (
                                 <li key={geolocation.key}>
                                     {geolocation.key} ({geolocation.value})
+                                </li>
+                            ))}
+                        </ul>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="h6">Speakers with most emojis in session titles</Typography>
+                        <ul>
+                            {stats.speakersWithMostEmojis.map((speaker) => (
+                                <li key={speaker.id}>
+                                    {speaker.name} ({speaker.emojiCount} emojis)
                                 </li>
                             ))}
                         </ul>
