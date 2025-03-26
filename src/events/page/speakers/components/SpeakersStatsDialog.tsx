@@ -19,22 +19,51 @@ const aggregateFields = <K extends keyof Speaker>(speakers: Speaker[], field: K)
         }))
         .sort((a, b) => b.value - a.value)
 }
+
+const getSpeakersWithMultipleTalks = (speakers: Speaker[], sessions: { speakers: string[] }[]) => {
+    const speakerTalkCount = sessions.reduce((acc: Record<string, number>, session) => {
+        session.speakers.forEach((speakerId) => {
+            acc[speakerId] = (acc[speakerId] || 0) + 1
+        })
+        return acc
+    }, {})
+
+    return Object.keys(speakerTalkCount)
+        .reduce((acc: (Speaker & { talkCount: number })[], speakerId) => {
+            const count = speakerTalkCount[speakerId]
+            if (count > 1) {
+                const speaker = speakers.find((s) => s.id === speakerId)
+                if (speaker) {
+                    acc.push({
+                        ...speaker,
+                        talkCount: count,
+                    })
+                }
+            }
+            return acc
+        }, [])
+        .sort((a, b) => b.talkCount - a.talkCount)
+}
+
 export const SpeakersStatsDialog = ({
     isOpen,
     onClose,
     speakers,
+    sessions,
 }: {
     isOpen: boolean
     onClose: () => void
     speakers: Speaker[]
+    sessions: { speakers: string[] }[]
 }) => {
     const stats = useMemo(() => {
         return {
             companies: aggregateFields(speakers, 'company'),
             jobTitles: aggregateFields(speakers, 'jobTitle'),
             geolocations: aggregateFields(speakers, 'geolocation'),
+            speakersWithMultipleTalks: getSpeakersWithMultipleTalks(speakers, sessions),
         }
-    }, [speakers])
+    }, [speakers, sessions])
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth={true} scroll="body">
@@ -71,6 +100,16 @@ export const SpeakersStatsDialog = ({
                             {stats.geolocations.map((geolocation) => (
                                 <li key={geolocation.key}>
                                     {geolocation.key} ({geolocation.value})
+                                </li>
+                            ))}
+                        </ul>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="h6">Speakers with multiple sessions</Typography>
+                        <ul>
+                            {stats.speakersWithMultipleTalks.map((speaker) => (
+                                <li key={speaker.id}>
+                                    {speaker.name} ({speaker.talkCount} sessions)
                                 </li>
                             ))}
                         </ul>
