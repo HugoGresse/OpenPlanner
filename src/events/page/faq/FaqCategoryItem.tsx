@@ -76,7 +76,7 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
     return (
         <Box width="100%" mb={4}>
             <Box display="flex">
-                <Typography variant="h2" justifyContent="space-between" alignItems="center" marginBottom={1}>
+                <Typography variant="h4" justifyContent="space-between" alignItems="center" marginBottom={1}>
                     {props.category.name} ({data.length})
                     <IconButton onClick={() => setOpen(!isOpen)}>
                         {isOpen ? <ExpandLessSharp /> : <ExpandMore />}

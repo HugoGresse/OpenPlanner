@@ -137,6 +137,8 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                         setSpeakersStatsOpen(false)
                     }}
                     speakers={speakers.data || []}
+                    sessions={sessions.data || []}
+                    event={event}
                 />
             )}
         </Container>

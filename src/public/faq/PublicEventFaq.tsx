@@ -29,7 +29,9 @@ export const PublicEventFaq = ({ faqReply }: PublicEventFaqProps) => {
 
     return (
         <PublicEventLayout>
-            <Typography variant="h1">{faqReply.eventName} FAQ</Typography>
+            <Typography variant="h1" sx={{ fontSize: '2rem' }}>
+                {faqReply.eventName} FAQ
+            </Typography>
             <Card
                 sx={{
                     padding: 2,

@@ -14,7 +14,7 @@ export const PublicFaqCategoryPicker = ({
     onSelectCategory,
 }: PublicFaqCategoryPickerProps) => {
     return (
-        <Box display="flex" justifyContent="center" width="100%" gap={2} marginY={2}>
+        <Box display="flex" justifyContent="center" width="100%" gap={2} marginY={2} flexWrap="wrap">
             {faqReply.faq.map((faq, index) => {
                 return (
                     <Box key={index}>
