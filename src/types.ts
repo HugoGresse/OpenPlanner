@@ -158,6 +158,8 @@ export interface Event {
     color: string | null
     colorSecondary: string | null
     colorBackground: string | null
+    bupherSession?: string | null
+    bupherOrganizationId?: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
