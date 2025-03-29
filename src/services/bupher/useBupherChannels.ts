@@ -8,6 +8,7 @@ export type BupherChannel = {
     type: string
     handle: string
     formatted_username: string
+    id: string
 }
 
 export type BupherChannelsState = {

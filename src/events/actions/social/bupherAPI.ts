@@ -15,6 +15,7 @@ export type BupherChannelsResponse = {
         type: string
         handle: string
         formatted_username: string
+        id: string
     }[]
 }
 
@@ -27,6 +28,11 @@ export type BupherScheduledPostsResponse = {
 export type BupherDraftPostResponse = {
     success: boolean
     error?: string
+}
+
+export type BupherProfile = {
+    id: string
+    type: 'twitter' | 'instagram' | 'facebook' | 'linkedin' | 'youtube' | 'tiktok'
 }
 
 export const bupherAPI = {
@@ -94,7 +100,7 @@ export const bupherAPI = {
     postDraftPost: async (
         eventId: string,
         apiKey: string,
-        channels: string[],
+        profiles: BupherProfile[],
         text: string,
         file: File
     ): Promise<BupherDraftPostResponse> => {
@@ -102,7 +108,7 @@ export const bupherAPI = {
         url.pathname += `v1/${eventId}/bupher/draft-post`
         url.searchParams.append('apiKey', apiKey)
         const formData = new FormData()
-        formData.append('channels', JSON.stringify(channels))
+        formData.append('profiles', JSON.stringify(profiles))
         formData.append('text', text)
         formData.append('file', file)
 

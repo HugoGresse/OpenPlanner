@@ -76,28 +76,139 @@ type PostDraftResponse = {
     }
 }
 
-export const postBupherDraft = async (
-    bupherSession: string,
-    profilIds: string[],
+type NetworkType = 'twitter' | 'instagram' | 'facebook' | 'linkedin' | 'youtube' | 'tiktok'
+
+type Profile = {
+    id: string
+    type: NetworkType
+}
+
+const createDraftBody = (
+    profile: Profile,
     text: string,
     photoUrl?: string,
     photoSize?: { width: number; height: number }
 ) => {
-    const body = {
-        args: `{"url":"/1/updates/create.json","args":{"now":false,"top":false,"is_draft":true,"shorten":true,"text":"${text}","scheduling_type":"direct","fb_text":"","entities":null,"annotations":[],"profile_ids":${profilIds},"attachment":false,"via":null,"source":null,"version":null,"duplicated_from":null,"created_source":"allChannels","channel_data":null,"tags":[],"media":{"progress":100,"uploaded":true,"photo":"${photoUrl}","picture":"${photoUrl}","thumbnail":"${photoUrl}","alt_text":null,"source":{"name":"localFile","trigger":"dragAndDrop"},"height":${photoSize?.height},"width":${photoSize?.width},"ai_assisted":false},"HTTPMethod":"POST"}`,
+    const baseArgs = {
+        now: false,
+        top: false,
+        is_draft: true,
+        shorten: true,
+        text,
+        scheduling_type: 'direct',
+        fb_text: '',
+        entities: null,
+        annotations: [],
+        profile_ids: [profile.id],
+        attachment: false,
+        via: null,
+        source: null,
+        version: null,
+        duplicated_from: null,
+        created_source: 'allChannels',
+        channel_data: null as {
+            twitter?: {
+                scheduling_type: string
+            }
+            instagram?: any
+            facebook?: any
+            linkedin?: any
+            youtube?: any
+            tiktok?: any
+        } | null,
+        tags: [],
+        media: photoUrl
+            ? {
+                  progress: 100,
+                  uploaded: true,
+                  photo: photoUrl,
+                  picture: photoUrl,
+                  thumbnail: photoUrl,
+                  alt_text: null,
+                  source: { name: 'localFile', trigger: 'dragAndDrop' },
+                  height: photoSize?.height,
+                  width: photoSize?.width,
+                  ai_assisted: false,
+              }
+            : null,
+        HTTPMethod: 'POST',
+    }
+    // Add network-specific configurations based on profile type
+    const networkConfigs = {} as Record<NetworkType, any>
+    switch (profile.type) {
+        case 'twitter':
+            // nothing specific
+            break
+        case 'instagram':
+            // nothing specific
+            break
+        case 'facebook':
+            // Facebook specific configurations
+            break
+        case 'linkedin':
+            networkConfigs.linkedin = {
+                update_type: 'post',
+            }
+            break
+        case 'youtube':
+            // YouTube specific configurations
+            break
+        case 'tiktok':
+            // TikTok specific configurations
+            break
     }
 
-    console.log(body)
-    const response = await makePublishRequest('/rpc/composerApiProxy', bupherSession, 'POST', JSON.stringify(body))
-    if (!response.ok) {
-        return {
-            success: false,
-            error: response.statusText + ' ' + response.status,
-        }
+    if (Object.keys(networkConfigs).length > 0) {
+        baseArgs.channel_data = networkConfigs
     }
-    const result = (await response.json()) as PostDraftResponse
+
     return {
-        success: true,
-        result: result,
+        args: JSON.stringify({
+            url: '/1/updates/create.json',
+            args: baseArgs,
+        }),
+    }
+}
+
+export const postBupherDraft = async (
+    bupherSession: string,
+    profiles: Profile[],
+    text: string,
+    options?: {
+        photoUrl?: string
+        photoSize?: { width: number; height: number }
+    }
+) => {
+    const results = await Promise.all(
+        profiles.map(async (profile) => {
+            const body = createDraftBody(profile, text, options?.photoUrl, options?.photoSize)
+            console.log(`Posting draft for profile ${profile.id} (${profile.type})`)
+            const response = await makePublishRequest(
+                '/rpc/composerApiProxy',
+                bupherSession,
+                'POST',
+                JSON.stringify(body)
+            )
+            if (!response.ok) {
+                return {
+                    success: false,
+                    profile,
+                    error: response.statusText + ' ' + response.status,
+                }
+            }
+            const result = (await response.json()) as PostDraftResponse
+            return {
+                success: true,
+                profile,
+                result: result,
+            }
+        })
+    )
+
+    // Check if all requests were successful
+    const allSuccessful = results.every((r) => r.success)
+    return {
+        success: allSuccessful,
+        results,
     }
 }

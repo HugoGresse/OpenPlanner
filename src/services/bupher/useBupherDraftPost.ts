@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
-import { bupherAPI } from '../../events/actions/social/bupherAPI'
-import { useBupherAuth } from './useBupherAuth'
+import { bupherAPI, BupherProfile } from '../../events/actions/social/bupherAPI'
 import { Event } from '../../types'
 
 export const useBupherDraftPost = (event: Event) => {
@@ -13,10 +12,10 @@ export const useBupherDraftPost = (event: Event) => {
     })
 
     const post = useCallback(
-        async (channels: string[], text: string, file: File) => {
+        async (profiles: BupherProfile[], text: string, file: File) => {
             setState((prev) => ({ ...prev, isLoading: true, error: null }))
 
-            const response = await bupherAPI.postDraftPost(event.id, event.apiKey || '', channels, text, file)
+            const response = await bupherAPI.postDraftPost(event.id, event.apiKey || '', profiles, text, file)
 
             if (!response.success) {
                 setState((prev) => ({ ...prev, isLoading: false, error: response.error || 'Unknown error' }))

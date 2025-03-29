@@ -9,6 +9,7 @@ const BupherChannelResponse = Type.Object({
     channels: Type.Optional(
         Type.Array(
             Type.Object({
+                id: Type.String(),
                 type: Type.String(),
                 handle: Type.String(),
                 formatted_username: Type.String(),
@@ -78,6 +79,7 @@ export const bupherChannelsRoute = (fastify: FastifyInstance, options: any, done
                 reply.send({
                     success: true,
                     channels: channels.result.map((channel: any) => ({
+                        id: channel.id,
                         type: channel.type,
                         handle: channel.handle,
                         formatted_username: channel.formatted_username,

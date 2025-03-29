@@ -2,17 +2,16 @@ import { Box, Button, Card, CardContent, Typography } from '@mui/material'
 import { Event } from '../../../types'
 import { useState } from 'react'
 import { useBupherDraftPost } from '../../../services/bupher/useBupherDraftPost'
-
+import { useBupherChannels } from '../../../services/bupher/useBupherChannels'
+import { BupherProfile } from '../../../events/actions/social/bupherAPI'
 interface TestBupherDraftPostProps {
     event: Event
 }
 
 export const TestBupherDraftPost = ({ event }: TestBupherDraftPostProps) => {
     const [isDownloading, setIsDownloading] = useState(false)
+    const { channels, isLoading: isChannelsLoading, error: channelsError } = useBupherChannels(event)
     const { post, isLoading, error } = useBupherDraftPost(event)
-
-    console.log('isLoading', isLoading)
-    console.log('error', error)
 
     const handleDownloadLogo = async () => {
         if (!event.logoUrl) {
@@ -25,7 +24,11 @@ export const TestBupherDraftPost = ({ event }: TestBupherDraftPostProps) => {
             const response = await fetch(event.logoUrl)
             const blob = await response.blob()
             const file = new File([blob], 'logo.png', { type: 'image/png' })
-            const success = await post([], 'Hello', file)
+            const success = await post(
+                channels?.map((channel) => ({ id: channel.id, type: channel.type as BupherProfile['type'] })),
+                'Hello',
+                file
+            )
             console.log('success', success)
         } catch (error) {
             console.error('Error downloading logo:', error)
@@ -47,7 +50,9 @@ export const TestBupherDraftPost = ({ event }: TestBupherDraftPostProps) => {
                                 style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain' }}
                             />
                             <Button variant="contained" onClick={handleDownloadLogo} disabled={isDownloading}>
-                                {isDownloading ? 'Downloading...' : 'Download and upload to Bupher'}
+                                {isDownloading
+                                    ? 'Posting...'
+                                    : `Test draft post to ${channels?.map((channel) => channel.handle).join(', ')}`}
                             </Button>
                         </>
                     ) : (

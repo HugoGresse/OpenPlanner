@@ -45,7 +45,6 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
         async (request, reply) => {
             try {
                 const { eventId } = request.params as { eventId: string }
-                const { text, profilIds } = request.body as { text: string; profilIds: string[] }
 
                 // Get the Bupher session
                 let bupherInfos = {
@@ -67,7 +66,13 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                     return sendErrorResponse(reply, 400, 'Missing file(s)')
                 }
 
-                console.log('fileParsingResult', fileParsingResult, profilIds, text)
+                const profiles = JSON.parse(fileParsingResult.fields.profiles as string) as {
+                    id: string
+                    type: 'twitter' | 'instagram' | 'facebook' | 'linkedin' | 'youtube' | 'tiktok'
+                }[]
+                const text = fileParsingResult.fields.text
+
+                console.log('Posting to bupher with profiles', profiles, 'and text', text)
 
                 const firstFileKey = Object.keys(fileParsingResult.uploads)[0] as string
                 const fileBuffer = fileParsingResult.uploads[firstFileKey] as Buffer
@@ -82,26 +87,25 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                     bupherInfos.bupherOrganizationId,
                     file
                 )
-                console.log('postResponse', fileResponse)
+
+                if (!fileResponse.success) {
+                    console.log('fileResponse', fileResponse)
+                }
 
                 if (!fileResponse.success) {
                     return sendErrorResponse(reply, 500, 'Failed to post Bupher file')
                 }
 
-                const postDraftResponse = await postBupherDraft(
-                    bupherInfos.bupherSession,
-                    profilIds,
-                    text,
-                    fileResponse.result?.location,
-                    {
+                const postDraftResponse = await postBupherDraft(bupherInfos.bupherSession, profiles, text, {
+                    photoUrl: fileResponse.result?.location,
+                    photoSize: {
                         width: fileResponse.result?.width ?? 0,
                         height: fileResponse.result?.height ?? 0,
-                    }
-                )
-
-                console.log('postDraftResponse', postDraftResponse)
-
-                // TODO : post draft
+                    },
+                })
+                if (!postDraftResponse.success) {
+                    console.log('postDraftResponse', postDraftResponse)
+                }
 
                 reply.send({
                     success: true,
