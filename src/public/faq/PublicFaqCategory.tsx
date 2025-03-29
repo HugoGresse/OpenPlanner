@@ -47,7 +47,9 @@ export const PublicFaqCategory = ({ faq }: FaqCategoryProps) => {
     return (
         <Box display="flex" justifyContent="center" flexWrap="wrap" width="100%" gap={2}>
             <Box width="100%" gap={2}>
-                <Typography variant="h2">{faq.category.name}</Typography>
+                <Typography variant="h2" sx={{ fontSize: '1.5rem' }}>
+                    {faq.category.name}
+                </Typography>
             </Box>
             {questionsOrdered.map((question, index) => {
                 return (
