@@ -7,7 +7,7 @@ import { useFirestoreDocument, UseQueryResult } from './firestoreQueryHook'
 export const useSession = (eventId: string, sessionId: string): UseQueryResult<Session> => {
     const sp = useSpeakersMap(eventId)
 
-    const s = useFirestoreDocument(doc(collections.sessions(eventId), sessionId))
+    const s = useFirestoreDocument(doc(collections.sessions(eventId), sessionId), true)
 
     if (sp.data && s.data) {
         s.data = {

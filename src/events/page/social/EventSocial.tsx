@@ -13,6 +13,7 @@ export type EventSocialProps = {
 
 export const EventSocial = ({ event }: EventSocialProps) => {
     const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+    const [postComponentId, setPostComponentId] = useState<string | null>(null)
     const { isLoggedIn, isLoading, error, login, logout } = useBupherAuth(event)
 
     useEffect(() => {
@@ -46,11 +47,14 @@ export const EventSocial = ({ event }: EventSocialProps) => {
                                 Logout
                             </Button>
                         </Alert>
-                        <TestBupherDraftPost event={event} />
-                        <BupherScheduledPosts event={event} />
+                        <BupherScheduledPosts event={event} key={postComponentId} />
                     </Box>
                     <Box sx={{ flex: 1 }}>
                         <BupherChannels event={event} />
+                        <TestBupherDraftPost
+                            event={event}
+                            refreshPosts={() => setPostComponentId(Date.now().toString())}
+                        />
                     </Box>
                 </Box>
             ) : (
