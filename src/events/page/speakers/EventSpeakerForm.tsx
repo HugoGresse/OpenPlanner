@@ -33,6 +33,12 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                 }
                 return onSubmit({
                     ...data,
+                    jobTitle: data.jobTitle || speaker?.jobTitle || null,
+                    company: data.company || speaker?.company || null,
+                    companyLogoUrl: data.companyLogoUrl || speaker?.companyLogoUrl || null,
+                    email: data.email || speaker?.email || null,
+                    phone: data.phone || speaker?.phone || null,
+                    geolocation: data.geolocation || speaker?.geolocation || null,
                     photoUrl: data.photoUrl || speaker?.photoUrl || null,
                     note: data.note || speaker?.note || null,
                     pronouns: data.pronouns || speaker?.pronouns || null,
