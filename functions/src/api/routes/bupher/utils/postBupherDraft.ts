@@ -239,7 +239,7 @@ export const postBupherDraft = async (
                 options?.photoSize,
                 options?.videoData
             )
-            console.log(`Posting draft for profile ${profile.id} (${profile.type})`, body)
+            console.log(`Posting draft for profile ${profile.id} (${profile.type})`)
             const response = await makePublishRequest(
                 '/rpc/composerApiProxy',
                 bupherSession,

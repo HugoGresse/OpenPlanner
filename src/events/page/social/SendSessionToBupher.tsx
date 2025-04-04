@@ -14,7 +14,7 @@ const getFile = async (url: string) => {
     const blob = await response.blob()
     const fileType = blob.type || 'image/png' // Fallback to image/png if type is empty
     const extension = fileType.split('/')[1] || 'png'
-    const fileName = `file.${extension}`
+    const fileName = `${fileType.split('/')[0]}.${extension}`
     return new File([blob], fileName, { type: fileType })
 }
 
@@ -66,7 +66,19 @@ export const SendSettionToBupher = ({ event, session }: { event: Event; session:
             }
 
             try {
+                // Get the main file (video or image)
                 const file = await getFile(fileUrl)
+
+                // Get the thumbnail file if it's a video and we have an image URL
+                let thumbnailFile: File | undefined
+                if (session.teaserVideoUrl && session.teaserImageUrl) {
+                    try {
+                        thumbnailFile = await getFile(session.teaserImageUrl)
+                    } catch (error) {
+                        console.warn('Failed to fetch thumbnail image:', error)
+                        // Continue without the thumbnail
+                    }
+                }
 
                 // Create a map of profile IDs to content
                 const contentMap: Record<string, string> = {}
@@ -93,7 +105,8 @@ export const SendSettionToBupher = ({ event, session }: { event: Event; session:
                     event.apiKey || '',
                     supportedProfiles,
                     contentMap,
-                    file
+                    file,
+                    thumbnailFile
                 )
 
                 if (!post.success) {

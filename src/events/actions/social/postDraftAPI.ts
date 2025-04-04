@@ -8,6 +8,7 @@ interface PostDraftRequest {
     content?: string
     contentMap?: Record<string, string>
     file: File
+    thumbnailFile?: File
 }
 
 interface PostDraftResponse {
@@ -35,6 +36,11 @@ export const postDraftToBupher = async (request: PostDraftRequest): Promise<Post
         }
 
         formData.append('file', request.file)
+
+        // Add thumbnail file if provided
+        if (request.thumbnailFile) {
+            formData.append('thumbnailFile', request.thumbnailFile)
+        }
 
         const response = await fetch(url.href, {
             method: 'POST',

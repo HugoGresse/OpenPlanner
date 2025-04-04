@@ -108,8 +108,6 @@ export const loginToBupher = async (
             redirect: 'manual',
         })
 
-        console.log('Bupher login response:', loginResponse.statusText, loginResponse.status)
-
         if (loginResponse.status !== 302) {
             sendErrorResponse(reply, 401, 'Invalid credentials or login failed, status: ' + loginResponse.status)
             return false

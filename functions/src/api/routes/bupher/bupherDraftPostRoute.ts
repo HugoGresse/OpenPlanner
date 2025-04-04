@@ -78,14 +78,13 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                 if (fileParsingResult.fields.contentMap) {
                     try {
                         text = JSON.parse(fileParsingResult.fields.contentMap as string) as Record<string, string>
-                        console.log('Using contentMap for profiles:', text)
                     } catch (error) {
                         console.error('Error parsing contentMap:', error)
                         return sendErrorResponse(reply, 400, 'Invalid contentMap format')
                     }
                 }
 
-                console.log('Posting to bupher with profiles', profiles, 'and text', text)
+                console.info('Posting to bupher with profiles', profiles, 'and text', text)
 
                 const firstFileKey = Object.keys(fileParsingResult.uploads)[0] as string
                 const fileBuffer = fileParsingResult.uploads[firstFileKey] as Buffer
@@ -95,6 +94,27 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                 }
                 const isVideo = fileType.mime.startsWith('video/')
                 const file = new File([fileBuffer], firstFileKey, { type: fileType.mime })
+
+                // Process thumbnail file if provided
+                let thumbnailUrl: string | undefined
+                const thumbnailKey = Object.keys(fileParsingResult.uploads)[1] as string | undefined
+                if (isVideo && thumbnailKey) {
+                    const thumbnailBuffer = fileParsingResult.uploads[thumbnailKey] as Buffer
+                    const thumbnailType = await checkFileTypes(thumbnailBuffer, thumbnailKey)
+
+                    if (thumbnailType && thumbnailType.mime.startsWith('image/')) {
+                        const thumbnailFile = new File([thumbnailBuffer], thumbnailKey, { type: thumbnailType.mime })
+                        const thumbnailResponse = await postBupherFile(
+                            bupherInfos.bupherSession,
+                            bupherInfos.bupherOrganizationId,
+                            thumbnailFile
+                        )
+
+                        if (thumbnailResponse.success && thumbnailResponse.result?.location) {
+                            thumbnailUrl = thumbnailResponse.result.location
+                        }
+                    }
+                }
 
                 const fileResponse = await postBupherFile(
                     bupherInfos.bupherSession,
@@ -109,6 +129,7 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                 if (!fileResponse.success) {
                     return sendErrorResponse(reply, 500, 'Failed to post Bupher file')
                 }
+
                 const postDraftResponse = await postBupherDraft(
                     bupherInfos.bupherSession,
                     profiles,
@@ -128,7 +149,11 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                                       height: fileResponse.result?.videoDetails?.height ?? 0,
                                   },
                                   thumb_offset: 0,
-                                  thumbnails: fileResponse.result?.thumbnail ? [fileResponse.result.thumbnail] : [],
+                                  thumbnails: thumbnailUrl
+                                      ? [thumbnailUrl]
+                                      : fileResponse.result?.thumbnail
+                                      ? [fileResponse.result.thumbnail]
+                                      : [],
                               },
                           }
                         : {
@@ -140,7 +165,7 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                           }
                 )
                 if (!postDraftResponse.success) {
-                    console.log('postDraftResponse', postDraftResponse)
+                    console.warn('postDraftResponse', postDraftResponse)
                 }
 
                 reply.send({

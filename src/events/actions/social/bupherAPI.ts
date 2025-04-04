@@ -103,7 +103,8 @@ export const bupherAPI = {
         apiKey: string,
         profiles: BupherProfile[],
         content: string | Record<string, string>,
-        file: File
+        file: File,
+        thumbnailFile?: File
     ): Promise<{ success: boolean; error?: string }> => {
         try {
             const request = {
@@ -118,6 +119,11 @@ export const bupherAPI = {
                 request.content = content
             } else {
                 request.contentMap = content
+            }
+
+            // Add thumbnail file if provided
+            if (thumbnailFile) {
+                request.thumbnailFile = thumbnailFile
             }
 
             return await postDraftToBupher(request)

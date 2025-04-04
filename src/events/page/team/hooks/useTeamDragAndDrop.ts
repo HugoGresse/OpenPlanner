@@ -171,7 +171,6 @@ export const useTeamDragAndDrop = (eventId: string) => {
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event
-        console.log('activeItem', activeItem, over)
         if (!over || !activeItem) {
             setActiveItem(null)
             setActiveTeam(null)
