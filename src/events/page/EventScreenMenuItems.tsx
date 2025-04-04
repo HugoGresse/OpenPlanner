@@ -67,7 +67,6 @@ export const Menu = [
         href: '/social',
         icon: mdiTwitter,
         name: 'Social',
-        requiredEmails: ['hugo.gresse@gmail.com', 'service@sunny-tech.io'],
     },
     {
         href: '/settings',
