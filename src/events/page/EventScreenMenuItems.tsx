@@ -86,9 +86,9 @@ export const EventScreenMenuItems = () => {
     return (
         <>
             {Menu.map((item) => {
-                if (item.requiredEmails && (!user || !item.requiredEmails.includes(user.email))) {
-                    return null
-                }
+                // if (item.requiredEmails && (!user || !item.requiredEmails.includes(user.email))) {
+                //     return null
+                // }
                 return (
                     <CCListItemButton href={item.href} key={item.href}>
                         <ListItemIcon>
