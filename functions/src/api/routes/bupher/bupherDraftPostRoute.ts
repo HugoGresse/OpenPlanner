@@ -70,7 +70,20 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                     id: string
                     type: 'twitter' | 'instagram' | 'facebook' | 'linkedin' | 'youtube' | 'tiktok'
                 }[]
-                const text = fileParsingResult.fields.text
+
+                // Get text or contentMap from the form data
+                let text: string | Record<string, string> = fileParsingResult.fields.text as string
+
+                // Check if contentMap is provided
+                if (fileParsingResult.fields.contentMap) {
+                    try {
+                        text = JSON.parse(fileParsingResult.fields.contentMap as string) as Record<string, string>
+                        console.log('Using contentMap for profiles:', text)
+                    } catch (error) {
+                        console.error('Error parsing contentMap:', error)
+                        return sendErrorResponse(reply, 400, 'Invalid contentMap format')
+                    }
+                }
 
                 console.log('Posting to bupher with profiles', profiles, 'and text', text)
 
@@ -80,6 +93,7 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                 if (!fileType) {
                     return sendErrorResponse(reply, 400, 'Invalid file type')
                 }
+                const isVideo = fileType.mime.startsWith('video/')
                 const file = new File([fileBuffer], firstFileKey, { type: fileType.mime })
 
                 const fileResponse = await postBupherFile(
@@ -95,14 +109,36 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                 if (!fileResponse.success) {
                     return sendErrorResponse(reply, 500, 'Failed to post Bupher file')
                 }
-
-                const postDraftResponse = await postBupherDraft(bupherInfos.bupherSession, profiles, text, {
-                    photoUrl: fileResponse.result?.location,
-                    photoSize: {
-                        width: fileResponse.result?.width ?? 0,
-                        height: fileResponse.result?.height ?? 0,
-                    },
-                })
+                const postDraftResponse = await postBupherDraft(
+                    bupherInfos.bupherSession,
+                    profiles,
+                    text,
+                    isVideo
+                        ? {
+                              videoData: {
+                                  title: fileResponse.result?.title ?? '',
+                                  id: fileResponse.result?.uploadId ?? '',
+                                  details: {
+                                      location: fileResponse.result?.location ?? '',
+                                      transcoded_location: fileResponse.result?.videoDetails?.transcodedLocation ?? '',
+                                      file_size: fileResponse.result?.videoDetails?.fileSize ?? 0,
+                                      duration: fileResponse.result?.videoDetails?.duration ?? 0,
+                                      duration_millis: fileResponse.result?.videoDetails?.durationMillis ?? 0,
+                                      width: fileResponse.result?.videoDetails?.width ?? 0,
+                                      height: fileResponse.result?.videoDetails?.height ?? 0,
+                                  },
+                                  thumb_offset: 0,
+                                  thumbnails: fileResponse.result?.thumbnail ? [fileResponse.result.thumbnail] : [],
+                              },
+                          }
+                        : {
+                              photoUrl: fileResponse.result?.location,
+                              photoSize: {
+                                  width: fileResponse.result?.width ?? 0,
+                                  height: fileResponse.result?.height ?? 0,
+                              },
+                          }
+                )
                 if (!postDraftResponse.success) {
                     console.log('postDraftResponse', postDraftResponse)
                 }

@@ -87,7 +87,22 @@ const createDraftBody = (
     profile: Profile,
     text: string,
     photoUrl?: string,
-    photoSize?: { width: number; height: number }
+    photoSize?: { width: number; height: number },
+    videoData?: {
+        title: string
+        id: string
+        details: {
+            location: string
+            transcoded_location: string
+            file_size: number
+            duration: number
+            duration_millis: number
+            width: number
+            height: number
+        }
+        thumb_offset: number
+        thumbnails: string[]
+    }
 ) => {
     const baseArgs = {
         now: false,
@@ -117,22 +132,40 @@ const createDraftBody = (
             tiktok?: any
         } | null,
         tags: [],
-        media: photoUrl
-            ? {
-                  progress: 100,
-                  uploaded: true,
-                  photo: photoUrl,
-                  picture: photoUrl,
-                  thumbnail: photoUrl,
-                  alt_text: null,
-                  source: { name: 'localFile', trigger: 'dragAndDrop' },
-                  height: photoSize?.height,
-                  width: photoSize?.width,
-                  ai_assisted: false,
-              }
-            : null,
+        media: null as any,
         HTTPMethod: 'POST',
     }
+
+    // Handle media (photo or video)
+    if (photoUrl) {
+        baseArgs.media = {
+            progress: 100,
+            uploaded: true,
+            photo: photoUrl,
+            picture: photoUrl,
+            thumbnail: photoUrl,
+            alt_text: null,
+            source: { name: 'localFile', trigger: 'dragAndDrop' },
+            height: photoSize?.height,
+            width: photoSize?.width,
+            ai_assisted: false,
+        }
+    } else if (videoData) {
+        baseArgs.media = {
+            progress: 100,
+            uploaded: true,
+            uploading_type: 'video',
+            video: {
+                title: videoData.title,
+                id: videoData.id,
+                details: videoData.details,
+                thumb_offset: videoData.thumb_offset,
+                thumbnails: videoData.thumbnails,
+            },
+            thumbnail: videoData.thumbnails[0],
+        }
+    }
+
     // Add network-specific configurations based on profile type
     const networkConfigs = {} as Record<NetworkType, any>
     switch (profile.type) {
@@ -173,16 +206,40 @@ const createDraftBody = (
 export const postBupherDraft = async (
     bupherSession: string,
     profiles: Profile[],
-    text: string,
+    text: string | Record<string, string>,
     options?: {
         photoUrl?: string
         photoSize?: { width: number; height: number }
+        videoData?: {
+            title: string
+            id: string
+            details: {
+                location: string
+                transcoded_location: string
+                file_size: number
+                duration: number
+                duration_millis: number
+                width: number
+                height: number
+            }
+            thumb_offset: number
+            thumbnails: string[]
+        }
     }
 ) => {
     const results = await Promise.all(
         profiles.map(async (profile) => {
-            const body = createDraftBody(profile, text, options?.photoUrl, options?.photoSize)
-            console.log(`Posting draft for profile ${profile.id} (${profile.type})`)
+            // Get the specific content for this profile if contentMap is provided
+            const profileText = typeof text === 'string' ? text : text[profile.id] || text[Object.keys(text)[0]] || ''
+
+            const body = createDraftBody(
+                profile,
+                profileText,
+                options?.photoUrl,
+                options?.photoSize,
+                options?.videoData
+            )
+            console.log(`Posting draft for profile ${profile.id} (${profile.type})`, body)
             const response = await makePublishRequest(
                 '/rpc/composerApiProxy',
                 bupherSession,

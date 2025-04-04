@@ -12,7 +12,10 @@ const getFile = async (url: string) => {
         throw new Error('Failed to fetch video or image, see logs for details')
     }
     const blob = await response.blob()
-    return new File([blob], 'image.png', { type: 'image/png' })
+    const fileType = blob.type || 'image/png' // Fallback to image/png if type is empty
+    const extension = fileType.split('/')[1] || 'png'
+    const fileName = `file.${extension}`
+    return new File([blob], fileName, { type: fileType })
 }
 
 export const SendSettionToBupher = ({ event, session }: { event: Event; session: Session }) => {
@@ -35,41 +38,74 @@ export const SendSettionToBupher = ({ event, session }: { event: Event; session:
                 id: channel.id,
                 type: channel.type as BupherProfile['type'],
             }))
-            let successCount = 0
-            for (const profile of bufferProfiles) {
-                if (['youtube', 'tiktok'].includes(profile.type)) {
-                    setError('Youtube and TikTok are not supported yet, please fill an issue on Github')
-                    continue
-                }
+
+            // Check if any of the channels are YouTube or TikTok
+            const unsupportedChannels = bufferProfiles.filter((profile) => ['youtube', 'tiktok'].includes(profile.type))
+
+            if (unsupportedChannels.length > 0) {
+                setError('YouTube and TikTok are not supported yet, please fill an issue on Github')
+                return
+            }
+
+            // Check if we have content for all supported channels
+            const supportedProfiles = bufferProfiles.filter((profile) => {
                 const type = profile.type as keyof TeasingPosts
-                if (!session.teasingPosts?.[type]) {
-                    setError('No text found for ' + profile.type)
-                    continue
-                }
+                return session.teasingPosts?.[type] !== undefined
+            })
 
-                const fileUrl = session.teaserImageUrl
-                if (!fileUrl) {
-                    setError('No image or video found, if you want to post without media, open a Github issue please')
-                    continue
-                }
+            if (supportedProfiles.length === 0) {
+                setError('No text content found for any of the supported channels')
+                return
+            }
 
+            // Get the file URL
+            const fileUrl = session.teaserVideoUrl || session.teaserImageUrl
+            if (!fileUrl) {
+                setError('No image or video found, if you want to post without media, open a Github issue please')
+                return
+            }
+
+            try {
                 const file = await getFile(fileUrl)
 
+                // Create a map of profile IDs to content
+                const contentMap: Record<string, string> = {}
+                let hasValidContent = false
+
+                for (const profile of supportedProfiles) {
+                    const type = profile.type as keyof TeasingPosts
+                    const content = session.teasingPosts?.[type]
+
+                    if (content) {
+                        contentMap[profile.id] = content
+                        hasValidContent = true
+                    }
+                }
+
+                if (!hasValidContent) {
+                    setError('No valid content found for any of the supported channels')
+                    return
+                }
+
+                // Send all profiles at once with their specific content
                 const post = await bupherAPI.postDraftPost(
                     event.id,
                     event.apiKey || '',
-                    bufferProfiles,
-                    session.teasingPosts?.[type],
+                    supportedProfiles,
+                    contentMap,
                     file
                 )
+
                 if (!post.success) {
-                    setError('Failed to post to ' + profile.type)
-                    continue
+                    setError('Failed to post to Bupher: ' + (post.error || 'Unknown error'))
+                    return
                 }
-                successCount++
-                setSuccess(`Successfully posted to ${profile.type} (${successCount}/${channels.length})`)
+
+                setSuccess(`Successfully posted to ${supportedProfiles.length}/${channels.length} channels`)
+            } catch (error) {
+                console.error('Error posting to Bupher:', error)
+                setError(`Error posting to Bupher: ${error instanceof Error ? error.message : 'Unknown error'}`)
             }
-            setSuccess(`Successfully posted to ${successCount}/${channels.length} channels`)
         } catch (error) {
             setError(error instanceof Error ? error.message : 'An error occurred')
         } finally {

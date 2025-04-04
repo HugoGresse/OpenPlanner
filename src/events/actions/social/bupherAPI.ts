@@ -1,5 +1,6 @@
 import { API_URL } from '../../../env'
 import { BupherScheduledPost } from '../../../services/bupher/useBupherScheduledPosts'
+import { postDraftToBupher } from './postDraftAPI'
 
 export type BupherLoginResponse = {
     success: boolean
@@ -101,22 +102,28 @@ export const bupherAPI = {
         eventId: string,
         apiKey: string,
         profiles: BupherProfile[],
-        text: string,
+        content: string | Record<string, string>,
         file: File
-    ): Promise<BupherDraftPostResponse> => {
-        const url = new URL(API_URL as string)
-        url.pathname += `v1/${eventId}/bupher/draft-post`
-        url.searchParams.append('apiKey', apiKey)
-        const formData = new FormData()
-        formData.append('profiles', JSON.stringify(profiles))
-        formData.append('text', text)
-        formData.append('file', file)
+    ): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const request = {
+                eventId,
+                apiKey,
+                profiles,
+                file,
+            } as any
 
-        const response = await fetch(url.href, {
-            method: 'POST',
-            body: formData,
-        })
+            // Handle both string content and map of profile IDs to content
+            if (typeof content === 'string') {
+                request.content = content
+            } else {
+                request.contentMap = content
+            }
 
-        return await response.json()
+            return await postDraftToBupher(request)
+        } catch (error) {
+            console.error('Error posting draft to Bupher:', error)
+            return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+        }
     },
 }
