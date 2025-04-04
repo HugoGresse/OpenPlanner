@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
 import { Session, Event, TeasingPosts } from '../../../types'
-import { Button, CircularProgress, Box, Alert, Typography } from '@mui/material'
+import { Button, CircularProgress, Box, Alert } from '@mui/material'
 import { BUHPER_NAME, BUPHER_PUBLISH_DRAFT } from './bupherName'
 import { bupherAPI, BupherProfile } from '../../actions/social/bupherAPI'
 import { OpenInNew as OpenInNewIcon } from '@mui/icons-material'
+import { CheckCircle as CheckCircleIcon } from '@mui/icons-material'
 
 const getFile = async (url: string) => {
     const response = await fetch(url)
@@ -114,7 +115,7 @@ export const SendSettionToBupher = ({ event, session }: { event: Event; session:
                     return
                 }
 
-                setSuccess(`Successfully posted to ${supportedProfiles.length}/${channels.length} channels`)
+                setSuccess(`${supportedProfiles.length} draft(s) saved`)
             } catch (error) {
                 console.error('Error posting to Bupher:', error)
                 setError(`Error posting to Bupher: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -135,7 +136,13 @@ export const SendSettionToBupher = ({ event, session }: { event: Event; session:
             <Button
                 onClick={handleSend}
                 disabled={isLoading}
-                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}>
+                startIcon={
+                    isLoading ? (
+                        <CircularProgress size={20} color="inherit" />
+                    ) : success ? (
+                        <CheckCircleIcon color="success" />
+                    ) : null
+                }>
                 {success || `Send to ${BUHPER_NAME}`}
             </Button>
             {error && <Alert severity="error">{error}</Alert>}
@@ -147,7 +154,7 @@ export const SendSettionToBupher = ({ event, session }: { event: Event; session:
                         onClick={handleOpenBupher}
                         startIcon={<OpenInNewIcon />}
                         size="small">
-                        View your posts in {BUHPER_NAME}
+                        View drafts in {BUHPER_NAME}
                     </Button>
                 </Box>
             )}
