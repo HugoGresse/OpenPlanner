@@ -18,8 +18,8 @@ import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { ExpandMore } from '@mui/icons-material'
 import { VideoTextFieldElement } from '../../../components/form/VideoTextFieldElement'
 import { GenerateSessionsVideoDialog } from './components/GenerateSessionsVideoDialog'
-import * as React from 'react'
 import { GenerateSessionsTextContentDialog } from './components/GenerateSessionsTextContentDialog'
+import { SendSettionToBupher } from '../social/SendSessionToBupher'
 
 export type EventSessionFormProps = {
     event: Event
@@ -309,16 +309,21 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
 
                 <Grid item xs={12}>
                     <Grid container spacing={1}>
-                        <Grid item xs={6} sx={{ flexDirection: 'row', alignItems: 'center', display: 'flex' }}>
+                        <Grid
+                            item
+                            xs={12}
+                            sx={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                display: 'flex',
+                            }}>
                             <Typography variant="h6">Talk announcements</Typography>
                             <IconButton onClick={() => setTeasingPostsOpen(!teasingPostsOpen)}>
                                 <ExpandMore />
                             </IconButton>
                             <Button onClick={() => setGenerateMediaOpen(true)}>Generate media</Button>
                             <Button onClick={() => setGenerateTextOpen(true)}>Generate text</Button>
-                        </Grid>
-                        <Grid item xs={6}>
-                            {/*<LoadingButton>Generate media post</LoadingButton>*/}
+                            {session && <SendSettionToBupher event={event} session={session} />}
                         </Grid>
 
                         {teasingPostsOpen && (

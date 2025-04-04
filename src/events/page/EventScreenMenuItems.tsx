@@ -10,9 +10,12 @@ import {
     mdiCogBox,
     mdiPresentation,
     mdiFrequentlyAskedQuestions,
+    mdiTwitter,
 } from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
+import { useSelector } from 'react-redux'
+import { selectUserOpenPlanner } from '../../auth/authReducer'
 
 type CCListItemButton = {
     children: React.ReactNode
@@ -61,6 +64,11 @@ export const Menu = [
         name: 'Schedule',
     },
     {
+        href: '/social',
+        icon: mdiTwitter,
+        name: 'Social',
+    },
+    {
         href: '/settings',
         icon: mdiCogBox,
         name: 'Settings',
@@ -73,16 +81,23 @@ export const Menu = [
 ]
 
 export const EventScreenMenuItems = () => {
+    const user = useSelector(selectUserOpenPlanner)
+
     return (
         <>
-            {Menu.map((item) => (
-                <CCListItemButton href={item.href} key={item.href}>
-                    <ListItemIcon>
-                        <Icon path={item.icon} size={1} />
-                    </ListItemIcon>
-                    <ListItemText primary={item.name} />
-                </CCListItemButton>
-            ))}
+            {Menu.map((item) => {
+                // if (item.requiredEmails && (!user || !item.requiredEmails.includes(user.email))) {
+                //     return null
+                // }
+                return (
+                    <CCListItemButton href={item.href} key={item.href}>
+                        <ListItemIcon>
+                            <Icon path={item.icon} size={1} />
+                        </ListItemIcon>
+                        <ListItemText primary={item.name} />
+                    </CCListItemButton>
+                )
+            })}
         </>
     )
 }

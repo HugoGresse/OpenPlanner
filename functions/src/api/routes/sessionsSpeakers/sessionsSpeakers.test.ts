@@ -501,7 +501,7 @@ describe('sessionsSpeakers', () => {
         expect(updateSpy).toHaveBeenNthCalledWith(2, {
             id: 'sessionId',
             title: 'sessionTitle',
-            category: undefined,
+            category: null,
             updatedAt: expect.any(Object),
         })
     })

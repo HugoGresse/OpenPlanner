@@ -66,12 +66,20 @@ export const convertBodySessionToSession = (
         realSession.category = (event.categories || []).find(
             (cat) => cat.name === session.categoryId || cat.name === session.categoryName
         )?.id
+        if (!realSession.category) {
+            console.error('Category not found', session.categoryId, session.categoryName, event.categories)
+            realSession.category = null
+        }
     }
 
     if (session.formatId || session.formatName) {
         realSession.format = (event.formats || []).find(
             (format) => format.name === session.formatId || format.name === session.formatName
         )?.id
+        if (!realSession.format) {
+            console.error('Format not found', session.formatId, session.formatName, event.formats)
+            realSession.format = null
+        }
     }
 
     if (session.speakerIds) {

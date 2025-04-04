@@ -74,4 +74,22 @@ export class EventDao {
                 throw new Error('Error creating format ' + error)
             })
     }
+
+    public static async saveBupherSession(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        session: string
+    ): Promise<any> {
+        const db = firebaseApp.firestore()
+        return await db.collection(`events`).doc(eventId).update({ bupherSession: session })
+    }
+
+    public static async saveBupherOrganizationId(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        organizationId: string
+    ): Promise<any> {
+        const db = firebaseApp.firestore()
+        return await db.collection(`events`).doc(eventId).update({ bupherOrganizationId: organizationId })
+    }
 }
