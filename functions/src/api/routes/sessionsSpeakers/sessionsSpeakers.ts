@@ -208,9 +208,7 @@ export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: (
             const { eventId } = request.params as { eventId: string }
 
             const existingEvent = await EventDao.getEvent(fastify.firebase, eventId)
-            console.log(`overwriteSpeakerSessions for event ${eventId} ${existingEvent.name}`)
-
-            console.log('request.body', request.body)
+            console.info(`overwriteSpeakerSessions for event ${eventId} ${existingEvent.name}`)
 
             const { tracksToCreate, categoriesToCreate, formatsToCreate } = verifyOverwriteData(
                 request.body,
