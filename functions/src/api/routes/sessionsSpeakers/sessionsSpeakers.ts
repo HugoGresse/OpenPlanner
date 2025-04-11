@@ -72,6 +72,8 @@ export const SpeakersSessionsType = Type.Object({
                     })
                 )
             ),
+            email: Type.Optional(Type.String()),
+            phone: Type.Optional(Type.String()),
         })
     ),
     sessions: Type.Array(
@@ -207,6 +209,8 @@ export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: (
 
             const existingEvent = await EventDao.getEvent(fastify.firebase, eventId)
             console.log(`overwriteSpeakerSessions for event ${eventId} ${existingEvent.name}`)
+
+            console.log('request.body', request.body)
 
             const { tracksToCreate, categoriesToCreate, formatsToCreate } = verifyOverwriteData(
                 request.body,
