@@ -3,7 +3,7 @@ import { Event, Faq, FaqCategory } from '../../../types'
 import { useFaq } from '../../../services/hooks/useFaq'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { Box, Button, IconButton, Typography } from '@mui/material'
-import { ExpandLessSharp, ExpandMore } from '@mui/icons-material'
+import { ExpandLessSharp, ExpandMore, PictureAsPdf } from '@mui/icons-material'
 import { LoadingButton } from '@mui/lab'
 import {
     useFirestoreCollectionMutation,
@@ -13,6 +13,7 @@ import { collections } from '../../../services/firebase'
 import { collection } from '@firebase/firestore'
 import { generateFirestoreId } from '../../../utils/generateFirestoreId'
 import { FaqCategoryItemContent } from './FaqCategoryItemContent'
+import { generateFaqPdf } from '../../../utils/faqPdfGenerator'
 
 export type FaqCategoryProps = {
     event: Event
@@ -30,6 +31,7 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
     const deletionMutation = useFirestoreDocumentDeletion(
         collection(collections.faq(props.event.id), categoryId, 'items')
     )
+    const [isExporting, setIsExporting] = useState(false)
 
     useEffect(() => {
         if (queryResult.loaded) {
@@ -73,20 +75,38 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
         setDidChange(false)
     }
 
+    const exportToPdf = async () => {
+        try {
+            setIsExporting(true)
+            await generateFaqPdf(props.event, props.category, data)
+        } catch (error) {
+            console.error('Failed to generate PDF:', error)
+        } finally {
+            setIsExporting(false)
+        }
+    }
+
     return (
         <Box width="100%" mb={4}>
-            <Box display="flex">
-                <Typography variant="h4" justifyContent="space-between" alignItems="center" marginBottom={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h4" marginBottom={1}>
                     {props.category.name} ({data.length})
+                </Typography>
+                <Box>
                     <IconButton onClick={() => setOpen(!isOpen)}>
                         {isOpen ? <ExpandLessSharp /> : <ExpandMore />}
                     </IconButton>
+                    {isOpen && (
+                        <IconButton onClick={exportToPdf} title="Export to PDF" disabled={isExporting}>
+                            <PictureAsPdf />
+                        </IconButton>
+                    )}
                     {didChange && (
                         <LoadingButton variant="contained" onClick={save} loading={mutation.isLoading}>
                             Save
                         </LoadingButton>
                     )}
-                </Typography>
+                </Box>
             </Box>
             {isOpen ? (
                 <>
