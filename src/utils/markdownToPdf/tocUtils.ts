@@ -30,7 +30,7 @@ export const generateTableOfContents = (
             doc.setFont('helvetica', 'normal')
         }
         doc.setFontSize(10)
-        const tocText = entry.text.replace(/[*_~`]{1,2}/g, '')
+        const tocText = entry.text.replace(/[*_~`]{1,2}/g, '') // Remove markdown formatting
         const textWidth = doc.getTextWidth(tocText)
 
         // Draw text (without underline)

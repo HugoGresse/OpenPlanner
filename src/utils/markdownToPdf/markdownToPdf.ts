@@ -68,9 +68,6 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
         }
     }
 
-    // Second pass: render content
-    let currentHeading: { text: string; level: number } | undefined
-
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i]
 
@@ -104,12 +101,6 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
 
                 // Add destination annotation for the heading
                 destinationAnnotations.push(result.destinationAnnotation)
-
-                // Update current heading context
-                currentHeading = {
-                    text: (token as any).text,
-                    level: (token as any).depth,
-                }
                 break
             }
 
@@ -119,15 +110,7 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
                     break
                 }
 
-                result = handleParagraph(
-                    doc,
-                    token as any,
-                    margins,
-                    currentY,
-                    currentPage,
-                    maxLineWidth,
-                    currentHeading
-                )
+                result = await handleParagraph(doc, token as any, margins, currentY, currentPage, maxLineWidth)
                 currentY = result.newY
                 currentPage = result.newPage
                 linkAnnotations.push(...result.linkAnnotations)

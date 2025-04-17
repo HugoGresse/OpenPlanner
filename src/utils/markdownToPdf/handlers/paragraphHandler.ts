@@ -2,12 +2,15 @@ import { jsPDF } from 'jspdf'
 import type { Token } from 'marked'
 import { LinkAnnotation, Margins } from '../types'
 import { checkAddPage } from '../pageUtils'
+import { handleImage } from './imageHandler'
 
 // Define a type for inline tokens
 interface InlineToken {
-    type: 'text' | 'strong' | 'em' | 'del' | 'link' | 'codespan'
+    type: 'text' | 'strong' | 'em' | 'del' | 'link' | 'codespan' | 'image'
     text: string
     href?: string
+    src?: string
+    alt?: string
 }
 
 // Interface for tracking text segments with their formatting
@@ -15,19 +18,20 @@ interface FormattedSegment {
     text: string
     type: InlineToken['type']
     href?: string
+    src?: string
+    alt?: string
     needsSpaceBefore: boolean
     needsSpaceAfter: boolean
 }
 
-export const handleParagraph = (
+export const handleParagraph = async (
     doc: jsPDF,
     token: Token & { type: 'paragraph'; raw: string; tokens?: InlineToken[] },
     margins: Margins,
     currentY: number,
     currentPage: number,
-    maxLineWidth: number,
-    currentHeading?: { text: string; level: number }
-): { newY: number; newPage: number; linkAnnotations: LinkAnnotation[] } => {
+    maxLineWidth: number
+): Promise<{ newY: number; newPage: number; linkAnnotations: LinkAnnotation[] }> => {
     const lineHeight = 5
     let pageCheck = { newY: currentY, newPage: currentPage }
     let currentLineY = pageCheck.newY
@@ -50,7 +54,7 @@ export const handleParagraph = (
             const nextToken = i < token.tokens.length - 1 ? token.tokens[i + 1] : null
 
             // Skip empty tokens
-            if (!currentToken.text) continue
+            if (!currentToken.text && currentToken.type !== 'image') continue
 
             normalizedTokens.push({
                 ...currentToken,
@@ -67,7 +71,21 @@ export const handleParagraph = (
             const nextToken = i < normalizedTokens.length - 1 ? normalizedTokens[i + 1] : null
 
             // Skip empty text tokens
-            if (!inlineToken.text.trim() && inlineToken.type === 'text') continue
+            if (inlineToken.type === 'text' && !inlineToken.text.trim()) continue
+
+            // If it's an image, treat it as a standalone segment
+            if (inlineToken.type === 'image') {
+                formattedSegments.push({
+                    text: inlineToken.text || '',
+                    type: 'image',
+                    src: inlineToken.href,
+                    alt: inlineToken.text,
+                    needsSpaceBefore: true,
+                    needsSpaceAfter: true,
+                    href: undefined,
+                })
+                continue
+            }
 
             // Determine if we need spacing around this token
             const needsSpaceBefore =
@@ -91,6 +109,7 @@ export const handleParagraph = (
             const lastSegment = formattedSegments[formattedSegments.length - 1]
             if (
                 lastSegment &&
+                lastSegment.type !== 'image' &&
                 lastSegment.type === inlineToken.type &&
                 (lastSegment.type !== 'link' || lastSegment.href === inlineToken.href) &&
                 !needsSpaceBefore
@@ -103,6 +122,8 @@ export const handleParagraph = (
                     text: inlineToken.text,
                     type: inlineToken.type,
                     href: inlineToken.href,
+                    src: undefined,
+                    alt: undefined,
                     needsSpaceBefore: needsSpaceBefore || (isBoldTransition && inlineToken.type === 'strong'),
                     needsSpaceAfter: needsSpaceAfter || (isBoldTransition && inlineToken.type !== 'strong'),
                 })
@@ -118,24 +139,53 @@ export const handleParagraph = (
         for (let i = 0; i < formattedSegments.length; i++) {
             const segment = formattedSegments[i]
 
-            // Handle explicit spacing for formatting transitions
-            // This adds actual visual space between differently formatted segments
+            // --- Handle Image Segment ---
+            if (segment.type === 'image' && segment.src) {
+                // 1. Render any preceding text line
+                if (lineSegments.length > 0) {
+                    renderFormattedLine(
+                        doc,
+                        lineSegments,
+                        margins.left,
+                        currentLineY,
+                        lineHeight,
+                        currentPageNum,
+                        linkAnnotations
+                    )
+                    currentLineY += lineHeight
+                    pageCheck = checkAddPage(doc, currentLineY, 0, margins, currentPageNum)
+                    currentLineY = pageCheck.newY
+                    currentPageNum = pageCheck.newPage
+                    lineSegments = [] // Reset for next line
+                    currentLineWidth = 0
+                }
+
+                // 2. Call the asynchronous image handler
+                const imageResult = await handleImage(
+                    doc,
+                    segment.src,
+                    segment.alt,
+                    margins,
+                    currentLineY,
+                    currentPageNum,
+                    availableWidth
+                )
+                currentLineY = imageResult.newY
+                currentPageNum = imageResult.newPage
+
+                continue // Move to the next segment after handling the image
+            }
+
+            // --- Handle Text Segment (existing logic slightly adapted) ---
             if (segment.needsSpaceBefore && currentLineWidth > 0) {
-                // Add small but visible space for style transition
-                // Use more space for transitions to/from bold text
                 const spaceWidth = segment.type === 'strong' ? doc.getTextWidth(' ') * 0.6 : doc.getTextWidth(' ') * 0.4
                 currentLineWidth += spaceWidth
-
-                // If the previous segment on the current line exists and needs space after
                 if (lineSegments.length > 0) {
-                    const prevLineSegment = lineSegments[lineSegments.length - 1]
-                    prevLineSegment.needsSpaceAfter = true
+                    lineSegments[lineSegments.length - 1].needsSpaceAfter = true
                 }
             }
 
-            // Split segment by words to handle wrapping
             const words = segment.text.split(/(\s+)/).filter(Boolean)
-
             for (let j = 0; j < words.length; j++) {
                 const word = words[j]
                 const isWhitespace = /^\s+$/.test(word)
@@ -323,6 +373,8 @@ function applyFormatting(doc: jsPDF, type: InlineToken['type']): void {
             doc.setFont('helvetica', 'normal')
             doc.setTextColor(0, 0, 255) // Blue for links
             break
+        case 'image':
+        case 'text':
         default:
             doc.setFont('helvetica', 'normal')
             doc.setTextColor(0, 0, 0)
