@@ -231,6 +231,7 @@ export interface FaqCategory {
     share: boolean
     private: boolean
     privateId: string | null
+    unifiedPage?: boolean
     collectionList: string[]
     faqs: Faq[]
 }

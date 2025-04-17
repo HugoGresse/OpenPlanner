@@ -8,6 +8,7 @@ const FaqCategory = Type.Object({
     name: Type.String(),
     order: Type.Number(),
     share: Type.Boolean(),
+    unifiedPage: Type.Optional(Type.Boolean()),
     private: Type.Optional(Type.Boolean()),
     privateId: Type.Optional(Type.String()),
 })
