@@ -12,7 +12,7 @@ export const handleHeading = (
     currentPage: number,
     tocEntries: TocEntry[]
 ): { newY: number; newPage: number; destinationAnnotation: DestinationAnnotation } => {
-    const fontSize = Math.max(12, 24 - token.depth * 2)
+    const fontSize = Math.max(12, 34 - token.depth * 6)
     // Estimate line height based on font size for page check, actual height might vary with wrapping
     const estimatedLineHeight = fontSize / 2
     const pageCheck = checkAddPage(doc, currentY, estimatedLineHeight + 2, margins, currentPage)
