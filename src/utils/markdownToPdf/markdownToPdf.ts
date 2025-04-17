@@ -62,14 +62,10 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
 
     if (tocEntries.length > 0) {
         if (hasTocPlaceholder) {
-            // Skip TOC generation at the beginning if we have a TOC placeholder
+            // Skip TOC generation at the beginning if we have a TOC placeholder,
+            // reset position to start rendering content from the top of page 1.
             currentY = margins.top
             currentPage = 1
-        } else {
-            // Generate TOC at the beginning
-            tocLinkAnnotations = generateTableOfContents(doc, tocEntries, margins, currentY)
-
-            currentPage = (doc.internal as any).getNumberOfPages()
         }
     }
 
@@ -180,7 +176,6 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
 
     // Process all link annotations to find and update matching destinations
     const processedAnnotations = processLinkAnnotations(tocLinkAnnotations, linkAnnotations, destinationAnnotations)
-    console.log(processedAnnotations)
 
     addLinksToPage(doc, processedAnnotations, currentPage)
 

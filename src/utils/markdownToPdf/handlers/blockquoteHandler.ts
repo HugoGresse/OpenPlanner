@@ -18,9 +18,9 @@ export const handleBlockquote = (
     doc.setLineWidth(0.5)
     doc.line(
         margins.left,
-        pageCheck.newY - lineHeight / 2,
+        pageCheck.newY - lineHeight,
         margins.left,
-        pageCheck.newY + lineHeight * doc.splitTextToSize(token.text, maxLineWidth - 5).length
+        pageCheck.newY + lineHeight * doc.splitTextToSize(token.text, maxLineWidth - 5).length - lineHeight / 3
     )
 
     doc.setFont('helvetica', 'italic')
