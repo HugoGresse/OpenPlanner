@@ -32,7 +32,6 @@ export const handleParagraph = async (
     currentPage: number,
     maxLineWidth: number
 ): Promise<{ newY: number; newPage: number; linkAnnotations: LinkAnnotation[] }> => {
-    console.log('handle paragraph', token)
     const lineHeight = 5
     let pageCheck = { newY: currentY, newPage: currentPage }
     let currentLineY = pageCheck.newY
@@ -254,7 +253,6 @@ export const handleParagraph = async (
 
                     // For regular words, check if they fit
                     applyFormatting(doc, segment.type)
-                    console.log('word', word)
                     const wordWidth = doc.getTextWidth(word)
                     resetFormatting(doc)
 
@@ -267,7 +265,6 @@ export const handleParagraph = async (
 
                     // If this word would exceed the line width, render the current line and start a new one
                     if (currentLineWidth + wordWidth + additionalWidth > availableWidth && currentLineWidth > 0) {
-                        console.log('render line')
                         // Render the current line
                         renderFormattedLine(
                             doc,
@@ -348,8 +345,6 @@ export const handleParagraph = async (
         for (let i = 0; i < paragraphParts.length; i++) {
             const partText = paragraphParts[i]
             const lines = doc.splitTextToSize(partText, maxLineWidth)
-
-            console.log('fallback to line lines', lines)
 
             const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
 
@@ -458,8 +453,6 @@ function renderFormattedLine(
 
         // Apply formatting for current segment
         applyFormatting(doc, segment.type)
-
-        console.log('segment', segment, startX, currentX)
 
         // Add extra space between different formatting styles
         // This is especially important for transitions to/from bold text
