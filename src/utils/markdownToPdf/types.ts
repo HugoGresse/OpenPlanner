@@ -4,10 +4,12 @@ export interface LinkAnnotation {
     y: number
     w: number
     h: number
+    isInternal: boolean
     url?: string
     destPage?: number
     destY?: number
-    pageNumber?: number
+    destHeadRef?: string
+    fromType?: string
 }
 
 export interface TocEntry {
@@ -22,4 +24,11 @@ export interface Margins {
     bottom: number
     left: number
     right: number
+}
+
+export interface DestinationAnnotation {
+    page: number
+    y: number
+    headingText: string
+    headingLevel: number
 }

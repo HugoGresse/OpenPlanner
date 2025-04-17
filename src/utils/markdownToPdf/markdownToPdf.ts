@@ -1,10 +1,11 @@
 import { jsPDF } from 'jspdf'
 import { marked } from 'marked'
 import type { Token } from 'marked'
-import { Margins } from './types'
+import { Margins, DestinationAnnotation, LinkAnnotation } from './types'
 import { addLinksToPage } from './pageUtils'
 import { generateTableOfContents } from './tocUtils'
-import { handleHeading, handleParagraph, handleList, handleBlockquote, handleCode, handleHr } from './tokenHandlers'
+import { handleHeading, handleParagraph, handleList, handleBlockquote, handleCode, handleHr } from './handlers'
+import { processLinkAnnotations } from './processLinkAnnotations'
 
 /**
  * Generates a PDF from Markdown content with a Table of Contents and links.
@@ -20,16 +21,8 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
     let currentY = margins.top
     let currentPage = 1
     const tocEntries: { text: string; level: number; page: number; y: number }[] = []
-    const linkAnnotations: {
-        page: number
-        x: number
-        y: number
-        w: number
-        h: number
-        url?: string
-        destPage?: number
-        destY?: number
-    }[] = []
+    const destinationAnnotations: DestinationAnnotation[] = []
+    const linkAnnotations: LinkAnnotation[] = []
 
     // First pass: collect TOC entries and calculate their positions
     for (const token of tokens) {
@@ -67,6 +60,8 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
     currentPage = doc.internal.pages.length
 
     // Second pass: render content
+    let currentHeading: { text: string; level: number } | undefined
+
     for (const token of tokens) {
         let result
         switch (token.type) {
@@ -81,7 +76,15 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
                 )
                 currentY = result.newY
                 currentPage = result.newPage
-                linkAnnotations.push(...result.linkAnnotations)
+
+                // Add destination annotation for the heading
+                destinationAnnotations.push(result.destinationAnnotation)
+
+                // Update current heading context
+                currentHeading = {
+                    text: (token as any).text,
+                    level: (token as any).depth,
+                }
                 break
             }
 
@@ -92,7 +95,8 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
                     margins,
                     currentY,
                     currentPage,
-                    maxLineWidth
+                    maxLineWidth,
+                    currentHeading
                 )
                 currentY = result.newY
                 currentPage = result.newPage
@@ -161,44 +165,14 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
             default:
                 break
         }
-
-        // Check if we need to add a new page
-        if (currentY > doc.internal.pageSize.getHeight() - margins.bottom) {
-            doc.addPage()
-            currentPage++
-            currentY = margins.top
-        }
     }
+
     // Process all link annotations to find and update matching destinations
-    const allLinkAnnotations = [...tocLinkAnnotations, ...linkAnnotations]
-    const processedAnnotations = allLinkAnnotations.map((link, index) => {
-        if (!link.url) {
-            return { ...link }
-        }
-
-        // Find matching destination in the array
-        const matchingDest = allLinkAnnotations.find((dest, destIndex) => {
-            // Skip self
-            if (index === destIndex) return false
-            // Check if the destination text matches the link URL
-            return dest.url === link.url
-        })
-
-        if (matchingDest) {
-            // Create new object with updated destination info
-            return {
-                ...link,
-                destPage: matchingDest.page,
-                destY: matchingDest.y,
-                url: undefined,
-            }
-        }
-
-        return { ...link }
-    })
+    const processedAnnotations = processLinkAnnotations(tocLinkAnnotations, linkAnnotations, destinationAnnotations)
+    console.log(processedAnnotations)
 
     // Add all links at the end
-    addLinksToPage(doc, processedAnnotations, currentPage)
+    // addLinksToPage(doc, processedAnnotations, currentPage)
 
     return doc.output('blob')
 }

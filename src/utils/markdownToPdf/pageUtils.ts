@@ -22,16 +22,9 @@ export const checkAddPage = (
     currentY: number,
     neededHeight: number,
     margins: Margins,
-    linkAnnotations: LinkAnnotation[],
     currentPage: number
 ): { addedPage: boolean; newY: number; newPage: number } => {
     if (currentY + neededHeight > doc.internal.pageSize.getHeight() - margins.bottom) {
-        // Add links to current page before adding a new one
-        if (linkAnnotations.length > 0) {
-            addLinksToPage(doc, linkAnnotations, currentPage)
-            linkAnnotations.length = 0
-        }
-
         // Add new page and reset position
         doc.addPage()
         return {

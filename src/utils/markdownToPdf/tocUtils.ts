@@ -36,20 +36,14 @@ export const generateTableOfContents = (
         doc.setDrawColor(0, 0, 0)
         doc.line(margins.left + indent, tocY + 1, margins.left + indent + textWidth, tocY + 1)
 
-        // Add page number to the right of the entry
-        // The page number needs to be adjusted by +1 because we inserted the TOC page
-        const pageNumber = `Page ${entry.page + 1}`
-        const pageNumberWidth = doc.getTextWidth(pageNumber)
-        doc.text(pageNumber, doc.internal.pageSize.getWidth() - margins.right - pageNumberWidth, tocY)
-
         tocLinkAnnotations.push({
             page: 1, // TOC is always on page 1
             x: margins.left + indent,
             y: tocY - tocLineHeight,
             w: textWidth,
             h: tocLineHeight,
-            destPage: entry.page + 1, // Add 1 because we inserted the TOC page
-            destY: doc.internal.pageSize.getHeight() - entry.y,
+            isInternal: true,
+            destHeadRef: entry.text,
         })
 
         tocY += tocLineHeight + 1
