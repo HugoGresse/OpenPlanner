@@ -26,7 +26,6 @@ export const parseInlineContent = (doc: jsPDF, tokens: Token[], x: number, y: nu
     const pageHeight = doc.internal.pageSize.height
     const availableWidth = doc.internal.pageSize.width - margins.left - margins.right
     const currentFontSize = doc.getFontSize()
-    const lineHeight = doc.getLineHeight() // Use jsPDF's calculated line height
     let currentFontStyle = doc.getFont().fontStyle || 'normal' // Track current style
 
     const applyStyle = (style: string) => {
@@ -46,6 +45,7 @@ export const parseInlineContent = (doc: jsPDF, tokens: Token[], x: number, y: nu
         // Apply specific styles
         const styleToApply = styleMap[tokenType] || 'normal'
         applyStyle(styleToApply)
+        const lineHeight = doc.getLineHeight() / 3
 
         // Handle strikethrough manually
         const isStrikethrough = tokenType === 'del'

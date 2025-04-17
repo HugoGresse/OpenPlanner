@@ -12,7 +12,7 @@ export const generateTableOfContents = (
 
     if (filteredTocEntries.length === 0) return []
 
-    let tocY = margins.top
+    let tocY = currentY || margins.top
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(16)
     tocY += 10
@@ -33,8 +33,10 @@ export const generateTableOfContents = (
         const tocText = entry.text.replace(/[*_~`]{1,2}/g, '') // Remove markdown formatting
         const textWidth = doc.getTextWidth(tocText)
 
-        // Draw text (without underline)
+        // Draw text
         doc.text(tocText, margins.left + indent, tocY)
+        // Draw underline
+        doc.line(margins.left + indent, tocY + 1, margins.left + indent + textWidth, tocY + 1)
 
         tocLinkAnnotations.push({
             page: 1, // TOC is always on page 1
