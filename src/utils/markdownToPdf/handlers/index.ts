@@ -1,6 +1,0 @@
-export { handleHeading } from './headingHandler'
-export { handleParagraph } from './paragraphHandler'
-export { handleList } from './listHandler'
-export { handleBlockquote } from './blockquoteHandler'
-export { handleCode } from './codeHandler'
-export { handleHr } from './hrHandler'

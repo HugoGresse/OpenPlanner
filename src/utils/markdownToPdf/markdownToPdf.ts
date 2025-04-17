@@ -4,8 +4,13 @@ import type { Token } from 'marked'
 import { Margins, DestinationAnnotation, LinkAnnotation } from './types'
 import { addLinksToPage } from './pageUtils'
 import { generateTableOfContents } from './tocUtils'
-import { handleHeading, handleParagraph, handleList, handleBlockquote, handleCode, handleHr } from './handlers'
+import { handleList } from './handlers/listHandler'
+import { handleBlockquote } from './handlers/blockquoteHandler'
+import { handleCode } from './handlers/codeHandler'
+import { handleHr } from './handlers/hrHandler'
 import { processLinkAnnotations } from './processLinkAnnotations'
+import { handleHeading } from './handlers/headingHandler'
+import { handleParagraph } from './handlers/paragraphHandler'
 
 /**
  * Generates a PDF from Markdown content with a Table of Contents and links.
@@ -118,14 +123,7 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
             }
 
             case 'list': {
-                result = handleList(
-                    doc,
-                    token as Token & { type: 'list'; ordered: boolean; items: { text: string }[] },
-                    margins,
-                    currentY,
-                    currentPage,
-                    maxLineWidth
-                )
+                result = handleList(doc, token as any, margins, currentY, currentPage, maxLineWidth)
                 currentY = result.newY
                 currentPage = result.newPage
                 linkAnnotations.push(...result.linkAnnotations)
