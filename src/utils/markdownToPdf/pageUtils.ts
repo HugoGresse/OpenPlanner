@@ -4,14 +4,12 @@ import { LinkAnnotation, Margins } from './types'
 export const addLinksToPage = (pdfDoc: jsPDF, links: LinkAnnotation[], pageNum: number): void => {
     const originalPage = (pdfDoc.internal as any).getCurrentPageInfo().pageNumber
     links.forEach((link: LinkAnnotation) => {
-        // For TOC links, we need to add them to page 1
-        // For content links, we use the provided page number
-        const targetPage = link.page === 1 ? 1 : pageNum
+        const targetPage = link.page || pageNum
         pdfDoc.setPage(targetPage)
         if (link.url) {
             pdfDoc.link(link.x, link.y, link.w, link.h, { url: link.url })
         } else if (link.destPage !== undefined && link.destY !== undefined) {
-            pdfDoc.link(link.x, link.y, link.w, link.h, { pageNumber: link.destPage, y: link.destY })
+            pdfDoc.link(link.x, link.y, link.w, link.h, { pageNumber: link.destPage, top: link.destY })
         }
     })
     pdfDoc.setPage(originalPage)

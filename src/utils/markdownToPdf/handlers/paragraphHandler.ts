@@ -50,10 +50,7 @@ export const handleParagraph = async (
         // First normalize the tokens to handle whitespace properly
         for (let i = 0; i < token.tokens.length; i++) {
             const currentToken = token.tokens[i]
-            const prevToken = i > 0 ? token.tokens[i - 1] : null
-            const nextToken = i < token.tokens.length - 1 ? token.tokens[i + 1] : null
 
-            // Skip empty tokens
             if (!currentToken.text && currentToken.type !== 'image') continue
 
             normalizedTokens.push({
@@ -176,7 +173,6 @@ export const handleParagraph = async (
                 continue // Move to the next segment after handling the image
             }
 
-            // --- Handle Text Segment (existing logic slightly adapted) ---
             if (segment.needsSpaceBefore && currentLineWidth > 0) {
                 const spaceWidth = segment.type === 'strong' ? doc.getTextWidth(' ') * 0.6 : doc.getTextWidth(' ') * 0.4
                 currentLineWidth += spaceWidth
@@ -185,103 +181,143 @@ export const handleParagraph = async (
                 }
             }
 
-            const words = segment.text.split(/(\s+)/).filter(Boolean)
-            for (let j = 0; j < words.length; j++) {
-                const word = words[j]
-                const isWhitespace = /^\s+$/.test(word)
-                const isLastWord = j === words.length - 1
+            // Split the segment text by newlines first to handle explicit line breaks
+            const textParts = segment.text.split(/\n/)
 
-                // Always add whitespace unless it's at the beginning of a line
-                if (isWhitespace) {
-                    if (currentLineWidth > 0) {
-                        // Add space to current segment if possible
+            for (let partIndex = 0; partIndex < textParts.length; partIndex++) {
+                const textPart = textParts[partIndex]
+
+                // If this isn't the first part, render the current line and start a new one
+                if (partIndex > 0) {
+                    // Render the current line before starting a new one for the next part
+                    if (lineSegments.length > 0) {
+                        renderFormattedLine(
+                            doc,
+                            lineSegments,
+                            margins.left,
+                            currentLineY,
+                            lineHeight,
+                            currentPageNum,
+                            linkAnnotations
+                        )
+
+                        // Move to next line
+                        currentLineY += lineHeight
+                        pageCheck = checkAddPage(doc, currentLineY, lineHeight, margins, currentPageNum)
+                        currentLineY = pageCheck.newY
+                        currentPageNum = pageCheck.newPage
+
+                        // Reset line tracking
+                        lineSegments = []
+                        currentLineWidth = 0
+                    }
+                }
+
+                // Skip if the part is empty (happens with consecutive newlines)
+                if (!textPart) continue
+
+                // Process words within this part
+                const words = textPart.split(/(\s+)/).filter(Boolean)
+
+                for (let j = 0; j < words.length; j++) {
+                    const word = words[j]
+                    const isWhitespace = /^\s+$/.test(word)
+                    const isLastWord = j === words.length - 1
+
+                    // Always add whitespace unless it's at the beginning of a line
+                    if (isWhitespace) {
+                        if (currentLineWidth > 0) {
+                            // Add space to current segment if possible
+                            if (
+                                lineSegments.length > 0 &&
+                                lineSegments[lineSegments.length - 1].type === segment.type &&
+                                (segment.type !== 'link' || lineSegments[lineSegments.length - 1].href === segment.href)
+                            ) {
+                                lineSegments[lineSegments.length - 1].text += word
+                            } else {
+                                lineSegments.push({
+                                    ...segment,
+                                    text: word,
+                                    needsSpaceBefore: false,
+                                    needsSpaceAfter: false,
+                                })
+                            }
+
+                            // Update line width
+                            applyFormatting(doc, segment.type)
+                            currentLineWidth += doc.getTextWidth(word)
+                            resetFormatting(doc)
+                        }
+                        continue
+                    }
+
+                    // For regular words, check if they fit
+                    applyFormatting(doc, segment.type)
+                    const wordWidth = doc.getTextWidth(word)
+                    resetFormatting(doc)
+
+                    // Calculate additional width for spacing after this word if needed
+                    let additionalWidth = 0
+                    if (isLastWord && segment.needsSpaceAfter && partIndex === textParts.length - 1) {
+                        additionalWidth =
+                            segment.type === 'strong' ? doc.getTextWidth(' ') * 0.6 : doc.getTextWidth(' ') * 0.4
+                    }
+
+                    // If this word would exceed the line width, render the current line and start a new one
+                    if (currentLineWidth + wordWidth + additionalWidth > availableWidth && currentLineWidth > 0) {
+                        // Render the current line
+                        renderFormattedLine(
+                            doc,
+                            lineSegments,
+                            margins.left,
+                            currentLineY,
+                            lineHeight,
+                            currentPageNum,
+                            linkAnnotations
+                        )
+
+                        // Move to next line
+                        currentLineY += lineHeight
+                        pageCheck = checkAddPage(doc, currentLineY, lineHeight, margins, currentPageNum)
+                        currentLineY = pageCheck.newY
+                        currentPageNum = pageCheck.newPage
+
+                        // Reset line tracking
+                        const newSegment = {
+                            ...segment,
+                            text: word,
+                            needsSpaceBefore: false,
+                            needsSpaceAfter:
+                                isLastWord && partIndex === textParts.length - 1 ? segment.needsSpaceAfter : false,
+                        }
+                        lineSegments = [newSegment]
+                        applyFormatting(doc, segment.type)
+                        currentLineWidth = wordWidth
+                        resetFormatting(doc)
+                    } else {
+                        // Add word to the current line
                         if (
                             lineSegments.length > 0 &&
                             lineSegments[lineSegments.length - 1].type === segment.type &&
                             (segment.type !== 'link' || lineSegments[lineSegments.length - 1].href === segment.href)
                         ) {
                             lineSegments[lineSegments.length - 1].text += word
+                            // Update space-after flag for the last word
+                            if (isLastWord && partIndex === textParts.length - 1) {
+                                lineSegments[lineSegments.length - 1].needsSpaceAfter = segment.needsSpaceAfter
+                            }
                         } else {
-                            lineSegments.push({
+                            const newSegment = {
                                 ...segment,
                                 text: word,
                                 needsSpaceBefore: false,
-                                needsSpaceAfter: false,
-                            })
+                                needsSpaceAfter:
+                                    isLastWord && partIndex === textParts.length - 1 ? segment.needsSpaceAfter : false,
+                            }
+                            lineSegments.push(newSegment)
                         }
-
-                        // Update line width
-                        applyFormatting(doc, segment.type)
-                        currentLineWidth += doc.getTextWidth(word)
-                        resetFormatting(doc)
+                        currentLineWidth += wordWidth
                     }
-                    continue
-                }
-
-                // For regular words, check if they fit
-                applyFormatting(doc, segment.type)
-                const wordWidth = doc.getTextWidth(word)
-                resetFormatting(doc)
-
-                // Calculate additional width for spacing after this word if needed
-                let additionalWidth = 0
-                if (isLastWord && segment.needsSpaceAfter) {
-                    additionalWidth =
-                        segment.type === 'strong' ? doc.getTextWidth(' ') * 0.6 : doc.getTextWidth(' ') * 0.4
-                }
-
-                // If this word would exceed the line width, render the current line and start a new one
-                if (currentLineWidth + wordWidth + additionalWidth > availableWidth && currentLineWidth > 0) {
-                    // Render the current line
-                    renderFormattedLine(
-                        doc,
-                        lineSegments,
-                        margins.left,
-                        currentLineY,
-                        lineHeight,
-                        currentPageNum,
-                        linkAnnotations
-                    )
-
-                    // Move to next line
-                    currentLineY += lineHeight
-                    pageCheck = checkAddPage(doc, currentLineY, lineHeight, margins, currentPageNum)
-                    currentLineY = pageCheck.newY
-                    currentPageNum = pageCheck.newPage
-
-                    // Reset line tracking
-                    const newSegment = {
-                        ...segment,
-                        text: word,
-                        needsSpaceBefore: false,
-                        needsSpaceAfter: isLastWord ? segment.needsSpaceAfter : false,
-                    }
-                    lineSegments = [newSegment]
-                    applyFormatting(doc, segment.type)
-                    currentLineWidth = wordWidth
-                    resetFormatting(doc)
-                } else {
-                    // Add word to the current line
-                    if (
-                        lineSegments.length > 0 &&
-                        lineSegments[lineSegments.length - 1].type === segment.type &&
-                        (segment.type !== 'link' || lineSegments[lineSegments.length - 1].href === segment.href)
-                    ) {
-                        lineSegments[lineSegments.length - 1].text += word
-                        // Update space-after flag for the last word
-                        if (isLastWord) {
-                            lineSegments[lineSegments.length - 1].needsSpaceAfter = segment.needsSpaceAfter
-                        }
-                    } else {
-                        const newSegment = {
-                            ...segment,
-                            text: word,
-                            needsSpaceBefore: false,
-                            needsSpaceAfter: isLastWord ? segment.needsSpaceAfter : false,
-                        }
-                        lineSegments.push(newSegment)
-                    }
-                    currentLineWidth += wordWidth
                 }
             }
         }
@@ -302,49 +338,61 @@ export const handleParagraph = async (
     } else {
         // Fallback to raw text processing
         const paragraphText = token.raw.replace(/<[^>]*>?/gm, '')
-        const lines = doc.splitTextToSize(paragraphText, maxLineWidth)
 
-        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
+        // Split by newlines first, then process each part
+        const paragraphParts = paragraphText.split('\n')
 
-        lines.forEach((line: string) => {
-            pageCheck = checkAddPage(doc, currentLineY, lineHeight, margins, currentPageNum)
-            currentLineY = pageCheck.newY
-            currentPageNum = pageCheck.newPage
+        for (let i = 0; i < paragraphParts.length; i++) {
+            const partText = paragraphParts[i]
+            const lines = doc.splitTextToSize(partText, maxLineWidth)
 
-            doc.text(line, margins.left, currentLineY)
+            const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
 
-            let match
-            let tempLine = line
-            let offset = 0
-            while ((match = linkRegex.exec(token.raw)) !== null) {
-                const linkText = match[1]
-                const linkUrl = match[2]
-                const startIndex = tempLine.indexOf(linkText, offset)
+            lines.forEach((line: string) => {
+                pageCheck = checkAddPage(doc, currentLineY, lineHeight, margins, currentPageNum)
+                currentLineY = pageCheck.newY
+                currentPageNum = pageCheck.newPage
 
-                if (startIndex !== -1) {
-                    const textBeforeWidth = doc.getTextWidth(tempLine.substring(0, startIndex))
-                    const linkTextWidth = doc.getTextWidth(linkText)
+                doc.text(line, margins.left, currentLineY)
 
-                    // Check if it's an internal link (starts with #)
-                    const isInternal = linkUrl.startsWith('#')
-                    const destHeadRef = isInternal ? linkUrl.substring(1) : undefined
+                let match
+                let tempLine = line
+                let offset = 0
+                while ((match = linkRegex.exec(token.raw)) !== null) {
+                    const linkText = match[1]
+                    const linkUrl = match[2]
+                    const startIndex = tempLine.indexOf(linkText, offset)
 
-                    linkAnnotations.push({
-                        page: currentPageNum,
-                        x: margins.left + textBeforeWidth,
-                        y: currentLineY - lineHeight,
-                        w: linkTextWidth,
-                        h: lineHeight,
-                        url: linkUrl,
-                        isInternal,
-                        destHeadRef,
-                        fromType: 'paragraph',
-                    })
-                    offset = startIndex + linkText.length
+                    if (startIndex !== -1) {
+                        const textBeforeWidth = doc.getTextWidth(tempLine.substring(0, startIndex))
+                        const linkTextWidth = doc.getTextWidth(linkText)
+
+                        // Check if it's an internal link (starts with #)
+                        const isInternal = linkUrl.startsWith('#')
+                        const destHeadRef = isInternal ? linkUrl.substring(1) : undefined
+
+                        linkAnnotations.push({
+                            page: currentPageNum,
+                            x: margins.left + textBeforeWidth,
+                            y: currentLineY - lineHeight,
+                            w: linkTextWidth,
+                            h: lineHeight,
+                            url: linkUrl,
+                            isInternal,
+                            destHeadRef,
+                            fromType: 'paragraph',
+                        })
+                        offset = startIndex + linkText.length
+                    }
                 }
+                currentLineY += lineHeight
+            })
+
+            // If this isn't the last part, add an extra line break
+            if (i < paragraphParts.length - 1) {
+                currentLineY += lineHeight
             }
-            currentLineY += lineHeight
-        })
+        }
     }
 
     return {
