@@ -27,7 +27,7 @@ export const handleHeading = (
     // Use the inline content parser to render styled text
     const finalY = parseInlineContent(
         doc,
-        token.tokens || [{ type: 'text', text: token.text }],
+        token.tokens || [{ type: 'text', text: token.text, raw: token.text }],
         margins.left,
         yPos,
         margins
