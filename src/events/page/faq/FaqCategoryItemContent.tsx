@@ -1,6 +1,5 @@
-import * as React from 'react'
 import { useState } from 'react'
-import { Box, Button, DialogContentText, FormControlLabel, Switch, TextField } from '@mui/material'
+import { Box, Button, DialogContentText, FormControlLabel, Switch, TextField, IconButton } from '@mui/material'
 import { generateFirestoreId } from '../../../utils/generateFirestoreId'
 import { TypographyCopyable } from '../../../components/TypographyCopyable'
 import { getFaqCategoryPrivateLink } from './faqLink'
@@ -14,6 +13,8 @@ import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { DeleteRounded, EditRounded } from '@mui/icons-material'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { generateFaqPdf } from '../../../utils/faqPdfGenerator'
+import { PictureAsPdf } from '@mui/icons-material'
 
 export type FaqCategoryItemContentProps = {
     event: Event
@@ -35,6 +36,14 @@ export const FaqCategoryItemContent = ({
     const [isDeletingCategory, setIsDeletingCategory] = useState<boolean>(false)
     const [isChangingCategoryName, setIsChangingCategoryName] = useState<null | string>(null)
     const categoryDocumentDeletion = useFirestoreDocumentDeletion(doc(collections.faq(event.id), category.id))
+
+    const exportToPdf = async () => {
+        try {
+            await generateFaqPdf(event, category, data)
+        } catch (error) {
+            console.error('Failed to generate PDF:', error)
+        }
+    }
 
     return (
         <Box>
@@ -96,6 +105,9 @@ export const FaqCategoryItemContent = ({
                         </Button>
                     </Box>
                 ) : null}
+                <IconButton onClick={exportToPdf} title="Export to PDF">
+                    <PictureAsPdf />
+                </IconButton>
             </Box>
             {data.map((faq, index) => (
                 <FaqItem

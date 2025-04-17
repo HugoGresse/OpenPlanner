@@ -13,7 +13,6 @@ import { collections } from '../../../services/firebase'
 import { collection } from '@firebase/firestore'
 import { generateFirestoreId } from '../../../utils/generateFirestoreId'
 import { FaqCategoryItemContent } from './FaqCategoryItemContent'
-import { generateFaqPdf } from '../../../utils/faqPdfGenerator'
 
 export type FaqCategoryProps = {
     event: Event
@@ -75,17 +74,6 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
         setDidChange(false)
     }
 
-    const exportToPdf = async () => {
-        try {
-            setIsExporting(true)
-            await generateFaqPdf(props.event, props.category, data)
-        } catch (error) {
-            console.error('Failed to generate PDF:', error)
-        } finally {
-            setIsExporting(false)
-        }
-    }
-
     return (
         <Box width="100%" mb={4}>
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -96,11 +84,6 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
                     <IconButton onClick={() => setOpen(!isOpen)}>
                         {isOpen ? <ExpandLessSharp /> : <ExpandMore />}
                     </IconButton>
-                    {isOpen && (
-                        <IconButton onClick={exportToPdf} title="Export to PDF" disabled={isExporting}>
-                            <PictureAsPdf />
-                        </IconButton>
-                    )}
                     {didChange && (
                         <LoadingButton variant="contained" onClick={save} loading={mutation.isLoading}>
                             Save
