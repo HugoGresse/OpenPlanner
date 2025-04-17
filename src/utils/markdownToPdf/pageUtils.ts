@@ -26,6 +26,7 @@ export const checkAddPage = (
 ): { addedPage: boolean; newY: number; newPage: number } => {
     if (currentY + neededHeight > doc.internal.pageSize.getHeight() - margins.bottom) {
         // Add new page and reset position
+        console.log('>>> adding page')
         doc.addPage()
         return {
             addedPage: true,

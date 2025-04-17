@@ -9,11 +9,6 @@ export const generateTableOfContents = (
 ): LinkAnnotation[] => {
     if (tocEntries.length === 0) return []
 
-    // Store current page number before inserting TOC
-    const currentPage = doc.internal.pages.length
-
-    doc.insertPage(1)
-    doc.setPage(1)
     let tocY = margins.top
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(16)

@@ -57,7 +57,7 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
 
     // Set the starting position for content after the TOC
     currentY = tocHeight
-    currentPage = doc.internal.pages.length
+    currentPage = (doc.internal as any).getNumberOfPages()
 
     // Second pass: render content
     let currentHeading: { text: string; level: number } | undefined
@@ -171,8 +171,7 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
     const processedAnnotations = processLinkAnnotations(tocLinkAnnotations, linkAnnotations, destinationAnnotations)
     console.log(processedAnnotations)
 
-    // Add all links at the end
-    // addLinksToPage(doc, processedAnnotations, currentPage)
+    addLinksToPage(doc, processedAnnotations, currentPage)
 
     return doc.output('blob')
 }
