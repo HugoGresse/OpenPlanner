@@ -17,21 +17,24 @@ export const generateTableOfContents = (
     doc.setFontSize(16)
     tocY += 10
 
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
     const tocLinkAnnotations: LinkAnnotation[] = []
 
     filteredTocEntries.forEach((entry: TocEntry) => {
         const indent = (entry.level - 1) * 5
         const tocLineHeight = 5
 
-        const tocText = entry.text
+        // Set font based on heading level (level 2 is bold, others are normal)
+        if (entry.level === 2) {
+            doc.setFont('helvetica', 'bold')
+        } else {
+            doc.setFont('helvetica', 'normal')
+        }
+        doc.setFontSize(10)
+        const tocText = entry.text.replace(/[*_~`]{1,2}/g, '')
         const textWidth = doc.getTextWidth(tocText)
 
-        // Draw underlined text
+        // Draw text (without underline)
         doc.text(tocText, margins.left + indent, tocY)
-        doc.setDrawColor(0, 0, 0)
-        doc.line(margins.left + indent, tocY + 1, margins.left + indent + textWidth, tocY + 1)
 
         tocLinkAnnotations.push({
             page: 1, // TOC is always on page 1
@@ -46,7 +49,7 @@ export const generateTableOfContents = (
         tocY += tocLineHeight + 1
     })
 
-    tocY += 8
+    tocY += 6
     doc.line(margins.left, tocY, doc.internal.pageSize.getWidth() - margins.right, tocY)
 
     return tocLinkAnnotations
