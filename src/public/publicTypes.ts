@@ -10,6 +10,7 @@ export type PublicFaqCategoryType = {
     name: string
     order: number
     faqs: PublicFaqItemType[]
+    unifiedPage: boolean
 }
 
 export type PublicFaqType = {

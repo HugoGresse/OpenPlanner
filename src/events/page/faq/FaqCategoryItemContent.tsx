@@ -76,6 +76,17 @@ export const FaqCategoryItemContent = ({
                     }
                     label="Private url?"
                 />
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={category.unifiedPage !== undefined ? category.unifiedPage : false}
+                            onChange={(e) => {
+                                categoryMutation.mutate({ unifiedPage: e.target.checked })
+                            }}
+                        />
+                    }
+                    label="Display as unified page"
+                />
                 {category.private && category.privateId ? (
                     <TypographyCopyable component="a">
                         {getFaqCategoryPrivateLink(event, category.privateId)}

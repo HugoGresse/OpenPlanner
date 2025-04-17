@@ -4,6 +4,7 @@ import { PublicFaqType } from '../publicTypes'
 import { Box, Typography } from '@mui/material'
 import { FaqQuestion } from './FaqQuestion'
 import { useSearchParams } from '../../hooks/useSearchParams'
+import MDEditor from '@uiw/react-md-editor'
 
 export type FaqCategoryProps = {
     faq: PublicFaqType
@@ -51,32 +52,42 @@ export const PublicFaqCategory = ({ faq }: FaqCategoryProps) => {
                     {faq.category.name}
                 </Typography>
             </Box>
-            {questionsOrdered.map((question, index) => {
-                return (
-                    <FaqQuestion
-                        key={question.id}
-                        question={question}
-                        open={openQuestionId === question.id}
-                        onClick={() => {
-                            if (openQuestionId === question.id) {
+            {faq.category.unifiedPage ? (
+                <Box>
+                    <MDEditor.Markdown
+                        source={questionsOrdered.reduce((acc, question) => {
+                            return acc + `# ${question.question}\n${question.answer}\n\n`
+                        }, '')}
+                    />
+                </Box>
+            ) : (
+                questionsOrdered.map((question, index) => {
+                    return (
+                        <FaqQuestion
+                            key={question.id}
+                            question={question}
+                            open={openQuestionId === question.id}
+                            onClick={() => {
+                                if (openQuestionId === question.id) {
+                                    setSearchParams((prev) => {
+                                        const newParams = new URLSearchParams(prev)
+                                        newParams.delete('question')
+                                        return newParams
+                                    })
+                                    setOpenQuestion(null)
+                                    return
+                                }
                                 setSearchParams((prev) => {
                                     const newParams = new URLSearchParams(prev)
-                                    newParams.delete('question')
+                                    newParams.set('question', question.id)
                                     return newParams
                                 })
-                                setOpenQuestion(null)
-                                return
-                            }
-                            setSearchParams((prev) => {
-                                const newParams = new URLSearchParams(prev)
-                                newParams.set('question', question.id)
-                                return newParams
-                            })
-                            setOpenQuestion(question.id)
-                        }}
-                    />
-                )
-            })}
+                                setOpenQuestion(question.id)
+                            }}
+                        />
+                    )
+                })
+            )}
         </Box>
     )
 }
