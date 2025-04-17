@@ -23,9 +23,19 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
     const tocEntries: { text: string; level: number; page: number; y: number }[] = []
     const destinationAnnotations: DestinationAnnotation[] = []
     const linkAnnotations: LinkAnnotation[] = []
+    let hasTocPlaceholder = false
+    let tocPlaceholderPosition = -1
 
-    // First pass: collect TOC entries and calculate their positions
-    for (const token of tokens) {
+    // First pass: collect TOC entries and calculate positions
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i]
+
+        // Check for TOC placeholder in paragraphs
+        if (token.type === 'paragraph' && (token as any).text === '[TOC]') {
+            hasTocPlaceholder = true
+            tocPlaceholderPosition = i
+        }
+
         if (token.type === 'heading') {
             const fontSize = Math.max(12, 24 - (token as any).depth * 2)
             const lineHeight = fontSize / 2
@@ -42,27 +52,42 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
         }
     }
 
-    // Generate TOC at the beginning
-    const tocLinkAnnotations = generateTableOfContents(doc, tocEntries, margins, currentY)
+    // Generate TOC if needed
+    let tocLinkAnnotations: LinkAnnotation[] = []
 
-    // Calculate the height of the TOC
-    const tocHeight =
-        margins.top + // Initial margin
-        16 + // Title height
-        10 + // Title bottom margin
-        tocEntries.length * 6 + // Each TOC entry height
-        10 + // Separator line margin
-        1 + // Separator line height
-        10 // Bottom margin after separator
+    if (tocEntries.length > 0) {
+        if (hasTocPlaceholder) {
+            // Skip TOC generation at the beginning if we have a TOC placeholder
+            currentY = margins.top
+            currentPage = 1
+        } else {
+            // Generate TOC at the beginning
+            tocLinkAnnotations = generateTableOfContents(doc, tocEntries, margins, currentY)
 
-    // Set the starting position for content after the TOC
-    currentY = tocHeight
-    currentPage = (doc.internal as any).getNumberOfPages()
+            currentPage = (doc.internal as any).getNumberOfPages()
+        }
+    }
 
     // Second pass: render content
     let currentHeading: { text: string; level: number } | undefined
 
-    for (const token of tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i]
+
+        // If we've reached the TOC placeholder, generate the TOC here
+        if (i === tocPlaceholderPosition) {
+            tocLinkAnnotations = generateTableOfContents(doc, tocEntries, margins, currentY)
+
+            // Calculate the height of the TOC
+            const tocHeight =
+                tocEntries.length * 6 + // Each TOC entry height
+                10 // Separator line margin
+
+            // Adjust current Y position
+            currentY += tocHeight
+            continue // Skip the TOC placeholder token
+        }
+
         let result
         switch (token.type) {
             case 'heading': {
@@ -89,9 +114,14 @@ export async function markdownToPdf(markdownContent: string): Promise<Blob> {
             }
 
             case 'paragraph': {
+                // Skip [TOC] paragraph
+                if ((token as any).text === '[TOC]') {
+                    break
+                }
+
                 result = handleParagraph(
                     doc,
-                    token as Token & { type: 'paragraph'; raw: string },
+                    token as any,
                     margins,
                     currentY,
                     currentPage,

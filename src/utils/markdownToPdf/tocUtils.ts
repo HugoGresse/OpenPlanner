@@ -7,19 +7,21 @@ export const generateTableOfContents = (
     margins: Margins,
     currentY: number
 ): LinkAnnotation[] => {
-    if (tocEntries.length === 0) return []
+    // Filter out h1 entries (level 1)
+    const filteredTocEntries = tocEntries.filter((entry) => entry.level > 1)
+
+    if (filteredTocEntries.length === 0) return []
 
     let tocY = margins.top
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(16)
-    doc.text('Table of Contents', margins.left, tocY)
     tocY += 10
 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     const tocLinkAnnotations: LinkAnnotation[] = []
 
-    tocEntries.forEach((entry: TocEntry) => {
+    filteredTocEntries.forEach((entry: TocEntry) => {
         const indent = (entry.level - 1) * 5
         const tocLineHeight = 5
 
@@ -44,15 +46,8 @@ export const generateTableOfContents = (
         tocY += tocLineHeight + 1
     })
 
-    // Add a separator line after the TOC
-    tocY += 10
+    tocY += 8
     doc.line(margins.left, tocY, doc.internal.pageSize.getWidth() - margins.right, tocY)
-    tocY += 10
-
-    // Adjust the Y position for all entries since we added the TOC
-    tocEntries.forEach((entry) => {
-        entry.y += tocY
-    })
 
     return tocLinkAnnotations
 }

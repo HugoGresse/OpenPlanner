@@ -35,6 +35,8 @@ ${faq.answer}
 
     return `# ${event.name} - ${category.name} FAQ
 
+[TOC]
+
 ${content}
 `
 }
