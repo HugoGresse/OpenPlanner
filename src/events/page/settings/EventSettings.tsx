@@ -4,7 +4,7 @@ import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useLocation } from 'wouter'
 import * as yup from 'yup'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
@@ -24,6 +24,7 @@ import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMuta
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { EventSettingsFormatCategoriesGrid } from './EventSettingsFormatCategoriesGrid'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
+import { TextFieldElementPrivate } from '../../../components/form/TextFieldElementPrivate'
 
 const schema = yup
     .object({
@@ -211,7 +212,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     Other stuffs
                                 </Typography>
 
-                                <TextFieldElement
+                                <TextFieldElementPrivate
                                     margin="normal"
                                     fullWidth
                                     id="openAPIKey"
@@ -221,7 +222,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     disabled={formState.isSubmitting}
                                 />
 
-                                <TextFieldElement
+                                <TextFieldElementPrivate
                                     margin="normal"
                                     fullWidth
                                     id="gladiaAPIKey"
