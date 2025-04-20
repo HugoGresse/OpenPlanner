@@ -58,8 +58,6 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
 
     const currentSessions = sessionsByDay.get(selectedDay) || []
 
-    console.log('currentSessions', event)
-
     return (
         <Box
             display="flex"
