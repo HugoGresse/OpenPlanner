@@ -1,11 +1,9 @@
-import * as React from 'react'
-import { TextFieldElement } from 'react-hook-form-mui'
 import { Box, Button, IconButton, InputAdornment } from '@mui/material'
 import { generateApiKey } from '../../utils/generateApiKey'
 import { useController } from 'react-hook-form'
 import { ContentCopy } from '@mui/icons-material'
 import { useCopyToClipboard } from '../../context/copyToClipboardHook'
-
+import { TextFieldElementPrivate } from './TextFieldElementPrivate'
 export type TextFieldElementWithGenerateApiKeyButtonProps = {
     required: boolean
     fullWidth: boolean
@@ -26,7 +24,7 @@ export const TextFieldElementWithGenerateApiKeyButton = (props: TextFieldElement
 
     return (
         <>
-            <TextFieldElement
+            <TextFieldElementPrivate
                 margin="normal"
                 required
                 fullWidth

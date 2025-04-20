@@ -19,6 +19,7 @@ import { useFaqs } from '../../../services/hooks/useFaqs'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { TypographyCopyable } from '../../../components/TypographyCopyable'
 import { Link } from 'wouter'
+import { TextFieldElementPrivate } from '../../../components/form/TextFieldElementPrivate'
 
 const schema = yup
     .object({
@@ -88,12 +89,22 @@ export const API = ({ event }: APIProps) => {
                             </Typography>
                             <EventStaticApiFilePaths event={event} />
 
-                            <Typography fontWeight="600" mt={2}>
+                            <Typography fontWeight="600" mt={5}>
                                 Dynamic API (slow, not cached, read/write, work in progress)
                             </Typography>
                             <Typography fontWeight="600" mt={2} component="a" href="https://api.openplanner.fr/">
                                 Docs
                             </Typography>
+                            <TextFieldElementPrivate
+                                margin="normal"
+                                fullWidth
+                                id="id"
+                                label="Event ID"
+                                name="id"
+                                disabled={true}
+                                showFullText={true}
+                                value={event.id}
+                            />
                             <TextFieldElementWithGenerateApiKeyButton
                                 required={true}
                                 fullWidth={true}

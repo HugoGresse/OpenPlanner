@@ -1,4 +1,4 @@
-import { Box } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { DateTime } from 'luxon'
 import { JsonSession, JsonPublicOutput } from '../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
 import { useLocation, useRoute } from 'wouter'
@@ -59,7 +59,16 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
     const currentSessions = sessionsByDay.get(selectedDay) || []
 
     return (
-        <Box display="flex" flexDirection="column" gap={2} p={0} mt={2} justifyContent="center" alignItems="center">
+        <Box
+            display="flex"
+            flexDirection="column"
+            gap={2}
+            p={0}
+            mt={2}
+            justifyContent="center"
+            alignItems="center"
+            sx={{ minHeight: 'calc(100vh - 124px)' }} // Subtract margin-top value to prevent overflow
+        >
             <ScheduleHeader
                 eventName={event.event.name}
                 logoUrl={event.event.logoUrl}
@@ -75,6 +84,16 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
                 speakersData={event.speakers}
                 categories={event.event.categories}
             />
+
+            <Box
+                sx={{
+                    marginTop: 'auto',
+                    py: 2,
+                }}>
+                <Typography variant="caption" color="text.secondary">
+                    Updated on {DateTime.fromISO(event.generatedAt).toLocaleString(DateTime.DATETIME_FULL)}
+                </Typography>
+            </Box>
         </Box>
     )
 }
