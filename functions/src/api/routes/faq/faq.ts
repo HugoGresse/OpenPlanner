@@ -46,7 +46,7 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
         {
             schema: {
                 tags: ['faq'],
-                summary:
+                description:
                     'Add a new item in the FAQ. If the question id is provided, and the question with the same id already exist, it will be updated instead of created.',
                 body: Faq,
                 response: {
@@ -78,7 +78,7 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
         {
             schema: {
                 tags: ['faq'],
-                summary:
+                description:
                     'Get the FAQ details (publicly used by OpenPlanner public frontend). If you pass a faqPrivateId, it will only return the private FAQ for that ID',
                 response: {
                     200: GetReply,

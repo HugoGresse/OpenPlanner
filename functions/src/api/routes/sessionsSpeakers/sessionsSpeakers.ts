@@ -178,7 +178,8 @@ export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: (
         {
             schema: {
                 tags: ['speakers', 'sessions'],
-                summary:
+                summary: 'Write sessions and speakers',
+                description:
                     'Overwrite sessions and speakers: if any data exist before, each filed given in the body will rewrite the corresponding data. ' +
                     'Tracks, formats and categories will only be created if none exist before and if you provide an id and a name. If track, format or category does exist, the ID will be matched again the trackName or the trackId, same for categories and formats.',
                 body: SpeakersSessionsType,

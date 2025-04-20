@@ -53,7 +53,7 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
         '/v1/:eventId/sessions/:sessionId/shortvid',
         {
             schema: {
-                tags: ['session'],
+                tags: ['sessions'],
                 summary: 'Generate the session announcement video using shortvid.io API.',
                 querystring: {
                     type: 'object',
