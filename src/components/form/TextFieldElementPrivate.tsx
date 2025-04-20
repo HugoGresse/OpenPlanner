@@ -15,12 +15,13 @@ export type TextFieldElementPrivateProps = {
     helperText?: string
     disabled?: boolean
     visibleChars?: number
+    showFullText?: boolean
 }
 
 export const TextFieldElementPrivate = (props: TextFieldElementPrivateProps & TextFieldElementProps) => {
     const { field } = useController({ name: props.name })
     const copyAction = useCopyToClipboard()
-    const [showFullText, setShowFullText] = useState(false)
+    const [showFullText, setShowFullText] = useState(props.showFullText === undefined ? false : props.showFullText)
     const visibleChars = props.visibleChars || 8
 
     const copyToClipboard = () => {
