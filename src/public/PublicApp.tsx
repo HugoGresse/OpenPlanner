@@ -4,6 +4,7 @@ import { Typography } from '@mui/material'
 import { TranscriptionApp } from './transcription/TranscriptionApp'
 import { PublicEventFaqApp } from './faq/PublicEventFaqApp'
 import { PublicEventContainer } from './event/PublicEventContainer'
+import { PublicEventJobAdd } from './jobs/PublicEventJobAdd'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
@@ -26,6 +27,9 @@ export const PublicApp = (props: PublicAppProps) => {
                 </Route>
                 <Route path="/transcription">
                     <TranscriptionApp eventId={eventId} />
+                </Route>
+                <Route path="/jobs/add">
+                    <PublicEventJobAdd eventId={eventId} />
                 </Route>
                 <Route>
                     <PublicEventContainer eventId={eventId} />

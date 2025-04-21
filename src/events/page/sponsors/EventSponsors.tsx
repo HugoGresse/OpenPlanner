@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { Box, Button, Card, Container, Typography } from '@mui/material'
 import { Event, SponsorCategory } from '../../../types'
@@ -8,12 +7,15 @@ import { SponsorCategoryItem } from './components/SponsorCategoryItem'
 import { NewCategoryDialog } from './components/NewCategoryDialog'
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import { updateSponsors } from '../../actions/updateSponsors'
-
+import { JobPostSettings } from './components/jobs/JobPostSettings'
+import { JobPostUrlDisplay } from './components/jobs/JobPostUrlDisplay'
+import { useJobsPosts } from '../../../services/hooks/useJobsPosts'
 export type EventSponsorsProps = {
     event: Event
 }
 export const EventSponsors = ({ event }: EventSponsorsProps) => {
     const sponsors = useSponsors(event.id)
+    const jobPosts = useJobsPosts(event.id)
     const [newCategoryDialog, setNewCategoryDialog] = useState(false)
 
     const sponsorsData = sponsors.data || []
@@ -64,10 +66,20 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
                 <Typography> {sponsors.data?.length} sponsors</Typography>
+                <JobPostSettings event={event} />
             </Box>
-            <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
+
+            {event.addJobPostEnabled && (
+                <JobPostUrlDisplay
+                    event={event}
+                    jobPosts={jobPosts.data || []}
+                    sponsorCategories={sponsorsData || []}
+                />
+            )}
+
+            <Card sx={{ paddingX: 2, minHeight: '50vh', marginBottom: 2 }}>
                 <DragDropContext onDragEnd={onDragEnd}>
                     <Droppable droppableId="droppable">
                         {(provided) => (
@@ -78,6 +90,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                                         index={index}
                                         category={category}
                                         eventId={event.id}
+                                        jobPosts={jobPosts.data || []}
                                     />
                                 ))}
                                 {provided.placeholder}
@@ -90,6 +103,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                     <Button onClick={() => setNewCategoryDialog(true)}>Add category</Button>
                 </Box>
             </Card>
+
             <NewCategoryDialog
                 open={newCategoryDialog}
                 eventId={event.id}

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { PublicFaqType } from '../publicTypes'
 import { Box, Typography } from '@mui/material'
 import { FaqQuestion } from './FaqQuestion'
-import { useSearchParams } from '../../hooks/useSearchParams'
+import { useSearchParams } from 'wouter'
 import MDEditor from '@uiw/react-md-editor'
 
 export type FaqCategoryProps = {

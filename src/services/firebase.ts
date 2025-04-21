@@ -8,6 +8,7 @@ import {
     adminUserConverter,
     eventConverter,
     faqConverter,
+    jobPostConverter,
     sessionConverter,
     speakerConverter,
     sponsorsConverter,
@@ -42,6 +43,8 @@ export const collections = {
         collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
     team: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'team').withConverter(teamConverter),
     faq: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'faq').withConverter(faqConverter),
+    jobPosts: (eventId: string) =>
+        collection(instanceFirestore, 'events', eventId, 'jobPosts').withConverter(jobPostConverter),
 
     adminsUsers: collection(instanceFirestore, 'admins', 'users', 'admins').withConverter(adminUserConverter),
 }

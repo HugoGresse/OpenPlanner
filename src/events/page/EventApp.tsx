@@ -34,6 +34,7 @@ const EventSponsors = lazy(() =>
     import('./sponsors/EventSponsors').then((module) => ({ default: module.EventSponsors }))
 )
 const Sponsor = lazy(() => import('./sponsors/Sponsor').then((module) => ({ default: module.Sponsor })))
+const JobPosts = lazy(() => import('./sponsors/jobposts/JobPosts').then((module) => ({ default: module.JobPosts })))
 
 const EventTeam = lazy(() => import('./team/EventTeam').then((module) => ({ default: module.EventTeam })))
 const EventMember = lazy(() => import('./team/EventMember').then((module) => ({ default: module.EventMember })))
@@ -72,6 +73,11 @@ export const EventApp = ({ eventId }: { eventId?: string }) => {
                 <Route path="/sponsors/:id">
                     <Suspense fallback={<SuspenseLoader />}>
                         <Sponsor event={eventData} />
+                    </Suspense>
+                </Route>
+                <Route path="/jobposts">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <JobPosts event={eventData} />
                     </Suspense>
                 </Route>
 

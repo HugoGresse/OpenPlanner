@@ -1,5 +1,6 @@
 import { FieldValue, Timestamp } from 'firebase/firestore'
 import { DateTime } from 'luxon'
+import { JobStatus } from './constants/jobStatus'
 
 export interface Track {
     id: string
@@ -141,6 +142,8 @@ export interface Event {
     createdAt: Date
     updatedAt: Date
     apiKey: string | null
+    addJobPostPrivateId?: string | null
+    addJobPostEnabled?: boolean
     files: EventFiles | null
     statusBadgeImage: string | null
     statusBadgeLink: string | null
@@ -192,6 +195,21 @@ export interface SponsorCategory {
     name: string
     order: number
     sponsors: Sponsor[]
+}
+
+export interface JobPost {
+    id: string
+    title: string
+    description: string
+    location: string
+    externalLink: string
+    category: string
+    salary: string | null
+    contactEmail: string | null
+    status: JobStatus
+    createdAt: Timestamp
+    updatedAt: Timestamp
+    sponsorId: string
 }
 
 export interface TeamMember {

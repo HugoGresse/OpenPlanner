@@ -1,49 +1,110 @@
-import * as React from 'react'
-import { Sponsor } from '../../../../types'
-import { Box, IconButton, Link, Typography } from '@mui/material'
+import { JobPost, Sponsor } from '../../../../types'
+import { Box, Card, CardContent, CardMedia, IconButton, Link, Typography, useTheme, alpha, Button } from '@mui/material'
 import { DeleteRounded } from '@mui/icons-material'
 import EditIcon from '@mui/icons-material/Edit'
-
+import WorkIcon from '@mui/icons-material/Work'
+import { useMemo } from 'react'
 export type SponsorItemProps = {
     sponsor: Sponsor
     categoryId: string
     onDelete: () => void
+    jobPosts: JobPost[]
 }
-export const SponsorItem = ({ sponsor, onDelete, categoryId }: SponsorItemProps) => {
+
+export const SponsorItem = ({ sponsor, onDelete, categoryId, jobPosts }: SponsorItemProps) => {
+    const theme = useTheme()
+
+    const jobPostsCount = useMemo(() => {
+        return jobPosts.filter((jobPost) => jobPost.sponsorId === sponsor.id).length
+    }, [jobPosts, sponsor.id])
+
     return (
-        <Box
+        <Card
             component="li"
-            borderRadius={2}
-            marginRight={1}
-            marginTop={1}
-            paddingLeft={1}
-            bgcolor="#DDDDDD88"
-            display="flex">
+            sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                borderRadius: 2,
+                marginRight: 1,
+                marginTop: 1,
+                backgroundColor: alpha(theme.palette.background.paper, 0.7),
+                transition: 'all 0.2s ease-in-out',
+                border: `1px solid ${theme.palette.divider}`,
+                '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: theme.shadows[4],
+                },
+                maxWidth: 340,
+                overflow: 'visible',
+            }}>
+            <CardContent
+                sx={{
+                    flex: '1 1 auto',
+                    p: 2,
+                    overflow: 'hidden',
+                }}>
+                <Typography variant="h6" gutterBottom component="div" noWrap>
+                    {sponsor.name}
+                </Typography>
+                <CardMedia
+                    component="img"
+                    sx={{
+                        width: 100,
+                        height: 100,
+                        objectFit: 'contain',
+                        borderRadius: 1,
+                        backgroundColor:
+                            theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.common.white, 0.1)
+                                : alpha(theme.palette.common.black, 0.05),
+                        padding: 1,
+                    }}
+                    image={sponsor.logoUrl}
+                    alt={sponsor.name}
+                />
+                <Button
+                    component={Link}
+                    href={`/jobposts?sponsorId=${sponsor.id}`}
+                    startIcon={<WorkIcon />}
+                    variant="outlined"
+                    size="small"
+                    sx={{ mt: 1 }}>
+                    {jobPostsCount} jobs
+                </Button>
+            </CardContent>
+
             <Box
                 sx={{
-                    img: {
-                        borderRadius: 2,
-                        height: 100,
-                        width: 100,
-                        objectFit: 'contain',
-                        overflow: 'hidden',
-                    },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexShrink: 0,
+                    borderLeft: `1px solid ${theme.palette.divider}`,
+                    p: 1,
+                    width: 50,
                 }}>
-                <Typography variant="h6">{sponsor.name}</Typography>
-                <img src={sponsor.logoUrl} alt={sponsor.name} />
-            </Box>
-            <Box display="flex" flexDirection="column" paddingX={2}>
                 <IconButton
                     aria-label="Edit sponsor"
                     component={Link}
                     href={`/sponsors/${sponsor.id}?categoryId=${categoryId}`}
-                    edge="end">
+                    size="small"
+                    sx={{
+                        mb: 1,
+                        color: theme.palette.primary.main,
+                    }}>
                     <EditIcon />
                 </IconButton>
-                <IconButton aria-label="Delete sponsor" onClick={onDelete} edge="end">
+                <IconButton
+                    aria-label="Delete sponsor"
+                    onClick={onDelete}
+                    size="small"
+                    sx={{
+                        color: theme.palette.error.main,
+                    }}>
                     <DeleteRounded />
                 </IconButton>
             </Box>
-        </Box>
+        </Card>
     )
 }

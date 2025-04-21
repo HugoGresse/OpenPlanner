@@ -1,11 +1,10 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { Card, Typography } from '@mui/material'
 import { PublicFaqReply } from '../publicTypes'
 import { PublicEventLayout } from '../PublicEventLayout'
 import { PublicFaqCategory } from './PublicFaqCategory'
 import { PublicFaqCategoryPicker } from './PublicFaqCategoryPicker'
-import { useSearchParams } from '../../hooks/useSearchParams'
+import { useSearchParams } from 'wouter'
 
 export type PublicEventFaqProps = {
     faqReply: PublicFaqReply

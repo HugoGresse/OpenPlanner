@@ -1,7 +1,6 @@
 import { Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material'
-import * as React from 'react'
 import { useRef, useState } from 'react'
-import { SponsorCategory } from '../../../../types'
+import { JobPost, SponsorCategory } from '../../../../types'
 import { SponsorItem } from './SponsorItem'
 import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
@@ -9,7 +8,7 @@ import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../../services/hooks/firestoreMutationHooks'
-import { DeleteRounded, Download, DragHandle } from '@mui/icons-material'
+import { DeleteRounded, Download, DragIndicator } from '@mui/icons-material'
 import { Draggable, DraggingStyle, NotDraggingStyle } from '@hello-pangea/dnd'
 import { downloadImages } from '../../../../utils/images/downloadImages'
 
@@ -17,9 +16,10 @@ export type SponsorCategoryProps = {
     category: SponsorCategory
     index: number
     eventId: string
+    jobPosts: JobPost[]
 }
 
-export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategoryProps) => {
+export const SponsorCategoryItem = ({ category, eventId, index, jobPosts }: SponsorCategoryProps) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(eventId), category.id))
     const deleteCategory = useFirestoreDocumentDeletion(doc(collections.sponsors(eventId), category.id))
     const ref = useRef(null)
@@ -39,9 +39,11 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                     {...provided.draggableProps}
                     style={getItemStyle(snapshot.isDragging, provided.draggableProps.style)}>
                     <Box marginY={1} ref={ref}>
-                        <Typography variant="h3" sx={{ borderBottom: '1px solid #BBB', marginBottom: 1 }}>
+                        <Typography
+                            variant="h3"
+                            sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}`, marginBottom: 1 }}>
                             <Box {...provided.dragHandleProps} sx={{ display: 'inline' }}>
-                                <DragHandle />
+                                <DragIndicator />
                             </Box>
                             {category.name}
                             <IconButton
@@ -70,6 +72,7 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                                     key={sponsor.id}
                                     sponsor={sponsor}
                                     categoryId={category.id}
+                                    jobPosts={jobPosts}
                                     onDelete={async () => {
                                         await mutation.mutate({
                                             sponsors: category.sponsors.filter((s) => s.id !== sponsor.id),
