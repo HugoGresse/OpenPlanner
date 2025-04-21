@@ -10,19 +10,23 @@ import {
     DialogContentText,
     DialogTitle,
 } from '@mui/material'
-import { Event } from '../../../../../types'
+import { Event, JobPost, SponsorCategory } from '../../../../../types'
 import { collections } from '../../../../../services/firebase'
 import { doc } from 'firebase/firestore'
 import { useFirestoreDocumentMutation } from '../../../../../services/hooks/firestoreMutationHooks'
 import { v4 as uuidv4 } from 'uuid'
 import { TypographyCopyable } from '../../../../../components/TypographyCopyable'
+import { PendingJobPostsDialog } from './PendingJobPostsDialog'
 
 export type JobPostUrlDisplayProps = {
     event: Event
+    jobPosts: JobPost[]
+    sponsorCategories: SponsorCategory[]
 }
 
-export const JobPostUrlDisplay = ({ event }: JobPostUrlDisplayProps) => {
+export const JobPostUrlDisplay = ({ event, jobPosts, sponsorCategories }: JobPostUrlDisplayProps) => {
     const [confirmResetDialog, setConfirmResetDialog] = useState(false)
+    const [pendingJobPostsDialog, setPendingJobPostsDialog] = useState(false)
 
     const eventMutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
 
@@ -38,12 +42,30 @@ export const JobPostUrlDisplay = ({ event }: JobPostUrlDisplayProps) => {
         setConfirmResetDialog(false)
     }
 
+    const { pendingJobPosts, approvedJobPosts } = useMemo(() => {
+        return {
+            pendingJobPosts: jobPosts.filter((jobPost) => !jobPost.approved),
+            approvedJobPosts: jobPosts.filter((jobPost) => jobPost.approved),
+        }
+    }, [jobPosts])
+
     return (
         <>
             <Card sx={{ padding: 2, marginBottom: 2 }}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                    Job posts
+                    Job posts, {pendingJobPosts.length} pending, {approvedJobPosts.length} approved
                 </Typography>
+                {pendingJobPosts.length > 0 && (
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            setPendingJobPostsDialog(true)
+                        }}
+                        sx={{ mb: 2 }}>
+                        Review pending job posts
+                    </Button>
+                )}
+
                 <Typography variant="body2" sx={{ marginBottom: 1 }}>
                     Share this URL with sponsors to allow them to submit job postings:
                 </Typography>
@@ -71,6 +93,14 @@ export const JobPostUrlDisplay = ({ event }: JobPostUrlDisplayProps) => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <PendingJobPostsDialog
+                open={pendingJobPostsDialog}
+                onClose={() => setPendingJobPostsDialog(false)}
+                jobPosts={jobPosts}
+                event={event}
+                sponsorCategories={sponsorCategories}
+            />
         </>
     )
 }

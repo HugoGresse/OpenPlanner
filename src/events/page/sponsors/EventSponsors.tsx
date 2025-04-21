@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { Box, Button, Card, Container, Typography } from '@mui/material'
 import { Event, SponsorCategory } from '../../../types'
@@ -10,15 +9,18 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import { updateSponsors } from '../../actions/updateSponsors'
 import { JobPostSettings } from './components/jobs/JobPostSettings'
 import { JobPostUrlDisplay } from './components/jobs/JobPostUrlDisplay'
-
+import { useJobsPosts } from '../../../services/hooks/useJobsPosts'
 export type EventSponsorsProps = {
     event: Event
 }
 export const EventSponsors = ({ event }: EventSponsorsProps) => {
     const sponsors = useSponsors(event.id)
+    const jobPosts = useJobsPosts(event.id)
     const [newCategoryDialog, setNewCategoryDialog] = useState(false)
 
     const sponsorsData = sponsors.data || []
+
+    console.log(jobPosts)
 
     if (sponsors.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
@@ -71,7 +73,13 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                 <JobPostSettings event={event} />
             </Box>
 
-            {event.addJobPostEnabled && <JobPostUrlDisplay event={event} />}
+            {event.addJobPostEnabled && (
+                <JobPostUrlDisplay
+                    event={event}
+                    jobPosts={jobPosts.data || []}
+                    sponsorCategories={sponsorsData || []}
+                />
+            )}
 
             <Card sx={{ paddingX: 2, minHeight: '50vh', marginBottom: 2 }}>
                 <DragDropContext onDragEnd={onDragEnd}>

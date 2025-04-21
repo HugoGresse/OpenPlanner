@@ -196,6 +196,21 @@ export interface SponsorCategory {
     sponsors: Sponsor[]
 }
 
+export interface JobPost {
+    id: string
+    title: string
+    description: string
+    location: string
+    externalLink: string
+    category: string
+    salary: string | null
+    contactEmail: string | null
+    approved: boolean
+    createdAt: Timestamp
+    updatedAt: Timestamp
+    sponsorId: string
+}
+
 export interface TeamMember {
     id: string
     name: string

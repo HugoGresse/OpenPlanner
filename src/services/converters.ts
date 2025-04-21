@@ -1,4 +1,4 @@
-import { Event, Faq, FaqCategory, NewEvent, Session, Speaker, SponsorCategory, TeamMember } from '../types'
+import { Event, Faq, FaqCategory, NewEvent, Session, Speaker, SponsorCategory, TeamMember, JobPost } from '../types'
 import { FirestoreDataConverter } from '@firebase/firestore'
 import { DateTime } from 'luxon'
 
@@ -139,6 +139,15 @@ export const faqItemConverter: FirestoreDataConverter<Faq> = {
     },
 }
 
+export const jobPostConverter: FirestoreDataConverter<JobPost> = {
+    fromFirestore(snapshot): JobPost {
+        const data = snapshot.data()
+        return data as JobPost
+    },
+    toFirestore(data: JobPost) {
+        return data
+    },
+}
 export const adminUserConverter: FirestoreDataConverter<{ id: string }> = {
     fromFirestore(snapshot): { id: string } {
         const data = snapshot.data()
