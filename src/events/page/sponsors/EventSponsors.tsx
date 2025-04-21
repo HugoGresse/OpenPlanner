@@ -8,6 +8,8 @@ import { SponsorCategoryItem } from './components/SponsorCategoryItem'
 import { NewCategoryDialog } from './components/NewCategoryDialog'
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import { updateSponsors } from '../../actions/updateSponsors'
+import { JobPostSettings } from './components/jobs/JobPostSettings'
+import { JobPostUrlDisplay } from './components/jobs/JobPostUrlDisplay'
 
 export type EventSponsorsProps = {
     event: Event
@@ -64,9 +66,13 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
                 <Typography> {sponsors.data?.length} sponsors</Typography>
+                <JobPostSettings event={event} />
             </Box>
+
+            {event.addJobPostEnabled && <JobPostUrlDisplay event={event} />}
+
             <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
                 <DragDropContext onDragEnd={onDragEnd}>
                     <Droppable droppableId="droppable">
@@ -90,6 +96,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                     <Button onClick={() => setNewCategoryDialog(true)}>Add category</Button>
                 </Box>
             </Card>
+
             <NewCategoryDialog
                 open={newCategoryDialog}
                 eventId={event.id}

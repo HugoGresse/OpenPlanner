@@ -142,6 +142,7 @@ export interface Event {
     updatedAt: Date
     apiKey: string | null
     addJobPostPrivateId?: string | null
+    addJobPostEnabled?: boolean
     files: EventFiles | null
     statusBadgeImage: string | null
     statusBadgeLink: string | null

@@ -44,6 +44,12 @@ export const addJobPostRouteHandler = (fastify: FastifyInstance) => {
             // Get the event to validate the addJobPostPrivateId
             const event = await EventDao.getEvent(fastify.firebase, eventId)
 
+            // Check if job posts are enabled and if the privateId matches
+            if (!event.addJobPostEnabled) {
+                reply.status(401).send('Job posting is not enabled for this event')
+                return
+            }
+
             // Check if the event has a addJobPostPrivateId and if it matches the one provided
             if (!event.addJobPostPrivateId || event.addJobPostPrivateId !== addJobPostPrivateId) {
                 reply.status(401).send('Invalid addJobPostPrivateId ID')
