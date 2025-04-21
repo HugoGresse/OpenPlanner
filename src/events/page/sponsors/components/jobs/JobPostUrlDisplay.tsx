@@ -42,7 +42,7 @@ export const JobPostUrlDisplay = ({ event }: JobPostUrlDisplayProps) => {
         <>
             <Card sx={{ padding: 2, marginBottom: 2 }}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                    Job Post Submission URL
+                    Job posts
                 </Typography>
                 <Typography variant="body2" sx={{ marginBottom: 1 }}>
                     Share this URL with sponsors to allow them to submit job postings:

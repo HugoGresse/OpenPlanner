@@ -1,5 +1,4 @@
 import { Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material'
-import * as React from 'react'
 import { useRef, useState } from 'react'
 import { SponsorCategory } from '../../../../types'
 import { SponsorItem } from './SponsorItem'
@@ -9,7 +8,7 @@ import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../../services/hooks/firestoreMutationHooks'
-import { DeleteRounded, Download, DragHandle } from '@mui/icons-material'
+import { DeleteRounded, Download, DragIndicator } from '@mui/icons-material'
 import { Draggable, DraggingStyle, NotDraggingStyle } from '@hello-pangea/dnd'
 import { downloadImages } from '../../../../utils/images/downloadImages'
 
@@ -39,9 +38,11 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                     {...provided.draggableProps}
                     style={getItemStyle(snapshot.isDragging, provided.draggableProps.style)}>
                     <Box marginY={1} ref={ref}>
-                        <Typography variant="h3" sx={{ borderBottom: '1px solid #BBB', marginBottom: 1 }}>
+                        <Typography
+                            variant="h3"
+                            sx={{ borderBottom: (theme) => `1px solid ${theme.palette.divider}`, marginBottom: 1 }}>
                             <Box {...provided.dragHandleProps} sx={{ display: 'inline' }}>
-                                <DragHandle />
+                                <DragIndicator />
                             </Box>
                             {category.name}
                             <IconButton

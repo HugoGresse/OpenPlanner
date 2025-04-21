@@ -73,7 +73,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
 
             {event.addJobPostEnabled && <JobPostUrlDisplay event={event} />}
 
-            <Card sx={{ paddingX: 2, minHeight: '50vh' }}>
+            <Card sx={{ paddingX: 2, minHeight: '50vh', marginBottom: 2 }}>
                 <DragDropContext onDragEnd={onDragEnd}>
                     <Droppable droppableId="droppable">
                         {(provided) => (
