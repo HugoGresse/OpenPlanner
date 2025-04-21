@@ -21,6 +21,7 @@ import { useSponsors } from '../../../../services/hooks/useSponsors'
 import { useJobsPosts } from '../../../../services/hooks/useJobsPosts'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { useSearchParams } from 'wouter'
+import { TitlePortal } from '../../layouts/EventLayout'
 
 const ALL_SPONSORS_ID = '-all-'
 
@@ -89,7 +90,7 @@ export const JobPosts = ({ event }: { event: Event }) => {
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom>
-                Job Posts
+                <TitlePortal>Job Posts</TitlePortal>
             </Typography>
 
             <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
