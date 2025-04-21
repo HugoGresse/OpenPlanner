@@ -102,11 +102,7 @@ export interface EventFiles {
     openfeedback: string
 }
 
-export interface EventExtended extends EventFrontend {
-    addJobPostEnabled?: boolean
-}
-
-export type Event = EventExtended
+export type Event = EventFrontend
 
 export interface SponsorResponse {
     id: string
