@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { Type } from '@sinclair/typebox'
 import { JobPostDao, JobPostResponse } from '../../dao/jobPostDao'
+import { JobStatus } from '../../.././../../src/constants/jobStatus'
 
 export type GetJobPostGETTypes = {
     Params: { eventId: string; jobPostId: string }
@@ -45,7 +46,7 @@ export const getJobPostGETSchema = {
             salary: Type.Optional(Type.String()),
             requirements: Type.Optional(Type.Array(Type.String())),
             contactEmail: Type.Optional(Type.String()),
-            approved: Type.Boolean(),
+            status: Type.Enum(JobStatus as Record<string, string>),
             createdAt: Type.Any(),
         }),
         400: Type.String(),

@@ -29,7 +29,9 @@ export const addJobPostPOSTSchema = {
     summary: 'Add a job post from a sponsor using a private id which is usually with the URL provided to the sponsor',
     body: TypeBoxJobPost,
     response: {
-        201: TypeBoxJobPost,
+        201: Type.Object({
+            jobPostId: Type.String(),
+        }),
         400: Type.String(),
         401: Type.String(),
     },

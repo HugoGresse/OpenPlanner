@@ -20,8 +20,6 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
 
     const sponsorsData = sponsors.data || []
 
-    console.log(jobPosts)
-
     if (sponsors.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
     }

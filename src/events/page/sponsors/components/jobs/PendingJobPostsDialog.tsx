@@ -18,6 +18,8 @@ import { collections } from '../../../../../services/firebase'
 import { useMemo, useState } from 'react'
 import MDEditor from '@uiw/react-md-editor'
 import { DateTime } from 'luxon'
+import { JobStatus } from '../../../../../constants/jobStatus'
+
 export type PendingJobPostsDialogProps = {
     open: boolean
     onClose: () => void
@@ -34,10 +36,9 @@ export const PendingJobPostsDialog = ({
     sponsorCategories,
 }: PendingJobPostsDialogProps) => {
     const [currentIndex, setCurrentIndex] = useState(0)
-    const pendingJobPosts = jobPosts.filter((jobPost) => !jobPost.approved)
+    const pendingJobPosts = jobPosts.filter((jobPost) => jobPost.status === JobStatus.PENDING)
     const currentJobPost = pendingJobPosts[currentIndex]
 
-    // Only create a mutation when there's a valid job post
     const jobPostMutation = useFirestoreDocumentMutationWithId(collections.jobPosts(event.id))
 
     const sponsorName = useMemo(() => {
@@ -52,7 +53,7 @@ export const PendingJobPostsDialog = ({
 
         jobPostMutation.mutate(
             {
-                approved: true,
+                status: JobStatus.APPROVED,
                 updatedAt: Timestamp.now(),
             },
             currentJobPost.id
@@ -62,9 +63,16 @@ export const PendingJobPostsDialog = ({
     }
 
     const handleReject = () => {
-        // TODO: Implement reject
-        // In a real application, you might want to either delete the job post
-        // or add a 'rejected' status instead of just moving to the next one
+        if (!currentJobPost) return
+
+        jobPostMutation.mutate(
+            {
+                status: JobStatus.REJECTED,
+                updatedAt: Timestamp.now(),
+            },
+            currentJobPost.id
+        )
+
         moveToNext()
     }
 

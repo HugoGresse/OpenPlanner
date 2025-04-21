@@ -1,5 +1,6 @@
 import { FieldValue, Timestamp } from 'firebase/firestore'
 import { DateTime } from 'luxon'
+import { JobStatus } from './constants/jobStatus'
 
 export interface Track {
     id: string
@@ -205,7 +206,7 @@ export interface JobPost {
     category: string
     salary: string | null
     contactEmail: string | null
-    approved: boolean
+    status: JobStatus
     createdAt: Timestamp
     updatedAt: Timestamp
     sponsorId: string

@@ -1,8 +1,8 @@
 import firebase from 'firebase-admin'
 import { v4 as uuidv4 } from 'uuid'
 import { JobPostType } from '../routes/sponsors/addJobPostPOST'
+import { JobStatus, JOB_STATUS_VALUES } from '../../../../src/constants/jobStatus'
 
-// Define a type for job posts without the privateEventId field
 export type JobPostData = Omit<JobPostType, 'addJobPostPrivateId'>
 
 export interface JobPostResponse extends JobPostData {
@@ -25,7 +25,7 @@ export class JobPostDao {
             .set({
                 ...jobPost,
                 id: jobPostId,
-                approved: false,
+                status: JobStatus.PENDING,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             })
 
@@ -51,7 +51,7 @@ export class JobPostDao {
         firebaseApp: firebase.app.App,
         eventId: string,
         sponsorId: string,
-        approvalStatus?: string
+        statusFilter?: string
     ): Promise<JobPostResponse[]> {
         const db = firebaseApp.firestore()
         let query = db
@@ -59,10 +59,8 @@ export class JobPostDao {
             .where('sponsorId', '==', sponsorId)
             .orderBy('createdAt', 'desc')
 
-        if (approvalStatus === 'approved') {
-            query = query.where('approved', '==', true)
-        } else if (approvalStatus === 'pending') {
-            query = query.where('approved', '==', false)
+        if (statusFilter && JOB_STATUS_VALUES.includes(statusFilter as JobStatus)) {
+            query = query.where('status', '==', statusFilter)
         }
 
         const snapshot = await query.get()
@@ -73,15 +71,13 @@ export class JobPostDao {
     public static async getAllJobPosts(
         firebaseApp: firebase.app.App,
         eventId: string,
-        approvalStatus?: string
+        statusFilter?: string
     ): Promise<JobPostResponse[]> {
         const db = firebaseApp.firestore()
         let query = db.collection(`events/${eventId}/jobPosts`).orderBy('createdAt', 'desc')
 
-        if (approvalStatus === 'approved') {
-            query = query.where('approved', '==', true)
-        } else if (approvalStatus === 'pending') {
-            query = query.where('approved', '==', false)
+        if (statusFilter && JOB_STATUS_VALUES.includes(statusFilter as JobStatus)) {
+            query = query.where('status', '==', statusFilter)
         }
 
         const snapshot = await query.get()
@@ -104,20 +100,20 @@ export class JobPostDao {
         }
     }
 
-    public static async setJobPostApproval(
+    public static async setJobPostStatus(
         firebaseApp: firebase.app.App,
         eventId: string,
         jobPostId: string,
-        approved: boolean
+        status: JobStatus
     ): Promise<boolean> {
         try {
             const db = firebaseApp.firestore()
             await db.collection(`events/${eventId}/jobPosts`).doc(jobPostId).update({
-                approved,
+                status,
             })
             return true
         } catch (error) {
-            console.error('Error updating job post approval status:', error)
+            console.error('Error updating job post status:', error)
             return false
         }
     }

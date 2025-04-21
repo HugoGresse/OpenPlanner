@@ -17,6 +17,7 @@ import { useFirestoreDocumentMutation } from '../../../../../services/hooks/fire
 import { v4 as uuidv4 } from 'uuid'
 import { TypographyCopyable } from '../../../../../components/TypographyCopyable'
 import { PendingJobPostsDialog } from './PendingJobPostsDialog'
+import { JobStatus } from '../../../../../constants/jobStatus'
 
 export type JobPostUrlDisplayProps = {
     event: Event
@@ -42,10 +43,11 @@ export const JobPostUrlDisplay = ({ event, jobPosts, sponsorCategories }: JobPos
         setConfirmResetDialog(false)
     }
 
-    const { pendingJobPosts, approvedJobPosts } = useMemo(() => {
+    const { pendingJobPosts, approvedJobPosts, rejectedJobPosts } = useMemo(() => {
         return {
-            pendingJobPosts: jobPosts.filter((jobPost) => !jobPost.approved),
-            approvedJobPosts: jobPosts.filter((jobPost) => jobPost.approved),
+            pendingJobPosts: jobPosts.filter((jobPost) => jobPost.status === JobStatus.PENDING),
+            approvedJobPosts: jobPosts.filter((jobPost) => jobPost.status === JobStatus.APPROVED),
+            rejectedJobPosts: jobPosts.filter((jobPost) => jobPost.status === JobStatus.REJECTED),
         }
     }, [jobPosts])
 
@@ -53,7 +55,8 @@ export const JobPostUrlDisplay = ({ event, jobPosts, sponsorCategories }: JobPos
         <>
             <Card sx={{ padding: 2, marginBottom: 2 }}>
                 <Typography variant="subtitle1" fontWeight="bold">
-                    Job posts, {pendingJobPosts.length} pending, {approvedJobPosts.length} approved
+                    Job posts, {pendingJobPosts.length} pending, {approvedJobPosts.length} approved,{' '}
+                    {rejectedJobPosts.length} rejected
                 </Typography>
                 {pendingJobPosts.length > 0 && (
                     <Button

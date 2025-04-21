@@ -114,7 +114,19 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
             setSubmitSuccess(true)
 
             if (shouldReset) {
-                reset()
+                // Preserve location and sponsorId when resetting form
+                const { sponsorId, location } = data
+                reset({
+                    sponsorId,
+                    location,
+                    title: '',
+                    description: '',
+                    externalLink: '',
+                    category: '',
+                    salary: '',
+                    requirements: [],
+                    contactEmail: '',
+                })
             }
         } catch (error) {
             console.error('Error submitting job post:', error)
@@ -147,8 +159,6 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
             </Container>
         )
     }
-
-    console.log(errorMsg)
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -326,7 +336,19 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
                                         await submitJobPost(data, false)
                                         if (!errorMsg) {
                                             setTimeout(() => {
-                                                reset()
+                                                // Preserve location and sponsorId when resetting form
+                                                const { sponsorId, location } = formContext.getValues()
+                                                reset({
+                                                    sponsorId,
+                                                    location,
+                                                    title: '',
+                                                    description: '',
+                                                    externalLink: '',
+                                                    category: '',
+                                                    salary: '',
+                                                    requirements: [],
+                                                    contactEmail: '',
+                                                })
                                                 setSubmitSuccess(false)
                                             }, 1000)
                                         }

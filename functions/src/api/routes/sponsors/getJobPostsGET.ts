@@ -1,9 +1,10 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { Type } from '@sinclair/typebox'
 import { JobPostDao, JobPostResponse } from '../../dao/jobPostDao'
+import { JobStatus, JOB_STATUS_VALUES } from '../../../../../src/constants/jobStatus'
 
 export type GetJobPostsGETTypes = {
-    Querystring: { sponsorId?: string; approvalStatus?: string }
+    Querystring: { sponsorId?: string; status?: string }
     Reply: JobPostResponse[] | string
 }
 
@@ -22,10 +23,10 @@ export const getJobPostsGETSchema = {
                 type: 'string',
                 description: 'Optional sponsor ID to filter job posts',
             },
-            approvalStatus: {
+            status: {
                 type: 'string',
-                enum: ['approved', 'pending', 'all'],
-                description: 'Filter by approval status (approved, pending, or all)',
+                enum: [...JOB_STATUS_VALUES, 'all'],
+                description: 'Filter by job post status',
             },
         },
     },
@@ -41,7 +42,7 @@ export const getJobPostsGETSchema = {
                 salary: Type.Optional(Type.String()),
                 requirements: Type.Optional(Type.Array(Type.String())),
                 contactEmail: Type.Optional(Type.String()),
-                approved: Type.Boolean(),
+                status: Type.Enum(JobStatus as Record<string, string>),
                 createdAt: Type.Any(),
             })
         ),
@@ -56,19 +57,19 @@ export const getJobPostsGETSchema = {
 
 export const getJobPostsRouteHandler = (fastify: FastifyInstance) => {
     return async (
-        request: FastifyRequest<{ Querystring: { sponsorId?: string; approvalStatus?: string } }>,
+        request: FastifyRequest<{ Querystring: { sponsorId?: string; status?: string } }>,
         reply: FastifyReply
     ) => {
         try {
             const { eventId } = request.params as { eventId: string }
-            const { sponsorId, approvalStatus } = request.query
+            const { sponsorId, status } = request.query
 
             let jobPosts: JobPostResponse[]
 
             if (sponsorId) {
-                jobPosts = await JobPostDao.getJobPostsBySponsor(fastify.firebase, eventId, sponsorId, approvalStatus)
+                jobPosts = await JobPostDao.getJobPostsBySponsor(fastify.firebase, eventId, sponsorId, status)
             } else {
-                jobPosts = await JobPostDao.getAllJobPosts(fastify.firebase, eventId, approvalStatus)
+                jobPosts = await JobPostDao.getAllJobPosts(fastify.firebase, eventId, status)
             }
 
             reply.status(200).send(jobPosts)
