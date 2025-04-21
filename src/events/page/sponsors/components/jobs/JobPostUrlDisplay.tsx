@@ -27,7 +27,7 @@ export const JobPostUrlDisplay = ({ event }: JobPostUrlDisplayProps) => {
     const eventMutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
 
     const jobPostUrl = useMemo(() => {
-        return `${window.location.origin}/public/jobs?id=${event.addJobPostPrivateId}`
+        return `${window.location.origin}/public/event/${event.id}/jobs/add?id=${event.addJobPostPrivateId}`
     }, [event.addJobPostPrivateId])
 
     const resetPrivateId = async () => {

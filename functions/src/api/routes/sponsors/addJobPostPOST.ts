@@ -21,7 +21,7 @@ export type JobPostType = Static<typeof TypeBoxJobPost>
 
 export type AddJobPostPOSTTypes = {
     Body: JobPostType
-    Reply: JobPostType | string
+    Reply: { jobPostId: string }
 }
 
 export const addJobPostPOSTSchema = {
@@ -61,9 +61,9 @@ export const addJobPostRouteHandler = (fastify: FastifyInstance) => {
 
             const jobPostId = await JobPostDao.addJobPost(fastify.firebase, eventId, jobPostData)
 
-            const jobPost = await JobPostDao.getJobPost(fastify.firebase, eventId, jobPostId)
-
-            reply.status(201).send(jobPost)
+            reply.status(201).send({
+                jobPostId,
+            })
         } catch (error: unknown) {
             console.error('Error adding job post:', error)
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
