@@ -1,17 +1,22 @@
-import * as React from 'react'
-import { Sponsor } from '../../../../types'
-import { Box, Card, CardContent, CardMedia, IconButton, Link, Typography, useTheme, alpha } from '@mui/material'
+import { JobPost, Sponsor } from '../../../../types'
+import { Box, Card, CardContent, CardMedia, IconButton, Link, Typography, useTheme, alpha, Button } from '@mui/material'
 import { DeleteRounded } from '@mui/icons-material'
 import EditIcon from '@mui/icons-material/Edit'
-
+import WorkIcon from '@mui/icons-material/Work'
+import { useMemo } from 'react'
 export type SponsorItemProps = {
     sponsor: Sponsor
     categoryId: string
     onDelete: () => void
+    jobPosts: JobPost[]
 }
 
-export const SponsorItem = ({ sponsor, onDelete, categoryId }: SponsorItemProps) => {
+export const SponsorItem = ({ sponsor, onDelete, categoryId, jobPosts }: SponsorItemProps) => {
     const theme = useTheme()
+
+    const jobPostsCount = useMemo(() => {
+        return jobPosts.filter((jobPost) => jobPost.sponsorId === sponsor.id).length
+    }, [jobPosts, sponsor.id])
 
     return (
         <Card
@@ -57,6 +62,15 @@ export const SponsorItem = ({ sponsor, onDelete, categoryId }: SponsorItemProps)
                     image={sponsor.logoUrl}
                     alt={sponsor.name}
                 />
+                <Button
+                    component={Link}
+                    href={`/jobposts?sponsorId=${sponsor.id}`}
+                    startIcon={<WorkIcon />}
+                    variant="outlined"
+                    size="small"
+                    sx={{ mt: 1 }}>
+                    {jobPostsCount} jobs
+                </Button>
             </CardContent>
 
             <Box

@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import { useRef, useState } from 'react'
-import { SponsorCategory } from '../../../../types'
+import { JobPost, SponsorCategory } from '../../../../types'
 import { SponsorItem } from './SponsorItem'
 import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
@@ -16,9 +16,10 @@ export type SponsorCategoryProps = {
     category: SponsorCategory
     index: number
     eventId: string
+    jobPosts: JobPost[]
 }
 
-export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategoryProps) => {
+export const SponsorCategoryItem = ({ category, eventId, index, jobPosts }: SponsorCategoryProps) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(eventId), category.id))
     const deleteCategory = useFirestoreDocumentDeletion(doc(collections.sponsors(eventId), category.id))
     const ref = useRef(null)
@@ -71,6 +72,7 @@ export const SponsorCategoryItem = ({ category, eventId, index }: SponsorCategor
                                     key={sponsor.id}
                                     sponsor={sponsor}
                                     categoryId={category.id}
+                                    jobPosts={jobPosts}
                                     onDelete={async () => {
                                         await mutation.mutate({
                                             sponsors: category.sponsors.filter((s) => s.id !== sponsor.id),
