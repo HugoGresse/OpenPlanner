@@ -291,7 +291,7 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
                                 helperText="Example: Télétravail, Montpellier, Paris, Paris 50%"
                             />
                         </Grid>
-                        {/* <Grid item xs={12}>
+                        <Grid item xs={12}>
                             <TextFieldElement
                                 name="contactEmail"
                                 label="Contact Email (Optional)"
@@ -299,7 +299,7 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
                                 disabled={isSubmitting}
                                 type="email"
                             />
-                        </Grid> */}
+                        </Grid>
 
                         {submitSuccess || errorMsg ? (
                             <Grid item xs={12}>

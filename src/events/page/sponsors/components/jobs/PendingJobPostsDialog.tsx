@@ -40,11 +40,12 @@ export const PendingJobPostsDialog = ({
     const currentJobPost = pendingJobPosts[currentIndex]
 
     const jobPostMutation = useFirestoreDocumentMutationWithId(collections.jobPosts(event.id))
-
     const sponsorName = useMemo(() => {
-        const sponsor = sponsorCategories.find((sponsor) =>
-            sponsor.sponsors.find((s) => s.id === currentJobPost?.sponsorId)
-        )
+        const sponsor = sponsorCategories.reduce((found, category) => {
+            if (found) return found
+            const matchingSponsor = category.sponsors.find((s) => s.id === currentJobPost?.sponsorId)
+            return matchingSponsor || null
+        }, null as { name: string } | null)
         return sponsor?.name
     }, [sponsorCategories, currentJobPost])
 
