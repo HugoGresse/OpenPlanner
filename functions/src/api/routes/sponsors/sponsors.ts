@@ -5,6 +5,11 @@ import { getJobPostsRouteHandler, getJobPostsGETSchema, GetJobPostsGETTypes } fr
 import { getJobPostRouteHandler, getJobPostGETSchema, GetJobPostGETTypes } from './getJobPostGET'
 import { deleteJobPostRouteHandler, deleteJobPostDELETESchema, DeleteJobPostDELETETypes } from './deleteJobPostDELETE'
 import { approveJobPostRouteHandler, approveJobPostPUTSchema, ApproveJobPostPUTTypes } from './approveJobPostPUT'
+import {
+    trackJobPostClickRouteHandler,
+    TrackJobPostClickPOSTTypes,
+    trackJobPostClickPOSTSchema,
+} from './trackJobPostClickPOST'
 
 export { SponsorType } from './addSponsorsPOST'
 export { JobPostType } from './addJobPostPOST'
@@ -23,7 +28,7 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
         '/v1/:eventId/sponsors/jobPosts',
         {
             schema: addJobPostPOSTSchema,
-            preHandler: fastify.auth([fastify.verifyApiKey]),
+            // No preHandler needed - authentication via event.addJobPostPrivateId
         },
         addJobPostRouteHandler(fastify)
     )
@@ -62,6 +67,15 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
             preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         approveJobPostRouteHandler(fastify)
+    )
+
+    fastify.post<TrackJobPostClickPOSTTypes>(
+        '/v1/:eventId/sponsors/jobPosts/track-click',
+        {
+            schema: trackJobPostClickPOSTSchema,
+            // No preHandler needed - this is a public route
+        },
+        trackJobPostClickRouteHandler(fastify)
     )
 
     done()

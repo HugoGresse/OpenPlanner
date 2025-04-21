@@ -2,7 +2,10 @@ import firebase from 'firebase-admin'
 import { v4 as uuidv4 } from 'uuid'
 import { JobPostType } from '../routes/sponsors/addJobPostPOST'
 
-export interface JobPostResponse extends JobPostType {
+// Define a type for job posts without the privateEventId field
+export type JobPostData = Omit<JobPostType, 'addJobPostPrivateId'>
+
+export interface JobPostResponse extends JobPostData {
     id: string
     createdAt: firebase.firestore.Timestamp
 }
@@ -11,7 +14,7 @@ export class JobPostDao {
     public static async addJobPost(
         firebaseApp: firebase.app.App,
         eventId: string,
-        jobPost: JobPostType
+        jobPost: JobPostData
     ): Promise<string> {
         const db = firebaseApp.firestore()
         const jobPostId = uuidv4()
@@ -115,6 +118,26 @@ export class JobPostDao {
             return true
         } catch (error) {
             console.error('Error updating job post approval status:', error)
+            return false
+        }
+    }
+
+    public static async trackJobPostClick(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        jobPostId: string
+    ): Promise<boolean> {
+        try {
+            const db = firebaseApp.firestore()
+            await db
+                .collection(`events/${eventId}/jobPosts`)
+                .doc(jobPostId)
+                .update({
+                    clickCount: firebase.firestore.FieldValue.increment(1),
+                })
+            return true
+        } catch (error) {
+            console.error('Error tracking job post click:', error)
             return false
         }
     }
