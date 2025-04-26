@@ -10,6 +10,8 @@ import {
     MenuItem,
     TextField,
     Typography,
+    FormControlLabel,
+    Checkbox,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { Event, Speaker } from '../../../types'
@@ -32,29 +34,43 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const [speakersStatsOpen, setSpeakersStatsOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
+    const [showOnlyWithoutSessions, setShowOnlyWithoutSessions] = useState(false)
     const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
     const isExportMenuOpen = Boolean(exportAnchorEl)
     const { createNotification } = useNotification()
 
     const speakersData = useMemo(() => speakers.data || [], [speakers.data])
+    const sessionsData = useMemo(() => sessions.data || [], [sessions.data])
     const isFiltered = displayedSpeakers.length !== speakersData.length
 
     useEffect(() => {
         const searchFiltered = search.toLowerCase().trim()
         setDisplayedSpeakers(
             speakersData.filter((s) => {
-                if (s.name.toLowerCase().includes(searchFiltered)) {
-                    return true
+                // Filter by search term
+                const matchesSearch =
+                    !searchFiltered ||
+                    s.name.toLowerCase().includes(searchFiltered) ||
+                    (s.note && s.note.toLowerCase().includes(searchFiltered)) ||
+                    (s.company && s.company.toLowerCase().includes(searchFiltered))
+
+                // Filter by session status
+                if (showOnlyWithoutSessions) {
+                    const hasSessions = sessionsData.some(
+                        (session) => session.speakers && session.speakers.includes(s.id)
+                    )
+                    return matchesSearch && !hasSessions
                 }
-                if (s.note && s.note.toLowerCase().includes(searchFiltered)) {
-                    return true
-                }
-                if (s.company && s.company.toLowerCase().includes(searchFiltered)) {
-                    return true
-                }
+
+                return matchesSearch
             })
         )
-    }, [speakersData, search])
+    }, [speakersData, search, showOnlyWithoutSessions, sessionsData])
+
+    const clearFilters = () => {
+        setSearch('')
+        setShowOnlyWithoutSessions(false)
+    }
 
     const closeExportMenu = (type: SpeakersExportType | null) => () => {
         setExportAnchorEl(null)
@@ -113,15 +129,21 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                             InputProps={{
                                 endAdornment: isFiltered ? (
                                     <InputAdornment position="start">
-                                        <IconButton
-                                            aria-label="Clear filters"
-                                            onClick={() => setDisplayedSpeakers(speakersData)}
-                                            edge="end">
+                                        <IconButton aria-label="Clear filters" onClick={clearFilters} edge="end">
                                             <Clear />
                                         </IconButton>
                                     </InputAdornment>
                                 ) : null,
                             }}
+                        />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={showOnlyWithoutSessions}
+                                    onChange={(e) => setShowOnlyWithoutSessions(e.target.checked)}
+                                />
+                            }
+                            label="Show only speakers without sessions"
                         />
                     </Grid>
                 </Grid>

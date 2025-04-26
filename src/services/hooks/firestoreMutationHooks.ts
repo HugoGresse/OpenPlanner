@@ -16,6 +16,7 @@ export const useFirestoreCollectionMutation = (ref: CollectionReference): UseMut
         async (data: any, id?: string) => {
             try {
                 setLoading(true)
+                setError(null)
                 if (id) {
                     await setDoc(doc(ref, id), data, { merge: true })
                     setLoading(false)
@@ -47,6 +48,7 @@ export const useFirestoreDocumentMutation = (ref: DocumentReference): UseMutatio
         async (data: any) => {
             try {
                 setLoading(true)
+                setError(null)
                 await setDoc(ref, data, { merge: true }) // We use setDoc to actually trigger the converter
             } catch (error: any) {
                 setError(error)
@@ -72,6 +74,7 @@ export const useFirestoreDocumentMutationWithId = (ref: CollectionReference): Us
         async (data: object, id: string) => {
             try {
                 setLoading(true)
+                setError(null)
                 const docRef = doc(ref, id)
                 await setDoc(docRef, data, { merge: true })
             } catch (error: any) {
@@ -106,6 +109,7 @@ export const useFirestoreDocumentDeletion = (
         async (id?: string) => {
             try {
                 setLoading(true)
+                setError(null)
                 if (ref instanceof CollectionReference) {
                     if (id) {
                         await deleteDoc(doc(ref, id))
