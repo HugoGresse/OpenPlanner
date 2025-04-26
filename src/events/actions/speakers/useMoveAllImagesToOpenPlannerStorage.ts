@@ -1,9 +1,10 @@
 import { Event, EventFiles, Session, Speaker } from '../../../types'
-import { baseStorageUrl } from '../../../services/firebase'
+import { isStorageUrl } from '../../../services/firebase'
 import { uploadImage } from '../../../utils/images/uploadImage'
 import { updateSpeaker } from './updateSpeaker'
 import { useCallback, useEffect, useState } from 'react'
 import { useEventFiles } from '../../../services/hooks/useEventFiles'
+import { API_URL } from '../../../env'
 
 export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Session[]) => {
     const [state, setState] = useState<{
@@ -68,9 +69,8 @@ export const useMoveAllImagesToOpenPlannerStorage = (event: Event, sessions: Ses
             if (session.speakersData?.length) {
                 for (const speaker of session.speakersData) {
                     let i = 0
-                    const shouldUpdatePhotoUrl = speaker.photoUrl && !speaker.photoUrl.startsWith(baseStorageUrl)
-                    const shouldUpdateCompanyLogoUrl =
-                        speaker.companyLogoUrl && !speaker.companyLogoUrl.startsWith(baseStorageUrl)
+                    const shouldUpdatePhotoUrl = speaker.photoUrl && !isStorageUrl(speaker.photoUrl)
+                    const shouldUpdateCompanyLogoUrl = speaker.companyLogoUrl && !isStorageUrl(speaker.companyLogoUrl)
 
                     if (shouldUpdatePhotoUrl) {
                         const result = await downloadAndUpdateSpeakerImage(event, filesPath, speaker, 'photoUrl')
@@ -116,9 +116,8 @@ const getTotalImagesToChange = (sessions: Session[]) => {
     return sessions.reduce((acc, session) => {
         if (session.speakersData?.length) {
             return session.speakersData.reduce((acc, speaker) => {
-                const shouldUpdatePhotoUrl = speaker.photoUrl && !speaker.photoUrl.startsWith(baseStorageUrl)
-                const shouldUpdateCompanyLogoUrl =
-                    speaker.companyLogoUrl && !speaker.companyLogoUrl.startsWith(baseStorageUrl)
+                const shouldUpdatePhotoUrl = speaker.photoUrl && !isStorageUrl(speaker.photoUrl)
+                const shouldUpdateCompanyLogoUrl = speaker.companyLogoUrl && !isStorageUrl(speaker.companyLogoUrl)
 
                 if (shouldUpdatePhotoUrl && !shouldUpdateCompanyLogoUrl) {
                     return acc + 1
@@ -152,45 +151,118 @@ const downloadAndUpdateSpeakerImage = async (
           error: string
       }
 > => {
+    const imageToDownload = speaker[fieldName]
+    if (!imageToDownload) {
+        return { success: true, error: null }
+    }
+
+    let newImageUrl: string | null = null
+
+    // First attempt: Try to download with regular fetch
     try {
-        const imageToDownload = speaker[fieldName]
-        if (!imageToDownload) {
-            return {
-                success: true,
-                error: null,
-            }
-        }
         const imageFetchResult = await fetch(imageToDownload)
-        if (!imageFetchResult.ok) {
-            console.warn(
-                'Error downloading image',
-                imageFetchResult.statusText,
-                imageFetchResult.status,
-                imageToDownload
-            )
-            return {
-                success: false,
-                error: `Error downloading image for speaker ${speaker.name}, error: ${imageFetchResult.statusText} (${imageFetchResult.status})`,
-            }
-        }
 
-        const imageBlob = await imageFetchResult.blob()
-        const newImageUrl = await uploadImage(filesPath.imageFolder, imageBlob)
-
-        await updateSpeaker(event.id, {
-            id: speaker.id,
-            [fieldName]: newImageUrl,
-        })
-
-        return {
-            success: true,
-            error: null,
+        if (imageFetchResult.ok) {
+            const imageBlob = await imageFetchResult.blob()
+            newImageUrl = await uploadImage(filesPath.imageFolder, imageBlob)
+        } else {
+            console.warn('Regular fetch failed:', imageFetchResult.statusText, imageFetchResult.status, imageToDownload)
         }
     } catch (error) {
-        console.error('error downloading or uploading image', error)
+        console.warn('Error during regular fetch:', error)
+    }
+
+    // Second attempt: Try using the server-side download and reupload if first attempt failed
+    if (!newImageUrl && event.apiKey) {
+        try {
+            const reuploadResult = await downloadAndReuploadFile(event.id, event.apiKey, imageToDownload)
+
+            if (reuploadResult.success) {
+                newImageUrl = reuploadResult.publicFileUrl
+            } else {
+                return {
+                    success: false,
+                    error: `Failed to download image for ${speaker.name} using fallback method. Error: ${reuploadResult.error}`,
+                }
+            }
+        } catch (error) {
+            return {
+                success: false,
+                error: `Error during server-side download for speaker ${speaker.name}: ${error}`,
+            }
+        }
+    }
+
+    // Update speaker if we successfully got a new image URL through either method
+    if (newImageUrl) {
+        try {
+            await updateSpeaker(event.id, {
+                id: speaker.id,
+                [fieldName]: newImageUrl,
+            })
+            return { success: true, error: null }
+        } catch (error) {
+            return {
+                success: false,
+                error: `Error updating speaker ${speaker.name} with new image: ${error}`,
+            }
+        }
+    }
+
+    // Both methods failed
+    return {
+        success: false,
+        error: `Failed to download image for ${speaker.name} using all available methods.${
+            !event.apiKey ? ' Fallback method not attempted (missing API key).' : ''
+        }`,
+    }
+}
+
+const downloadAndReuploadFile = async (
+    eventId: string,
+    apiKey: string,
+    fileUrl: string
+): Promise<
+    | {
+          success: true
+          publicFileUrl: string
+      }
+    | {
+          success: false
+          error: string
+      }
+> => {
+    const url = new URL(API_URL as string)
+    url.pathname += `v1/${eventId}/files/download-reupload`
+    url.searchParams.append('apiKey', apiKey)
+
+    try {
+        const response = await fetch(url.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                url: fileUrl,
+            }),
+        })
+
+        if (response.status !== 201) {
+            return {
+                success: false,
+                error: `API returned error: ${response.status} ${response.statusText}`,
+            }
+        }
+
+        const result = await response.json()
+        return {
+            success: true,
+            publicFileUrl: result.publicFileUrl,
+        }
+    } catch (error) {
         return {
             success: false,
-            error: `Error downloading or uploading image for speaker ${speaker.name}, error: ${error}`,
+            error: `Network or parsing error: ${error}`,
         }
     }
 }
