@@ -11,8 +11,9 @@ export type EventSpeakerFormProps = {
     event: Event
     speaker?: Speaker
     onSubmit: (speaker: Speaker) => void
+    rightColumns?: React.ReactNode
 }
-export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormProps) => {
+export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: EventSpeakerFormProps) => {
     const formContext = useForm({
         defaultValues: speaker
             ? ({
@@ -177,6 +178,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event }: EventSpeakerFormP
                         disabled={isSubmitting}
                         size="small"
                     />
+                    {rightColumns}
                 </Grid>
 
                 <Grid item xs={12}>

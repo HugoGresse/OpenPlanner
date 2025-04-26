@@ -15,6 +15,7 @@ import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
+import { SpeakerSessions } from './components/SpeakerSessions'
 
 export type EventSpeakerProps = {
     event: Event
@@ -22,7 +23,6 @@ export type EventSpeakerProps = {
 export const EventSpeaker = ({ event }: EventSpeakerProps) => {
     const [_, params] = useRoute('/:routeName/:speakerId/*?')
     const [_2, setLocation] = useLocation()
-    const searchString = useSearch()
     const speakers = useSpeakers(event.id)
     const speakerId = params?.speakerId
     const [deleteOpen, setDeleteOpen] = useState(false)
@@ -98,11 +98,14 @@ export const EventSpeaker = ({ event }: EventSpeakerProps) => {
                     onSubmit={(data) => {
                         return mutation.mutate(data)
                     }}
+                    rightColumns={<SpeakerSessions event={event} speaker={speaker} />}
                 />
+
                 {mutation.isError && (
                     <Typography color="error">Error while saving speaker: {mutation.error?.message}</Typography>
                 )}
             </Card>
+
             <Box mt={2}>
                 <Button color="warning" onClick={() => setDeleteOpen(true)}>
                     Delete speaker
