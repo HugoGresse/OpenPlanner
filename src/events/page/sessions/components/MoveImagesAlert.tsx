@@ -35,9 +35,6 @@ export const MoveImagesAlert = ({ event, sessionsData }: { event: Event; session
                                     <li key={error}>{error}</li>
                                 ))}
                             </ul>
-                            <Typography>
-                                Common errors could be linked to CORS issues, please check the console for more details.
-                            </Typography>
                         </>
                     )}
                 </Alert>

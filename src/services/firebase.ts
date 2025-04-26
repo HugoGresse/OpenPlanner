@@ -26,6 +26,12 @@ const config = {
 }
 
 export const baseStorageUrl = `https://storage.googleapis.com/${config.storageBucket}`
+export const alternativeStorageUrl = `https://${config.storageBucket}.storage.googleapis.com/`
+
+export const isStorageUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false
+    return url.startsWith(baseStorageUrl) || url.startsWith(alternativeStorageUrl)
+}
 
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)

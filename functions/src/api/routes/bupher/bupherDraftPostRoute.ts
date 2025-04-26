@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { Type } from '@sinclair/typebox'
 import { getBupherSessionAndUserId, sendErrorResponse } from './utils/bupherUtils'
 import { postBupherFile } from './utils/postBupherFile'
-import { extractMultipartFormData } from '../file/parseMultipartFiles'
+import { extractMultipartFormData } from '../file/utils/parseMultipartFiles'
 import { checkFileTypes } from '../../other/checkFileTypes'
 import { postBupherDraft } from './utils/postBupherDraft'
 

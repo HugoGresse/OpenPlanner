@@ -133,8 +133,6 @@ export const EventLayout = ({ children, event, customTitle }: EventLayoutProps) 
     const routeName = menuItem ? menuItem.name : 'Loading...'
     const hideAppBar = menuItem?.href === '/schedule'
 
-    console.log('hasPortalTitle', hasPortalTitle, customTitle)
-
     return (
         <PortalContext.Provider value={{ rightToolbarElement, titleElement }}>
             <EventFilesProvider event={event}>

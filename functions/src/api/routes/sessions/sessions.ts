@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
 import { SessionDao } from '../../dao/sessionDao'
-import { uploadBufferToStorage } from '../file/files'
+import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
 
 /**
  *
