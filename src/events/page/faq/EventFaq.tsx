@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Box, Button, Card, Container, IconButton } from '@mui/material'
 import { Event, FaqCategory } from '../../../types'
 import { useFaqs } from '../../../services/hooks/useFaqs'
@@ -6,12 +6,13 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/Firesto
 import { FaqCategoryItem } from './FaqCategoryItem'
 import { NewFaqCategoryDialog } from './NewFaqCategoryDialog'
 import { getFaqBaseLinkLink } from './faqLink'
-import { ContentCopy, OpenInNew } from '@mui/icons-material'
+import { ContentCopy, ImportExport, OpenInNew } from '@mui/icons-material'
+import { FaqCategoryImportDialog } from './components/FaqCategoryImportDialog'
 
 export const EventFAQ = ({ event }: { event: Event }) => {
     const queryResult = useFaqs(event)
     const [addDialogOpen, setAddDialogOpen] = useState(false)
-
+    const [importDialogOpen, setImportDialogOpen] = useState(false)
     if (queryResult.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={queryResult} />
     }
@@ -22,31 +23,44 @@ export const EventFAQ = ({ event }: { event: Event }) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Button component="a" href={faqLink} target="_blank" startIcon={<OpenInNew />}>
-                Open public FAQ
-            </Button>
-            <IconButton
-                aria-label="Copy FAQ Link"
-                color="primary"
-                onClick={() => {
-                    navigator.clipboard.writeText(faqLink)
-                }}>
-                <ContentCopy />
-            </IconButton>
-            <Card
-                sx={{
-                    padding: 2,
-                    minHeight: '50vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    flexFlow: 'row',
-                    flexWrap: 'wrap',
-                    alignContent: 'flex-start',
-                }}>
-                {categoryData.map((faqCategory: FaqCategory) => (
-                    <FaqCategoryItem key={faqCategory.id} category={faqCategory} event={event} />
-                ))}
-            </Card>
+            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={1}>
+                <Box>
+                    <Button component="a" href={faqLink} target="_blank" startIcon={<OpenInNew />}>
+                        Open public FAQ
+                    </Button>
+                    <Button
+                        color="primary"
+                        startIcon={<ContentCopy />}
+                        onClick={() => {
+                            navigator.clipboard.writeText(faqLink)
+                        }}>
+                        Copy FAQ Link
+                    </Button>
+                </Box>
+                <Button
+                    color="primary"
+                    startIcon={<ImportExport />}
+                    onClick={() => {
+                        setImportDialogOpen(true)
+                    }}>
+                    Import FAQ from another event
+                </Button>
+            </Box>
+            {categoryData.map((faqCategory: FaqCategory) => (
+                <Card
+                    key={faqCategory.id}
+                    sx={{
+                        padding: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flexFlow: 'row',
+                        flexWrap: 'wrap',
+                        alignContent: 'flex-start',
+                        marginY: 2,
+                    }}>
+                    <FaqCategoryItem category={faqCategory} event={event} />
+                </Card>
+            ))}
             <Box marginY={2}>
                 <Button
                     onClick={() => {
@@ -60,6 +74,11 @@ export const EventFAQ = ({ event }: { event: Event }) => {
                 onClose={() => setAddDialogOpen(false)}
                 categoryCount={categoryData.length}
                 eventId={event.id}
+            />
+            <FaqCategoryImportDialog
+                open={importDialogOpen}
+                onClose={() => setImportDialogOpen(false)}
+                currentEventId={event.id}
             />
         </Container>
     )
