@@ -42,6 +42,7 @@ export const triggerWebhooks = async (firebaseApp: firebase.app.App, event: Even
             updatedWebhooks[index] = {
                 ...webhook,
                 lastAnswer: `code: ${responseCode}, body: ${responseText ? responseText : 'empty'}`,
+                lastAnswerDate: new Date() as any, // Firestore expect a JS date but return a Timestamp object
             }
         }
     }

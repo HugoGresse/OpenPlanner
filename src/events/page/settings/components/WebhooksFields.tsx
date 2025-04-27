@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import {
     Box,
@@ -14,13 +13,14 @@ import {
 import { Control, TextFieldElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
 import { Event, EventSettingForForm, Webhooks } from '../../../../types'
-
+import { DateTime } from 'luxon'
 export type WebhooksFieldsProps = {
     control: Control<EventSettingForForm, any>
     isSubmitting: boolean
     event: Event
 }
 type WebhooksWithKey = Webhooks & { id: string }
+
 export const WebhooksFields = ({ control, isSubmitting, event }: WebhooksFieldsProps) => {
     const [selectedWebhook, setSelectedWebhook] = useState<null | Webhooks>(null)
     const { fields, append, remove } = useFieldArray({
@@ -37,6 +37,10 @@ export const WebhooksFields = ({ control, isSubmitting, event }: WebhooksFieldsP
             <Box paddingLeft={2}>
                 {fields.map((webhook: WebhooksWithKey, index) => {
                     const eventWebhook = event.webhooks.find((w) => w.url === webhook.url)
+                    console.log(eventWebhook)
+                    const lastAnswerRelativeToNow = eventWebhook?.lastAnswerDate
+                        ? DateTime.fromJSDate(eventWebhook.lastAnswerDate.toDate()).toRelative()
+                        : 'never'
 
                     return (
                         <Box display="flex" flexDirection="column" key={webhook.id}>
@@ -81,7 +85,7 @@ export const WebhooksFields = ({ control, isSubmitting, event }: WebhooksFieldsP
                                 size="small">
                                 Last answer:{' '}
                                 {eventWebhook && eventWebhook.lastAnswer
-                                    ? eventWebhook.lastAnswer.slice(0, 15) + '...'
+                                    ? `${lastAnswerRelativeToNow}, ${eventWebhook.lastAnswer.slice(0, 15)}...`
                                     : 'none'}
                             </Button>
                         </Box>
@@ -94,6 +98,7 @@ export const WebhooksFields = ({ control, isSubmitting, event }: WebhooksFieldsP
                             url: '',
                             token: null,
                             lastAnswer: null,
+                            lastAnswerDate: null,
                         })
                     }}>
                     <Add />

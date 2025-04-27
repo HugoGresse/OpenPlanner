@@ -9,6 +9,7 @@ export interface Track {
 
 export interface Webhooks {
     lastAnswer: string | null
+    lastAnswerDate: Timestamp | null
     url: string
     token: string | null
 }
