@@ -2,8 +2,9 @@ import { Box, Button, Typography, useTheme } from '@mui/material'
 import * as React from 'react'
 import { LoadingButton } from '@mui/lab'
 import { TextFieldElement, useWatch } from 'react-hook-form-mui'
-import { Download } from '@mui/icons-material'
+import { Download, Crop } from '@mui/icons-material'
 import { triggerFileDownload } from '../../utils/triggerFileDownload'
+import { ImageCropDialog, CroppedImageFile } from './ImageCropDialog'
 
 export type SidePanelImageUploadFormProps = {
     fieldName: string
@@ -15,6 +16,7 @@ export type SidePanelImageUploadFormProps = {
     getInputProps: () => any
     onInputClick: () => void
     onSaveClick: () => void
+    onImageChange?: (file: File, preview: string) => void
     disabled?: boolean
 }
 export const SidePanelImageUploadForm = ({
@@ -26,11 +28,36 @@ export const SidePanelImageUploadForm = ({
     onInputClick,
     onSaveClick,
     uploading,
+    onImageChange,
     disabled = false,
 }: SidePanelImageUploadFormProps) => {
     const theme = useTheme()
     const fieldValue = useWatch({ name: fieldName })
-    const previewImage = (file && file.preview) || fieldValue
+    const [previewImage, setPreviewImage] = React.useState<string>((file && file.preview) || fieldValue)
+    const [cropDialogOpen, setCropDialogOpen] = React.useState(false)
+
+    // Update previewImage when file or fieldValue changes
+    React.useEffect(() => {
+        setPreviewImage((file && file.preview) || fieldValue)
+    }, [file, fieldValue])
+
+    const handleOpenCropDialog = () => {
+        setCropDialogOpen(true)
+    }
+
+    const handleCloseCropDialog = () => {
+        setCropDialogOpen(false)
+    }
+
+    const handleApplyCrop = (croppedImage: CroppedImageFile) => {
+        // Update the preview image with the cropped version
+        setPreviewImage(croppedImage.dataUrl)
+
+        // Notify parent component with the file and preview
+        if (onImageChange) {
+            onImageChange(croppedImage.file, croppedImage.dataUrl)
+        }
+    }
 
     return (
         <>
@@ -116,15 +143,35 @@ export const SidePanelImageUploadForm = ({
                             <img src={previewImage} alt="" width="100%" />
                         </Box>
                     </Box>
-                    <Button
-                        variant="outlined"
-                        endIcon={<Download />}
-                        sx={{ mb: 2 }}
-                        onClick={async () => {
-                            await triggerFileDownload(previewImage, `${'OpenPlanner'}`)
-                        }}>
-                        Download
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <Button
+                            sx={{
+                                flex: 1,
+                            }}
+                            variant="outlined"
+                            endIcon={<Download />}
+                            onClick={async () => {
+                                await triggerFileDownload(previewImage, `${'OpenPlanner'}`)
+                            }}>
+                            Download
+                        </Button>
+                        <Button
+                            sx={{
+                                flex: 1,
+                            }}
+                            variant="outlined"
+                            endIcon={<Crop />}
+                            onClick={handleOpenCropDialog}>
+                            Crop
+                        </Button>
+                    </Box>
+
+                    <ImageCropDialog
+                        open={cropDialogOpen}
+                        onClose={handleCloseCropDialog}
+                        imageSrc={previewImage}
+                        onApplyCrop={handleApplyCrop}
+                    />
                 </>
             )}
 

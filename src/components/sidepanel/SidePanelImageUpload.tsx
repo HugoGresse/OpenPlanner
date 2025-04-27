@@ -88,6 +88,14 @@ export const SidePanelImageUpload = ({
         }
     }, [])
 
+    // Handle cropped image data
+    const handleImageChange = useCallback((file: File, preview: string) => {
+        setUpload({
+            file,
+            preview,
+        })
+    }, [])
+
     const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
         onDrop,
         multiple: false,
@@ -110,6 +118,7 @@ export const SidePanelImageUpload = ({
                 fieldName={fieldName}
                 onInputClick={open}
                 onSaveClick={onSave}
+                onImageChange={handleImageChange}
                 helpText="PNG or JPEG image, will be resized in the browser. You can also paste image directly from clipboard."
                 disabled={isLoading || !!error || !filesPath}
             />
