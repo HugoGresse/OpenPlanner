@@ -43,9 +43,10 @@ export const SpeakerSessions = ({ event, speaker }: SpeakerSessionsProps) => {
                         flexWrap: 'wrap',
                         gap: 1,
                         p: 1,
-                        border: '1px solid',
+                        borderBottom: '1px solid',
                         borderColor: 'divider',
-                        borderRadius: 1,
+                        borderTopLeftRadius: 4,
+                        borderTopRightRadius: 4,
                         backgroundColor: 'action.hover',
                     }}>
                     {sessionsResult.data.map((session) => (
