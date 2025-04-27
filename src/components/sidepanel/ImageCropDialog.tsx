@@ -1,6 +1,9 @@
 import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material'
 import React, { useState, useRef, useEffect } from 'react'
-import { cropJpegImage, cropPngImage, cropSvgImage, detectImageType } from '../../utils/imageCropUtils'
+import { cropJpegImage } from '../../utils/images/imageCrop/cropJpegImage'
+import { cropPngImage } from '../../utils/images/imageCrop/cropPngImage'
+import { cropSvgImage } from '../../utils/images/imageCrop/cropSvgImage'
+import { detectImageType } from '../../utils/images/imageCrop/detectImageType'
 
 // Define a more complete file type to return
 export type CroppedImageFile = {
