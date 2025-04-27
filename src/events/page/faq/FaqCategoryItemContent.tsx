@@ -15,6 +15,17 @@ import { DeleteRounded, EditRounded } from '@mui/icons-material'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { generateFaqPdf } from '../../../utils/faqPdfGenerator'
 import { PictureAsPdf } from '@mui/icons-material'
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { arrayMove } from '@dnd-kit/sortable'
 
 export type FaqCategoryItemContentProps = {
     event: Event
@@ -36,6 +47,34 @@ export const FaqCategoryItemContent = ({
     const [isDeletingCategory, setIsDeletingCategory] = useState<boolean>(false)
     const [isChangingCategoryName, setIsChangingCategoryName] = useState<null | string>(null)
     const categoryDocumentDeletion = useFirestoreDocumentDeletion(doc(collections.faq(event.id), category.id))
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+
+        if (over && active.id !== over.id) {
+            const oldIndex = data.findIndex((item) => item.id === active.id)
+            const newIndex = data.findIndex((item) => item.id === over.id)
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newData = arrayMove(data, oldIndex, newIndex)
+
+                // Update order field to match array index
+                const updatedData = newData.map((item, index) => ({
+                    ...item,
+                    order: index,
+                }))
+
+                updateLocalState(updatedData)
+            }
+        }
+    }
 
     const exportToPdf = async () => {
         try {
@@ -120,23 +159,29 @@ export const FaqCategoryItemContent = ({
                     <PictureAsPdf />
                 </IconButton>
             </Box>
-            {data.map((faq, index) => (
-                <FaqItem
-                    key={faq.id}
-                    faq={faq}
-                    onDelete={() => {
-                        setDeletedItems([...deletedItems, faq.id])
-                        const d = [...data]
-                        d.splice(index, 1)
-                        updateLocalState(d)
-                    }}
-                    onChange={(newFaq) => {
-                        const d = [...data]
-                        d[index] = newFaq
-                        updateLocalState(d)
-                    }}
-                />
-            ))}
+
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={data.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+                    {data.map((faq, index) => (
+                        <FaqItem
+                            key={faq.id}
+                            faq={faq}
+                            onDelete={() => {
+                                setDeletedItems([...deletedItems, faq.id])
+                                const d = [...data]
+                                d.splice(index, 1)
+                                updateLocalState(d)
+                            }}
+                            onChange={(newFaq) => {
+                                const d = [...data]
+                                d[index] = newFaq
+                                updateLocalState(d)
+                            }}
+                        />
+                    ))}
+                </SortableContext>
+            </DndContext>
+
             <ConfirmDialog
                 open={isDeletingCategory}
                 title="Delete this FAQ category?"
