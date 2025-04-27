@@ -1,4 +1,4 @@
-import { Box, CircularProgress, FormControlLabel, Switch, Typography } from '@mui/material'
+import { Alert, Box, CircularProgress, FormControlLabel, Switch, Typography } from '@mui/material'
 import { Event } from '../../../../types'
 import { TypographyCopyable } from '../../../../components/TypographyCopyable'
 import { collections } from '../../../../services/firebase'
@@ -43,6 +43,11 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
                 <CircularProgress />
             ) : (
                 <Box>
+                    <Alert severity="info">
+                        The Static API is updated only when you press <b>"Update website"</b>. <br />
+                        You may want to add a cache busting param to the url to force refresh the cache:{' '}
+                        <b>"?t=Date.now()"</b>.
+                    </Alert>
                     <Typography sx={{ mt: 2 }}>Public (no private information):</Typography>
                     {filesPath.public && <TypographyCopyable>{filesPath.public}</TypographyCopyable>}
                     <Typography sx={{ mt: 2 }}>
@@ -72,13 +77,6 @@ export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
                             label="Enable Voxxrin"
                         />
                     )}
-
-                    <Box bgcolor={'#88888888'} p={1} mt={2} borderRadius={1}>
-                        <Typography>
-                            You may want to add a cache busting param to the url to force refresh the cache:
-                            "?t=Date.now()". The <b>Static API</b> is updated only when you press "Update website".
-                        </Typography>
-                    </Box>
                 </Box>
             )}
         </Box>
