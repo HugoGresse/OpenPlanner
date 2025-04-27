@@ -3,7 +3,7 @@ import { Event, Faq, FaqCategory } from '../../../types'
 import { useFaq } from '../../../services/hooks/useFaq'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { Box, Button, IconButton, Typography } from '@mui/material'
-import { ExpandLessSharp, ExpandMore, PictureAsPdf } from '@mui/icons-material'
+import { ExpandLessSharp, ExpandMore } from '@mui/icons-material'
 import { LoadingButton } from '@mui/lab'
 import {
     useFirestoreCollectionMutation,
@@ -30,7 +30,6 @@ export const FaqCategoryItem = (props: FaqCategoryProps) => {
     const deletionMutation = useFirestoreDocumentDeletion(
         collection(collections.faq(props.event.id), categoryId, 'items')
     )
-    const [isExporting, setIsExporting] = useState(false)
 
     useEffect(() => {
         if (queryResult.loaded) {
