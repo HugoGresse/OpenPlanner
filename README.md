@@ -78,3 +78,37 @@ bun start   # start the dev server
 The repo contain few scripts useful for:
 
 -   updating the YouTube metadata (title, desc, thumbnails, etc) of uploaded video: [scripts/youtubeBatchEdit.js](scripts/youtubeBatchEdit.js)
+
+### Deploy
+
+#### Image Processing and CORS Issues
+
+When working with images, especially with image cropping and canvas operations, you might encounter Cross-Origin Resource Sharing (CORS) issues. These occur when trying to process images from different domains. The project includes utilities to handle these issues:
+
+-   For images loaded from different origins, make sure to set the `crossOrigin="anonymous"` attribute on the image elements before setting the `src` attribute.
+-   The `loadImageWithCORS` utility in `src/utils/images/loadImageWithCORS.ts` helps load images with proper CORS settings.
+-   If you're hosting images on your own server, ensure it returns the appropriate CORS headers, especially:
+    ```
+    Access-Control-Allow-Origin: *
+    ```
+    Or more restrictively:
+    ```
+    Access-Control-Allow-Origin: https://your-domain.com
+    ```
+
+For Firebase Storage specifically, you can configure CORS by:
+
+1. Creating a `cors.json` file with:
+    ```json
+    [
+        {
+            "origin": ["*"],
+            "method": ["GET"],
+            "maxAgeSeconds": 3600
+        }
+    ]
+    ```
+2. Uploading it with `gsutil`:
+    ```bash
+    gsutil cors set cors.json gs://your-firebase-bucket
+    ```
