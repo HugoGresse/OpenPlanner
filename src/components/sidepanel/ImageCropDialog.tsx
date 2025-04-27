@@ -4,6 +4,7 @@ import { cropJpegImage } from '../../utils/images/imageCrop/cropJpegImage'
 import { cropPngImage } from '../../utils/images/imageCrop/cropPngImage'
 import { cropSvgImage } from '../../utils/images/imageCrop/cropSvgImage'
 import { detectImageType } from '../../utils/images/imageCrop/detectImageType'
+import { isImageCrossOrigin } from '../../utils/images/loadImageWithCORS'
 
 // Define a more complete file type to return
 export type CroppedImageFile = {
@@ -31,6 +32,7 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
     const [isProcessing, setIsProcessing] = useState(false)
     const [imageName, setImageName] = useState('image') // Default name
     const [naturalAspectRatio, setNaturalAspectRatio] = useState(0) // Store image's natural aspect ratio
+    const [isCrossOrigin, setIsCrossOrigin] = useState(false)
 
     const imageRef = useRef<HTMLImageElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -41,6 +43,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
         detectImageType(imageSrc).then((type) => {
             setImageType(type)
         })
+
+        // Check if the image is cross-origin
+        setIsCrossOrigin(isImageCrossOrigin(imageSrc))
 
         // Extract name from URL if possible
         if (imageSrc.startsWith('data:')) {
@@ -253,6 +258,10 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                     mimeType = 'image/png'
             }
 
+            if (!croppedImageData) {
+                throw new Error('Failed to crop image. This may be due to cross-origin restrictions.')
+            }
+
             if (onApplyCrop && croppedImageData) {
                 // Create a proper filename based on original name and type
                 const extension = mimeType.split('/')[1]
@@ -277,6 +286,8 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
             onClose()
         } catch (error) {
             console.error('Error applying crop:', error)
+            // Display a friendly error message to the user
+            alert(`Failed to crop image: ${error instanceof Error ? error.message : 'Unknown error'}`)
         } finally {
             setIsProcessing(false)
         }
@@ -393,9 +404,10 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                 <Box
                     ref={containerRef}
                     sx={{
-                        width: '100%',
-                        height: naturalAspectRatio ? `calc(100% / ${naturalAspectRatio})` : 400,
-                        maxHeight: '70vh', // Prevent too tall containers
+                        width: 'fit-content',
+                        maxWidth: '100%',
+                        height: 'auto',
+                        maxHeight: '70vh',
                         position: 'relative',
                         backgroundColor: '#f0f0f0',
                         display: 'flex',
@@ -403,6 +415,7 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                         alignItems: 'center',
                         overflow: 'hidden',
                         cursor: isDragging ? 'grabbing' : 'default',
+                        margin: '0 auto', // Center the container horizontally
                     }}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -411,12 +424,12 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                     <img
                         ref={imageRef}
                         src={imageSrc}
+                        crossOrigin={isCrossOrigin ? 'anonymous' : undefined}
                         alt="Crop preview"
                         style={{
                             maxWidth: '100%',
-                            maxHeight: '100%',
-                            width: naturalAspectRatio ? '100%' : 'auto',
-                            height: naturalAspectRatio ? '100%' : 'auto',
+                            maxHeight: '70vh',
+                            objectFit: 'contain',
                             display: 'block',
                         }}
                         onLoad={handleImageLoad}
