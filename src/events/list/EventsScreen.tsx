@@ -6,12 +6,12 @@ import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventsListItem } from './EventsListItem'
 import { Event } from '../../types'
-import { Alert, Box, Button } from '@mui/material'
+import { Alert, Box, Button, Link, Typography } from '@mui/material'
 import { NewEventCreatedDialog } from '../new/NewEventCreatedDialog'
 import { useNotification } from '../../hooks/notificationHook'
 import { NewEventDialog } from '../new/NewEventDialog'
 import { useIsAdmin } from '../../services/hooks/useIsAdmin'
-
+import { OSSSponsor } from '../../components/OSSSponsor'
 export const EventsScreen = ({}) => {
     const userId = useSelector(selectUserIdOpenPlanner)
     const events = useEvents(userId)
@@ -53,6 +53,19 @@ export const EventsScreen = ({}) => {
             <Alert severity="info">
                 ConferenceHall integration is now directly managed within ConferenceHall, using OpenPlanner API key.
             </Alert>
+
+            <Box display="flex" flexDirection="column" alignItems="center" gap={1} maxWidth={500} marginX="auto" mt={2}>
+                <Typography>
+                    This project is open source on{' '}
+                    <Link component="a" href="https://github.com/HugoGresse/openplanner" target="_blank">
+                        GitHub
+                    </Link>
+                    . Any support is welcome!
+                </Typography>
+                <Box width="100%">
+                    <OSSSponsor />
+                </Box>
+            </Box>
 
             <NewEventDialog isOpen={newEventOpen} onClose={onEventCreated} />
 
