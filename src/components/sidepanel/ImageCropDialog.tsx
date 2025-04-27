@@ -27,6 +27,7 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
     const [imageType, setImageType] = useState<'jpeg' | 'png' | 'svg' | 'unknown'>('unknown')
     const [isProcessing, setIsProcessing] = useState(false)
     const [imageName, setImageName] = useState('image') // Default name
+    const [naturalAspectRatio, setNaturalAspectRatio] = useState(0) // Store image's natural aspect ratio
 
     const imageRef = useRef<HTMLImageElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -34,7 +35,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
 
     // Detect image type and name when imageSrc changes
     useEffect(() => {
-        setImageType(detectImageType(imageSrc))
+        detectImageType(imageSrc).then((type) => {
+            setImageType(type)
+        })
 
         // Extract name from URL if possible
         if (imageSrc.startsWith('data:')) {
@@ -63,8 +66,8 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                 // Get the SVG's viewBox if available
                 const svgElement = imageRef.current.naturalWidth === 0 ? document.querySelector('svg') : null
 
-                let svgWidth = imageRef.current.width
-                let svgHeight = imageRef.current.height
+                let svgWidth = imageRef.current.clientWidth || imageRef.current.width
+                let svgHeight = imageRef.current.clientHeight || imageRef.current.height
 
                 // If we found an SVG element and it has a viewBox, use those dimensions
                 if (svgElement && svgElement.getAttribute('viewBox')) {
@@ -75,28 +78,30 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                             // Use viewBox dimensions but maintain aspect ratio
                             const aspectRatio = vbWidth / vbHeight
                             if (aspectRatio > 1) {
-                                svgWidth = imageRef.current.width
-                                svgHeight = imageRef.current.width / aspectRatio
+                                svgWidth = imageRef.current.clientWidth || imageRef.current.width
+                                svgHeight = (imageRef.current.clientWidth || imageRef.current.width) / aspectRatio
                             } else {
-                                svgHeight = imageRef.current.height
-                                svgWidth = imageRef.current.height * aspectRatio
+                                svgHeight = imageRef.current.clientHeight || imageRef.current.height
+                                svgWidth = (imageRef.current.clientHeight || imageRef.current.height) * aspectRatio
                             }
                         }
                     }
                 }
 
-                // Set crop to 95% of SVG dimensions
-                const width = svgWidth * 0.95
-                const height = svgHeight * 0.95
+                // Set crop to match SVG dimensions
+                const width = svgWidth * 0.98
+                const height = svgHeight * 0.98
                 const x = (svgWidth - width) / 2
                 const y = (svgHeight - height) / 2
                 setCrop({ x, y, width, height })
             } else {
                 // Regular handling for other image types
-                const width = imageRef.current.width * 0.95
-                const height = imageRef.current.height * 0.95
-                const x = (imageRef.current.width - width) / 2
-                const y = (imageRef.current.height - height) / 2
+                const actualWidth = imageRef.current.clientWidth || imageRef.current.width
+                const actualHeight = imageRef.current.clientHeight || imageRef.current.height
+                const width = actualWidth * 0.98
+                const height = actualHeight * 0.98
+                const x = (actualWidth - width) / 2
+                const y = (actualHeight - height) / 2
                 setCrop({ x, y, width, height })
             }
         }
@@ -105,9 +110,14 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
     // Handle image load
     const handleImageLoad = () => {
         if (imageRef.current) {
+            const naturalWidth = imageRef.current.naturalWidth || imageRef.current.width
+            const naturalHeight = imageRef.current.naturalHeight || imageRef.current.height
+            const aspectRatio = naturalWidth / naturalHeight
+
+            setNaturalAspectRatio(aspectRatio)
             setImageSize({
-                width: imageRef.current.width,
-                height: imageRef.current.height,
+                width: imageRef.current.clientWidth || imageRef.current.width,
+                height: imageRef.current.clientHeight || imageRef.current.height,
             })
             setImageLoaded(true)
         }
@@ -135,9 +145,13 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
         const x = e.clientX - rect.left - dragStart.x
         const y = e.clientY - rect.top - dragStart.y
 
-        // Constrain to image boundaries
-        const newX = Math.max(0, Math.min(x, imageSize.width - crop.width))
-        const newY = Math.max(0, Math.min(y, imageSize.height - crop.height))
+        // Get the actual displayed image dimensions from the image element
+        const actualWidth = imageRef.current?.clientWidth || imageSize.width
+        const actualHeight = imageRef.current?.clientHeight || imageSize.height
+
+        // Constrain to image boundaries with a small buffer for exact edge selection
+        const newX = Math.max(0, Math.min(x, actualWidth - crop.width))
+        const newY = Math.max(0, Math.min(y, actualHeight - crop.height))
 
         setCrop((prev) => ({ ...prev, x: newX, y: newY }))
     }
@@ -192,29 +206,47 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
 
         setIsProcessing(true)
         try {
+            // Calculate scale ratio between natural size and displayed size
+            const naturalWidth = imageRef.current.naturalWidth
+            const naturalHeight = imageRef.current.naturalHeight
+            const displayWidth = imageRef.current.clientWidth || imageSize.width
+            const displayHeight = imageRef.current.clientHeight || imageSize.height
+
+            // Calculate scaling factors
+            const scaleX = naturalWidth / displayWidth
+            const scaleY = naturalHeight / displayHeight
+
+            // Scale crop coordinates to match original image dimensions
+            const scaledCrop = {
+                x: Math.round(crop.x * scaleX),
+                y: Math.round(crop.y * scaleY),
+                width: Math.round(crop.width * scaleX),
+                height: Math.round(crop.height * scaleY),
+            }
+
             let croppedImageData = ''
             let mimeType = 'image/png' // Default
 
             // Use different cropping method based on image type
             switch (imageType) {
                 case 'jpeg':
-                    croppedImageData = cropJpegImage(imageRef.current, crop)
+                    croppedImageData = cropJpegImage(imageRef.current, scaledCrop)
                     mimeType = 'image/jpeg'
                     break
                 case 'png':
-                    croppedImageData = cropPngImage(imageRef.current, crop)
+                    croppedImageData = cropPngImage(imageRef.current, scaledCrop)
                     mimeType = 'image/png'
                     break
                 case 'svg':
-                    croppedImageData = await cropSvgImage(imageSrc, crop, {
-                        width: imageSize.width,
-                        height: imageSize.height,
+                    croppedImageData = await cropSvgImage(imageSrc, scaledCrop, {
+                        width: naturalWidth,
+                        height: naturalHeight,
                     })
                     mimeType = 'image/svg+xml'
                     break
                 default:
                     // Fallback to PNG for unknown types
-                    croppedImageData = cropPngImage(imageRef.current, crop)
+                    croppedImageData = cropPngImage(imageRef.current, scaledCrop)
                     mimeType = 'image/png'
             }
 
@@ -259,48 +291,82 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
         const startY = e.clientY
         const startCrop = { ...crop }
 
+        // Get actual displayed dimensions
+        const actualWidth = imageRef.current?.clientWidth || imageSize.width
+        const actualHeight = imageRef.current?.clientHeight || imageSize.height
+
         const handleResizeMove = (moveEvent: MouseEvent) => {
             const deltaX = moveEvent.clientX - startX
             const deltaY = moveEvent.clientY - startY
 
             let newCrop = { ...startCrop }
+            const minSize = 10 // Smaller minimum size
 
             switch (direction) {
                 case 'se':
-                    newCrop.width = Math.max(50, Math.min(startCrop.width + deltaX, imageSize.width - startCrop.x))
-                    newCrop.height = Math.max(50, Math.min(startCrop.height + deltaY, imageSize.height - startCrop.y))
+                    newCrop.width = Math.max(minSize, Math.min(startCrop.width + deltaX, actualWidth - startCrop.x))
+                    newCrop.height = Math.max(minSize, Math.min(startCrop.height + deltaY, actualHeight - startCrop.y))
                     break
                 case 'sw':
-                    const newWidthSw = Math.max(50, startCrop.width - deltaX)
-                    const newXSw = startCrop.x + startCrop.width - newWidthSw
+                    const newWidthSw = Math.max(minSize, startCrop.width - deltaX)
+                    const maxXSw = startCrop.x + startCrop.width - minSize
+                    const newXSw = Math.min(maxXSw, startCrop.x + startCrop.width - newWidthSw)
+
+                    // Allow dragging up to the edge
                     if (newXSw >= 0) {
                         newCrop.x = newXSw
                         newCrop.width = newWidthSw
+                    } else {
+                        // Handle edge case - snap to exact boundary
+                        newCrop.x = 0
+                        newCrop.width = startCrop.x + startCrop.width
                     }
-                    newCrop.height = Math.max(50, Math.min(startCrop.height + deltaY, imageSize.height - startCrop.y))
+
+                    newCrop.height = Math.max(minSize, Math.min(startCrop.height + deltaY, actualHeight - startCrop.y))
                     break
                 case 'ne':
-                    newCrop.width = Math.max(50, Math.min(startCrop.width + deltaX, imageSize.width - startCrop.x))
-                    const newHeightNe = Math.max(50, startCrop.height - deltaY)
-                    const newYNe = startCrop.y + startCrop.height - newHeightNe
+                    newCrop.width = Math.max(minSize, Math.min(startCrop.width + deltaX, actualWidth - startCrop.x))
+
+                    const newHeightNe = Math.max(minSize, startCrop.height - deltaY)
+                    const maxYNe = startCrop.y + startCrop.height - minSize
+                    const newYNe = Math.min(maxYNe, startCrop.y + startCrop.height - newHeightNe)
+
+                    // Allow dragging up to the edge
                     if (newYNe >= 0) {
                         newCrop.y = newYNe
                         newCrop.height = newHeightNe
+                    } else {
+                        // Handle edge case - snap to exact boundary
+                        newCrop.y = 0
+                        newCrop.height = startCrop.y + startCrop.height
                     }
                     break
                 case 'nw':
-                    const newWidthNw = Math.max(50, startCrop.width - deltaX)
-                    const newXNw = startCrop.x + startCrop.width - newWidthNw
-                    const newHeightNw = Math.max(50, startCrop.height - deltaY)
-                    const newYNw = startCrop.y + startCrop.height - newHeightNw
+                    const newWidthNw = Math.max(minSize, startCrop.width - deltaX)
+                    const maxXNw = startCrop.x + startCrop.width - minSize
+                    const newXNw = Math.min(maxXNw, startCrop.x + startCrop.width - newWidthNw)
 
+                    const newHeightNw = Math.max(minSize, startCrop.height - deltaY)
+                    const maxYNw = startCrop.y + startCrop.height - minSize
+                    const newYNw = Math.min(maxYNw, startCrop.y + startCrop.height - newHeightNw)
+
+                    // Allow dragging up to edges
                     if (newXNw >= 0) {
                         newCrop.x = newXNw
                         newCrop.width = newWidthNw
+                    } else {
+                        // Handle edge case - snap to exact boundary
+                        newCrop.x = 0
+                        newCrop.width = startCrop.x + startCrop.width
                     }
+
                     if (newYNw >= 0) {
                         newCrop.y = newYNw
                         newCrop.height = newHeightNw
+                    } else {
+                        // Handle edge case - snap to exact boundary
+                        newCrop.y = 0
+                        newCrop.height = startCrop.y + startCrop.height
                     }
                     break
             }
@@ -324,10 +390,14 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                 <Box
                     ref={containerRef}
                     sx={{
-                        height: 400,
+                        width: '100%',
+                        height: naturalAspectRatio ? `calc(100% / ${naturalAspectRatio})` : 400,
+                        maxHeight: '70vh', // Prevent too tall containers
                         position: 'relative',
                         backgroundColor: '#f0f0f0',
                         display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
                         overflow: 'hidden',
                         cursor: isDragging ? 'grabbing' : 'default',
                     }}
@@ -339,7 +409,13 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                         ref={imageRef}
                         src={imageSrc}
                         alt="Crop preview"
-                        style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+                        style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            width: naturalAspectRatio ? '100%' : 'auto',
+                            height: naturalAspectRatio ? '100%' : 'auto',
+                            display: 'block',
+                        }}
                         onLoad={handleImageLoad}
                     />
 
@@ -352,9 +428,12 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                                     top: crop.y,
                                     width: crop.width,
                                     height: crop.height,
-                                    border: '2px dashed #ffffff',
-                                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                                    cursor: 'move',
+                                    border: '2px dashed rgba(255, 255, 255, 0.9)',
+                                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)',
+                                    pointerEvents: 'auto',
+                                    cursor: isDragging ? 'grabbing' : 'grab',
+                                    zIndex: 1,
+                                    touchAction: 'none',
                                 }}>
                                 {/* Resize handles */}
                                 <Box
@@ -367,6 +446,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                                         backgroundColor: 'white',
                                         border: '1px solid #333',
                                         cursor: 'se-resize',
+                                        zIndex: 2,
+                                        borderRadius: '50%',
+                                        touchAction: 'none',
                                     }}
                                     onMouseDown={(e) => handleResize('se', e)}
                                 />
@@ -380,6 +462,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                                         backgroundColor: 'white',
                                         border: '1px solid #333',
                                         cursor: 'sw-resize',
+                                        zIndex: 2,
+                                        borderRadius: '50%',
+                                        touchAction: 'none',
                                     }}
                                     onMouseDown={(e) => handleResize('sw', e)}
                                 />
@@ -393,6 +478,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                                         backgroundColor: 'white',
                                         border: '1px solid #333',
                                         cursor: 'ne-resize',
+                                        zIndex: 2,
+                                        borderRadius: '50%',
+                                        touchAction: 'none',
                                     }}
                                     onMouseDown={(e) => handleResize('ne', e)}
                                 />
@@ -406,6 +494,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                                         backgroundColor: 'white',
                                         border: '1px solid #333',
                                         cursor: 'nw-resize',
+                                        zIndex: 2,
+                                        borderRadius: '50%',
+                                        touchAction: 'none',
                                     }}
                                     onMouseDown={(e) => handleResize('nw', e)}
                                 />
