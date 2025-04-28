@@ -14,6 +14,10 @@ import {
     Link,
     Button,
     SelectChangeEvent,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
 } from '@mui/material'
 import { Event } from '../../../../types'
 import { JobStatus, JOB_STATUS_VALUES } from '../../../../constants/jobStatus'
@@ -22,6 +26,13 @@ import { useJobsPosts } from '../../../../services/hooks/useJobsPosts'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { useSearchParams } from 'wouter'
 import { TitlePortal } from '../../layouts/EventLayout'
+import {
+    useFirestoreDocumentDeletion,
+    useFirestoreDocumentMutation,
+    useFirestoreDocumentMutationWithId,
+} from '../../../../services/hooks/firestoreMutationHooks'
+import { collections } from '../../../../services/firebase'
+import { doc, DocumentReference } from 'firebase/firestore'
 
 const ALL_SPONSORS_ID = '-all-'
 
@@ -30,9 +41,13 @@ export const JobPosts = ({ event }: { event: Event }) => {
     const jobPosts = useJobsPosts(event.id)
     const [searchParams, setSearchParams] = useSearchParams()
     const sponsorIdParam = searchParams.get('sponsorId')
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [jobPostToDelete, setJobPostToDelete] = useState<string | null>(null)
 
     const [selectedSponsorId, setSelectedSponsorId] = useState<string>(sponsorIdParam || '')
     const [selectedStatus, setSelectedStatus] = useState<string>('all')
+
+    const jobPostDeletion = useFirestoreDocumentDeletion(collections.jobPosts(event.id))
 
     const sponsorsFlatMap = useMemo(() => {
         return (sponsors.data ?? []).flatMap((sponsor) => sponsor.sponsors) || []
@@ -81,6 +96,28 @@ export const JobPosts = ({ event }: { event: Event }) => {
             default:
                 return 'default'
         }
+    }
+
+    const handleDeleteClick = (jobPostId: string) => {
+        setJobPostToDelete(jobPostId)
+        setDeleteDialogOpen(true)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!jobPostToDelete) return
+
+        try {
+            await jobPostDeletion.mutate(jobPostToDelete)
+            setDeleteDialogOpen(false)
+            setJobPostToDelete(null)
+        } catch (error) {
+            console.error('Error deleting job post:', error)
+        }
+    }
+
+    const handleDeleteCancel = () => {
+        setDeleteDialogOpen(false)
+        setJobPostToDelete(null)
     }
 
     if (jobPosts.isLoading || sponsors.isLoading) {
@@ -181,9 +218,18 @@ export const JobPosts = ({ event }: { event: Event }) => {
                                             Apply
                                         </Button>
 
-                                        <Typography variant="caption" color="text.secondary">
-                                            {jobPost.category}
-                                        </Typography>
+                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {jobPost.category}
+                                            </Typography>
+                                            <Button
+                                                variant="outlined"
+                                                color="error"
+                                                size="small"
+                                                onClick={() => handleDeleteClick(jobPost.id)}>
+                                                Delete
+                                            </Button>
+                                        </Box>
                                     </Box>
                                 </CardContent>
                             </Card>
@@ -191,6 +237,21 @@ export const JobPosts = ({ event }: { event: Event }) => {
                     ))}
                 </Grid>
             )}
+
+            <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+                <DialogTitle>Delete Job Post</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete this job post? This action cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDeleteCancel}>Cancel</Button>
+                    <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     )
 }
