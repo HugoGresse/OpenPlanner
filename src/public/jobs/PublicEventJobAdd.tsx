@@ -162,6 +162,21 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            {data?.event && (
+                <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {data.event.logoUrl && (
+                        <Box
+                            component="img"
+                            src={data.event.logoUrl}
+                            alt={`${data.event.name} logo`}
+                            sx={{ height: 60, width: 'auto', objectFit: 'contain' }}
+                        />
+                    )}
+                    <Typography variant="h4" component="h1">
+                        {data.event.name}
+                    </Typography>
+                </Box>
+            )}
             <Card sx={{ p: 4 }}>
                 <Typography variant="h4" gutterBottom>
                     Add Job Posting
