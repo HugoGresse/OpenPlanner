@@ -1,5 +1,14 @@
 import { Event, Session } from '../../../../types'
-import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
+import {
+    Box,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogContent,
+    Typography,
+    FormControlLabel,
+    Checkbox,
+} from '@mui/material'
 import * as React from 'react'
 import { convertSecondsToMinutes } from '../../../../utils/dates/convertSecondsToMinutes'
 import {
@@ -22,6 +31,7 @@ export const GenerateSessionsVideoDialog = ({
     sessions,
     onSuccess,
     forceGenerate = false,
+    onlyMissing = false,
 }: {
     isOpen: boolean
     onClose: () => void
@@ -29,8 +39,10 @@ export const GenerateSessionsVideoDialog = ({
     sessions: Session[]
     onSuccess?: ({}: { videoUrl: string; imageUrl: string }) => void
     forceGenerate?: boolean
+    onlyMissing?: boolean
 }) => {
     const { createNotification } = useNotification()
+    const [onlyMissingChecked, setOnlyMissingChecked] = React.useState(onlyMissing)
     const { generatingState, generate } = useSessionsGenerationGeneric<
         ShortVidGenerationSettings,
         GeneratedSessionVideoAnswer
@@ -55,9 +67,17 @@ export const GenerateSessionsVideoDialog = ({
         generatingState.generationState === GenerationStates.GENERATING ||
         finalGeneration.generatingState.generationState === GenerationStates.GENERATING
 
-    const sessionToGenerateFor = forceGenerate
-        ? sessions
-        : sessions.filter((session) => session.speakers && session.speakers.length > 0)
+    const sessionToGenerateFor = React.useMemo(() => {
+        let filteredSessions = forceGenerate
+            ? sessions
+            : sessions.filter((session) => session.speakers && session.speakers.length > 0)
+
+        if (onlyMissingChecked) {
+            filteredSessions = filteredSessions.filter((session) => !session.teaserVideoUrl || !session.teaserImageUrl)
+        }
+
+        return filteredSessions
+    }, [sessions, forceGenerate, onlyMissingChecked])
 
     const generateAllVideos = () => {
         const updateDoc = !onSuccess
@@ -105,6 +125,17 @@ export const GenerateSessionsVideoDialog = ({
 
                 <ShortVidSettings event={event} />
 
+                <FormControlLabel
+                    sx={{ width: '100%' }}
+                    control={
+                        <Checkbox
+                            checked={onlyMissingChecked}
+                            onChange={(e) => setOnlyMissingChecked(e.target.checked)}
+                        />
+                    }
+                    label="Only generate for sessions without videos or images"
+                />
+
                 {!forceGenerate && (
                     <Button
                         variant="contained"
@@ -128,7 +159,7 @@ export const GenerateSessionsVideoDialog = ({
                 )}
                 <Button
                     variant={forceGenerate ? 'contained' : 'outlined'}
-                    disabled={disabledButton}
+                    disabled={disabledButton || sessionToGenerateFor.length === 0}
                     onClick={generateAllVideos}
                     sx={{ marginLeft: 1 }}>
                     {finalGeneration.generatingState.generationState === 'GENERATING' ? (
@@ -141,6 +172,13 @@ export const GenerateSessionsVideoDialog = ({
                     )}
                     {finalGeneration.generatingState.progress && ` (${finalGeneration.generatingState.progress})`}
                 </Button>
+
+                {sessionToGenerateFor.length === 0 && (
+                    <Typography color="text.secondary" sx={{ mt: 2 }}>
+                        No sessions to generate.{' '}
+                        {onlyMissingChecked ? 'All sessions already have videos.' : 'No sessions with speakers found.'}
+                    </Typography>
+                )}
 
                 {generatingState.generationState === GenerationStates.ERROR && (
                     <Typography color="error">{generatingState.message}</Typography>
