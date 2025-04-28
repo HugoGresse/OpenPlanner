@@ -37,7 +37,6 @@ export const WebhooksFields = ({ control, isSubmitting, event }: WebhooksFieldsP
             <Box paddingLeft={2}>
                 {fields.map((webhook: WebhooksWithKey, index) => {
                     const eventWebhook = event.webhooks.find((w) => w.url === webhook.url)
-                    console.log(eventWebhook)
                     const lastAnswerRelativeToNow = eventWebhook?.lastAnswerDate
                         ? DateTime.fromJSDate(eventWebhook.lastAnswerDate.toDate()).toRelative()
                         : 'never'
