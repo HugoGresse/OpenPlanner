@@ -44,7 +44,7 @@ React guidelines:
 
 ### Requirements
 
--   Two firebase projects. One for **`open planner`** and the other for **`conference hall`**.
+-   One firebase project for **`open planner`**.
 -   Node.js **20+**
 -   [Bun.js](https://bun.js.org/) as a build tool
 
@@ -70,6 +70,13 @@ In order to run the project locally, you need to run the following commands:
 bun install # install dependencies
 bun start   # start the dev server
 ```
+
+Then, some features on the frontend use OpenPlanner API, which can be started with:
+
+1. `cd functions/`
+2. `npm i`
+3. `npm run build:watch` to start the compiler in watch mode for auto rebuild
+4. `npm run serve` to start the API itself which will use Firestore on GCP.
 
 **Enjoy 🚀**
 

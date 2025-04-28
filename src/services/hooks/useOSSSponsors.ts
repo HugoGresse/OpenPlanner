@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { OpenSponsorsUrl } from '../../env'
 
 export const useOSSSponsors = () => {
-    const [sponsors, setSponsors] = useState<{ name: string; website: string; logo: string; logoDark: string }[]>([])
+    const [sponsors, setSponsors] = useState<
+        { name: string; website: string; logo: string; logoDark: string; tracking: string }[]
+    >([])
 
     useEffect(() => {
         const fetchData = async () => {
