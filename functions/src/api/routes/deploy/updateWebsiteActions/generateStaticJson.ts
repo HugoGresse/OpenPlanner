@@ -8,15 +8,18 @@ import { SpeakerDao } from '../../../dao/speakerDao'
 import { SponsorDao } from '../../../dao/sponsorDao'
 import { TeamDao } from '../../../dao/teamDao'
 import { FaqDao } from '../../../dao/faqDao'
+import { JobPostDao } from '../../../dao/jobPostDao'
+import { JobStatus } from '../../../../../../src/constants/jobStatus'
 import { dateToString } from '../../../other/dateConverter'
 
 export const generateStaticJson = async (firebaseApp: firebase.app.App, event: Event): Promise<JsonOutput> => {
-    const [sessions, speakers, sponsors, { team, teams }, faq] = await Promise.all([
+    const [sessions, speakers, sponsors, { team, teams }, faq, jobPosts] = await Promise.all([
         SessionDao.getSessions(firebaseApp, event.id),
         SpeakerDao.getSpeakers(firebaseApp, event.id),
         SponsorDao.getSponsors(firebaseApp, event.id),
         TeamDao.getTeams(firebaseApp, event.id),
         FaqDao.getFullFaqs(firebaseApp, event.id),
+        JobPostDao.getAllJobPosts(firebaseApp, event.id, JobStatus.APPROVED),
     ])
 
     const faqPublic = faq.filter((f) => !f.private)
@@ -74,7 +77,26 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         teaserImageUrl: s.teaserImageUrl,
     }))
 
-    const outputSponsor = sponsors
+    const outputSponsor = sponsors.map((category) => ({
+        ...category,
+        sponsors: category.sponsors.map((sponsor) => ({
+            ...sponsor,
+            jobPosts: jobPosts
+                .filter((jobPost) => jobPost.sponsorId === sponsor.id)
+                .map((jobPost) => ({
+                    id: jobPost.id,
+                    title: jobPost.title,
+                    description: jobPost.description,
+                    location: jobPost.location,
+                    externalLink: jobPost.externalLink,
+                    salary: jobPost.salary,
+                    requirements: jobPost.requirements,
+                    contactEmail: jobPost.contactEmail,
+                    category: jobPost.category,
+                    createdAt: dateToString(jobPost.createdAt.toDate()),
+                })),
+        })),
+    }))
 
     const outputEvent = {
         id: event.id,
