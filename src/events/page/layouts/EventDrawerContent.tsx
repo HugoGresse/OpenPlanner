@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { CircularProgress, Divider, List, ListItemText, Toolbar, Tooltip } from '@mui/material'
+import { Box, CircularProgress, Divider, List, ListItemText, Toolbar, Tooltip } from '@mui/material'
 import { EventScreenMenuItems } from '../EventScreenMenuItems'
 import { LoadingButton } from '@mui/lab'
 import { Event } from '../../../types'
@@ -8,6 +8,7 @@ import { updateWebsiteTriggerWebhooksAction } from '../../actions/updateWebsiteT
 import { EventSelector } from '../../../components/EventSelector'
 import confetti from 'canvas-confetti'
 import { DateTime } from 'luxon'
+import { OSSSponsor } from '../../../components/OSSSponsor'
 
 export type EventDrawerContentProps = {
     event: Event
@@ -79,6 +80,10 @@ export const EventDrawerContent = ({ event }: EventDrawerContentProps) => {
                     </LoadingButton>
                 </Tooltip>
             </List>
+
+            <Box padding={1}>
+                <OSSSponsor />
+            </Box>
         </>
     )
 }
