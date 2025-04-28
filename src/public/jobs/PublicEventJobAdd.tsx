@@ -216,7 +216,7 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
                         <Grid item xs={12}>
                             <FormControl fullWidth>
                                 <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                                    Job Description
+                                    Job Description (in Markdown)
                                 </Typography>
                                 <Box
                                     sx={{
