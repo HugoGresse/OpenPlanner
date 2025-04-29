@@ -6,6 +6,7 @@ import GitHubIcon from '@mui/icons-material/GitHub'
 import LanguageIcon from '@mui/icons-material/Language'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import YouTubeIcon from '@mui/icons-material/YouTube'
+import { Bluesky } from '../../../../components/icons/Bluesky'
 
 type SpeakerLinksProps = {
     socials: Social[]
@@ -20,6 +21,7 @@ const socialIcons: Record<string, React.ReactNode> = {
     instagram: <InstagramIcon sx={{ height: iconSize, width: iconSize }} />,
     youtube: <YouTubeIcon sx={{ height: iconSize, width: iconSize }} />,
     website: <LanguageIcon sx={{ height: iconSize, width: iconSize }} />,
+    bluesky: <Bluesky sx={{ height: iconSize, width: iconSize }} />,
 }
 
 // Add a helper function to check if a URL is valid

@@ -33,7 +33,7 @@ export type BupherDraftPostResponse = {
 
 export type BupherProfile = {
     id: string
-    type: 'twitter' | 'instagram' | 'facebook' | 'linkedin' | 'youtube' | 'tiktok'
+    type: 'twitter' | 'instagram' | 'facebook' | 'linkedin' | 'youtube' | 'tiktok' | 'bluesky'
 }
 
 export const bupherAPI = {

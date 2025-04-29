@@ -7,6 +7,7 @@ export enum TeasingPostSocials {
     LinkedIn = 'linkedin',
     Facebook = 'facebook',
     Instagram = 'instagram',
+    Bluesky = 'bluesky',
 }
 
 export const GenerateSessionsTeasingContentPrompts = {

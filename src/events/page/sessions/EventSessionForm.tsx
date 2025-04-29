@@ -69,6 +69,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                     twitter: data.teasingPosts?.twitter || null,
                     instagram: data.teasingPosts?.instagram || null,
                     facebook: data.teasingPosts?.facebook || null,
+                    bluesky: data.teasingPosts?.bluesky || null,
                 }
                 return onSubmit({
                     title: data.title,
@@ -95,6 +96,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                         linkedin: data.announcedOn?.linkedin || false,
                         facebook: data.announcedOn?.facebook || false,
                         instagram: data.announcedOn?.instagram || false,
+                        bluesky: data.announcedOn?.bluesky || false,
                     },
                 } as Session)
             }}>
@@ -407,6 +409,19 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         disabled={false}
                                     />
                                 </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        multiline
+                                        minRows={4}
+                                        maxRows={40}
+                                        label="Bluesky teasing post"
+                                        name="teasingPosts.bluesky"
+                                        variant="filled"
+                                        disabled={false}
+                                    />
+                                </Grid>
                             </>
                         )}
                     </Grid>
@@ -426,6 +441,9 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                         </Grid>
                         <Grid item xs={3}>
                             <CheckboxElement label="Instagram" name="announcedOn.instagram" />
+                        </Grid>
+                        <Grid item xs={3}>
+                            <CheckboxElement label="Bluesky" name="announcedOn.bluesky" />
                         </Grid>
                     </Grid>
                 </Grid>
