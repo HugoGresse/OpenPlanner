@@ -65,6 +65,7 @@ export interface TeasingPosts {
     linkedin?: string | null
     facebook?: string | null
     instagram?: string | null
+    bluesky?: string | null
 }
 
 export interface Session {
@@ -103,6 +104,7 @@ export interface Session {
         linkedin?: boolean
         facebook?: boolean
         instagram?: boolean
+        bluesky?: boolean
     }
 }
 

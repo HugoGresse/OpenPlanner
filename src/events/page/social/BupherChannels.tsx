@@ -30,6 +30,8 @@ const getChannelUrl = (type: string, handle: string) => {
             return `https://youtube.com/${handle}`
         case 'tiktok':
             return `https://tiktok.com/@${handle}`
+        case 'bluesky':
+            return `https://bsky.app/profile/${handle}`
         default:
             return `https://${type}.com/${handle}`
     }

@@ -3,6 +3,7 @@ import { Box, Button, Chip, Grid, Link, Typography, useTheme } from '@mui/materi
 import { Session } from '../../../types'
 import { dateTimeToDayMonthHours } from '../../../utils/dates/timeFormats'
 import { Twitter, LinkedIn, Facebook, Instagram } from '@mui/icons-material'
+import { Bluesky } from '../../../components/icons/Bluesky'
 
 type EventSessionItem = {
     selectFormat: (formatId: string) => void
@@ -54,6 +55,7 @@ export const EventSessionItem = ({ selectFormat, session }: EventSessionItem) =>
                         {session.announcedOn.linkedin && <LinkedIn fontSize="small" />}
                         {session.announcedOn.facebook && <Facebook fontSize="small" />}
                         {session.announcedOn.instagram && <Instagram fontSize="small" />}
+                        {session.announcedOn.bluesky && <Bluesky fontSize="small" />}
                     </Box>
                 )}
             </Grid>
