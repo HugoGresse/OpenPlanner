@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useSelector } from 'react-redux'
 import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -30,6 +29,7 @@ export const AdminScreen = ({}) => {
                 name: event.name,
                 happenAt: DateTime.fromJSDate(event.dates.start).toRelative(),
                 eventId: event.id, // Save event ID for the custom component
+                creator: event.owner, // Add the creator/owner ID
             }
         })
     }, [events.data])
@@ -39,6 +39,7 @@ export const AdminScreen = ({}) => {
         { field: 'createdAt', headerName: 'Created At', width: 200 },
         { field: 'name', headerName: 'Name', width: 200 },
         { field: 'happenAt', headerName: 'Event Date', width: 200 },
+        { field: 'creator', headerName: 'Creator', width: 200 },
         {
             field: 'speakersCount',
             headerName: 'Speakers',
@@ -90,7 +91,7 @@ interface EventStatsCellProps {
 
 const EventStatsCell = ({ eventId, type }: EventStatsCellProps) => {
     const collection = type === 'speakers' ? collections.speakers(eventId) : collections.sessions(eventId)
-    const result = useFirestoreCollection(collection, false)
+    const result = useFirestoreCollection(collection as any, false)
 
     if (result.isLoading) return <span>Loading...</span>
     if (result.error) return <span>Error</span>
