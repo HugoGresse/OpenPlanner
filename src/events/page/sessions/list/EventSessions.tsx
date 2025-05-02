@@ -3,6 +3,10 @@ import {
     Button,
     Card,
     Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Divider,
     FormControlLabel,
     FormGroup,
@@ -11,6 +15,7 @@ import {
     InputAdornment,
     Menu,
     MenuItem,
+    Select,
     Switch,
     TextField,
     Typography,
@@ -32,6 +37,8 @@ import { GenerateSessionsVideoDialog } from '../components/GenerateSessionsVideo
 import { exportSessionsAction, SessionsExportType } from './actions/exportSessionsActions'
 import { TeasingPostSocials } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 import { MoveImagesAlert } from '../components/MoveImagesAlert'
+import { useSessionsBatchEdit } from './hooks/useSessionsBatchEdit'
+import { BatchEditDialog } from './components/BatchEditDialog'
 
 export type EventSessionsProps = {
     event: Event
@@ -66,6 +73,21 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
             notAnnouncedOn: selectedNotAnnouncedOn,
         })
     }, [sessionsData, search, selectedCategory, selectedFormat, onlyWithoutSpeaker, selectedNotAnnouncedOn])
+
+    // Use the batch edit hook
+    const {
+        selectedSessions,
+        handleSessionSelect,
+        handleSelectAll,
+        batchEditDialogOpen,
+        openBatchEditDialog,
+        closeBatchEditDialog,
+        handleUpdateSessions,
+    } = useSessionsBatchEdit({
+        event,
+        displayedSessions,
+        reloadSessions: sessions.load,
+    })
 
     const isFiltered = displayedSessions.length !== sessionsData.length
 
@@ -129,6 +151,9 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                         </MenuItem>
                     ))}
                 </Menu>
+                <Button onClick={openBatchEditDialog} disabled={selectedSessions.length === 0} sx={{ mr: 1 }}>
+                    Batch Edit ({selectedSessions.length})
+                </Button>
                 <Button href="/sessions/new" variant="contained">
                     Add session
                 </Button>
@@ -219,9 +244,32 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                         </Box>
                     </Grid>
                 </Grid>
-                <Divider sx={{ my: 2 }} />
+                <FormControlLabel
+                    sx={{ marginLeft: 0 }}
+                    control={
+                        <Checkbox
+                            checked={
+                                selectedSessions.length === displayedSessions.length && displayedSessions.length > 0
+                            }
+                            indeterminate={
+                                selectedSessions.length > 0 && selectedSessions.length < displayedSessions.length
+                            }
+                            onChange={(e) => handleSelectAll(e.target.checked)}
+                        />
+                    }
+                    label={<Typography variant="body2">Select All</Typography>}
+                />
                 {displayedSessions.map((session: Session) => (
-                    <EventSessionItem key={session.id} session={session} selectFormat={setSelectedFormat} />
+                    <Box key={session.id} display="flex" alignItems="flex-start">
+                        <Checkbox
+                            checked={selectedSessions.includes(session.id)}
+                            onChange={(e) => handleSessionSelect(session.id, e.target.checked)}
+                            sx={{ mt: 1.5 }}
+                        />
+                        <Box flexGrow={1}>
+                            <EventSessionItem session={session} selectFormat={setSelectedFormat} />
+                        </Box>
+                    </Box>
                 ))}
             </Card>
             {generateTextDialogOpen && (
@@ -244,6 +292,16 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     sessions={displayedSessions}
                 />
             )}
+
+            {/* Batch Edit Dialog */}
+            <BatchEditDialog
+                isOpen={batchEditDialogOpen}
+                onClose={closeBatchEditDialog}
+                selectedSessions={selectedSessions}
+                displayedSessions={displayedSessions}
+                event={event}
+                onUpdateSessions={handleUpdateSessions}
+            />
         </Container>
     )
 }
