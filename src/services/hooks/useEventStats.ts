@@ -5,7 +5,7 @@ export interface EventStats {
     speakersCount: number
     sessionsCount: number
     isLoading: boolean
-    error: Error | null
+    error: Error | null | string
 }
 
 export const useEventStats = (eventId: string): EventStats => {
