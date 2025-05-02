@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Overview
+
+OpenPlanner is a React-based application for managing events, sessions, speakers, and sponsors. The backend/api is used for some part of the admin and other public-facing pages. 
+
+## Key Files and Directories
+- [src/](mdc:src) - Main source code
+- [src/events/](mdc:src/events) - Event management functionality
+- [src/components/](mdc:src/components) - Reusable UI components
+- [src/services/](mdc:src/services) - Service-related functionality
+- [types.ts](mdc:src/types.ts) -  TypeScript type definitions
+- [functions/](mdc:functions) - Backend API used for some part of the admin and most of the public oriented form or website, and all other stuff when browser only code cannot be used. 

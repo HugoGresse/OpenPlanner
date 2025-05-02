@@ -1,0 +1,28 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Backend Structure
+
+The application uses Firebase for backend services, with Cloud Functions for server-side logic.
+
+## Firebase Configuration
+- [firebase.json](mdc:firebase.json) - Firebase project configuration
+- [firestore.rules](mdc:firestore.rules) - Firestore security rules
+- [firebase.storage.rules](mdc:firebase.storage.rules) - Firebase Storage rules
+
+## Backend Functions
+- [functions/src/](mdc:functions/src) - Source code for Cloud Functions
+- [functions/src/api/dao/](mdc:functions/src/api/dao) - Data Access Objects
+- [functions/src/api/routes/](mdc:functions/src/api/routes) - API route definitions
+
+## API Routes
+Key API routes:
+- [functions/src/api/routes/event/](mdc:functions/src/api/routes/event) - Event-related endpoints
+- [functions/src/api/routes/sessions/](mdc:functions/src/api/routes/sessions) - Session-related endpoints
+- [functions/src/api/routes/sponsors/](mdc:functions/src/api/routes/sponsors) - Sponsor-related endpoints
+- [functions/src/api/routes/transcription/](mdc:functions/src/api/routes/transcription) - Transcription-related endpoints
+
+## Data Types
+Common data types are defined in [types.ts](mdc:src/types.ts) and used throughout the application. Backend type inherit fromn it to prevent duplicated types. The API use Fastify, typescript and typebox for typing the API.

@@ -1,0 +1,28 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Code Organization
+
+The codebase follows a feature-based organization pattern:
+
+## Main Directories
+- [src/auth/](mdc:src/auth) - Authentication related components
+- [src/components/](mdc:src/components) - Shared UI components
+- [src/context/](mdc:src/context) - React context providers
+- [src/events/](mdc:src/events) - Event management features
+- [src/hooks/](mdc:src/hooks) - Custom React hooks
+- [src/public/](mdc:src/public) - Public-facing components
+- [src/services/](mdc:src/services) - Service integrations used to retrieve or write data
+- [src/utils/](mdc:src/utils) - Utility functions
+
+## Event Structure
+Events are a core concept with subdirectories for:
+- [src/events/actions/](mdc:src/events/actions) - Event-related actions
+- [src/events/admin/](mdc:src/events/admin) - Admin interfaces, the most important service of the project.
+- [src/events/page/](mdc:src/events/page) - Event page components
+
+## Backend
+- [functions/src/](mdc:functions/src) - Backend functions
+- [functions/src/api/](mdc:functions/src/api) - API routes and handlers
