@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Events and Sessions
+
+The application manages events and their sessions, with features for filtering, exporting, and generating content.
+
+## Key Components
+- [src/events/page/sessions/list/EventSessions.tsx](mdc:src/events/page/sessions/list/EventSessions.tsx) - Main component for displaying and managing event sessions
+- [src/events/page/sessions/list/filterSessions.ts](mdc:src/events/page/sessions/list/filterSessions.ts) - Session filtering logic
+- [src/events/page/sessions/list/actions/exportSessionsActions.ts](mdc:src/events/page/sessions/list/actions/exportSessionsActions.ts) - Functions for exporting sessions
+
+## Session Related Components
+- [src/events/page/sessions/components/](mdc:src/events/page/sessions/components) - Session-related UI components
+- [src/events/actions/sessions/](mdc:src/events/actions/sessions) - Actions for session management
+- [src/events/page/sessions/list/](mdc:src/events/page/sessions/list) - Session listing and filtering
+
+## Data Flow
+1. Sessions are fetched using the `useSessions` hook from [src/services/hooks/useSessions.ts](mdc:src/services/hooks/useSessions.ts)
+2. Filtering is applied based on user selections
+3. Displayed sessions can be exported or used to generate content

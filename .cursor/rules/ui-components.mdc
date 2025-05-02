@@ -1,0 +1,28 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# UI Components
+
+The application uses Material UI (MUI) for its component library.
+
+## Component Organization
+- [src/components/](mdc:src/components) - Main components directory
+- [src/components/form/](mdc:src/components/form) - Form-related components
+- [src/components/icons/](mdc:src/components/icons) - Custom icons
+- [src/components/sidepanel/](mdc:src/components/sidepanel) - Sidepanel components
+
+## Feature-Specific Components
+Components are also organized by feature:
+- [src/events/page/faq/components/](mdc:src/events/page/faq/components) - FAQ components
+- [src/events/page/schedule/components/](mdc:src/events/page/schedule/components) - Schedule components
+- [src/events/page/sessions/components/](mdc:src/events/page/sessions/components) - Session components
+- [src/events/page/speakers/components/](mdc:src/events/page/speakers/components) - Speaker components
+- [src/events/page/sponsors/components/](mdc:src/events/page/sponsors/components) - Sponsor components
+
+## Component Conventions
+- Components use TypeScript and Material UI
+- Props are defined using TypeScript interfaces
+- Components are generally organized by feature rather than by component type
+- File or components should be short, logic should ideally put into specific compoment or hooks. 
