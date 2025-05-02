@@ -15,35 +15,35 @@ service cloud.firestore {
             allow write: if authenticated() && isAdmin(resource.data);
 
             match /sessions/{sessionId} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /sessionsTemplate/{sessionId} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /speakers/{speakerId} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /sponsors/{sponsorId} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /jobPosts/{postId} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /team/{memberId} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /faq/{category=**} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /schedule/{scheduleId} {
-                allow read: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
         }
