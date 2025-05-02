@@ -3,13 +3,7 @@ import {
     Button,
     Card,
     Container,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
     FormControlLabel,
-    FormGroup,
     Grid,
     IconButton,
     InputAdornment,
@@ -20,6 +14,10 @@ import {
     TextField,
     Typography,
     Checkbox,
+    Chip,
+    OutlinedInput,
+    FormControl,
+    InputLabel,
 } from '@mui/material'
 import * as React from 'react'
 import { useMemo, useState } from 'react'
@@ -58,8 +56,9 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
     const [generateVideoDialogOpen, setGenerateVideoDialogOpen] = useState(false)
     const [selectedNotAnnouncedOn, setSelectedNotAnnouncedOn] = useState<TeasingPostSocials[]>([])
 
-    const handleNotAnnouncedOnChange = (social: TeasingPostSocials, checked: boolean) => {
-        setSelectedNotAnnouncedOn((prev) => (checked ? [...prev, social] : prev.filter((s) => s !== social)))
+    const handleNotAnnouncedOnChange = (event: any) => {
+        const value = event.target.value
+        setSelectedNotAnnouncedOn(typeof value === 'string' ? value.split(',') : value)
     }
 
     const sessionsData = useMemo(() => sessions.data || [], [sessions.data])
@@ -209,7 +208,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
+                    <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center' }}>
                         <FormControlLabel
                             control={
                                 <Switch
@@ -219,29 +218,39 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             }
                             label="Without speaker"
                         />
-                        <Box display="flex" alignItems="center" ml={2}>
-                            <Typography variant="body1" sx={{ marginRight: 2 }}>
-                                Not announced on:
-                            </Typography>
-                            <FormGroup row>
+                        <FormControl sx={{ ml: 2, minWidth: 200 }} size="small">
+                            <InputLabel id="not-announced-label">Not announced on</InputLabel>
+                            <Select
+                                labelId="not-announced-label"
+                                multiple
+                                value={selectedNotAnnouncedOn}
+                                onChange={handleNotAnnouncedOnChange}
+                                input={<OutlinedInput label="Not announced on" />}
+                                renderValue={(selected) => (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                        {selected.map((value) => (
+                                            <Chip key={value} label={value} size="small" />
+                                        ))}
+                                    </Box>
+                                )}
+                                displayEmpty
+                                MenuProps={{
+                                    PaperProps: {
+                                        style: {
+                                            maxHeight: 224,
+                                        },
+                                    },
+                                }}>
+                                <MenuItem disabled value="">
+                                    <em>Select platforms</em>
+                                </MenuItem>
                                 {Object.values(TeasingPostSocials).map((social) => (
-                                    <FormControlLabel
-                                        key={social}
-                                        control={
-                                            <Checkbox
-                                                checked={selectedNotAnnouncedOn.includes(social)}
-                                                onChange={(event) =>
-                                                    handleNotAnnouncedOnChange(social, event.target.checked)
-                                                }
-                                                size="small"
-                                            />
-                                        }
-                                        label={social}
-                                        sx={{ marginRight: 1 }}
-                                    />
+                                    <MenuItem key={social} value={social}>
+                                        {social}
+                                    </MenuItem>
                                 ))}
-                            </FormGroup>
-                        </Box>
+                            </Select>
+                        </FormControl>
                     </Grid>
                 </Grid>
                 <FormControlLabel
