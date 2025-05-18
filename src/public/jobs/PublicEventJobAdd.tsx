@@ -74,6 +74,7 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
         }
 
         setIsSubmitting(true)
+        setSubmitSuccess(false)
         setErrorMsg('')
 
         try {
@@ -112,6 +113,9 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
             }
 
             setSubmitSuccess(true)
+            setTimeout(() => {
+                setSubmitSuccess(false)
+            }, 10000)
 
             if (shouldReset) {
                 // Preserve location and sponsorId when resetting form
@@ -319,13 +323,14 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
                         {submitSuccess || errorMsg ? (
                             <Grid item xs={12}>
                                 {submitSuccess && (
-                                    <Alert severity="success" sx={{ mb: 3 }}>
-                                        Job post submitted successfully!
+                                    <Alert severity="success">
+                                        Job post submitted successfully and the {data?.event.name} team will review it
+                                        before publication.
                                     </Alert>
                                 )}
 
                                 {errorMsg && (
-                                    <Alert severity="error" sx={{ mb: 3 }}>
+                                    <Alert severity="error">
                                         {(errorMsg as any)?.error === 'FST_ERR_VALIDATION'
                                             ? `${(errorMsg as any).reason}`
                                             : errorMsg}
@@ -334,7 +339,7 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
                             </Grid>
                         ) : null}
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                                 <LoadingButton
                                     type="submit"
                                     variant="contained"
@@ -342,34 +347,6 @@ export const PublicEventJobAdd = ({ eventId }: PublicEventJobAddProps) => {
                                     disabled={isSubmitting}>
                                     Add Job Post
                                 </LoadingButton>
-
-                                <Button
-                                    variant="outlined"
-                                    disabled={isSubmitting}
-                                    onClick={async () => {
-                                        const data = formContext.getValues()
-                                        await submitJobPost(data, false)
-                                        if (!errorMsg) {
-                                            setTimeout(() => {
-                                                // Preserve location and sponsorId when resetting form
-                                                const { sponsorId, location } = formContext.getValues()
-                                                reset({
-                                                    sponsorId,
-                                                    location,
-                                                    title: '',
-                                                    description: '',
-                                                    externalLink: '',
-                                                    category: '',
-                                                    salary: '',
-                                                    requirements: [],
-                                                    contactEmail: '',
-                                                })
-                                                setSubmitSuccess(false)
-                                            }, 1000)
-                                        }
-                                    }}>
-                                    Add Post and Continue with Another
-                                </Button>
                             </Box>
                         </Grid>
                     </Grid>
