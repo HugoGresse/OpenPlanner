@@ -133,7 +133,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                             options={speakers.data.map((s) => ({
                                 id: s.id,
                                 label: s.name,
-                                photoUrl: s.photoUrl,
+                                photoUrl: s.photoUrl || '',
                             }))}
                             textFieldProps={{
                                 variant: 'filled',
@@ -145,7 +145,7 @@ export const EventSessionForm = ({ event, session, onSubmit }: EventSessionFormP
                                         return (
                                             <Chip
                                                 avatar={
-                                                    <Avatar alt={option?.label} src={option.photoUrl || undefined} />
+                                                    <Avatar alt={option?.label} src={option?.photoUrl || undefined} />
                                                 }
                                                 label={option?.label || 'Deleted'}
                                                 onClick={() => {
