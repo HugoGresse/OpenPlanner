@@ -71,6 +71,10 @@ export class SponsorDao {
         eventId: string,
         token: string
     ): Promise<{ sponsor: Sponsor; categoryId: string } | null> {
+        if (!token || token.trim().length === 0) {
+            return null
+        }
+
         const db = firebaseApp.firestore()
         const snapshot = await db.collection(`events/${eventId}/sponsors`).get()
 
