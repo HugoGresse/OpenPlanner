@@ -5,7 +5,7 @@ import { TranscriptionApp } from './transcription/TranscriptionApp'
 import { PublicEventFaqApp } from './faq/PublicEventFaqApp'
 import { PublicEventContainer } from './event/PublicEventContainer'
 import { PublicEventJobAdd } from './jobs/PublicEventJobAdd'
-import { PublicSponsorJobManagement } from './jobs/PublicSponsorJobManagement'
+import { PublicEventJobManagement } from './jobs/PublicEventJobManagement'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
@@ -33,7 +33,7 @@ export const PublicApp = (props: PublicAppProps) => {
                     <PublicEventJobAdd eventId={eventId} />
                 </Route>
                 <Route path="/jobsSponsors/">
-                    <PublicSponsorJobManagement />
+                    <PublicEventJobManagement eventId={eventId} />
                 </Route>
                 <Route>
                     <PublicEventContainer eventId={eventId} />

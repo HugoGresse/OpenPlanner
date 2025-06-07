@@ -5,6 +5,20 @@
             "queryScope": "COLLECTION",
             "fields": [
                 {
+                    "fieldPath": "sponsorId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "jobPosts",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
                     "fieldPath": "status",
                     "order": "ASCENDING"
                 },

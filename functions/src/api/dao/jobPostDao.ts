@@ -131,6 +131,7 @@ export class JobPostDao {
                 .doc(jobPostId)
                 .update({
                     ...updateData,
+                    status: JobStatus.PENDING,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 })
             return true

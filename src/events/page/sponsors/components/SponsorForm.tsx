@@ -30,6 +30,7 @@ export const SponsorForm = ({ event, sponsor, onSubmit }: SponsorFormProps) => {
             formContext={formContext}
             onSuccess={async (data) => {
                 return onSubmit({
+                    ...sponsor,
                     id: sponsor?.id || '',
                     name: data.name,
                     logoUrl: data.logoUrl,

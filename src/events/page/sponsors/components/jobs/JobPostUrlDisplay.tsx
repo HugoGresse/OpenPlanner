@@ -100,7 +100,7 @@ export const JobPostUrlDisplay = ({ event, jobPosts, sponsorCategories }: JobPos
             <PendingJobPostsDialog
                 open={pendingJobPostsDialog}
                 onClose={() => setPendingJobPostsDialog(false)}
-                jobPosts={jobPosts}
+                jobPosts={pendingJobPosts}
                 event={event}
                 sponsorCategories={sponsorCategories}
             />
