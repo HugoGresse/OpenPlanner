@@ -89,7 +89,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                                         key={category.id}
                                         index={index}
                                         category={category}
-                                        eventId={event.id}
+                                        event={event}
                                         jobPosts={jobPosts.data || []}
                                     />
                                 ))}
