@@ -118,6 +118,29 @@ export class JobPostDao {
         }
     }
 
+    public static async updateJobPost(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        jobPostId: string,
+        updateData: Partial<JobPostData>
+    ): Promise<boolean> {
+        try {
+            const db = firebaseApp.firestore()
+            await db
+                .collection(`events/${eventId}/jobPosts`)
+                .doc(jobPostId)
+                .update({
+                    ...updateData,
+                    status: JobStatus.PENDING,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                })
+            return true
+        } catch (error) {
+            console.error('Error updating job post:', error)
+            return false
+        }
+    }
+
     public static async trackJobPostClick(
         firebaseApp: firebase.app.App,
         eventId: string,

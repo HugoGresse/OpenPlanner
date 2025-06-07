@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import { useRef, useState } from 'react'
-import { JobPost, SponsorCategory } from '../../../../types'
+import { JobPost, SponsorCategory, Event } from '../../../../types'
 import { SponsorItem } from './SponsorItem'
 import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
@@ -15,13 +15,13 @@ import { downloadImages } from '../../../../utils/images/downloadImages'
 export type SponsorCategoryProps = {
     category: SponsorCategory
     index: number
-    eventId: string
+    event: Event
     jobPosts: JobPost[]
 }
 
-export const SponsorCategoryItem = ({ category, eventId, index, jobPosts }: SponsorCategoryProps) => {
-    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(eventId), category.id))
-    const deleteCategory = useFirestoreDocumentDeletion(doc(collections.sponsors(eventId), category.id))
+export const SponsorCategoryItem = ({ category, event, index, jobPosts }: SponsorCategoryProps) => {
+    const mutation = useFirestoreDocumentMutation(doc(collections.sponsors(event.id), category.id))
+    const deleteCategory = useFirestoreDocumentDeletion(doc(collections.sponsors(event.id), category.id))
     const ref = useRef(null)
     const [dwnloadMenuAnchor, setDownloadMenuAnchor] = useState<null | HTMLElement>(null)
 
@@ -73,6 +73,7 @@ export const SponsorCategoryItem = ({ category, eventId, index, jobPosts }: Spon
                                     sponsor={sponsor}
                                     categoryId={category.id}
                                     jobPosts={jobPosts}
+                                    event={event}
                                     onDelete={async () => {
                                         await mutation.mutate({
                                             sponsors: category.sponsors.filter((s) => s.id !== sponsor.id),

@@ -191,6 +191,7 @@ export interface Sponsor {
     name: string
     logoUrl: string
     website: string | null
+    jobPostToken?: string | null // Unique token for sponsor's job management page
 }
 
 export interface SponsorCategory {

@@ -15,7 +15,7 @@ import { Event, JobPost, SponsorCategory } from '../../../../../types'
 import { useFirestoreDocumentMutationWithId } from '../../../../../services/hooks/firestoreMutationHooks'
 import { Timestamp } from 'firebase/firestore'
 import { collections } from '../../../../../services/firebase'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import MDEditor from '@uiw/react-md-editor'
 import { DateTime } from 'luxon'
 import { JobStatus } from '../../../../../constants/jobStatus'
@@ -28,6 +28,17 @@ export type PendingJobPostsDialogProps = {
     sponsorCategories: SponsorCategory[]
 }
 
+/**
+ * This dialog is used to review the job posts that are pending approval.
+ * It is used to approve or reject the job posts.
+ * It is used to move to the next job post.
+ * It is used to close the dialog.
+ *
+ * The dialog doesn't store the current index of the job post, it is always the first one. After approve or reject, the props are updated in realtime.
+ *
+ * @param param0
+ * @returns
+ */
 export const PendingJobPostsDialog = ({
     open,
     onClose,
@@ -35,9 +46,7 @@ export const PendingJobPostsDialog = ({
     event,
     sponsorCategories,
 }: PendingJobPostsDialogProps) => {
-    const [currentIndex, setCurrentIndex] = useState(0)
-    const pendingJobPosts = jobPosts.filter((jobPost) => jobPost.status === JobStatus.PENDING)
-    const currentJobPost = pendingJobPosts[currentIndex]
+    const currentJobPost = jobPosts[0]
 
     const jobPostMutation = useFirestoreDocumentMutationWithId(collections.jobPosts(event.id))
     const sponsorName = useMemo(() => {
@@ -78,9 +87,7 @@ export const PendingJobPostsDialog = ({
     }
 
     const moveToNext = () => {
-        if (currentIndex < pendingJobPosts.length - 1) {
-            setCurrentIndex(currentIndex + 1)
-        } else {
+        if (jobPosts.length <= 1) {
             onClose()
         }
     }
@@ -92,7 +99,7 @@ export const PendingJobPostsDialog = ({
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
             <DialogTitle>
-                Review job post ({currentIndex + 1}/{pendingJobPosts.length})
+                Review job post ({1}/{jobPosts.length})
             </DialogTitle>
             <DialogContent>
                 <Divider sx={{ my: 2 }} />

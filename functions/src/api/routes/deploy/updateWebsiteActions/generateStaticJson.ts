@@ -98,6 +98,28 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         })),
     }))
 
+    const outputSponsorsPrivate = sponsors.map((category) => ({
+        ...category,
+        sponsors: category.sponsors.map((sponsor) => ({
+            ...sponsor,
+            jobPostToken: sponsor.jobPostToken,
+            jobPosts: jobPosts
+                .filter((jobPost) => jobPost.sponsorId === sponsor.id)
+                .map((jobPost) => ({
+                    id: jobPost.id,
+                    title: jobPost.title,
+                    description: jobPost.description,
+                    location: jobPost.location,
+                    externalLink: jobPost.externalLink,
+                    salary: jobPost.salary,
+                    requirements: jobPost.requirements,
+                    contactEmail: jobPost.contactEmail,
+                    category: jobPost.category,
+                    createdAt: dateToString(jobPost.createdAt.toDate()),
+                })),
+        })),
+    }))
+
     const outputEvent = {
         id: event.id,
         name: event.name,
@@ -142,7 +164,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         event: outputEvent,
         speakers,
         sessions: outputSessionsPrivate,
-        sponsors: outputSponsor,
+        sponsors: outputSponsorsPrivate,
         team,
         teams,
         faq,

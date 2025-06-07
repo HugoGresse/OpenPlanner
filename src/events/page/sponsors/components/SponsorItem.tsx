@@ -1,17 +1,20 @@
-import { JobPost, Sponsor } from '../../../../types'
+import { JobPost, Sponsor, Event } from '../../../../types'
 import { Box, Card, CardContent, CardMedia, IconButton, Link, Typography, useTheme, alpha, Button } from '@mui/material'
 import { DeleteRounded } from '@mui/icons-material'
 import EditIcon from '@mui/icons-material/Edit'
 import WorkIcon from '@mui/icons-material/Work'
 import { useMemo } from 'react'
+import { SponsorTokenManager } from './SponsorTokenManager'
+
 export type SponsorItemProps = {
     sponsor: Sponsor
     categoryId: string
     onDelete: () => void
     jobPosts: JobPost[]
+    event: Event
 }
 
-export const SponsorItem = ({ sponsor, onDelete, categoryId, jobPosts }: SponsorItemProps) => {
+export const SponsorItem = ({ sponsor, onDelete, categoryId, jobPosts, event }: SponsorItemProps) => {
     const theme = useTheme()
 
     const jobPostsCount = useMemo(() => {
@@ -95,11 +98,13 @@ export const SponsorItem = ({ sponsor, onDelete, categoryId, jobPosts }: Sponsor
                     }}>
                     <EditIcon />
                 </IconButton>
+                <SponsorTokenManager sponsor={sponsor} categoryId={categoryId} event={event} />
                 <IconButton
                     aria-label="Delete sponsor"
                     onClick={onDelete}
                     size="small"
                     sx={{
+                        mt: 1,
                         color: theme.palette.error.main,
                     }}>
                     <DeleteRounded />

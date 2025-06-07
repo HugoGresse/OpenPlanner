@@ -1,10 +1,35 @@
 import { FastifyInstance } from 'fastify'
 import { addSponsorRouteHandler, addSponsorPOSTSchema, AddSponsorPOSTTypes } from './addSponsorsPOST'
-import { addJobPostRouteHandler, addJobPostPOSTSchema, AddJobPostPOSTTypes } from './addJobPostPOST'
+import {
+    addJobPostRouteHandler,
+    addJobPostPOSTSchema,
+    AddJobPostPOSTTypes,
+    addSponsorJobPostRouteHandler,
+    addSponsorJobPostPOSTSchema,
+    AddSponsorJobPostPOSTTypes,
+} from './addJobPostPOST'
 import { getJobPostsRouteHandler, getJobPostsGETSchema, GetJobPostsGETTypes } from './getJobPostsGET'
 import { getJobPostRouteHandler, getJobPostGETSchema, GetJobPostGETTypes } from './getJobPostGET'
-import { deleteJobPostRouteHandler, deleteJobPostDELETESchema, DeleteJobPostDELETETypes } from './deleteJobPostDELETE'
+import {
+    deleteJobPostRouteHandler,
+    deleteJobPostDELETESchema,
+    DeleteJobPostDELETETypes,
+    deleteSponsorJobPostRouteHandler,
+    deleteSponsorJobPostDELETESchema,
+    DeleteSponsorJobPostDELETETypes,
+} from './deleteJobPostDELETE'
 import { approveJobPostRouteHandler, approveJobPostPUTSchema, ApproveJobPostPUTTypes } from './approveJobPostPUT'
+import { updateJobPostRouteHandler, updateJobPostPUTSchema, UpdateJobPostPUTTypes } from './updateJobPostPUT'
+import {
+    getSponsorJobPostsRouteHandler,
+    getSponsorJobPostsGETSchema,
+    GetSponsorJobPostsGETTypes,
+} from './getSponsorJobPostsGET'
+import {
+    generateSponsorTokenRouteHandler,
+    generateSponsorTokenPOSTSchema,
+    GenerateSponsorTokenPOSTTypes,
+} from './generateSponsorTokenPOST'
 import {
     trackJobPostClickRouteHandler,
     TrackJobPostClickPOSTTypes,
@@ -24,6 +49,17 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
         addSponsorRouteHandler(fastify)
     )
 
+    // Generate sponsor token (admin only)
+    fastify.post<GenerateSponsorTokenPOSTTypes>(
+        '/v1/:eventId/sponsors/generate-token',
+        {
+            schema: generateSponsorTokenPOSTSchema,
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        generateSponsorTokenRouteHandler(fastify)
+    )
+
+    // Original job post endpoint (using event private ID)
     fastify.post<AddJobPostPOSTTypes>(
         '/v1/:eventId/sponsors/jobPosts',
         {
@@ -33,6 +69,44 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
         addJobPostRouteHandler(fastify)
     )
 
+    // New sponsor-specific job post endpoints
+    fastify.post<AddSponsorJobPostPOSTTypes>(
+        '/v1/:eventId/sponsors/job-posts',
+        {
+            schema: addSponsorJobPostPOSTSchema,
+            // No preHandler needed - authentication via sponsor token
+        },
+        addSponsorJobPostRouteHandler(fastify)
+    )
+
+    fastify.get<GetSponsorJobPostsGETTypes>(
+        '/v1/:eventId/sponsors/job-posts',
+        {
+            schema: getSponsorJobPostsGETSchema,
+            // No preHandler needed - authentication via sponsor token
+        },
+        getSponsorJobPostsRouteHandler(fastify)
+    )
+
+    fastify.put<UpdateJobPostPUTTypes>(
+        '/v1/:eventId/sponsors/job-posts/:jobPostId',
+        {
+            schema: updateJobPostPUTSchema,
+            // No preHandler needed - authentication via sponsor token
+        },
+        updateJobPostRouteHandler(fastify)
+    )
+
+    fastify.delete<DeleteSponsorJobPostDELETETypes>(
+        '/v1/:eventId/sponsors/job-posts/:jobPostId',
+        {
+            schema: deleteSponsorJobPostDELETESchema,
+            // No preHandler needed - authentication via sponsor token
+        },
+        deleteSponsorJobPostRouteHandler(fastify)
+    )
+
+    // Admin endpoints (existing)
     fastify.get<GetJobPostsGETTypes>(
         '/v1/:eventId/sponsors/jobPosts',
         {
