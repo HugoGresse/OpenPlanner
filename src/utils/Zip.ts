@@ -98,7 +98,7 @@ export class Zip {
 
             uint.modTime = fetchResponse.headers.get('Last-Modified') || new Date().toUTCString()
             uint.fileUrl = `${this.name}/${folder}${file.name}.${fileExtension || ''}`
-            this.zip[file.name || generateFirestoreId()] = uint
+            this.zip[file.name || `${generateFirestoreId()}.${fileExtension}`] = uint
         }
     }
 
