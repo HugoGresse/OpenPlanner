@@ -1,6 +1,6 @@
 import { dataUriToBuffer } from 'data-uri-to-buffer'
 
-export const convertSvgToPng = (svg: string): Promise<ArrayBuffer> => {
+export const loadAndConvertSvgToPng = (svg: string): Promise<ArrayBuffer> => {
     const svgAsBlob = new Blob([svg], { type: 'image/svg+xml' })
     const svgAsUrl = URL.createObjectURL(svgAsBlob)
     const img = new Image()

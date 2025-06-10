@@ -1,4 +1,5 @@
-import { convertSvgToPng as convertSvgToPngFunc } from './images/convertSvgToPng'
+import { loadAndConvertSvgToPng } from './images/loadAndConvertSvgToPng'
+import { generateFirestoreId } from './generateFirestoreId'
 
 /**
  * Modified from https://github.com/pwasystem/zip/blob/main/zip.js
@@ -83,7 +84,7 @@ export class Zip {
 
             const buffer =
                 fileExtension === 'svg' && convertSvgToPng
-                    ? await convertSvgToPngFunc(await fetchResponse.text())
+                    ? await loadAndConvertSvgToPng(await fetchResponse.text())
                     : await fetchResponse.arrayBuffer()
 
             if (fileExtension === 'svg' && convertSvgToPng) {
@@ -97,7 +98,7 @@ export class Zip {
 
             uint.modTime = fetchResponse.headers.get('Last-Modified') || new Date().toUTCString()
             uint.fileUrl = `${this.name}/${folder}${file.name}.${fileExtension || ''}`
-            this.zip[file.name] = uint
+            this.zip[file.name || `${generateFirestoreId()}.${fileExtension}`] = uint
         }
     }
 
