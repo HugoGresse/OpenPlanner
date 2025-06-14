@@ -117,10 +117,10 @@ export const DaySchedule: React.FC<DayScheduleProps> = ({ tracks, sessions, spea
                     {tracks.map((track, index) => (
                         <Box key={track.id} sx={{ position: 'relative' }}>
                             <Typography
-                                variant="subtitle1"
                                 sx={{
                                     textAlign: 'center',
-                                    fontWeight: 'bold',
+                                    fontWeight: 500,
+                                    fontSize: '1.4em',
                                     p: 1,
                                     display: 'flex',
                                     alignItems: 'center',

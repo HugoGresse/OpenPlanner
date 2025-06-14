@@ -29,12 +29,14 @@ import { TextFieldElementPrivate } from '../../../components/form/TextFieldEleme
 const schema = yup
     .object({
         name: yup.string().required(),
+        timezone: yup.string().required(),
     })
     .required()
 
 const convertInputEvent = (event: Event): EventForForm => {
     return {
         ...event,
+        timezone: event.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
         dates: {
             start: event.dates.start ? DateTime.fromJSDate(event.dates.start).toFormat("kkkk-LL-dd'T'T") : null,
             end: event.dates.end ? DateTime.fromJSDate(event.dates.end).toFormat("kkkk-LL-dd'T'T") : null,
@@ -110,6 +112,17 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     type="datetime-local"
                                     InputLabelProps={{ shrink: true }}
                                     disabled={formState.isSubmitting}
+                                />
+                                <TextFieldElement
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="timezone"
+                                    label="Timezone"
+                                    name="timezone"
+                                    variant="filled"
+                                    disabled={formState.isSubmitting}
+                                    helperText="eg: Europe/Paris"
                                 />
                                 {days ? days + ' day(s)' : ''}
                             </Grid>

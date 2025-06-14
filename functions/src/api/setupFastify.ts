@@ -15,10 +15,11 @@ import { filesRoutes } from './routes/file/files'
 import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
-import { eventRoutes } from './routes/event/event'
+import { eventRoutes } from './routes/event/eventRoutes'
 import { bupherRoutes } from './routes/bupher/bupher'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
 import { deployRoutes } from './routes/deploy/deploy'
+import { noCacheHook } from '../utils/noCacheHook'
 
 type Firebase = firebaseApp.App
 declare module 'fastify' {
@@ -28,13 +29,16 @@ declare module 'fastify' {
     }
 }
 
+export const isDev = () => {
+    return !!(process.env.FUNCTIONS_EMULATOR && process.env.FUNCTIONS_EMULATOR === 'true')
+}
+
 export const setupFastify = () => {
-    const isDev = !!(process.env.FUNCTIONS_EMULATOR && process.env.FUNCTIONS_EMULATOR === 'true')
     const isNodeEnvDev = process.env.NODE_ENV === 'development'
     const isNodeEnvTest = process.env.NODE_ENV === 'test'
 
     const fastify = Fastify({
-        logger: isDev,
+        logger: isDev() || isNodeEnvDev || isNodeEnvTest,
     }).withTypeProvider<TypeBoxTypeProvider>()
 
     if (!isNodeEnvDev && !isNodeEnvTest) {
@@ -47,10 +51,7 @@ export const setupFastify = () => {
     fastify.register(cors, {
         origin: '*',
     })
-    fastify.addHook('onSend', (_, reply, _2, done: () => void) => {
-        reply.header('Cache-Control', 'must-revalidate,no-cache,no-store')
-        done()
-    })
+    fastify.addHook('onSend', noCacheHook)
     registerSwagger(fastify)
 
     fastify.register(eventRoutes)

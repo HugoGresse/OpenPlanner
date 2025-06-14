@@ -75,6 +75,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         color: null,
                         colorSecondary: null,
                         colorBackground: null,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                         publicEnabled: false,
                     }
                     mutation

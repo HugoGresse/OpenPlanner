@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { DateTime } from 'luxon'
 import { JsonSession, JsonPublicOutput } from '../../../functions/src/api/routes/deploy/updateWebsiteActions/jsonTypes'
-import { useLocation, useRoute } from 'wouter'
+import { useLocation, useRoute, useSearchParams } from 'wouter'
 import { ScheduleHeader } from './components/ScheduleHeader'
 import { DayTabs } from './components/DayTabs'
 import { DaySchedule } from './components/DaySchedule'
@@ -16,7 +16,9 @@ export type PublicEventScheduleProps = {
 export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps) => {
     const [_, setLocation] = useLocation()
     const [_2, params] = useRoute('/schedule/:day')
+    const [searchParams] = useSearchParams()
     const selectedDay = params?.day
+    const hideHeader = searchParams.get('hideHeader') === 'true'
 
     const sessionsByDay = useMemo(() => {
         const sessions = event.sessions
@@ -69,11 +71,13 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
             alignItems="center"
             sx={{ minHeight: 'calc(100vh - 124px)' }} // Subtract margin-top value to prevent overflow
         >
-            <ScheduleHeader
-                eventName={event.event.name}
-                logoUrl={event.event.logoUrl}
-                colorBackground={event.event.colorBackground}
-            />
+            {!hideHeader && (
+                <ScheduleHeader
+                    eventName={event.event.name}
+                    logoUrl={event.event.logoUrl}
+                    colorBackground={event.event.colorBackground}
+                />
+            )}
 
             <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
 
