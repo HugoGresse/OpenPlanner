@@ -7,7 +7,8 @@ export const uploadBufferToStorage = async (
     firebase: firebase.app.App,
     buffer: Buffer,
     eventId: string,
-    fileName: string
+    fileName: string,
+    addUuid: boolean = true
 ): Promise<[boolean, string]> => {
     const storageBucket = getStorageBucketName()
 
@@ -21,7 +22,7 @@ export const uploadBufferToStorage = async (
 
     const bucket = firebase.storage().bucket(storageBucket)
     const fileName50char = fileName.slice(0, 50)
-    const path = `events/${eventId}/${uuidv4()}_${fileName50char}.${extension}`
+    const path = `events/${eventId}/${addUuid ? uuidv4() + '_' : ''}${fileName50char}.${extension}`
     const bucketFile = bucket.file(path)
 
     try {

@@ -13,7 +13,14 @@ export class EventDao {
         if (!data) {
             throw new Error('Event not found')
         }
-        return data as Event
+        const baseData = data
+        if (data.dates) {
+            baseData.dates = {
+                start: data.dates.start.toDate(),
+                end: data.dates.end.toDate(),
+            }
+        }
+        return baseData as Event
     }
 
     public static async createCategory(

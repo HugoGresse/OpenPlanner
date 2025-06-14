@@ -5,11 +5,12 @@ import { addContentTypeParserForServerless } from '../api/other/addContentTypePa
 import { pdfRoute } from './pdf'
 import { fastifyErrorHandler } from '../api/other/fastifyErrorHandler'
 import cors from '@fastify/cors'
-import { noCacheHook } from '../fastifyUtils/noCacheHook'
+import { noCacheHook } from '../utils/noCacheHook'
 import FastifySwagger from '@fastify/swagger'
 import FastifySwaggerUi from '@fastify/swagger-ui'
-import { serviceApiKeyPlugin } from './apiKeyPreHandler'
+import { serviceApiKeyPlugin } from './serviceApiKeyPreHandler'
 import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
+import { getFirebaseProjectId } from '../utils/getFirebaseProjectId'
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -41,7 +42,9 @@ const setupServiceFastify = () => {
                 title: 'OpenPlanner Service API Documentation',
                 version: '1.0.0',
             },
-            host: isDev ? 'localhost:5001/conferencecenterr/europe-west1/serviceApi/' : 'service.openplanner.fr/',
+            host: isDev
+                ? `localhost:5001/${getFirebaseProjectId()}/europe-west1/serviceApi/`
+                : 'service.openplanner.fr/',
             schemes: isDev ? ['http'] : ['https'],
             consumes: ['application/json'],
             produces: ['application/json'],
