@@ -19,6 +19,7 @@ import { eventRoutes } from './routes/event/event'
 import { bupherRoutes } from './routes/bupher/bupher'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
 import { deployRoutes } from './routes/deploy/deploy'
+import { noCacheHook } from '../fastifyUtils/noCacheHook'
 
 type Firebase = firebaseApp.App
 declare module 'fastify' {
@@ -47,10 +48,7 @@ export const setupFastify = () => {
     fastify.register(cors, {
         origin: '*',
     })
-    fastify.addHook('onSend', (_, reply, _2, done: () => void) => {
-        reply.header('Cache-Control', 'must-revalidate,no-cache,no-store')
-        done()
-    })
+    fastify.addHook('onSend', noCacheHook)
     registerSwagger(fastify)
 
     fastify.register(eventRoutes)
