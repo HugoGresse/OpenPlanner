@@ -245,7 +245,11 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     <p>
                                         <a
                                             target="_blank"
-                                            href={`https://openplanner.fr/public/event/${event.id}/transcription`}>
+                                            href={`${
+                                                window.location.hostname === 'localhost'
+                                                    ? 'http://localhost:3000'
+                                                    : 'https://openplanner.fr'
+                                            }/public/event/${event.id}/transcription`}>
                                             Transcription page url
                                         </a>
                                     </p>

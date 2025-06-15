@@ -147,7 +147,9 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
         <Box>
             <iframe
                 key={`${selectedTalk?.id}-${options.backgroundColor}-${options.textColor}`}
-                src={`https://openplanner.fr/gladia.html?token=${gladiaAPIKey}&font_size=40&background_color=${options.backgroundColor}&text_color=${options.textColor}`}
+                src={`${
+                    window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://openplanner.fr'
+                }/gladia.html?token=${gladiaAPIKey}&font_size=43&background_color=000&text_color=ffffff&line_height=1&alignment=left&hide_settings=true&font_name=Arial`}
                 width="100%"
                 height={`${iframeHeight}px`}
                 allow="camera; microphone"
@@ -158,13 +160,14 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
                 position={'absolute'}
                 right={0}
                 bottom={0}
+                left={0}
                 display={'flex'}
                 alignItems={'center'}
                 justifyContent={'center'}>
                 <p>
                     TRACK: {selectedTrack} Talk: {selectedTalk?.title} Start: {startTime} End: {endTime}
                 </p>
-                <p>Next talk: {upcomingTalks[currentTalkIndex + 1]?.title}</p>
+                <p> Next talk: {upcomingTalks[currentTalkIndex + 1]?.title}</p>
                 <Button
                     variant="contained"
                     size="small"
@@ -176,19 +179,6 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
                 <Button size="small" variant="contained" onClick={() => saveStuffInLocalStorage('', '')}>
                     Clear password
                 </Button>
-
-                <FormControlLabel
-                    control={<Checkbox />}
-                    checked={options.backgroundColor === '00ff00'}
-                    label="Green background"
-                    labelPlacement="start"
-                    onChange={(e: any) => {
-                        setOptions({
-                            ...options,
-                            backgroundColor: e.target.checked ? '00ff00' : '000000',
-                        })
-                    }}
-                />
             </Box>
         </Box>
     )

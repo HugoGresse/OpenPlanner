@@ -41,23 +41,44 @@
         </style>
     </head>
     <body>
-        <div id="settings-panel" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; color: white; z-index: 1000; max-width: 300px;">
-            <h3 style="margin-top: 0;">Settings</h3>
+        <div
+            id="settings-panel"
+            style="
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 10px;
+                border-radius: 5px;
+                color: white;
+                z-index: 1000;
+                max-width: 300px;
+            "
+        >
+            <h3 style="margin-top: 0">Settings</h3>
             <form id="settings-form">
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px">
                     <label for="token">API Key:</label>
-                    <input type="text" id="token" name="token" style="width: 100%;">
+                    <input type="text" id="token" name="token" style="width: 100%" />
                 </div>
                 <div class="form-group">
                     <label for="font_size">Font Size:</label>
-                    <input type="number" id="font_size" name="font_size" min="10" max="100" value="40">
+                    <input type="number" id="font_size" name="font_size" min="10" max="100" value="40" />
                 </div>
-                
+
                 <div class="form-group">
                     <label for="line_height">Line Spacing:</label>
-                    <input type="number" id="line_height" name="line_height" min="0.5" max="3" step="0.1" value="1.25">
+                    <input
+                        type="number"
+                        id="line_height"
+                        name="line_height"
+                        min="0.5"
+                        max="3"
+                        step="0.1"
+                        value="1.25"
+                    />
                 </div>
-                
+
                 <div class="form-group">
                     <label for="font_name">Font:</label>
                     <select id="font_name" name="font_name">
@@ -69,35 +90,45 @@
                         <option value="Verdana">Verdana</option>
                     </select>
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px">
                     <label for="background_color">Background Color:</label>
-                    <input type="color" id="background_color" name="background_color" style="width: 100%;">
+                    <input type="color" id="background_color" name="background_color" style="width: 100%" />
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px">
                     <label for="text_color">Text Color:</label>
-                    <input type="color" id="text_color" name="text_color" style="width: 100%;">
+                    <input type="color" id="text_color" name="text_color" style="width: 100%" />
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px">
                     <label for="max_lines">Max Lines:</label>
-                    <input type="number" id="max_lines" name="max_lines" min="1" max="10" style="width: 100%;">
+                    <input type="number" id="max_lines" name="max_lines" min="1" max="10" style="width: 100%" />
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px">
                     <label for="scroll_speed">Scroll Speed (ms):</label>
-                    <input type="number" id="scroll_speed" name="scroll_speed" min="500" max="5000" step="100" style="width: 100%;">
+                    <input
+                        type="number"
+                        id="scroll_speed"
+                        name="scroll_speed"
+                        min="500"
+                        max="5000"
+                        step="100"
+                        style="width: 100%"
+                    />
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px">
                     <label for="alignment">Alignment:</label>
-                    <select id="alignment" name="alignment" style="width: 100%;">
+                    <select id="alignment" name="alignment" style="width: 100%">
                         <option value="left">Left</option>
                         <option value="center">Center</option>
                         <option value="right">Right</option>
                     </select>
                 </div>
                 <button type="button" id="apply-settings">Apply Settings</button>
-                <button type="button" id="toggle-settings" style="margin-left: 10px;">Hide Settings</button>
+                <button type="button" id="toggle-settings" style="margin-left: 10px">Hide Settings</button>
             </form>
         </div>
-        <button id="show-settings" style="position: fixed; top: 10px; right: 10px; z-index: 999; display: none;">Show Settings</button>
+        <button id="show-settings" style="position: fixed; bottom: 10px; right: 10px; z-index: 999; display: none">
+            Show Settings
+        </button>
         <div id="result"></div>
         <!-- /**
     ?token=YOUR_API_KEY
@@ -112,23 +143,23 @@
     &alignment=center
     **/ -->
         <script>
-            const SAMPLE_RATE = 16000;
+            const SAMPLE_RATE = 16000
 
             /** We try to (re)connect to the WS during 5 min before giving up */
-            const MAX_CONNECTION_DURATION = 5 * 60 * 1000;
+            const MAX_CONNECTION_DURATION = 5 * 60 * 1000
 
-            let queryParams = new URLSearchParams(window.location.search);
+            let queryParams = new URLSearchParams(window.location.search)
 
             /**
              * @returns {{promise: Promise<any>; resolve(value: any): void; reject(err: any): void;}}
              */
             function deferredPromise() {
-                const deferred = {};
+                const deferred = {}
                 deferred.promise = new Promise((resolve, reject) => {
-                    deferred.resolve = resolve;
-                    deferred.reject = reject;
-                });
-                return deferred;
+                    deferred.resolve = resolve
+                    deferred.reject = reject
+                })
+                return deferred
             }
 
             /**
@@ -136,10 +167,10 @@
              */
             async function initiateSession(gladiaKey) {
                 const response = await fetch(`https://api.gladia.io/v2/live`, {
-                    method: "POST",
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-GLADIA-KEY": gladiaKey,
+                        'Content-Type': 'application/json',
+                        'X-GLADIA-KEY': gladiaKey,
                     },
                     body: JSON.stringify({
                         sample_rate: SAMPLE_RATE,
@@ -148,51 +179,48 @@
                         endpointing: parseFloat(queryParams.get('endpointing') || '0.2'),
                         maximum_duration_without_endpointing: 10,
                         language_config: {
-                            languages: ["fr", "en"]
+                            languages: ['fr', 'en'],
                         },
                         realtime_processing: {
-                            "custom_vocabulary": true,
+                            custom_vocabulary: true,
                             custom_vocabulary_config: {
-                                vocabulary: [
-                                    "Sunny Tech",
-                                    "Clever Cloud",
-                                    "Gladia",
-                                    "Billetweb"
-                                ]
-                            }
-                        }
+                                vocabulary: ['Sunny Tech', 'Clever Cloud', 'Gladia', 'Billetweb'],
+                            },
+                        },
                     }),
-                });
+                })
                 if (!response.ok) {
-                    const message = `${response.status}: ${(await response.text()) || response.statusText}`;
-                    throw new Error(message);
+                    const message = `${response.status}: ${(await response.text()) || response.statusText}`
+                    throw new Error(message)
                 }
-                return await response.json();
+                return await response.json()
             }
 
             // Function to load settings from URL parameters and update form fields
             function loadSettings() {
-                const token = queryParams.get('token') || '';
-                const font_size = parseInt(queryParams.get('font_size') || '40', 10);
-                const line_height = parseFloat(queryParams.get('line_height') || '1.25');
-                const font_name = queryParams.get('font_name') || 'Arial';
-                const background_color = queryParams.get('background_color') || '00ff00';
-                const text_color = queryParams.get('text_color') || 'ffffff';
-                const max_lines = parseInt(queryParams.get('max_lines') || '3', 10);
-                const scroll_speed = parseInt(queryParams.get('scroll_speed') || '2000', 10);
-                const alignment = queryParams.get('alignment') || 'center';
-                
+                const token = queryParams.get('token') || ''
+                const font_size = parseInt(queryParams.get('font_size') || '40', 10)
+                const line_height = parseFloat(queryParams.get('line_height') || '1.25')
+                const font_name = queryParams.get('font_name') || 'Arial'
+                const background_color = queryParams.get('background_color') || '00ff00'
+                const text_color = queryParams.get('text_color') || 'ffffff'
+                const max_lines = parseInt(queryParams.get('max_lines') || '3', 10)
+                const scroll_speed = parseInt(queryParams.get('scroll_speed') || '2000', 10)
+                const alignment = queryParams.get('alignment') || 'center'
+
                 // Update form fields with current values
-                document.getElementById('token').value = token;
-                document.getElementById('font_size').value = font_size;
-                document.getElementById('line_height').value = line_height;
-                document.getElementById('font_name').value = font_name;
-                document.getElementById('background_color').value = background_color.startsWith('#') ? background_color : `#${background_color}`;
-                document.getElementById('text_color').value = text_color.startsWith('#') ? text_color : `#${text_color}`;
-                document.getElementById('max_lines').value = max_lines;
-                document.getElementById('scroll_speed').value = scroll_speed;
-                document.getElementById('alignment').value = alignment;
-                
+                document.getElementById('token').value = token
+                document.getElementById('font_size').value = font_size
+                document.getElementById('line_height').value = line_height
+                document.getElementById('font_name').value = font_name
+                document.getElementById('background_color').value = background_color.startsWith('#')
+                    ? background_color
+                    : `#${background_color}`
+                document.getElementById('text_color').value = text_color.startsWith('#') ? text_color : `#${text_color}`
+                document.getElementById('max_lines').value = max_lines
+                document.getElementById('scroll_speed').value = scroll_speed
+                document.getElementById('alignment').value = alignment
+
                 return {
                     token,
                     font_size,
@@ -202,215 +230,215 @@
                     text_color,
                     max_lines,
                     scroll_speed,
-                    alignment
-                };
+                    alignment,
+                }
             }
-            
+
             // Function to update URL parameters based on form values
             function updateUrlParams() {
-                const form = document.getElementById('settings-form');
-                const formData = new FormData(form);
-                
+                const form = document.getElementById('settings-form')
+                const formData = new FormData(form)
+
                 // Get current URL parameters
-                const currentParams = new URLSearchParams(window.location.search);
-                
+                const currentParams = new URLSearchParams(window.location.search)
+
                 // Update parameters with form values
                 for (const [key, value] of formData.entries()) {
                     if (value) {
                         // For color inputs, remove the # if present
                         if ((key === 'background_color' || key === 'text_color') && value.startsWith('#')) {
-                            currentParams.set(key, value.substring(1));
+                            currentParams.set(key, value.substring(1))
                         } else {
-                            currentParams.set(key, value);
+                            currentParams.set(key, value)
                         }
                     }
                 }
-                
+
                 // Update URL without reloading the page
-                const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
-                window.history.pushState({}, '', newUrl);
-                
+                const newUrl = `${window.location.pathname}?${currentParams.toString()}`
+                window.history.pushState({}, '', newUrl)
+
                 // Reload query parameters
-                return new URLSearchParams(window.location.search);
+                return new URLSearchParams(window.location.search)
             }
-            
+
             // Toggle settings panel visibility
             document.getElementById('toggle-settings').addEventListener('click', () => {
-                document.getElementById('settings-panel').style.display = 'none';
-                document.getElementById('show-settings').style.display = 'block';
-                
+                document.getElementById('settings-panel').style.display = 'none'
+                document.getElementById('show-settings').style.display = 'block'
+
                 // Update URL parameter to hide settings by default
-                const currentParams = new URLSearchParams(window.location.search);
-                currentParams.set('hide_settings', 'true');
-                const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
-                window.history.pushState({}, '', newUrl);
-                queryParams = new URLSearchParams(window.location.search);
-            });
-            
+                const currentParams = new URLSearchParams(window.location.search)
+                currentParams.set('hide_settings', 'true')
+                const newUrl = `${window.location.pathname}?${currentParams.toString()}`
+                window.history.pushState({}, '', newUrl)
+                queryParams = new URLSearchParams(window.location.search)
+            })
+
             document.getElementById('show-settings').addEventListener('click', () => {
-                document.getElementById('settings-panel').style.display = 'block';
-                document.getElementById('show-settings').style.display = 'none';
-                
+                document.getElementById('settings-panel').style.display = 'block'
+                document.getElementById('show-settings').style.display = 'none'
+
                 // Update URL parameter to show settings by default
-                const currentParams = new URLSearchParams(window.location.search);
-                currentParams.delete('hide_settings');
-                const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
-                window.history.pushState({}, '', newUrl);
-                queryParams = new URLSearchParams(window.location.search);
-            });
-            
+                const currentParams = new URLSearchParams(window.location.search)
+                currentParams.delete('hide_settings')
+                const newUrl = `${window.location.pathname}?${currentParams.toString()}`
+                window.history.pushState({}, '', newUrl)
+                queryParams = new URLSearchParams(window.location.search)
+            })
+
             // Apply settings button handler
             document.getElementById('apply-settings').addEventListener('click', () => {
-                queryParams = updateUrlParams();
+                queryParams = updateUrlParams()
                 // Restart the transcription if it's already running
                 if (window.currentRecorder) {
-                    stop();
+                    stop()
                     setTimeout(() => {
-                        start();
-                    }, 500);
+                        start()
+                    }, 500)
                 } else {
-                    start();
+                    start()
                 }
-            });
-            
+            })
+
             // Initialize settings when the page loads
-            loadSettings();
-            
+            loadSettings()
+
             // Check if settings should be hidden by default
             if (queryParams.get('hide_settings') === 'true') {
-                document.getElementById('settings-panel').style.display = 'none';
-                document.getElementById('show-settings').style.display = 'block';
+                document.getElementById('settings-panel').style.display = 'none'
+                document.getElementById('show-settings').style.display = 'block'
             }
 
             // Global stop function to terminate recording and connection
             function stop() {
                 if (window.currentRecorder) {
-                    window.currentRecorder.destroy();
+                    window.currentRecorder.destroy()
                 }
-                
+
                 if (window.currentAudioStream) {
-                    window.currentAudioStream.getTracks().forEach((track) => track.stop());
+                    window.currentAudioStream.getTracks().forEach((track) => track.stop())
                 }
-                
+
                 if (window.currentSocket) {
-                    window.currentSocket.onopen = null;
-                    window.currentSocket.onerror = null;
-                    window.currentSocket.onclose = null;
-                    window.currentSocket.onmessage = null;
-                    window.currentSocket.close();
+                    window.currentSocket.onopen = null
+                    window.currentSocket.onerror = null
+                    window.currentSocket.onclose = null
+                    window.currentSocket.onmessage = null
+                    window.currentSocket.close()
                 }
-                
-                window.currentRecorder = null;
-                window.currentAudioStream = null;
-                window.currentSocket = null;
+
+                window.currentRecorder = null
+                window.currentAudioStream = null
+                window.currentSocket = null
             }
-            
+
             // Initialize settings from URL parameters
-            loadSettings();
-            
+            loadSettings()
+
             // Start the application
             async function start() {
                 // Load settings from URL parameters
-                const settings = loadSettings();
-                
+                const settings = loadSettings()
+
                 /** @type {HTMLDivElement} */
-                const resultContainer = document.querySelector('#result');
-                
+                const resultContainer = document.querySelector('#result')
+
                 // Clear existing content
-                resultContainer.innerHTML = '';
-                
+                resultContainer.innerHTML = ''
+
                 // Set styles
-                const font_size = settings.font_size;
-                const line_height = settings.line_height;
-                const font_name = settings.font_name;
-                const background_color = settings.background_color;
-                const text_color = settings.text_color;
-                const max_lines = settings.max_lines;
-                const scroll_speed = settings.scroll_speed;
-                const alignment = settings.alignment;
-                
-                const lineHeight = font_size * line_height;
-                const containerHeight = lineHeight * max_lines;
-                resultContainer.style.fontSize = `${font_size}px`;
-                resultContainer.style.lineHeight = `${lineHeight}px`;
-                resultContainer.style.height = `${containerHeight}px`;
-                resultContainer.style.paddingTop = `${containerHeight}px`;
-                resultContainer.style.fontFamily = font_name;
+                const font_size = settings.font_size
+                const line_height = settings.line_height
+                const font_name = settings.font_name
+                const background_color = settings.background_color
+                const text_color = settings.text_color
+                const max_lines = settings.max_lines
+                const scroll_speed = settings.scroll_speed
+                const alignment = settings.alignment
+
+                const lineHeight = font_size * line_height
+                const containerHeight = lineHeight * max_lines
+                resultContainer.style.fontSize = `${font_size}px`
+                resultContainer.style.lineHeight = `${lineHeight}px`
+                resultContainer.style.height = `${containerHeight}px`
+                resultContainer.style.paddingTop = `${containerHeight}px`
+                resultContainer.style.paddingLeft = `${containerHeight}px`
+                resultContainer.style.fontFamily = font_name
                 resultContainer.style.backgroundColor = background_color.startsWith('#')
                     ? background_color
-                    : `#${background_color}`;
+                    : `#${background_color}`
                 document.body.style.backgroundColor = background_color.startsWith('#')
                     ? background_color
-                    : `#${background_color}`;
-                resultContainer.style.color = text_color.startsWith('#') ? text_color : `#${text_color}`;
-                resultContainer.style.textAlign = alignment;
-                
+                    : `#${background_color}`
+                resultContainer.style.color = text_color.startsWith('#') ? text_color : `#${text_color}`
+                resultContainer.style.textAlign = alignment
+
                 // Automatic scroll
-                let timeout;
+                let timeout
                 const scrollOneLine = () => {
                     if (resultContainer.scrollTop + containerHeight < resultContainer.scrollHeight) {
                         resultContainer.scrollTo({
                             top: resultContainer.scrollTop + lineHeight,
                             behavior: 'smooth',
-                        });
+                        })
                     }
-                };
-                
-                const updateScroll = () => {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => {
-                        scrollOneLine();
-                        updateScroll();
-                    }, scroll_speed);
-                };
-                
-                updateScroll();
-                
-                // Get API key from settings
-                const token = settings.token;
-                if (!token) {
-                    resultContainer.innerHTML = '<p style="color: red;">Error: Missing API key. Please enter your Gladia API key in the settings panel.</p>';
-                    return;
                 }
-                
+
+                const updateScroll = () => {
+                    clearTimeout(timeout)
+                    timeout = setTimeout(() => {
+                        scrollOneLine()
+                        updateScroll()
+                    }, scroll_speed)
+                }
+
+                updateScroll()
+
+                // Get API key from settings
+                const token = settings.token
+                if (!token) {
+                    resultContainer.innerHTML =
+                        '<p style="color: red;">Error: Missing API key. Please enter your Gladia API key in the settings panel.</p>'
+                    return
+                }
+
                 // Get source language from query parameters
-                const source_language = queryParams.get('source_language') || 'french';
-                
+                const source_language = queryParams.get('source_language') || 'french'
+
                 /** @type {MediaStream | undefined} */
-                let audioStream;
+                let audioStream
                 /** @type {RecordRTC | undefined} */
-                let recorder;
+                let recorder
                 /** @type {WebSocket | undefined} */
-                let socket;
-                
+                let socket
+
                 // These variables will be set properly in the try block
-                
+
                 try {
                     // Initialize session with Gladia API v2
-                    const { url } = await initiateSession(token);
-                    const socketPromise = deferredPromise();
-                    
+                    const { url } = await initiateSession(token)
+                    const socketPromise = deferredPromise()
+
                     // Initialize WebSocket connection
-                    socket = new WebSocket(url);
+                    socket = new WebSocket(url)
                     socket.onopen = () => {
-                        socketPromise.resolve(true);
-                    };
+                        socketPromise.resolve(true)
+                    }
                     socket.onerror = () => {
-                        socketPromise.reject(new Error(`Couldn't connect to the server`));
-                    };
+                        socketPromise.reject(new Error(`Couldn't connect to the server`))
+                    }
                     socket.onclose = (event) => {
                         socketPromise.reject(
-                            new Error(
-                                `Server refuses the connection: [${event.code}] ${event.reason}`
-                            )
-                        );
-                    };
-                    
+                            new Error(`Server refuses the connection: [${event.code}] ${event.reason}`)
+                        )
+                    }
+
                     // Get audio stream
                     audioStream = await navigator.mediaDevices.getUserMedia({
-                        audio: true
-                    });
-                    
+                        audio: true,
+                    })
+
                     // Initialize recorder
                     recorder = new RecordRTC(audioStream, {
                         type: 'audio',
@@ -418,48 +446,47 @@
                         recorderType: RecordRTC.StereoAudioRecorder,
                         timeSlice: 1000,
                         async ondataavailable(blob) {
-                            const buffer = await blob.arrayBuffer();
+                            const buffer = await blob.arrayBuffer()
                             // Remove WAV header
-                            const modifiedBuffer = buffer.slice(44);
-                            socket?.send(modifiedBuffer);
+                            const modifiedBuffer = buffer.slice(44)
+                            socket?.send(modifiedBuffer)
                         },
                         desiredSampRate: SAMPLE_RATE,
-                        numberOfAudioChannels: 1
-                    });
-                    
+                        numberOfAudioChannels: 1,
+                    })
+
                     // Store references globally to allow stopping from outside
-                    window.currentRecorder = recorder;
-                    window.currentAudioStream = audioStream;
-                    window.currentSocket = socket;
-                    
-                    await socketPromise.promise;
-                    
+                    window.currentRecorder = recorder
+                    window.currentAudioStream = audioStream
+                    window.currentSocket = socket
+
+                    await socketPromise.promise
+
                     // Register WebSocket message handler
                     socket.onmessage = (event) => {
-                        const message = JSON.parse(event.data);
-                        console.log(message);
+                        const message = JSON.parse(event.data)
+                        console.log(message)
                         if (message?.type === 'transcript') {
                             if (message.data.is_final) {
                                 // Create a new paragraph for final transcription
-                                const p = document.createElement('p');
-                                p.textContent = message.data.utterance.text;
-                                resultContainer.appendChild(p);
+                                const p = document.createElement('p')
+                                p.textContent = message.data.utterance.text
+                                resultContainer.appendChild(p)
                             }
                         }
-                    };
-                    
+                    }
+
                     // Start recording
-                    recorder.startRecording();
-                    
+                    recorder.startRecording()
                 } catch (err) {
-                    console.error('Error during initialization:', err);
-                    resultContainer.innerHTML = `<p style="color: red;">Error: ${err.message || err}</p>`;
-                    stop();
+                    console.error('Error during initialization:', err)
+                    resultContainer.innerHTML = `<p style="color: red;">Error: ${err.message || err}</p>`
+                    stop()
                 }
             }
-            
+
             // Start the application
-            start();
+            start()
         </script>
     </body>
 </html>
