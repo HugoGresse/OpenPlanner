@@ -39,7 +39,6 @@
         "@uiw/react-md-editor": "^4.0.1",
         "canvas-confetti": "^1.9.3",
         "data-uri-to-buffer": "^6.0.2",
-        "firebase": "^10.5.2",
         "flag-icons": "^7.3.2",
         "image-blob-reduce": "^4.1.0",
         "jspdf": "^3.0.1",

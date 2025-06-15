@@ -109,7 +109,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
         setExportAnchorEl(null)
         if (!type) return
 
-        exportSessionsAction(sessionsData, displayedSessions, type)
+        exportSessionsAction(sessionsData, displayedSessions, type, event.timezone || undefined)
     }
 
     if (sessions.isLoading) {
@@ -126,7 +126,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                         ? `${displayedSessions.length}/${sessionsData.length} sessions`
                         : `${sessionsData.length} sessions`}
                 </Typography>
-                <Button onClick={(event) => setGenerateAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
+                <Button onClick={(event: React.MouseEvent<HTMLButtonElement>) => setGenerateAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
                     Generate
                 </Button>
                 <Menu
@@ -140,7 +140,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     <MenuItem onClick={closeGenerateMenu('text')}>Teasing for socials</MenuItem>
                     <MenuItem onClick={closeGenerateMenu('video')}>Teasing video using ShortVid.io</MenuItem>
                 </Menu>
-                <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
+                <Button onClick={(event: React.MouseEvent<HTMLButtonElement>) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
                     Export
                 </Button>
                 <Menu anchorEl={exportAnchorEl} open={isExportMenuOpen} onClose={closeExportMenu(null)}>
@@ -166,7 +166,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             size="small"
                             margin="normal"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                             InputProps={{
                                 endAdornment: isFiltered ? (
                                     <InputAdornment position="start">
@@ -213,7 +213,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                             control={
                                 <Switch
                                     value={onlyWithoutSpeaker}
-                                    onChange={(e) => setOnlyWithoutSpeaker(e.target.checked)}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOnlyWithoutSpeaker(e.target.checked)}
                                 />
                             }
                             label="Without speaker"
@@ -226,12 +226,12 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                                 value={selectedNotAnnouncedOn}
                                 onChange={handleNotAnnouncedOnChange}
                                 input={<OutlinedInput label="Not announced on" />}
-                                renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {selected.map((value) => (
-                                            <Chip key={value} label={value} size="small" />
+                                renderValue={(selected: TeasingPostSocials[]) => (
+                                    <>
+                                        {selected.map((value: TeasingPostSocials) => (
+                                            <Chip key={value} label={value} />
                                         ))}
-                                    </Box>
+                                    </>
                                 )}
                                 displayEmpty
                                 MenuProps={{
@@ -257,13 +257,8 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     sx={{ marginLeft: 0 }}
                     control={
                         <Checkbox
-                            checked={
-                                selectedSessions.length === displayedSessions.length && displayedSessions.length > 0
-                            }
-                            indeterminate={
-                                selectedSessions.length > 0 && selectedSessions.length < displayedSessions.length
-                            }
-                            onChange={(e) => handleSelectAll(e.target.checked)}
+                            checked={selectedSessions.length === displayedSessions.length}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSelectAll(e.target.checked)}
                         />
                     }
                     label={<Typography variant="body2">Select All</Typography>}
@@ -272,8 +267,7 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
                     <Box key={session.id} display="flex" alignItems="flex-start">
                         <Checkbox
                             checked={selectedSessions.includes(session.id)}
-                            onChange={(e) => handleSessionSelect(session.id, e.target.checked)}
-                            sx={{ mt: 1.5 }}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSessionSelect(session.id, e.target.checked)}
                         />
                         <Box flexGrow={1}>
                             <EventSessionItem session={session} selectFormat={setSelectedFormat} />
@@ -314,3 +308,5 @@ export const EventSessions = ({ event }: EventSessionsProps) => {
         </Container>
     )
 }
+
+// @ts-ignore: Ignore missing MUI type declarations
