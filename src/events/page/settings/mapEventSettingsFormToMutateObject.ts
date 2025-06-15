@@ -34,6 +34,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
     const openAPIKey = data.openAPIKey || ''
     const gladiaAPIKey = data.gladiaAPIKey || ''
     const transcriptionPassword = data.transcriptionPassword || ''
+    const timezone = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
 
     return {
         ...event,
@@ -55,6 +56,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         openAPIKey,
         gladiaAPIKey,
         transcriptionPassword,
+        timezone,
     }
 }
 

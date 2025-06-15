@@ -12,7 +12,7 @@ const GetEventReply = Type.Union([
 ])
 type GetEventReplyType = Static<typeof GetEventReply>
 
-export const eventRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
+export const getEventRoute = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.get<{ Reply: GetEventReplyType }>(
         '/v1/:eventId/event',
         {
