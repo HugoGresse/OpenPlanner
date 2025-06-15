@@ -15,10 +15,12 @@ export enum SessionsExportType {
 export const exportSessionsAction = (
     allSessions: Session[],
     displayedSessions: Session[],
-    type: SessionsExportType
+    type: SessionsExportType,
+    timezone?: string
 ) => {
-    const flattenAllSessions = allSessions.map((s) => flattenObject(s))
-    const flattedDisplayedSessions = displayedSessions.map((s) => flattenObject(s))
+    const addTimezone = (session: any) => ({ ...session, timezone: timezone || 'UTC' })
+    const flattenAllSessions = allSessions.map((s) => flattenObject(s)).map(addTimezone)
+    const flattedDisplayedSessions = displayedSessions.map((s) => flattenObject(s)).map(addTimezone)
     const teasingData = displayedSessions.map((s) => ({
         title: s.title,
         speakers: s.speakersData,
@@ -26,6 +28,7 @@ export const exportSessionsAction = (
         teasingData: s.teasingPosts,
         teasingImage: s.teaserImageUrl,
         teasingVideo: s.teaserVideoUrl,
+        timezone: timezone || 'UTC',
     }))
 
     switch (type) {
@@ -33,7 +36,7 @@ export const exportSessionsAction = (
             downloadJsonToXLSX(flattenAllSessions, 'sessions.xlsx')
             break
         case SessionsExportType.AllSessionsJson:
-            const json = JSON.stringify(allSessions, null, 4)
+            const json = JSON.stringify(allSessions.map(addTimezone), null, 4)
             const fileName = 'sessions.json'
             triggerJsonDownloadFromData(json, fileName)
             break
@@ -41,7 +44,7 @@ export const exportSessionsAction = (
             downloadJsonToXLSX(flattedDisplayedSessions, 'sessions.xlsx')
             break
         case SessionsExportType.DisplayedSessionsJson:
-            const displayedJson = JSON.stringify(displayedSessions, null, 4)
+            const displayedJson = JSON.stringify(displayedSessions.map(addTimezone), null, 4)
             const displayedFileName = 'sessions.json'
             triggerJsonDownloadFromData(displayedJson, displayedFileName)
             break
