@@ -9,7 +9,8 @@
         "start": "npm run shell",
         "logs": "firebase functions:log",
         "apiOnly": "NODE_ENV=development nodemon src/api/index.ts",
-        "test": "vitest --dir src"
+        "test": "vitest --dir src",
+        "gcp-build": "node node_modules/puppeteer/install.mjs"
     },
     "engines": {
         "node": "20"

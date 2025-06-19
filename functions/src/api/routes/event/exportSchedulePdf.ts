@@ -73,8 +73,8 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
                 const serviceApiKey = getServiceAPIKey()
                 const pdfServiceUrl = isDev()
                     ? `http://localhost:5001/${firebaseProjectId}/europe-west1/serviceApi`
-                    : `https://service.openplanner.fr/`
-                const response = await fetch(`${pdfServiceUrl}/v1/convert?apiKey=${serviceApiKey}`, {
+                    : `https://serviceapi.openplanner.fr`
+                const response = await fetch(`${pdfServiceUrl}/v1/pdf/convert?apiKey=${serviceApiKey}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

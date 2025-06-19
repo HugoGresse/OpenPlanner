@@ -27,7 +27,7 @@ interface PDFSettings {
 
 export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.post<{ Body: { urls: string[]; settings?: PDFSettings } }>(
-        '/v1/convert',
+        '/v1/pdf/convert',
         {
             schema: {
                 tags: ['pdf'],
@@ -88,6 +88,7 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
             preHandler: fastify.auth([fastify.verifyServiceApiKey]),
         },
         async (request, reply) => {
+            console.log('request.body', request.query)
             const { urls, settings } = request.body
 
             if (!urls.length) {
