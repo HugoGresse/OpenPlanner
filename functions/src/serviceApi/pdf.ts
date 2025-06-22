@@ -88,7 +88,6 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
             preHandler: fastify.auth([fastify.verifyServiceApiKey]),
         },
         async (request, reply) => {
-            console.log('request.body', request.query)
             const { urls, settings } = request.body
 
             if (!urls.length) {
