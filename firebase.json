@@ -17,6 +17,13 @@
                     }
                 },
                 {
+                    "source": "**/service-api/**",
+                    "function": {
+                        "functionId": "serviceApi",
+                        "region": "europe-west1"
+                    }
+                },
+                {
                     "source": "**",
                     "destination": "/index.html"
                 }
@@ -31,6 +38,20 @@
                     "source": "**",
                     "function": {
                         "functionId": "api",
+                        "region": "europe-west1"
+                    }
+                }
+            ]
+        },
+        {
+            "target": "serviceapi",
+            "public": "api-swagger",
+            "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+            "rewrites": [
+                {
+                    "source": "**",
+                    "function": {
+                        "functionId": "serviceApi",
                         "region": "europe-west1"
                     }
                 }

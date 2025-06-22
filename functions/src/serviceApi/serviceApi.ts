@@ -44,7 +44,7 @@ const setupServiceFastify = () => {
             },
             host: isDev
                 ? `localhost:5001/${getFirebaseProjectId()}/europe-west1/serviceApi/`
-                : 'service.openplanner.fr/',
+                : 'serviceapi.openplanner.fr/',
             schemes: isDev ? ['http'] : ['https'],
             consumes: ['application/json'],
             produces: ['application/json'],
@@ -74,9 +74,12 @@ const setupServiceFastify = () => {
 const fastify = setupServiceFastify()
 fastify.register(pdfRoute)
 
-export const serviceApi = onRequest({ timeoutSeconds: 300, region: 'europe-west1' }, async (request, reply) => {
-    fastify.ready((error) => {
-        if (error) throw error
-        fastify.server.emit('request', request, reply)
-    })
-})
+export const serviceApi = onRequest(
+    { timeoutSeconds: 300, region: 'europe-west1', memory: '1GiB' },
+    async (request, reply) => {
+        fastify.ready((error) => {
+            if (error) throw error
+            fastify.server.emit('request', request, reply)
+        })
+    }
+)

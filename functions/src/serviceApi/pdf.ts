@@ -27,7 +27,7 @@ interface PDFSettings {
 
 export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.post<{ Body: { urls: string[]; settings?: PDFSettings } }>(
-        '/v1/convert',
+        '/v1/pdf/convert',
         {
             schema: {
                 tags: ['pdf'],
