@@ -114,6 +114,7 @@ export interface EventFiles {
     imageFolder: string
     openfeedback: string
     voxxrin: string | null
+    pdf: string | null
 }
 
 export interface EventShortVidSettings {

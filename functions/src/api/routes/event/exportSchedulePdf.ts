@@ -6,6 +6,8 @@ import { getFirebaseProjectId } from '../../../utils/getFirebaseProjectId'
 import { getServiceAPIKey } from '../../../serviceApi/serviceApiKeyPreHandler'
 import { getIndividualDays } from '../../../../../src/utils/dates/diffDays'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
+import { addPdfFileToEvent, getFilesNames, getUploadFilePath } from '../deploy/updateWebsiteActions/getFilesNames'
+import { getFileName } from '../../other/getFileName'
 
 const ExportPdfReply = Type.Object({
     pdf: Type.String(),
@@ -108,6 +110,9 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
                     throw new Error(`PDF service responded with status: ${response.status}`)
                 }
 
+                const pdfFilePath = await addPdfFileToEvent(fastify.firebase, event)
+                const pdfFileName = getFileName(pdfFilePath).replace('.pdf', '')
+
                 const pdfArrayBuffer = await response.arrayBuffer()
                 const pdfBuffer = Buffer.from(pdfArrayBuffer)
 
@@ -115,7 +120,7 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
                     fastify.firebase,
                     pdfBuffer,
                     eventId,
-                    `schedule`,
+                    pdfFileName,
                     false
                 )
 
@@ -123,8 +128,17 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
                     return reply.status(400).send(publicFileUrlOrError)
                 }
 
+                if (!event.files?.pdf) {
+                    const updatedEvent = await EventDao.getEvent(fastify.firebase, eventId)
+                    const eventFiles = await getFilesNames(fastify.firebase, updatedEvent)
+                    const uploadFilePath = getUploadFilePath(eventFiles)
+                    return reply.status(200).send({
+                        pdf: uploadFilePath.pdf,
+                    })
+                }
+
                 reply.status(200).send({
-                    pdf: publicFileUrlOrError,
+                    pdf: getUploadFilePath(event.files).pdf,
                 })
             } catch (err) {
                 const error = err as Error

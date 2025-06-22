@@ -11,6 +11,7 @@ const GetFilesReply = Type.Object({
     openfeedback: Type.String(),
     imageFolder: Type.String(),
     voxxrin: Type.Union([Type.String(), Type.Null()]),
+    pdf: Type.Union([Type.String(), Type.Null()]),
 })
 
 type GetFilesReplyType = Static<typeof GetFilesReply>

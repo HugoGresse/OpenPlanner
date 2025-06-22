@@ -100,6 +100,7 @@ export interface EventFiles {
     private: string
     imageFolder: string
     openfeedback: string
+    pdf: string | null
 }
 
 export type Event = EventFrontend

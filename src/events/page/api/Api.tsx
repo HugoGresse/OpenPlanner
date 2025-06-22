@@ -1,7 +1,6 @@
 import * as yup from 'yup'
 import { Event, EventSettingForForm } from '../../../types'
-import * as React from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreMutationHooks'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
@@ -20,6 +19,7 @@ import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/Firesto
 import { TypographyCopyable } from '../../../components/TypographyCopyable'
 import { Link } from 'wouter'
 import { TextFieldElementPrivate } from '../../../components/form/TextFieldElementPrivate'
+import { PdfScheduleSection } from '../../../components/PdfScheduleSection'
 
 const schema = yup
     .object({
@@ -128,6 +128,8 @@ export const API = ({ event }: APIProps) => {
                                     </Box>
                                 )}
                             </Box>
+
+                            <PdfScheduleSection event={event} />
 
                             <Typography component="h2" variant="h5" gutterBottom>
                                 FAQ
