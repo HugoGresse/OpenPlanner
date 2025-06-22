@@ -19,11 +19,18 @@
             }
 
             #result {
-                margin-top: 5%;
-                font-weight: 700;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                font-weight: 600;
                 overflow: hidden;
                 word-break: break-word;
                 box-sizing: border-box;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
             }
 
             #result > * {
@@ -202,7 +209,7 @@
                 const font_size = parseInt(queryParams.get('font_size') || '40', 10)
                 const line_height = parseFloat(queryParams.get('line_height') || '1.25')
                 const font_name = queryParams.get('font_name') || 'Arial'
-                const background_color = queryParams.get('background_color') || '00ff00'
+                const background_color = queryParams.get('background_color') || '000'
                 const text_color = queryParams.get('text_color') || 'ffffff'
                 const max_lines = parseInt(queryParams.get('max_lines') || '3', 10)
                 const scroll_speed = parseInt(queryParams.get('scroll_speed') || '2000', 10)
@@ -358,12 +365,13 @@
                 const alignment = settings.alignment
 
                 const lineHeight = font_size * line_height
-                const containerHeight = lineHeight * max_lines
+                // Add a bit of extra height to ensure text isn't cut off
+                const containerHeight = lineHeight * max_lines + 20
                 resultContainer.style.fontSize = `${font_size}px`
                 resultContainer.style.lineHeight = `${lineHeight}px`
                 resultContainer.style.height = `${containerHeight}px`
-                resultContainer.style.paddingTop = `${containerHeight}px`
-                resultContainer.style.paddingLeft = `${containerHeight}px`
+                resultContainer.style.paddingBottom = '10px'
+                resultContainer.style.paddingTop = '0'
                 resultContainer.style.fontFamily = font_name
                 resultContainer.style.backgroundColor = background_color.startsWith('#')
                     ? background_color
@@ -374,26 +382,9 @@
                 resultContainer.style.color = text_color.startsWith('#') ? text_color : `#${text_color}`
                 resultContainer.style.textAlign = alignment
 
-                // Automatic scroll
-                let timeout
-                const scrollOneLine = () => {
-                    if (resultContainer.scrollTop + containerHeight < resultContainer.scrollHeight) {
-                        resultContainer.scrollTo({
-                            top: resultContainer.scrollTop + lineHeight,
-                            behavior: 'smooth',
-                        })
-                    }
-                }
-
-                const updateScroll = () => {
-                    clearTimeout(timeout)
-                    timeout = setTimeout(() => {
-                        scrollOneLine()
-                        updateScroll()
-                    }, scroll_speed)
-                }
-
-                updateScroll()
+                // Configure container for displaying up to max_lines of text
+                resultContainer.style.overflow = 'hidden'
+                resultContainer.style.position = 'relative'
 
                 // Get API key from settings
                 const token = settings.token
@@ -465,13 +456,26 @@
                     // Register WebSocket message handler
                     socket.onmessage = (event) => {
                         const message = JSON.parse(event.data)
-                        console.log(message)
+                        // Only log final transcripts to reduce console noise
+                        if (message?.type === 'transcript' && message.data.is_final) {
+                            console.log(message.data.utterance.text)
+                        }
+                        
                         if (message?.type === 'transcript') {
                             if (message.data.is_final) {
                                 // Create a new paragraph for final transcription
                                 const p = document.createElement('p')
                                 p.textContent = message.data.utterance.text
+                                p.style.margin = '0'
+                                p.style.padding = '0'
+                                
+                                // Add new paragraph at the bottom
                                 resultContainer.appendChild(p)
+                                
+                                // Remove old paragraphs if we exceed max_lines
+                                while (resultContainer.children.length > max_lines) {
+                                    resultContainer.removeChild(resultContainer.firstChild)
+                                }
                             }
                         }
                     }
