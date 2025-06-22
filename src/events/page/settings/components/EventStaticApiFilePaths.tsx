@@ -13,7 +13,7 @@ export type EventApiFilePathsProps = {
 
 export const EventStaticApiFilePaths = ({ event }: EventApiFilePathsProps) => {
     useEnsureApiKey(event)
-    const { filesPath, isLoading, error } = useEventFiles(event)
+    const { filesPath, isLoading, error, refetch } = useEventFiles(event)
 
     if (!event.files) {
         return (

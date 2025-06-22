@@ -69,6 +69,7 @@ export interface JsonPublicOutput {
     team: TeamMember[]
     teams: { id: string; members: TeamMember[]; order: number }[]
     faq: FaqCategory[]
+    timezone: string | null | undefined
     generatedAt: string
 }
 

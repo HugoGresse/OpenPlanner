@@ -158,6 +158,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         team,
         teams,
         faq: faqPublic,
+        timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
     const outputPrivate: JsonPrivateOutput = {
@@ -168,6 +169,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         team,
         teams,
         faq,
+        timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
 

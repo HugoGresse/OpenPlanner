@@ -30,6 +30,7 @@ export const EventFilesProvider = ({ event, children }: EventFilesProviderProps)
                 openfeedback: '',
                 voxxrin: '',
                 imageFolder: '',
+                pdf: '',
             },
             isLoading,
             error,
