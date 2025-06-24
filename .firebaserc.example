@@ -10,6 +10,9 @@
         ],
         "apiopenplanner": [
           "apiopenplanner"
+        ],
+        "serviceapi": [
+            "serviceapi"
         ]
       }
     }
