@@ -1,8 +1,10 @@
+import { DateTime } from 'luxon'
+
 interface FlattenedObject {
     [key: string]: any
 }
 
-export const flattenObject = (obj: any, prefix: string = ''): FlattenedObject => {
+export const flattenObject = (obj: any, prefix: string = '', convertDateToISO = true): FlattenedObject => {
     let result: FlattenedObject = {}
 
     for (let key in obj) {
@@ -11,7 +13,11 @@ export const flattenObject = (obj: any, prefix: string = ''): FlattenedObject =>
             const newKey = prefix ? `${prefix}.${key}` : key
 
             if (typeof value === 'object' && value !== null) {
-                if (Array.isArray(value)) {
+                if (convertDateToISO && value instanceof Date) {
+                    result[newKey] = value.toISOString()
+                } else if (convertDateToISO && value instanceof DateTime) {
+                    result[newKey] = value.toISO()
+                } else if (Array.isArray(value)) {
                     value.forEach((item, index) => {
                         const arrayKey = `${newKey}[${index}]`
                         if (typeof item === 'object' && item !== null) {
