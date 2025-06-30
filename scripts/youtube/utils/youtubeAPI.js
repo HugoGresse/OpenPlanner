@@ -113,7 +113,7 @@ const getChannel = async (auth) => {
         service.channels.list(
             {
                 auth: auth,
-                part: 'snippet,contentDetails,statistics',
+                part: ['snippet', 'contentDetails', 'statistics'],
                 mine: true,
             },
             function (err, response) {

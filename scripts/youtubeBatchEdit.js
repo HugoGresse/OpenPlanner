@@ -1,5 +1,6 @@
-import { getVideosLast72Hours, initYoutube, updateVideo, updateVideoThumbnail } from './youtubeAPI.js'
+import { getVideosLast72Hours, initYoutube, updateVideo, updateVideoThumbnail } from './youtube/utils/youtubeAPI.js'
 import fs from 'fs'
+import { joinYoutubeAndOpenPlannerData } from './youtube/utils/joinYoutubeAndOpenPlannerData.js'
 
 /**
  * This script allow for batch edit of youtube metadata (title, desc, tags, date, thumbnail).
@@ -13,7 +14,7 @@ import fs from 'fs'
  * - thumbnail from thumnails generate using https://fill-my-slides.web.app/ or your own thumbnails, located in the "miniature" folder, with the file name being the index of the talk from openplanner.json
  *
  * Pre-requisites:
- * - Upload videos to youtube with the same title as in OpenPlanner
+ * - Upload videos to youtube with the same (title or id) as in OpenPlanner
  * - Generate thumbnails using https://fill-my-slides.web.app/ (you can get the correct format by uncomenting the line in the main : "return formatFillMySlidesData(openPlannerContent)", then put them in the "miniature" folder on the scripts folder. Don't forget to set Two images as avatar for co-speakers cases and specify which track was filmed in the "captedTrackIds" array.
  * - change the playlist id "playlistId" to the one you want to edit (create it on youtube first)
  * - get the full data from open planner as "openplanner.json" in scripts/openplanner.json
@@ -28,43 +29,6 @@ import fs from 'fs'
  * Help:
  * - the youtube credential code looks like 4/0AcvDMrBXVxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx in the url
  */
-
-const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) => {
-    // Check if all videos exist in OpenPlanner
-    const videosWithOpenPlannerData = youtubeVideos.map((video) => {
-        const videoTitle = video.snippet.title
-
-        // find session details in openplanner.json
-        const session = openPlannerData.sessions.find(
-            (session) => videoTitle.includes(session.title) || session.title.includes(videoTitle)
-        )
-
-        return {
-            ...video,
-            session,
-            speakers:
-                session && session.speakerIds
-                    ? session.speakerIds.map((speakerId) => {
-                          const speaker = openPlannerData.speakers.find((speaker) => speaker.id === speakerId)
-                          return speaker
-                      })
-                    : [],
-        }
-    })
-    const videosWithValidSession = videosWithOpenPlannerData.filter(
-        (video) => video.session && video.speakers.length > 0
-    )
-
-    console.log('Matching videos: ' + videosWithValidSession.length)
-    console.log(
-        'Non matching video title or no speakers: ' +
-            videosWithOpenPlannerData
-                .filter((video) => !video.session || video.speakers.length === 0)
-                .map((video) => video.snippet.title)
-    )
-
-    return videosWithValidSession
-}
 
 const formatYoutubeDescription = (video, openPlannerContent) => {
     const { session, speakers } = video
@@ -133,7 +97,7 @@ const formatFillMySlidesData = (openPlannerContent) => {
 const main = async () => {
     const { auth, channelId } = await initYoutube()
 
-    const playlistId = 'PLz7aCyCbFOu8_3w6EydaKkjHDiZ9Az1XR'
+    const playlistId = 'PLz7aCyCbFOu_5UbMFIJyZ_9Qsu5jZTBnU'
     const videoCategoryId = '27' // use await listVideoCategories(auth)
     const openPlannerFileName = 'openplanner.json'
     const openPlannerContent = JSON.parse(fs.readFileSync(openPlannerFileName))
