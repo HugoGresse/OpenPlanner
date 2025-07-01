@@ -1,14 +1,14 @@
-import { getVideosLast72Hours, initYoutube, updateVideo, updateVideoThumbnail } from './youtubeAPI.js'
+import { getVideosLast72Hours, initYoutube } from './utils/youtubeAPI.js'
 import fs from 'fs'
 import axios from 'axios'
 import path from 'path'
 import { PromisePool } from '@supercharge/promise-pool'
+import { getOpenPlannerContent } from './utils/getOpenPlannerContent.js'
+import { joinYoutubeAndOpenPlannerData } from './utils/joinYoutubeAndOpenPlannerData.js'
+import 'dotenv/config'
 
-const GLADIA_KEY_PATH = path.resolve(process.env.HOME, '.credentials', 'gladia_api.key')
-const OPENAI_KEY_PATH = path.resolve(process.env.HOME, '.credentials', 'openai_api.key')
 const POLLING_INTERVAL = 5000 // 5 seconds
 const CONCURRENT_JOBS = 10
-const PLAYLIST_ID = 'replace-me'
 
 // This whole is here to generate subtitles for a youtube video
 // using Gladia & ChatGPT. It won't upload subtitles to youtube
@@ -26,46 +26,14 @@ const PLAYLIST_ID = 'replace-me'
 //  - You change the concurrency to better follow what's happening
 //  - If any SRT or keywords are already generated, they won't be recreated.
 
-const getApiKey = (filePath) => {
-    if (!fs.existsSync(filePath)) {
-        console.error(`❌ Error: API key file not found at: ${filePath}`)
-        console.log('🔄 Please create a file at the above location with your API key.')
-        process.exit(1)
-    }
-    return fs.readFileSync(filePath, 'utf-8').trim()
+const GLADIA_API_KEY = process.env.GLADIA_API_KEY
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+
+if (!GLADIA_API_KEY || !OPENAI_API_KEY) {
+    throw new Error('GLADIA_API_KEY and OPENAI_API_KEY must be set')
 }
 
-const GLADIA_API_KEY = getApiKey(GLADIA_KEY_PATH)
-const OPENAI_API_KEY = getApiKey(OPENAI_KEY_PATH)
 const GLADIA_TRANSCRIPTION_ENDPOINT = 'https://api.gladia.io/v2/transcription'
-
-const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) => {
-    const videosWithOpenPlannerData = youtubeVideos.map((video) => {
-        const videoTitle = video.snippet.title
-
-        const session = openPlannerData.sessions.find(
-            (session) => videoTitle.includes(session.title) || session.title.includes(videoTitle)
-        )
-
-        return {
-            videoId: video.contentDetails.videoId,
-            publishedAt: video.contentDetails.videoPublishedAt,
-            session,
-        }
-    })
-
-    const videosWithValidSession = videosWithOpenPlannerData.filter((video) => video.session)
-
-    console.log(`ℹ️ Matching videos: ${videosWithValidSession.length}`)
-    console.log(
-        `ℹ️ Non matching video title or no speakers: ${videosWithOpenPlannerData
-            .filter((video) => !video.session)
-            .map((video) => video.snippet.title)
-            .join(', ')}`
-    )
-
-    return videosWithValidSession
-}
 
 async function getTranscriptionIdFromGladia(audioUrl, customVocabulary) {
     const headers = {
@@ -232,10 +200,13 @@ const processVideo = async (video, outSrtDir, outKeywordsDir) => {
 
 const main = async () => {
     const { auth, channelId } = await initYoutube()
-    const openPlannerFileName = 'openplanner.json'
-    const openPlannerContent = JSON.parse(fs.readFileSync(openPlannerFileName))
 
-    const videos = await getVideosLast72Hours(auth, channelId, PLAYLIST_ID)
+    const playlistId = process.env.YOUTUBE_PLAYLIST_ID
+    const openPlannerEventId = process.env.OPENPLANNER_EVENT_ID
+
+    const openPlannerContent = await getOpenPlannerContent(openPlannerEventId)
+
+    const videos = await getVideosLast72Hours(auth, channelId, playlistId)
     console.log('ℹ️ Retrieved videos: ' + videos.length)
 
     const videosWithValidSession = joinYoutubeAndOpenPlannerData(videos, openPlannerContent)
