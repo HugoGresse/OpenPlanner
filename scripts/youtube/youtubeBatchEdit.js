@@ -1,6 +1,7 @@
-import { getVideosLast72Hours, initYoutube, updateVideo, updateVideoThumbnail } from './youtube/utils/youtubeAPI.js'
-import fs from 'fs'
-import { joinYoutubeAndOpenPlannerData } from './youtube/utils/joinYoutubeAndOpenPlannerData.js'
+import { getVideosLast72Hours, initYoutube, updateVideo, updateVideoThumbnail } from './utils/youtubeAPI.js'
+import { joinYoutubeAndOpenPlannerData } from './utils/joinYoutubeAndOpenPlannerData.js'
+import { getOpenPlannerContent } from './utils/getOpenPlannerContent.js'
+import 'dotenv/config'
 
 /**
  * This script allow for batch edit of youtube metadata (title, desc, tags, date, thumbnail).
@@ -49,6 +50,9 @@ const formatYoutubeDescription = (video, openPlannerContent) => {
             if (social.name === 'Twitter') {
                 return `https://twitter.com/${accountName}`
             }
+            if (social.name === 'X') {
+                return `https://x.com/${accountName}`
+            }
             if (social.name === 'Linkedin') {
                 return `https://linkedin.com/in/${accountName}`
             }
@@ -56,6 +60,9 @@ const formatYoutubeDescription = (video, openPlannerContent) => {
                 return `https://github.com/${accountName}`
             }
         })[0]
+        if (!socialLink) {
+            return speaker.name
+        }
         return `${speaker.name} - ${socialLink}`
     })
 
@@ -64,52 +71,18 @@ const formatYoutubeDescription = (video, openPlannerContent) => {
     return `${speakersText.join('\n')}\n${desc.replace(/<[^>]*>?/gm, '')}`
 }
 
-const formatFillMySlidesData = (openPlannerContent) => {
-    const captedTrackIds = ['lavande-lamour', 'coquelicot-amphi-106', 'olivier-amphi-108']
-    const keepedSessions = openPlannerContent.sessions.filter((session) => {
-        return session.speakerIds.length > 0 && captedTrackIds.includes(session.trackId)
-    })
-
-    const result = keepedSessions
-        .map((session) => {
-            const speakers = session.speakerIds.map((speakerId) => {
-                const speaker = openPlannerContent.speakers.find((speaker) => speaker.id === speakerId)
-                return speaker.name
-            })
-            const speakersAvatar = session.speakerIds.map((speakerId) => {
-                const speaker = openPlannerContent.speakers.find((speaker) => speaker.id === speakerId)
-                return speaker.photoUrl
-            })
-            if (!speakers || speakers.length === 0) {
-                return null
-            }
-            return {
-                0: session.title,
-                1: speakers.reverse().join(', '),
-                2: speakersAvatar[0],
-                3: speakersAvatar[1] || 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Clear.gif',
-            }
-        })
-        .filter((session) => !!session)
-    console.log(JSON.stringify(result))
-}
-
 const main = async () => {
     const { auth, channelId } = await initYoutube()
 
-    const playlistId = 'PLz7aCyCbFOu_5UbMFIJyZ_9Qsu5jZTBnU'
-    const videoCategoryId = '27' // use await listVideoCategories(auth)
-    const openPlannerFileName = 'openplanner.json'
-    const openPlannerContent = JSON.parse(fs.readFileSync(openPlannerFileName))
+    const playlistId = process.env.YOUTUBE_PLAYLIST_ID
+    const openPlannerEventId = process.env.OPENPLANNER_EVENT_ID
 
-    // Generate thumbnails using https://fill-my-slides.web.app/
-    // return formatFillMySlidesData(openPlannerContent)
+    const openPlannerContent = await getOpenPlannerContent(openPlannerEventId)
+    const videoCategoryId = '27' // use await listVideoCategories(auth)
 
     const videos = await getVideosLast72Hours(auth, channelId, playlistId)
 
     console.log('Retrieved videos: ' + videos.length)
-
-    return
 
     const videosWithValidSession = joinYoutubeAndOpenPlannerData(videos, openPlannerContent)
 
@@ -126,13 +99,13 @@ const main = async () => {
     for (const video of videosWithValidSessionAndDescription) {
         const tagBasedOnOpenPlannerCategory = openPlannerContent.event.categories.find((category) => {
             return category.id === video.session.categoryId
-        }).name
+        })?.name
 
         const updateModel = {
             description: video.description,
             categoryId: videoCategoryId,
             defaultLanguage: 'fr',
-            tags: ['sunnytech', tagBasedOnOpenPlannerCategory],
+            tags: ['sunnytech', tagBasedOnOpenPlannerCategory, 'sunnytech-2025'].filter(Boolean),
             recordingDetails: {
                 recordingDate: video.session.dateStart,
             },
@@ -146,29 +119,16 @@ const main = async () => {
     }
 
     // Update video thumbnails
-    let i = 0
-    const videosWithValidSessionAndDescriptionOrderedFromOpenPlannerData = videosWithValidSessionAndDescription.sort(
-        (a, b) => {
-            // order by order of index in its respective array in openplanner.json
-            const aIndex = openPlannerContent.sessions.findIndex((session) => session.id === a.session.id)
-            const bIndex = openPlannerContent.sessions.findIndex((session) => session.id === b.session.id)
-
-            if (aIndex === -1 || bIndex === -1) {
-                return 0
-            }
-            return aIndex - bIndex
-        }
-    )
-
-    for (const video of videosWithValidSessionAndDescriptionOrderedFromOpenPlannerData) {
-        let thumbnailPath = `./miniature/${i}.png`
-
+    for (const video of videosWithValidSessionAndDescription) {
+        const thumbnailPath = `./miniature/${video.session.id}.png`
         const videoId = video.snippet.resourceId.videoId
+
+        console.log('Updating video thumbnail for ' + video.session.title + ' (YT video id: ' + videoId + ')')
+
         const result = await updateVideoThumbnail(auth, videoId, thumbnailPath)
         if (result) {
             console.log('Updated video thumbnail: ' + video.snippet.title)
         }
-        i++
     }
 }
 

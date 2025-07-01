@@ -29,7 +29,6 @@ const main = async () => {
     const playlistId = process.env.YOUTUBE_PLAYLIST_ID
     const openPlannerEventId = process.env.OPENPLANNER_EVENT_ID
     const openPlannerApiKey = process.env.OPENPLANNER_API_KEY
-    const openPlannerApiUrl = process.env.OPENPLANNER_API_URL
 
     const openPlannerContent = await getOpenPlannerContent(openPlannerEventId)
 

@@ -5,6 +5,6 @@ export const getOpenPlannerContent = async (openPlannerEventId) => {
     const dataUrl = data.dataUrl
 
     // 2. get the file content
-    const dataResponse = await fetch(dataUrl)
+    const dataResponse = await fetch(dataUrl + '?t=' + Date.now())
     return await dataResponse.json()
 }
