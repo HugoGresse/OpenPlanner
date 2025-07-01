@@ -112,7 +112,19 @@ const main = async () => {
         }
 
         const videoId = video.snippet.resourceId.videoId
-        const result = await updateVideo(auth, videoId, video.snippet.title, updateModel)
+        const videoTitle =
+            video.session.title.length > 100 ? video.session.title.slice(0, 95) + '...' : video.session.title
+        if (video.session.title.length > 100) {
+            console.log(
+                ' ⚠️ Video title is too long and has been sliced: ' +
+                    video.session.title +
+                    ' (YT video id: ' +
+                    videoId +
+                    ')',
+                video.session.videoLink
+            )
+        }
+        const result = await updateVideo(auth, videoId, videoTitle, updateModel)
         if (result) {
             console.log('Updated video: ' + video.snippet.title)
         }
