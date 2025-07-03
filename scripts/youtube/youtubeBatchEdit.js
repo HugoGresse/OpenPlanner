@@ -1,4 +1,4 @@
-import { getVideosLast72Hours, initYoutube, updateVideo, updateVideoThumbnail } from './utils/youtubeAPI.js'
+import { getVideosFromPlaylist, initYoutube, updateVideo, updateVideoThumbnail } from './utils/youtubeAPI.js'
 import { joinYoutubeAndOpenPlannerData } from './utils/joinYoutubeAndOpenPlannerData.js'
 import { getOpenPlannerContent } from './utils/getOpenPlannerContent.js'
 import 'dotenv/config'
@@ -80,7 +80,7 @@ const main = async () => {
     const openPlannerContent = await getOpenPlannerContent(openPlannerEventId)
     const videoCategoryId = '27' // use await listVideoCategories(auth)
 
-    const videos = await getVideosLast72Hours(auth, channelId, playlistId)
+    const videos = await getVideosFromPlaylist(auth, channelId, playlistId)
 
     console.log('Retrieved videos: ' + videos.length)
 

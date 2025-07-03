@@ -139,13 +139,7 @@ const getChannel = async (auth) => {
     })
 }
 
-export const getVideosLast72Hours = async (auth, channelId, playlistId) => {
-    // date for 3 days ago
-    const date = new Date()
-    date.setDate(date.getDate() - 3)
-    const afterDate = date.toISOString()
-    console.log(afterDate)
-
+export const getVideosFromPlaylist = async (auth, channelId, playlistId) => {
     var service = google.youtube('v3')
 
     // get all videos in playlist

@@ -1,4 +1,4 @@
-import { getVideosLast72Hours, initYoutube } from './utils/youtubeAPI.js'
+import { getVideosFromPlaylist, initYoutube } from './utils/youtubeAPI.js'
 import fs from 'fs'
 import axios from 'axios'
 import path from 'path'
@@ -8,18 +8,20 @@ import { joinYoutubeAndOpenPlannerData } from './utils/joinYoutubeAndOpenPlanner
 import 'dotenv/config'
 
 const POLLING_INTERVAL = 5000 // 5 seconds
-const CONCURRENT_JOBS = 10
+const CONCURRENT_JOBS = 5
 
 // This whole is here to generate subtitles for a youtube video
 // using Gladia & ChatGPT. It won't upload subtitles to youtube
 // but only export SRT files into `out_srt` directory.
 //
 // Configuration:
-//  - Create a file containing gladia API key in ~/.credentials/gladia_api.key
-//  - Create a file containing chatgpt API key in ~/.credentials/openai_api.key
+//  - Fill the .env file with the following variables:
+//    - GLADIA_API_KEY
+//    - OPENAI_API_KEY
+//    - YOUTUBE_PLAYLIST_ID
+//    - OPENPLANNER_EVENT_ID
 //  - Ensure you have youtube credentials for API in ~/.credentials/youtube.credentials.json
 //  - Ensure you have client_secret.json file to bypass Oauth2 from youtube
-//  - Update const variable PLAYLIST_ID in this script with one containing all videos
 //
 // Notes:
 //  - Videos & the playlist MUST not be in private, in "non-visible" at least
@@ -152,8 +154,9 @@ function saveKeywordsToJson(keywords, videoId) {
 }
 
 const processVideo = async (video, outSrtDir, outKeywordsDir) => {
-    const srtFilename = path.join(outSrtDir, `${video.videoId}.srt`)
-    const jsonFilename = path.join(outKeywordsDir, `${video.videoId}.json`)
+    const videoId = video.contentDetails.videoId
+    const srtFilename = path.join(outSrtDir, `${videoId}.srt`)
+    const jsonFilename = path.join(outKeywordsDir, `${videoId}.json`)
 
     // Check if subtitles and keywords already exist
     const srtExists = fs.existsSync(srtFilename)
@@ -162,39 +165,38 @@ const processVideo = async (video, outSrtDir, outKeywordsDir) => {
 
     if (keywordsExist) {
         customVocabulary = JSON.parse(fs.readFileSync(jsonFilename))
-        console.log(`ℹ️ Keywords JSON file already exists for video ID: ${video.videoId}, using existing keywords.`)
+        console.log(`ℹ️ Keywords JSON file already exists for video ID: ${videoId}, using existing keywords.`)
     } else {
+        console.log('Generating keywords for ' + video.session.title)
         const keywords = await generateKeywords(video.session)
         if (keywords.length > 0) {
-            saveKeywordsToJson(keywords, video.videoId)
+            saveKeywordsToJson(keywords, videoId)
             customVocabulary = keywords
-            console.log(
-                `✅ Generated and saved keywords for session title: ${video.session.title} (ID: ${video.videoId})`
-            )
+            console.log(`✅ Generated and saved keywords for session title: ${video.session.title} (ID: ${videoId})`)
         }
     }
 
     if (srtExists) {
-        console.log(`ℹ️ SRT file already exists for video ID: ${video.videoId}, skipping transcription...`)
+        console.log(`ℹ️ SRT file already exists for video ID: ${videoId}, skipping transcription...`)
         return
     }
 
     try {
-        const audioUrl = `https://www.youtube.com/watch?v=${video.videoId}`
-        console.log(`🚀 Initiating transcription for ${video.session.title} (ID: ${video.videoId})`)
+        const audioUrl = `https://www.youtube.com/watch?v=${videoId}`
+        console.log(`🚀 Initiating transcription for ${video.session.title} (ID: ${videoId})`)
 
         const transcriptionId = await getTranscriptionIdFromGladia(audioUrl, customVocabulary)
 
         if (transcriptionId == '') {
             return
         }
-        console.log(`🚀 Awaiting transcription results for ${video.session.title} (ID: ${video.videoId})`)
+        console.log(`🚀 Awaiting transcription results for ${video.session.title} (ID: ${videoId})`)
         const subtitles = await getFullTranscriptionFromGladia(transcriptionId)
 
         saveSubtitlesToSrt(subtitles, srtFilename)
-        console.log(`✅ Processed and saved SRT for ${video.session.title} (ID: ${video.videoId})`)
+        console.log(`✅ Processed and saved SRT for ${video.session.title} (ID: ${videoId})`)
     } catch (error) {
-        console.error(`❌ Failed to process video ID: ${video.videoId}`, error.message)
+        console.error(`❌ Failed to process video ID: ${videoId}`, error.message)
     }
 }
 
@@ -206,7 +208,7 @@ const main = async () => {
 
     const openPlannerContent = await getOpenPlannerContent(openPlannerEventId)
 
-    const videos = await getVideosLast72Hours(auth, channelId, playlistId)
+    const videos = await getVideosFromPlaylist(auth, channelId, playlistId)
     console.log('ℹ️ Retrieved videos: ' + videos.length)
 
     const videosWithValidSession = joinYoutubeAndOpenPlannerData(videos, openPlannerContent)
