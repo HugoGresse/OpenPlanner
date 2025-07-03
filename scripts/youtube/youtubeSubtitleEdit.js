@@ -164,6 +164,7 @@ const processVideo = async (video, outSrtDir, outKeywordsDir) => {
     let customVocabulary = []
 
     if (keywordsExist) {
+        // @ts-ignore
         customVocabulary = JSON.parse(fs.readFileSync(jsonFilename))
         console.log(`ℹ️ Keywords JSON file already exists for video ID: ${videoId}, using existing keywords.`)
     } else {
