@@ -20,6 +20,9 @@ export class EventDao {
                 end: data.dates.end?.toDate(),
             }
         }
+        if (!baseData.id) {
+            baseData.id = eventId
+        }
         return baseData as Event
     }
 
