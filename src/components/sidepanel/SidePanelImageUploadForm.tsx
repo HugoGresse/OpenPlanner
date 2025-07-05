@@ -5,6 +5,7 @@ import { TextFieldElement, useWatch } from 'react-hook-form-mui'
 import { Download, Crop } from '@mui/icons-material'
 import { triggerFileDownload } from '../../utils/triggerFileDownload'
 import { ImageCropDialog, CroppedImageFile } from './ImageCropDialog'
+import { getImageInfo, ImageInfo } from '../../utils/images/getImageInfo'
 
 export type SidePanelImageUploadFormProps = {
     fieldName: string
@@ -35,10 +36,12 @@ export const SidePanelImageUploadForm = ({
     const fieldValue = useWatch({ name: fieldName })
     const [previewImage, setPreviewImage] = React.useState<string>((file && file.preview) || fieldValue)
     const [cropDialogOpen, setCropDialogOpen] = React.useState(false)
+    const [imageInfo, setImageInfo] = React.useState<ImageInfo | null>(null)
 
     // Update previewImage when file or fieldValue changes
     React.useEffect(() => {
         setPreviewImage((file && file.preview) || fieldValue)
+        setImageInfo(null) // Reset image info when image changes
     }, [file, fieldValue])
 
     const handleOpenCropDialog = () => {
@@ -57,6 +60,12 @@ export const SidePanelImageUploadForm = ({
         if (onImageChange) {
             onImageChange(croppedImage.file, croppedImage.dataUrl)
         }
+    }
+
+    const handleImageLoad = async (event: React.SyntheticEvent<HTMLImageElement>) => {
+        const img = event.currentTarget
+        const info = await getImageInfo(previewImage)
+        setImageInfo(info)
     }
 
     return (
@@ -131,7 +140,16 @@ export const SidePanelImageUploadForm = ({
                                 display: 'block',
                             },
                         }}>
-                        <Typography>Preview</Typography>
+                        <Typography>
+                            Preview
+                            {imageInfo && (
+                                <span style={{ textTransform: 'none' }}>
+                                    {' '}
+                                    ({imageInfo.width}px × {imageInfo.height}px)
+                                    {imageInfo.fileType && <span> • {imageInfo.fileType}</span>}
+                                </span>
+                            )}
+                        </Typography>
                         <Box
                             sx={{
                                 width: '100%',
@@ -140,7 +158,7 @@ export const SidePanelImageUploadForm = ({
                                 backgroundSize: '20px 20px',
                                 backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
                             }}>
-                            <img src={previewImage} alt="" width="100%" />
+                            <img src={previewImage} alt="" width="100%" onLoad={handleImageLoad} />
                         </Box>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
