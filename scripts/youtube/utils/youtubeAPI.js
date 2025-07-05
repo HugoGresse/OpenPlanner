@@ -6,7 +6,7 @@ var OAuth2 = google.auth.OAuth2
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/youtube-nodejs-quickstart.json
-var SCOPES = ['https://www.googleapis.com/auth/youtube']
+var SCOPES = ['https://www.googleapis.com/auth/youtube', 'https://www.googleapis.com/auth/youtube.force-ssl']
 var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + '/.credentials/'
 var TOKEN_PATH = TOKEN_DIR + 'youtube.credentials.json'
 
@@ -113,7 +113,7 @@ const getChannel = async (auth) => {
         service.channels.list(
             {
                 auth: auth,
-                part: 'snippet,contentDetails,statistics',
+                part: ['snippet', 'contentDetails', 'statistics'],
                 mine: true,
             },
             function (err, response) {
@@ -139,13 +139,7 @@ const getChannel = async (auth) => {
     })
 }
 
-export const getVideosLast72Hours = async (auth, channelId, playlistId) => {
-    // date for 3 days ago
-    const date = new Date()
-    date.setDate(date.getDate() - 3)
-    const afterDate = date.toISOString()
-    console.log(afterDate)
-
+export const getVideosFromPlaylist = async (auth, channelId, playlistId) => {
     var service = google.youtube('v3')
 
     // get all videos in playlist
@@ -204,6 +198,27 @@ export const updateVideoThumbnail = async (auth, videoId, thumbnailPath) => {
         media: {
             mimeType: 'image/png',
             body: fs.createReadStream(thumbnailPath),
+        },
+    })
+    return response.data
+}
+
+// Upload SRT subtitles as captions to a YouTube video
+export const uploadCaption = async (auth, videoId, srtPath, language = 'fr', name = 'French subtitles') => {
+    const service = google.youtube('v3')
+    const response = await service.captions.insert({
+        auth: auth,
+        part: 'snippet',
+        resource: {
+            snippet: {
+                videoId: videoId,
+                language: language,
+                name: name,
+            },
+        },
+        media: {
+            mimeType: 'application/x-subrip',
+            body: fs.createReadStream(srtPath),
         },
     })
     return response.data
