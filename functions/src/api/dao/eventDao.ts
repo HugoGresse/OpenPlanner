@@ -16,8 +16,8 @@ export class EventDao {
         const baseData = data
         if (data.dates) {
             baseData.dates = {
-                start: data.dates.start.toDate(),
-                end: data.dates.end.toDate(),
+                start: data.dates.start?.toDate(),
+                end: data.dates.end?.toDate(),
             }
         }
         return baseData as Event
