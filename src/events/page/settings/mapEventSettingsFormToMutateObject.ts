@@ -74,6 +74,9 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
             token: webhook.token || null,
         }
     })
+
+    const repoUrl = data.repoUrl || null
+    const repoToken = data.repoToken || null
     const apiKey = data.apiKey || null
 
     return {
@@ -81,5 +84,7 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
         webhooks,
         apiKey,
         publicEnabled: data.publicEnabled || false,
+        repoUrl,
+        repoToken,
     }
 }

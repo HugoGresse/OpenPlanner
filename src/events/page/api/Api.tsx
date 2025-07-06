@@ -9,6 +9,7 @@ import { Card, Container, Grid, Typography, Box, Button } from '@mui/material'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { mapEventDevSettingsFormToMutateObject } from '../settings/mapEventSettingsFormToMutateObject'
 import { WebhooksFields } from '../settings/components/WebhooksFields'
+import { RepoFields } from '../settings/components/RepoFields'
 import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFilePaths'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
@@ -33,6 +34,9 @@ const schema = yup
                 lastAnswer: yup.string().nullable(),
             })
         ),
+        repoUrl: yup.string().nullable(),
+        workflowRunId: yup.string().nullable(),
+        token: yup.string().nullable(),
     })
     .required()
 
@@ -42,6 +46,8 @@ const convertInputEvent = (event: Event): EventSettingForForm => {
         webhooks: event.webhooks || [],
         apiKey: event.apiKey,
         publicEnabled: event.publicEnabled || false,
+        repoUrl: event.repoUrl || null,
+        repoToken: event.repoToken || null,
     }
 }
 
@@ -166,6 +172,11 @@ export const API = ({ event }: APIProps) => {
                                 Deployments
                             </Typography>
                             <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
+
+                            <Typography component="h2" variant="h5" mt={4}>
+                                Repository Settings
+                            </Typography>
+                            <RepoFields control={control} isSubmitting={formState.isSubmitting} event={event} />
                         </Grid>
 
                         <Grid item xs={12}>
