@@ -9,6 +9,7 @@ import { EventSelector } from '../../../components/EventSelector'
 import confetti from 'canvas-confetti'
 import { DateTime } from 'luxon'
 import { OSSSponsor } from '../../../components/OSSSponsor'
+import { WatchBuildProgress } from '../../../components/WatchBuildProgress'
 
 export type EventDrawerContentProps = {
     event: Event
@@ -17,6 +18,7 @@ export type EventDrawerContentProps = {
 export const EventDrawerContent = ({ event }: EventDrawerContentProps) => {
     const [loading, setLoading] = useState(false)
     const { createNotification } = useNotification()
+    const [githubWatchKey, setGithubWatchKey] = useState(0)
     const buttonRef = useRef<HTMLButtonElement>(null)
 
     const getRelativeTime = () => {
@@ -39,45 +41,59 @@ export const EventDrawerContent = ({ event }: EventDrawerContentProps) => {
             <List component="nav">
                 <EventScreenMenuItems />
                 <Tooltip title={getRelativeTime()} arrow placement="top">
-                    <LoadingButton
-                        ref={buttonRef}
-                        variant="contained"
-                        loading={loading}
-                        disabled={loading}
-                        onClick={async () => {
-                            setLoading(true)
-                            await updateWebsiteTriggerWebhooksAction(event, createNotification)
-                            setLoading(false)
+                    <Box>
+                        <LoadingButton
+                            ref={buttonRef}
+                            variant="contained"
+                            loading={loading}
+                            disabled={loading}
+                            onClick={async () => {
+                                setLoading(true)
+                                await updateWebsiteTriggerWebhooksAction(event, createNotification)
+                                setLoading(false)
 
-                            // Trigger confetti effect from button position
-                            if (buttonRef.current) {
-                                const rect = buttonRef.current.getBoundingClientRect()
-                                const x = rect.left + rect.width / 2
-                                const y = rect.top + rect.height / 2
+                                // Trigger confetti effect from button position
+                                if (buttonRef.current) {
+                                    const rect = buttonRef.current.getBoundingClientRect()
+                                    const x = rect.left + rect.width / 2
+                                    const y = rect.top + rect.height / 2
 
-                                confetti({
-                                    origin: {
-                                        x: x / window.innerWidth,
-                                        y: y / window.innerHeight,
-                                    },
-                                    spread: 70,
-                                    startVelocity: 30,
-                                    particleCount: 100,
-                                    angle: 20,
-                                    gravity: -0.4,
-                                    zIndex: 2000,
-                                    drift: 0.5,
-                                })
-                            }
-                        }}
-                        sx={{
-                            margin: 1,
-                            whiteSpace: 'break-spaces',
-                            width: 'calc(100% - 16px)',
-                        }}
-                        loadingIndicator={<CircularProgress color="secondary" size={16} />}>
-                        <ListItemText primary={'Update website'} />
-                    </LoadingButton>
+                                    confetti({
+                                        origin: {
+                                            x: x / window.innerWidth,
+                                            y: y / window.innerHeight,
+                                        },
+                                        spread: 70,
+                                        startVelocity: 30,
+                                        particleCount: 100,
+                                        angle: 20,
+                                        gravity: -0.4,
+                                        zIndex: 2000,
+                                        drift: 0.5,
+                                    })
+                                }
+                                setTimeout(() => {
+                                    setGithubWatchKey(githubWatchKey + 1)
+                                }, 1000)
+                            }}
+                            sx={{
+                                margin: 1,
+                                whiteSpace: 'break-spaces',
+                                width: 'calc(100% - 16px)',
+                            }}
+                            loadingIndicator={<CircularProgress color="secondary" size={16} />}>
+                            <ListItemText primary={'Update website'} />
+                        </LoadingButton>
+                        {event.repoUrl && (
+                            <WatchBuildProgress
+                                key={githubWatchKey} // it trigger the refresh of the component after a deploy on the button above
+                                repoUrl={event.repoUrl}
+                                token={event.repoToken || undefined}
+                                refreshInterval={5000}
+                                timeout={180000}
+                            />
+                        )}
+                    </Box>
                 </Tooltip>
             </List>
 

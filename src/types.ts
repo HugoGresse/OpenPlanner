@@ -168,6 +168,8 @@ export interface Event {
     bupherSession?: string | null
     bupherOrganizationId?: string | null
     timezone: string | null
+    repoUrl?: string | null
+    repoToken?: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -181,6 +183,8 @@ export type EventSettingForForm = {
     webhooks: Webhooks[]
     apiKey: string | null
     publicEnabled?: boolean
+    repoUrl?: string | null
+    repoToken?: string | null
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {
