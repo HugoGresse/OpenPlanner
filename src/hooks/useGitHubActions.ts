@@ -29,6 +29,8 @@ export type UseGitHubActionsProps = {
     autoRefresh?: boolean
     /** Refresh interval in milliseconds (default: 5000) */
     refreshInterval?: number
+    /** Timeout in milliseconds to stop watching (default: 180000 = 3 minutes) */
+    timeout?: number
 }
 
 export type UseGitHubActionsReturn = {
@@ -37,6 +39,7 @@ export type UseGitHubActionsReturn = {
     error?: string
     refresh: () => void
     lastRefresh: Date
+    isWatching: boolean
 }
 
 const GITHUB_API_BASE = 'https://api.github.com'
@@ -121,12 +124,14 @@ export const useGitHubActions = ({
     token,
     autoRefresh = true,
     refreshInterval = 5000,
+    timeout = 180000,
 }: UseGitHubActionsProps): UseGitHubActionsReturn => {
     const [workflowRun, setWorkflowRun] = useState<GitHubWorkflowRun>()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string>()
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
     const [currentWorkflowRunId, setCurrentWorkflowRunId] = useState<number>()
+    const [isWatching, setIsWatching] = useState(false)
 
     const fetchWorkflowRun = useCallback(async () => {
         if (!owner || !repo) return
@@ -180,20 +185,24 @@ export const useGitHubActions = ({
 
         const isWorkflowRunningOrPending = workflowRun?.status === 'in_progress' || workflowRun?.status === 'queued'
 
+        // Update isWatching state
+        setIsWatching(autoRefresh && isWorkflowRunningOrPending && !isWorkflowCompleted)
+
         if (autoRefresh && isWorkflowRunningOrPending && !isWorkflowCompleted) {
             const interval = setInterval(fetchWorkflowRun, refreshInterval)
 
-            // Set a 5-minute timeout to stop the interval
-            const timeout = setTimeout(() => {
+            // Set a timeout to stop the interval
+            const timeoutId = setTimeout(() => {
                 clearInterval(interval)
-            }, 5 * 60 * 1000) // 5 minutes
+                setIsWatching(false)
+            }, timeout)
 
             return () => {
                 clearInterval(interval)
-                clearTimeout(timeout)
+                clearTimeout(timeoutId)
             }
         }
-    }, [owner, repo, branch, autoRefresh, refreshInterval, workflowRun?.status, fetchWorkflowRun])
+    }, [owner, repo, branch, autoRefresh, refreshInterval, workflowRun?.status, fetchWorkflowRun, timeout])
 
     return {
         workflowRun,
@@ -201,5 +210,6 @@ export const useGitHubActions = ({
         error,
         refresh,
         lastRefresh,
+        isWatching,
     }
 }

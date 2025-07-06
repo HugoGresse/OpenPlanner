@@ -11,7 +11,7 @@ export type RepoFieldsProps = {
 export const RepoFields = ({ control, isSubmitting, event }: RepoFieldsProps) => {
     return (
         <>
-            <Typography variant="body2">for CI progress monitoring</Typography>
+            <Typography variant="body2">for CI progress monitoring, only GitHub is supported.</Typography>
 
             <TextFieldElement
                 label="Repository URL"
@@ -36,7 +36,7 @@ export const RepoFields = ({ control, isSubmitting, event }: RepoFieldsProps) =>
                 type="password"
                 fullWidth
                 disabled={isSubmitting}
-                helperText="GitHub personal access token for API access, only required for private repositories"
+                helperText="GitHub personal access token for API access, recommended to prevent rate limiting. Generate a token at https://github.com/settings/personal-access-tokens with actions read permission"
             />
         </>
     )

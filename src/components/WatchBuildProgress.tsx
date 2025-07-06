@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { Box, Chip, LinearProgress, Typography, Alert, AlertTitle } from '@mui/material'
 import { CheckCircle, Error as ErrorIcon, Pause, Schedule, Build } from '@mui/icons-material'
+import GitHubIcon from '@mui/icons-material/GitHub'
 import { useGitHubActions } from '../hooks/useGitHubActions'
 
 export type BuildStatus = 'queued' | 'in_progress' | 'completed' | 'failed' | 'cancelled' | 'skipped'
@@ -90,7 +91,10 @@ const getStatusIcon = (status: BuildStatus, conclusion?: string) => {
 const formatDuration = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
-    return `${minutes}m ${remainingSeconds}s`
+    if (minutes > 0) {
+        return `${minutes}m ${remainingSeconds}s`
+    }
+    return `${remainingSeconds}s`
 }
 
 const formatTimestamp = (timestamp: string): string => {
@@ -110,46 +114,21 @@ export const WatchBuildProgress: React.FC<WatchBuildProgressProps> = ({
     refreshInterval = 5000,
     timeout = 180000,
 }) => {
-    const [isWatching, setIsWatching] = useState(false)
-    const [timeoutReached, setTimeoutReached] = useState(false)
-
     const parsedRepo = useMemo(() => parseGitHubUrl(repoUrl), [repoUrl])
     const owner = parsedRepo?.owner
     const repository = parsedRepo?.repo
 
-    const { workflowRun, loading, error, lastRefresh } = useGitHubActions({
+    const { workflowRun, loading, isWatching } = useGitHubActions({
         owner: owner || '',
         repo: repository || '',
         branch,
         token,
-        autoRefresh: !timeoutReached,
+        autoRefresh: true,
         refreshInterval,
+        timeout,
     })
 
-    useEffect(() => {
-        if (!workflowRun) return
-        if (workflowRun.status === 'completed' || workflowRun.status === 'failed' || workflowRun.status === 'cancelled')
-            return
-        if (timeoutReached) return
-
-        setIsWatching(true)
-
-        // Set timeout to stop watching
-        let timeoutId: NodeJS.Timeout | undefined
-        if (timeout) {
-            timeoutId = setTimeout(() => {
-                setIsWatching(false)
-                setTimeoutReached(true)
-            }, timeout)
-        }
-
-        return () => {
-            if (timeoutId) clearTimeout(timeoutId)
-            setIsWatching(false)
-        }
-    }, [workflowRun, timeout, timeoutReached])
-
-    const status = workflowRun?.status || 'queued'
+    const status = workflowRun?.status
     const conclusion = workflowRun?.conclusion
 
     // Calculate current workflow duration
@@ -159,11 +138,16 @@ export const WatchBuildProgress: React.FC<WatchBuildProgressProps> = ({
 
     const isWorkflowRunningOrPending = status === 'in_progress' || status === 'queued'
 
+    if ((loading && !isWorkflowRunningOrPending) || !status) {
+        return <Box sx={{ width: 16, height: 16 }} />
+    }
+
     return (
         <Box>
             <Box display="flex" alignItems="center" mb={2} mx={1}>
                 <Chip
-                    icon={getStatusIcon(status, conclusion)}
+                    icon={<GitHubIcon />}
+                    deleteIcon={getStatusIcon(status, conclusion)}
                     label={
                         status.replace('_', ' ') +
                         (currentWorkflowDuration && isWorkflowRunningOrPending
@@ -172,6 +156,13 @@ export const WatchBuildProgress: React.FC<WatchBuildProgressProps> = ({
                     }
                     color={getStatusColor(status, conclusion) as any}
                     variant="outlined"
+                    onClick={() => {
+                        if (workflowRun && owner && repository) {
+                            const githubUrl = `https://github.com/${owner}/${repository}/actions/runs/${workflowRun.id}`
+                            window.open(githubUrl, '_blank')
+                        }
+                    }}
+                    sx={{ cursor: 'pointer' }}
                 />
                 {isWatching && (
                     <Box
