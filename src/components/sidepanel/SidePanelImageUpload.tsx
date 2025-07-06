@@ -119,7 +119,7 @@ export const SidePanelImageUpload = ({
                 onInputClick={open}
                 onSaveClick={onSave}
                 onImageChange={handleImageChange}
-                helpText="PNG or JPEG image, will be resized in the browser. You can also paste image directly from clipboard."
+                helpText="SVG images are recommended. PNG or JPEG image, will be resized in the browser. You can also paste image directly from clipboard."
                 disabled={isLoading || !!error || !filesPath}
             />
         </SidePanel>

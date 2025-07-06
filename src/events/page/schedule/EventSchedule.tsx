@@ -270,7 +270,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                                             // @ts-ignore
                                             ...getExportParameters(),
                                             true,
-                                            dayOfTheMonth.start.toJSDate().getDay()
+                                            dayOfTheMonth.start.toJSDate().getDate()
                                         )
                                         createNotification('Table copied to clipboard')
                                     }}>

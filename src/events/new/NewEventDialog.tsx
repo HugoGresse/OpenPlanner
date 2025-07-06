@@ -1,5 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
-import * as React from 'react'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
 import { useSelector } from 'react-redux'
 import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
@@ -12,6 +11,7 @@ import { NewEvent } from '../../types'
 import { serverTimestamp } from 'firebase/firestore'
 import { useNotification } from '../../hooks/notificationHook'
 import { generateApiKey } from '../../utils/generateApiKey'
+
 export type NewEventDialogProps = {
     isOpen: boolean
     onClose: (eventId: string | null) => void
@@ -20,6 +20,8 @@ export type NewEventDialogProps = {
 const schema = yup
     .object({
         name: yup.string().required(),
+        startDate: yup.date().nullable().optional(),
+        endDate: yup.date().nullable().optional(),
     })
     .required()
 
@@ -28,12 +30,18 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
 
     const { createNotification } = useNotification()
     const formContext = useForm()
-    const { formState } = formContext
+    const { formState, watch, setValue } = formContext
 
     const mutation = useFirestoreCollectionMutation(collections.events)
 
     return (
-        <Dialog open={isOpen} onClose={() => onClose(null)} maxWidth="md" fullWidth={true} scroll="body">
+        <Dialog
+            open={isOpen}
+            onClose={() => onClose(null)}
+            maxWidth="md"
+            fullWidth={true}
+            scroll="body"
+            disableRestoreFocus={true}>
             <DialogTitle>New event creation</DialogTitle>
 
             <FormContainer
@@ -48,8 +56,8 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         scheduleVisible: true,
                         conferenceHallId: null,
                         dates: {
-                            start: null,
-                            end: null,
+                            start: data.startDate ? new Date(data.startDate) : null,
+                            end: data.endDate ? new Date(data.endDate) : null,
                         },
                         formats: [],
                         categories: [],
@@ -97,6 +105,38 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         label="Event name"
                         name="name"
                         variant="filled"
+                        autoFocus={isOpen}
+                        disabled={formState.isSubmitting}
+                    />
+                    <Typography sx={{ marginTop: 2 }}>Event dates (optional, can be set later on)</Typography>
+                    <TextFieldElement
+                        margin="normal"
+                        fullWidth
+                        id="startDate"
+                        label="Start date (optional)"
+                        name="startDate"
+                        type="datetime-local"
+                        InputLabelProps={{ shrink: true }}
+                        variant="filled"
+                        disabled={formState.isSubmitting}
+                        onBlur={(e) => {
+                            if (e.target.value && !watch('endDate')) {
+                                const start = new Date(e.target.value)
+                                const end = new Date(start)
+                                end.setHours(end.getHours() + 8)
+                                setValue('endDate', end.toISOString().slice(0, 16))
+                            }
+                        }}
+                    />
+                    <TextFieldElement
+                        margin="normal"
+                        fullWidth
+                        id="endDate"
+                        label="End date (optional)"
+                        name="endDate"
+                        variant="filled"
+                        type="datetime-local"
+                        InputLabelProps={{ shrink: true }}
                         disabled={formState.isSubmitting}
                     />
                 </DialogContent>

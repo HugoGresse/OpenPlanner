@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Button, Card, Container, Typography } from '@mui/material'
 import { Event, SponsorCategory } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -19,6 +19,12 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
     const [newCategoryDialog, setNewCategoryDialog] = useState(false)
 
     const sponsorsData = sponsors.data || []
+
+    const sponsorCount = useMemo(() => {
+        return sponsorsData.reduce((acc: number, category: SponsorCategory) => {
+            return acc + category.sponsors.length
+        }, 0)
+    }, [sponsorsData])
 
     if (sponsors.isLoading) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sponsors} />
@@ -67,7 +73,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
-                <Typography> {sponsors.data?.length} sponsors</Typography>
+                <Typography> {sponsorCount} sponsors</Typography>
                 <JobPostSettings event={event} />
             </Box>
 

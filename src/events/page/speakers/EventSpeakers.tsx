@@ -105,11 +105,15 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     </MenuItem>
                     <MenuItem onClick={closeExportMenu(SpeakersExportType.AllXLSX)}>All speakers (XLSX)</MenuItem>
                     <MenuItem onClick={closeExportMenu(SpeakersExportType.AllJson)}>All speakers (JSON)</MenuItem>
+                    <MenuItem onClick={closeExportMenu(SpeakersExportType.AllCsv)}>All speakers (CSV)</MenuItem>
                     <MenuItem onClick={closeExportMenu(SpeakersExportType.DisplayedXLSX)}>
                         Displayed speakers (XLSX)
                     </MenuItem>
                     <MenuItem onClick={closeExportMenu(SpeakersExportType.DisplayedJson)}>
                         Displayed speakers (JSON)
+                    </MenuItem>
+                    <MenuItem onClick={closeExportMenu(SpeakersExportType.DisplayedCsv)}>
+                        Displayed speakers (CSV)
                     </MenuItem>
                 </Menu>
                 <Button href="/speakers/new" variant="contained">
