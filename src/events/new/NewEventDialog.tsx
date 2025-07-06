@@ -1,5 +1,4 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
-import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { selectUserIdOpenPlanner } from '../../auth/authReducer'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
