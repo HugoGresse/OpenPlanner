@@ -72,8 +72,13 @@ export const EventDrawerContent = ({ event }: EventDrawerContentProps) => {
                                         drift: 0.5,
                                     })
                                 }
-                                setTimeout(() => {
-                                    setGithubWatchKey(githubWatchKey + 1)
+                                let count = 0
+                                const intervalId = setInterval(() => {
+                                    setGithubWatchKey((prev) => prev + 1)
+                                    count += 1
+                                    if (count === 5) {
+                                        clearInterval(intervalId)
+                                    }
                                 }, 1000)
                             }}
                             sx={{
