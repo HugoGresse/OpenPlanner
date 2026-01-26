@@ -5,7 +5,7 @@
     },
     "hosting": [
         {
-            "target": "conferencecenterr",
+            "site": "conferencecenterr2",
             "public": "dist",
             "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
             "rewrites": [
@@ -30,7 +30,7 @@
             ]
         },
         {
-            "target": "apiopenplanner",
+            "site": "apiopenplanner2",
             "public": "api-swagger",
             "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
             "rewrites": [
@@ -44,8 +44,8 @@
             ]
         },
         {
-            "target": "serviceapi",
-            "public": "api-swagger",
+            "site": "serviceapi2",
+            "public": "serviceapi-swagger",
             "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
             "rewrites": [
                 {
