@@ -51,13 +51,13 @@ React guidelines:
 ### Installation
 
 1. Create a `.env` from `.env.example`. Do the same for the `.env` files in `functions` .
-2. In your Firebase project, create a **web app** with Firebase Hosting named `openplanner`. Copy the generated config and populate `.env`.
+2. In your Firebase project, create a **Web App** named `openplanner` to obtain the Firebase config. Copy the generated config and populate `.env`.
    For the API URL, create a **Function** named `api` and copy its trigger URL into the env file.
-3. Create the following **web app**, each with its own Hosting site (replace `X` with your suffix):
+3. In your Firebase project, create the following **Web App** (replace `X` with your suffix):
     - API: Hosting site `apiopenplannerX`
     - ConferenceCenter: Hosting site `conferencecenterrX`
     - ServiceApi: Hosting site `serviceapiX`
-4. Update `firebase.json` so the `site` value matches the correct Hosting site name for the target you are deploying.
+4. Copy `.firebaserc.example` to `.firebaserc` and set your Firebase project values. Targets are resolved via `firebase target:apply`, no need to hardcode Hosting target name ids in `firebase.json`.
 5. Install dependencies with Bun: `bun install`.
 
 Inside OpenPlanner's firebase project:
@@ -73,17 +73,17 @@ firebase login
 firebase use openplanner
 ```
 
-6. Configure hosting targets with the Firebase CLI (adjust names to your actual Hosting sites):
+6. Configure hosting targets with the Firebase CLI (replace X with your actual target suffix):
 
 ```
-firebase target:apply hosting conferencecenterrX dist
-firebase target:apply hosting apiopenplannerX api-swagger
-firebase target:apply hosting serviceapiX serviceapi-swagger
+firebase target:apply hosting conferencecenterr conferencecenterrX
+firebase target:apply hosting apiopenplanner apiopenplannerX
+firebase target:apply hosting serviceapi serviceapiX
 ```
 
 7. Deploy: `firebase deploy`.
 
-8. Run frontend app : `npm run start`. Your app is available on `http://localhost:3000/` .
+8. Run frontend app: `npm run start`. Your app is available on `http://localhost:3000/`.
 
 9. To sign in to the app, create a user in Firebase under Authentication > Users.
 
