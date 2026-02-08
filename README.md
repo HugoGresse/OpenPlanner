@@ -51,8 +51,7 @@ React guidelines:
 ### Installation
 
 1. Create a `.env` from `.env.example`. Do the same for the `.env` files in `functions` .
-2. In your Firebase project, create a **Web App** named `openplanner` to obtain the Firebase config. Copy the generated config and populate `.env`.
-   For the API URL, create a **Function** named `api` and copy its trigger URL into the env file.
+2. In your Firebase project, create a **Web App** named `openplanner` ssociated with the default hosting to obtain the Firebase config. Copy the generated config and populate `.env`.
 3. In your Firebase project, create the following **Web App** (replace `X` with your suffix):
     - API: Hosting site `apiopenplannerX`
     - ConferenceCenter: Hosting site `conferencecenterrX`
@@ -83,9 +82,11 @@ firebase target:apply hosting serviceapi serviceapiX
 
 7. Deploy: `firebase deploy`.
 
-8. Run frontend app: `npm run start`. Your app is available on `http://localhost:3000/`.
+8. Copy the URL of the created API function into the .env file.
 
-9. To sign in to the app, create a user in Firebase under Authentication > Users.
+9. Run frontend app: `npm run start`. Your app is available on `http://localhost:3000/`.
+
+10. To sign in to the app, create a user in Firebase under Authentication > Users.
 
 ### Development
 
