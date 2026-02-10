@@ -13,6 +13,7 @@ import {
     speakerConverter,
     sponsorsConverter,
     teamConverter,
+    ticketConverter,
 } from './converters'
 
 const config = {
@@ -48,6 +49,8 @@ export const collections = {
     speakers: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
     team: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'team').withConverter(teamConverter),
+    tickets: (eventId: string) =>
+        collection(instanceFirestore, 'events', eventId, 'tickets').withConverter(ticketConverter),
     faq: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'faq').withConverter(faqConverter),
     jobPosts: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'jobPosts').withConverter(jobPostConverter),

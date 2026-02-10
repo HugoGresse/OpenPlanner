@@ -323,6 +323,21 @@ export enum ConferenceHallProposalState {
     rejected = 'rejected',
 }
 
+export interface Ticket {
+    id: string
+    name: string
+    price: number
+    currency: string
+    url: string
+    ticketsCount: number
+    available: boolean
+    soldOut: boolean
+    highlighted: boolean
+    displayNewsletterRegistration: boolean
+    startDate: string
+    message: string
+}
+
 export interface ConferenceHallSpeaker {
     uid: string
     displayName: string

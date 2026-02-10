@@ -1,4 +1,15 @@
-import { Event, Faq, FaqCategory, NewEvent, Session, Speaker, SponsorCategory, TeamMember, JobPost } from '../types'
+import {
+    Event,
+    Faq,
+    FaqCategory,
+    NewEvent,
+    Session,
+    Speaker,
+    SponsorCategory,
+    TeamMember,
+    JobPost,
+    Ticket,
+} from '../types'
 import { FirestoreDataConverter } from '@firebase/firestore'
 import { DateTime } from 'luxon'
 
@@ -148,6 +159,18 @@ export const jobPostConverter: FirestoreDataConverter<JobPost> = {
         return data
     },
 }
+
+export const ticketConverter: FirestoreDataConverter<Ticket> = {
+    fromFirestore(snapshot): Ticket {
+        const data = snapshot.data()
+
+        return data as Ticket
+    },
+    toFirestore(ticket: Ticket) {
+        return ticket
+    },
+}
+
 export const adminUserConverter: FirestoreDataConverter<{ id: string }> = {
     fromFirestore(snapshot): { id: string } {
         const data = snapshot.data()

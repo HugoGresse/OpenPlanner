@@ -38,6 +38,10 @@ service cloud.firestore {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
+            match /tickets/{ticketId} {
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
+                allow write: if authenticated() && isAdmin(eventData(eventId));
+            }
             match /faq/{category=**} {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
