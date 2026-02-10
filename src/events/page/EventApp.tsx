@@ -12,6 +12,7 @@ import { NewSession } from './sessions/NewSession'
 import { NewSpeaker } from './speakers/NewSpeaker'
 import { EventSpeaker } from './speakers/EventSpeaker'
 import { EventSocial } from './social/EventSocial'
+import { NewTicket } from './tickets/NewTicket'
 
 const EventSettings = lazy(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
@@ -39,6 +40,8 @@ const JobPosts = lazy(() => import('./sponsors/jobposts/JobPosts').then((module)
 const EventTeam = lazy(() => import('./team/EventTeam').then((module) => ({ default: module.EventTeam })))
 const EventMember = lazy(() => import('./team/EventMember').then((module) => ({ default: module.EventMember })))
 const EventFaq = lazy(() => import('./faq/EventFaq').then((module) => ({ default: module.EventFAQ })))
+const EventTickets = lazy(() => import('./tickets/EventTickets').then((module) => ({ default: module.EventTickets })))
+const EventTicket = lazy(() => import('./tickets/EventTicket').then((module) => ({ default: module.EventTicket })))
 
 export const EventApp = ({ eventId }: { eventId?: string }) => {
     const event = useEvent(eventId)
@@ -150,6 +153,19 @@ export const EventApp = ({ eventId }: { eventId?: string }) => {
                 </Route>
                 <Route path="/social">
                     <EventSocial event={eventData} />
+                </Route>
+                <Route path="/tickets">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventTickets event={eventData} />
+                    </Suspense>
+                </Route>
+                <Route path="/tickets/new">
+                    <NewTicket event={eventData} />
+                </Route>
+                <Route path="/tickets/:id">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventTicket event={eventData} />
+                    </Suspense>
                 </Route>
                 <Route>
                     <Redirect to={defaultRedirect} />
