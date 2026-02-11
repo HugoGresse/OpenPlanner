@@ -104,7 +104,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                                 endDate: data.endDate ? DateTime.fromISO(data.endDate) : null,
                                 message: '',
                             }
-                            await addDoc(collections.tickets(eventId), defaultTicket)
+                            await addDoc(collections.tickets(eventId), defaultTicket as Ticket)
                             onClose(eventId)
                         })
                         .catch((error: Error) => {

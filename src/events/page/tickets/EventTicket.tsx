@@ -20,6 +20,11 @@ export const EventTicket = ({ event }: EventTicketProps) => {
 
     const ticketId = params?.ticketId
 
+    if (!ticketId || typeof ticketId !== 'string') {
+        setLocation('/tickets')
+        return null
+    }
+
     const mutation = useFirestoreDocumentMutation(doc(collections.tickets(event.id), ticketId))
 
     if (tickets.isLoading || !tickets.data) {
