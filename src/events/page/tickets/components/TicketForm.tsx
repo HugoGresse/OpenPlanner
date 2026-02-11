@@ -34,7 +34,8 @@ export const TicketForm = ({ event, ticket, onSubmit }: TicketFormProps) => {
                   currency: 'EUR',
                   url: '',
                   ticketsCount: 0,
-                  startDate: new Date().toISOString().split('T')[0],
+                  startDate: new Date(),
+                  endDate: new Date(),
                   message: '',
                   available: true,
                   soldOut: false,
@@ -56,6 +57,7 @@ export const TicketForm = ({ event, ticket, onSubmit }: TicketFormProps) => {
                     url: data.url || '',
                     ticketsCount: Number(data.ticketsCount) || 0,
                     startDate: data.startDate || '',
+                    endDate: data.endDate || '',
                     message: data.message || '',
                     available: data.available ?? true,
                     soldOut: data.soldOut ?? false,
@@ -156,7 +158,19 @@ export const TicketForm = ({ event, ticket, onSubmit }: TicketFormProps) => {
                         required
                         label="Start Date"
                         name="startDate"
-                        type="date"
+                        type="datetime-local"
+                        variant="filled"
+                        disabled={isSubmitting}
+                        InputLabelProps={{ shrink: true }}
+                    />
+
+                    <TextFieldElement
+                        margin="dense"
+                        fullWidth
+                        required
+                        label="End Date"
+                        name="endDate"
+                        type="datetime-local"
                         variant="filled"
                         disabled={isSubmitting}
                         InputLabelProps={{ shrink: true }}

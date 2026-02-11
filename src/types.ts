@@ -334,7 +334,8 @@ export interface Ticket {
     soldOut: boolean
     highlighted: boolean
     displayNewsletterRegistration: boolean
-    startDate: string
+    startDate: DateTime | null
+    endDate: DateTime | null
     message: string
 }
 

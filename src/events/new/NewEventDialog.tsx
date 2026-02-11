@@ -11,6 +11,7 @@ import { NewEvent, Ticket } from '../../types'
 import { addDoc, serverTimestamp } from 'firebase/firestore'
 import { useNotification } from '../../hooks/notificationHook'
 import { generateApiKey } from '../../utils/generateApiKey'
+import { DateTime } from 'luxon'
 
 export type NewEventDialogProps = {
     isOpen: boolean
@@ -99,9 +100,8 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                                 soldOut: false,
                                 highlighted: false,
                                 displayNewsletterRegistration: false,
-                                startDate: data.startDate
-                                    ? new Date(data.startDate).toISOString().split('T')[0]
-                                    : new Date().toISOString().split('T')[0],
+                                startDate: data.startDate ? DateTime.fromISO(data.startDate) : null,
+                                endDate: data.endDate ? DateTime.fromISO(data.endDate) : null,
                                 message: '',
                             }
                             await addDoc(collections.tickets(eventId), defaultTicket)

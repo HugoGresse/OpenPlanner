@@ -6,6 +6,7 @@ import { useFirestoreDocumentDeletion } from '../../../../services/hooks/firesto
 import { collections } from '../../../../services/firebase'
 import { doc } from 'firebase/firestore'
 import { ConfirmTooltipButton } from '../../../../components/ConfirmTooltipButton'
+import { DateTime } from 'luxon'
 
 export type TicketItemProps = {
     ticket: Ticket
@@ -14,6 +15,8 @@ export type TicketItemProps = {
 
 export const TicketItem = ({ ticket, eventId }: TicketItemProps) => {
     const deletion = useFirestoreDocumentDeletion(doc(collections.tickets(eventId), ticket.id))
+    const formatDate = (date: Ticket['startDate']) => (date ? date.toLocaleString(DateTime.DATE_MED) : 'TBD')
+    const dateRangeLabel = `${formatDate(ticket.startDate)} → ${formatDate(ticket.endDate)}`
 
     return (
         <Box
@@ -30,7 +33,7 @@ export const TicketItem = ({ ticket, eventId }: TicketItemProps) => {
                 <Typography variant="h6">{ticket.name}</Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                     <Typography variant="body2" color="textSecondary">
-                        €{ticket.price}
+                        {ticket.price} {ticket.currency || 'EUR'}
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
                         •
@@ -42,7 +45,7 @@ export const TicketItem = ({ ticket, eventId }: TicketItemProps) => {
                         •
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
-                        {ticket.startDate}
+                        {dateRangeLabel}
                     </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
