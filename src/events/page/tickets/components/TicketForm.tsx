@@ -1,6 +1,8 @@
 import { Event, Ticket } from '../../../../types'
 import { FormContainer, TextFieldElement, SelectElement, useForm, SwitchElement } from 'react-hook-form-mui'
 import { Grid, InputAdornment } from '@mui/material'
+import { SaveShortcut } from '../../../../components/form/SaveShortcut'
+import LoadingButton from '@mui/lab/LoadingButton'
 
 const currencyOptions = [
     { id: 'EUR', label: '€ EUR' },
@@ -15,8 +17,6 @@ const currencySymbols: Record<string, string> = {
     GBP: '£',
     CHF: 'CHF',
 }
-import LoadingButton from '@mui/lab/LoadingButton'
-import { SaveShortcut } from '../../../../components/form/SaveShortcut'
 
 export type TicketFormProps = {
     event: Event
