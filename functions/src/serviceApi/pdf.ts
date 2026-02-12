@@ -97,7 +97,7 @@ const setupPage = async (browser: Browser, settings: MergedPDFSettings): Promise
     return page
 }
 
-const generatePdfFromPage = async (page: Page, settings: MergedPDFSettings): Promise<Uint8Array> => {
+const generatePdfFromPage = async (page: Page, settings: MergedPDFSettings): Promise<Buffer> => {
     const pdfBuffer = await page.pdf({
         format: settings.pdf.format,
         printBackground: true,
@@ -107,7 +107,7 @@ const generatePdfFromPage = async (page: Page, settings: MergedPDFSettings): Pro
         landscape: settings.pdf.landscape,
         margin: settings.pdf.margin,
     })
-    return new Uint8Array(pdfBuffer)
+    return Buffer.from(pdfBuffer)
 }
 
 const pdfSettingsSchema = Type.Optional(
@@ -178,8 +178,9 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
                 return reply.status(400).send(JSON.stringify({ error: 'At least one URL is required' }))
             }
 
+            let browser: Browser | null = null
             try {
-                const browser = await puppeteer.launch({
+                browser = await puppeteer.launch({
                     headless: true,
                     args: ['--no-sandbox', '--disable-setuid-sandbox'],
                 })
@@ -190,11 +191,10 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
                     const page = await setupPage(browser, mergedSettings)
                     await page.goto(url, { waitUntil: 'networkidle0' })
                     const pdfBuffer = await generatePdfFromPage(page, mergedSettings)
-                    await merger.add(pdfBuffer)
+                    await merger.add(pdfBuffer as Uint8Array)
                     await page.close()
                 }
 
-                await browser.close()
                 const mergedPdf = await merger.saveAsBuffer()
 
                 reply.header('Content-Type', 'application/pdf')
@@ -208,6 +208,10 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
                         details: error.message,
                     })
                 )
+            } finally {
+                if (browser) {
+                    await browser.close()
+                }
             }
         }
     )
@@ -241,8 +245,9 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
                 return reply.status(400).send(JSON.stringify({ error: 'At least one HTML content is required' }))
             }
 
+            let browser: Browser | null = null
             try {
-                const browser = await puppeteer.launch({
+                browser = await puppeteer.launch({
                     headless: true,
                     args: ['--no-sandbox', '--disable-setuid-sandbox'],
                 })
@@ -253,11 +258,10 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
                     const page = await setupPage(browser, mergedSettings)
                     await page.setContent(html, { waitUntil: 'networkidle0' })
                     const pdfBuffer = await generatePdfFromPage(page, mergedSettings)
-                    await merger.add(pdfBuffer)
+                    await merger.add(pdfBuffer as Uint8Array)
                     await page.close()
                 }
 
-                await browser.close()
                 const mergedPdf = await merger.saveAsBuffer()
 
                 reply.header('Content-Type', 'application/pdf')
@@ -271,6 +275,10 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
                         details: error.message,
                     })
                 )
+            } finally {
+                if (browser) {
+                    await browser.close()
+                }
             }
         }
     )
