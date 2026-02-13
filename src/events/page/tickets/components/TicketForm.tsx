@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import { Event, Ticket } from '../../../../types'
 import { FormContainer, TextFieldElement, SelectElement, useForm, SwitchElement } from 'react-hook-form-mui'
 import { Grid, InputAdornment } from '@mui/material'
@@ -24,18 +25,56 @@ export type TicketFormProps = {
     onSubmit: (ticket: Ticket) => void
 }
 
+type TicketFormValues = Omit<Ticket, 'startDate' | 'endDate'> & {
+    startDate: string
+    endDate: string
+}
+
 export const TicketForm = ({ event, ticket, onSubmit }: TicketFormProps) => {
-    const formContext = useForm({
+    const toLocalInputValue = (value: Ticket['startDate'] | string | Date | null) => {
+        if (!value) {
+            return ''
+        }
+
+        if (DateTime.isDateTime(value)) {
+            return value.toFormat("yyyy-LL-dd'T'HH:mm")
+        }
+
+        if ((value as unknown) instanceof Date) {
+            return DateTime.fromJSDate(value as Date).toFormat("yyyy-LL-dd'T'HH:mm")
+        }
+
+        if (typeof value === 'string') {
+            return DateTime.fromISO(value).toFormat("yyyy-LL-dd'T'HH:mm")
+        }
+
+        return ''
+    }
+
+    const toDateTimeOrNull = (value?: string) => {
+        if (!value) {
+            return null
+        }
+
+        const dateTime = DateTime.fromISO(value)
+        return dateTime.isValid ? dateTime : null
+    }
+
+    const formContext = useForm<TicketFormValues>({
         defaultValues: ticket
-            ? ticket
+            ? {
+                  ...ticket,
+                  startDate: toLocalInputValue(ticket.startDate),
+                  endDate: toLocalInputValue(ticket.endDate),
+              }
             : {
                   name: '',
                   price: 0,
                   currency: 'EUR',
                   url: '',
                   ticketsCount: 0,
-                  startDate: new Date(),
-                  endDate: new Date(),
+                  startDate: '',
+                  endDate: '',
                   message: '',
                   available: true,
                   soldOut: false,
@@ -56,8 +95,8 @@ export const TicketForm = ({ event, ticket, onSubmit }: TicketFormProps) => {
                     currency: data.currency || 'EUR',
                     url: data.url || '',
                     ticketsCount: Number(data.ticketsCount) || 0,
-                    startDate: data.startDate || '',
-                    endDate: data.endDate || '',
+                    startDate: toDateTimeOrNull(data.startDate),
+                    endDate: toDateTimeOrNull(data.endDate),
                     message: data.message || '',
                     available: data.available ?? true,
                     soldOut: data.soldOut ?? false,
