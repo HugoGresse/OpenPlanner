@@ -11,11 +11,11 @@ export type EventTicketsProps = {
 export const EventTickets = ({ event }: EventTicketsProps) => {
     const tickets = useTickets(event.id)
 
-    if (tickets.isLoading) {
+    if (tickets.isLoading || tickets.isError || !tickets.data) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={tickets} />
     }
 
-    const ticketsData: Ticket[] = tickets.data || []
+    const ticketsData: Ticket[] = tickets.data
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
