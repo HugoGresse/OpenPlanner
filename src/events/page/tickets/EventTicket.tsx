@@ -7,7 +7,7 @@ import { collections } from '../../../services/firebase'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { TicketForm } from './components/TicketForm'
 import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreMutationHooks'
-import { useTickets } from '../../../services/hooks/useTickets'
+import { useTicket } from '../../../services/hooks/useTicket'
 import { Event, Ticket } from '../../../types'
 
 export type EventTicketProps = {
@@ -15,10 +15,10 @@ export type EventTicketProps = {
 }
 export const EventTicket = ({ event }: EventTicketProps) => {
     const [_, params] = useRoute('/:routeName/:ticketId/*?')
-    const tickets = useTickets(event.id)
     const [_2, setLocation] = useLocation()
 
     const ticketId = params?.ticketId
+    const ticketResult = useTicket(event.id, typeof ticketId === 'string' ? ticketId : null)
 
     if (!ticketId || typeof ticketId !== 'string') {
         setLocation('/tickets')
@@ -27,11 +27,11 @@ export const EventTicket = ({ event }: EventTicketProps) => {
 
     const mutation = useFirestoreDocumentMutation(doc(collections.tickets(event.id), ticketId))
 
-    if (tickets.isLoading || !tickets.data) {
-        return <FirestoreQueryLoaderAndErrorDisplay hookResult={tickets} />
+    if (ticketResult.isLoading || !ticketResult.data) {
+        return <FirestoreQueryLoaderAndErrorDisplay hookResult={ticketResult} />
     }
 
-    const ticket = tickets.data.find((t: Ticket) => t.id === ticketId)
+    const ticket = ticketResult.data
 
     if (!ticket) {
         setLocation('/tickets')
