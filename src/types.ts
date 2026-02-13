@@ -323,11 +323,13 @@ export enum ConferenceHallProposalState {
     rejected = 'rejected',
 }
 
+export type TicketCurrency = 'EUR' | 'USD' | 'GBP' | 'CHF'
+
 export interface Ticket {
     id: string
     name: string
     price: number
-    currency: string
+    currency: TicketCurrency
     url: string
     ticketsCount: number
     available: boolean
