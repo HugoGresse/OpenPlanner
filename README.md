@@ -44,23 +44,49 @@ React guidelines:
 
 ### Requirements
 
--   One firebase project for **`open planner`**.
+-   One Firebase project for **`OpenPlanner`** on the Blaze plan.
 -   Node.js **20+**
 -   [Bun.js](https://bun.js.org/) as a build tool
 
 ### Installation
 
-1. Create a **`.env`** with **`.env.example`** as a template.
-2. Create a web app in your firebase project for **`conference hall`** and **`open planner`**. then copy the config and fill **`.env`** with it.
-3. Use [bun.sh](https://bun.sh/) to install dependencies and build the project: `bun install`
+1. Create a `.env` from `.env.example`. Do the same for the `.env` files in `functions` .
+2. In your Firebase project, create a **Web App** named `openplanner` associated with the default hosting to obtain the Firebase config. Copy the generated config and populate `.env`.
+3. In your Firebase project, create the following **Web App** (replace `X` with your suffix):
+    - API: Hosting site `apiopenplannerX`
+    - ConferenceCenter: Hosting site `conferencecenterrX`
+    - ServiceApi: Hosting site `serviceapiX`
+4. Copy `.firebaserc.example` to `.firebaserc` and set your Firebase project values. Targets are resolved via `firebase target:apply`, no need to hardcode Hosting target name ids in `firebase.json`.
+5. Install dependencies with Bun: `bun install`.
 
 Inside OpenPlanner's firebase project:
 
-1. Enable Authentication with email/pwd in console.firebase.google.com
-2. In the Authentication parameters, "User actions", disable the "Protection against enumeration of e-mail addresses (recommended)" option
-3. Enable Storage, with rules in test or prod (whatever)
-4. Set the hosting config for the website using the firebase CLI: `firebase target:apply hosting conferencecenterr dist`
-5. Set the hosting config for the API (swagger) `firebase target:apply hosting apiopenplanner api-swagger`
+1. Enable Authentication with email/password (Authentication > Sign-in method > Email/Password > Enable).
+2. In Authentication settings, under User actions, disable “Protection against email enumeration (recommended)”.
+3. Create Storage (use test or prod rules as needed).
+4. Create a Firestore database (default mode).
+5. Log in and select the Firebase project in your terminal:
+
+```
+firebase login
+firebase use openplanner
+```
+
+6. Configure hosting targets with the Firebase CLI (replace X with your actual target suffix):
+
+```
+firebase target:apply hosting conferencecenterr conferencecenterrX
+firebase target:apply hosting apiopenplanner apiopenplannerX
+firebase target:apply hosting serviceapi serviceapiX
+```
+
+7. Deploy: `firebase deploy`.
+
+8. Copy the URL of the created API function into the .env file.
+
+9. Run frontend app: `npm run start`. Your app is available on `http://localhost:3000/`.
+
+10. To sign in to the app, create a user in Firebase under Authentication > Users.
 
 ### Development
 
