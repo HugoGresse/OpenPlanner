@@ -5,7 +5,8 @@ import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreM
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { FormContainer, useForm, SwitchElement } from 'react-hook-form-mui'
-import { Card, Container, Grid, Typography, Box, Button } from '@mui/material'
+import { Card, Container, Grid, Typography, Box, Button, IconButton, Collapse } from '@mui/material'
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { mapEventDevSettingsFormToMutateObject } from '../settings/mapEventSettingsFormToMutateObject'
 import { WebhooksFields } from '../settings/components/WebhooksFields'
@@ -57,6 +58,10 @@ export type APIProps = {
 export const API = ({ event }: APIProps) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
     const faqQuery = useFaqs(event)
+    const [expandedAPI, setExpandedAPI] = useState(true)
+    const [expandedWebsite, setExpandedWebsite] = useState(true)
+    const [expandedFAQ, setExpandedFAQ] = useState(true)
+    const [expandedDeploy, setExpandedDeploy] = useState(true)
 
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
@@ -87,97 +92,154 @@ export const API = ({ event }: APIProps) => {
                 onSuccess={async (data) => {
                     return mutation.mutate(mapEventDevSettingsFormToMutateObject(event, data))
                 }}>
-                <Card sx={{ padding: 2 }}>
-                    <Grid container spacing={4}>
-                        <Grid item xs={12} md={6}>
-                            <Typography component="h2" variant="h5">
-                                APIs
-                            </Typography>
-                            <EventStaticApiFilePaths event={event} />
+                <Typography component="h1" variant="h5">
+                    API & Deploys
+                </Typography>
 
-                            <Typography fontWeight="600" mt={5}>
-                                Dynamic API (slow, not cached, read/write, work in progress)
-                            </Typography>
-                            <Typography fontWeight="600" mt={2} component="a" href="https://api.openplanner.fr/">
-                                Docs
-                            </Typography>
-                            <TextFieldElementPrivate
-                                margin="normal"
-                                fullWidth
-                                id="id"
-                                label="Event ID"
-                                name="id"
-                                disabled={true}
-                                showFullText={true}
-                                value={event.id}
-                            />
-                            <TextFieldElementWithGenerateApiKeyButton
-                                required={true}
-                                fullWidth={true}
-                                id="apiKey"
-                                label="API Key"
-                                name="apiKey"
-                                disabled={true}
-                                helperText="use as params ?apiKey=xxx"
-                                buttonText="Generate new API Key"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Typography component="h2" variant="h5" gutterBottom>
-                                Website
-                            </Typography>
-                            <Box mb={2}>
-                                <SwitchElement label="Enable public website" name="publicEnabled" />
-                                {publicEnabled && (
-                                    <Box mt={1}>
-                                        <TypographyCopyable>{eventPublicUrl}</TypographyCopyable>
-                                    </Box>
-                                )}
-                            </Box>
+                <Card sx={{ paddingX: 2, mt: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                        <Typography fontSize="large" sx={{ mt: 2 }}>
+                            APIs
+                        </Typography>
+                        <IconButton
+                            size="small"
+                            onClick={() => setExpandedAPI(!expandedAPI)}
+                            sx={{
+                                transform: expandedAPI ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                transition: '0.3s',
+                            }}>
+                            <ExpandMoreIcon />
+                        </IconButton>
+                    </Box>
+                    <Collapse in={expandedAPI}>
+                        <EventStaticApiFilePaths event={event} />
 
-                            <PdfScheduleSection event={event} />
+                        <Typography fontWeight="600" mt={5}>
+                            Dynamic API (slow, not cached, read/write, work in progress)
+                        </Typography>
+                        <Typography fontWeight="600" mt={2} component="a" href="https://api.openplanner.fr/">
+                            Docs
+                        </Typography>
+                        <TextFieldElementPrivate
+                            margin="normal"
+                            fullWidth
+                            id="id"
+                            label="Event ID"
+                            name="id"
+                            disabled={true}
+                            showFullText={true}
+                            value={event.id}
+                        />
+                        <TextFieldElementWithGenerateApiKeyButton
+                            required={true}
+                            fullWidth={true}
+                            id="apiKey"
+                            label="API Key"
+                            name="apiKey"
+                            disabled={true}
+                            helperText="use as params ?apiKey=xxx"
+                            buttonText="Generate new API Key"
+                        />
+                    </Collapse>
+                </Card>
 
-                            <Typography component="h2" variant="h5" gutterBottom>
-                                FAQ
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                        <Typography fontSize="large" sx={{ mt: 2 }}>
+                            Website
+                        </Typography>
+                        <IconButton
+                            size="small"
+                            onClick={() => setExpandedWebsite(!expandedWebsite)}
+                            sx={{
+                                transform: expandedWebsite ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                transition: '0.3s',
+                            }}>
+                            <ExpandMoreIcon />
+                        </IconButton>
+                    </Box>
+                    <Collapse in={expandedWebsite}>
+                        <Box mb={2}>
+                            <SwitchElement label="Enable public website" name="publicEnabled" />
+                            {publicEnabled && (
+                                <Box mt={1}>
+                                    <TypographyCopyable>{eventPublicUrl}</TypographyCopyable>
+                                </Box>
+                            )}
+                        </Box>
+
+                        <PdfScheduleSection event={event} />
+                    </Collapse>
+                </Card>
+
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                        <Typography fontSize="large" sx={{ mt: 2 }}>
+                            FAQ
+                        </Typography>
+                        <IconButton
+                            size="small"
+                            onClick={() => setExpandedFAQ(!expandedFAQ)}
+                            sx={{
+                                transform: expandedFAQ ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                transition: '0.3s',
+                            }}>
+                            <ExpandMoreIcon />
+                        </IconButton>
+                    </Box>
+                    <Collapse in={expandedFAQ}>
+                        <Box>
+                            <Typography variant="body1" gutterBottom>
+                                Public FAQ:{' '}
+                                <Button component={Link} to={`/faq`}>
+                                    Edit FAQ
+                                </Button>
                             </Typography>
-                            <Box>
-                                <Typography variant="body1" gutterBottom>
-                                    Public FAQ:{' '}
-                                    <Button component={Link} to={`/faq`}>
-                                        Edit FAQ
-                                    </Button>
-                                </Typography>
-                                <TypographyCopyable>{faqBaseUrl}</TypographyCopyable>
+                            <TypographyCopyable>{faqBaseUrl}</TypographyCopyable>
 
-                                <Typography variant="body1" mt={2} gutterBottom>
-                                    Private FAQ pages: {privateFaqCount}
-                                </Typography>
-
-                                {faqCategories.map(
-                                    (category) =>
-                                        category.private && (
-                                            <Box key={category.id}>
-                                                <Typography variant="subtitle1" gutterBottom>
-                                                    {category.name}
-                                                </Typography>
-                                                <TypographyCopyable singleLine={true}>
-                                                    {`${faqBaseUrl}${category.privateId}`}
-                                                </TypographyCopyable>
-                                            </Box>
-                                        )
-                                )}
-                            </Box>
-
-                            <Typography component="h2" variant="h5" mt={4}>
-                                Deployments
+                            <Typography variant="body1" mt={2} gutterBottom>
+                                Private FAQ pages: {privateFaqCount}
                             </Typography>
-                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
 
-                            <Typography component="h2" variant="h5" mt={4}>
-                                Repository Settings
-                            </Typography>
-                            <RepoFields control={control} isSubmitting={formState.isSubmitting} event={event} />
-                        </Grid>
+                            {faqCategories.map(
+                                (category) =>
+                                    category.private && (
+                                        <Box key={category.id}>
+                                            <Typography variant="subtitle1" gutterBottom>
+                                                {category.name}
+                                            </Typography>
+                                            <TypographyCopyable singleLine={true}>
+                                                {`${faqBaseUrl}${category.privateId}`}
+                                            </TypographyCopyable>
+                                        </Box>
+                                    )
+                            )}
+                        </Box>
+                    </Collapse>
+                </Card>
+
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                        <Typography fontSize="large" sx={{ mt: 2 }}>
+                            Deployments & Repository
+                        </Typography>
+                        <IconButton
+                            size="small"
+                            onClick={() => setExpandedDeploy(!expandedDeploy)}
+                            sx={{
+                                transform: expandedDeploy ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                transition: '0.3s',
+                            }}>
+                            <ExpandMoreIcon />
+                        </IconButton>
+                    </Box>
+                    <Collapse in={expandedDeploy}>
+                        <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
+
+                        <Typography fontWeight="600" mt={4}>
+                            Repository Settings
+                        </Typography>
+                        <RepoFields control={control} isSubmitting={formState.isSubmitting} event={event} />
 
                         <Grid item xs={12}>
                             <LoadingButton
@@ -190,7 +252,7 @@ export const API = ({ event }: APIProps) => {
                                 Save
                             </LoadingButton>
                         </Grid>
-                    </Grid>
+                    </Collapse>
                 </Card>
                 <SaveShortcut />
             </FormContainer>
