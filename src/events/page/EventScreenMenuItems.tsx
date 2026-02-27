@@ -11,6 +11,7 @@ import {
     mdiPresentation,
     mdiFrequentlyAskedQuestions,
     mdiTwitter,
+    mdiTicket,
 } from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
@@ -62,6 +63,11 @@ export const Menu = [
         href: '/schedule',
         icon: mdiCalendarWeekend,
         name: 'Schedule',
+    },
+    {
+        href: '/tickets',
+        icon: mdiTicket,
+        name: 'Tickets',
     },
     {
         href: '/social',

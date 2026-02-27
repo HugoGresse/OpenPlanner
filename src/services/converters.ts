@@ -1,5 +1,16 @@
-import { Event, Faq, FaqCategory, NewEvent, Session, Speaker, SponsorCategory, TeamMember, JobPost } from '../types'
-import { FirestoreDataConverter } from '@firebase/firestore'
+import {
+    Event,
+    Faq,
+    FaqCategory,
+    NewEvent,
+    Session,
+    Speaker,
+    SponsorCategory,
+    TeamMember,
+    JobPost,
+    Ticket,
+} from '../types'
+import { FirestoreDataConverter, Timestamp } from '@firebase/firestore'
 import { DateTime } from 'luxon'
 
 export const eventConverter: FirestoreDataConverter<Event | NewEvent> = {
@@ -148,6 +159,54 @@ export const jobPostConverter: FirestoreDataConverter<JobPost> = {
         return data
     },
 }
+
+export const ticketConverter: FirestoreDataConverter<Ticket> = {
+    fromFirestore(snapshot): Ticket {
+        const data = snapshot.data()
+
+        const startDate = data.startDate
+            ? typeof data.startDate === 'string'
+                ? DateTime.fromISO(data.startDate)
+                : data.startDate instanceof Timestamp
+                ? DateTime.fromJSDate(data.startDate.toDate())
+                : DateTime.fromJSDate(data.startDate?.toDate?.())
+            : null
+
+        const endDate = data.endDate
+            ? typeof data.endDate === 'string'
+                ? DateTime.fromISO(data.endDate)
+                : data.endDate instanceof Timestamp
+                ? DateTime.fromJSDate(data.endDate.toDate())
+                : DateTime.fromJSDate(data.endDate?.toDate?.())
+            : null
+
+        return {
+            ...(data as Ticket),
+            startDate,
+            endDate,
+        }
+    },
+    toFirestore(ticket: Ticket) {
+        const startDate = ticket.startDate
+            ? DateTime.isDateTime(ticket.startDate)
+                ? Timestamp.fromDate(ticket.startDate.toJSDate())
+                : ticket.startDate
+            : null
+
+        const endDate = ticket.endDate
+            ? DateTime.isDateTime(ticket.endDate)
+                ? Timestamp.fromDate(ticket.endDate.toJSDate())
+                : ticket.endDate
+            : null
+
+        return {
+            ...ticket,
+            startDate,
+            endDate,
+        }
+    },
+}
+
 export const adminUserConverter: FirestoreDataConverter<{ id: string }> = {
     fromFirestore(snapshot): { id: string } {
         const data = snapshot.data()

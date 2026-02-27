@@ -7,10 +7,11 @@ import * as yup from 'yup'
 import { useFirestoreCollectionMutation } from '../../services/hooks/firestoreMutationHooks'
 import { collections } from '../../services/firebase'
 import LoadingButton from '@mui/lab/LoadingButton'
-import { NewEvent } from '../../types'
-import { serverTimestamp } from 'firebase/firestore'
+import { NewEvent, Ticket } from '../../types'
+import { addDoc, serverTimestamp } from 'firebase/firestore'
 import { useNotification } from '../../hooks/notificationHook'
 import { generateApiKey } from '../../utils/generateApiKey'
+import { DateTime } from 'luxon'
 
 export type NewEventDialogProps = {
     isOpen: boolean
@@ -88,7 +89,22 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                     }
                     mutation
                         .mutate(newEventData)
-                        .then((eventId: any) => {
+                        .then(async (eventId: any) => {
+                            const defaultTicket: Omit<Ticket, 'id'> = {
+                                name: 'Standard',
+                                price: 0,
+                                currency: 'EUR',
+                                url: '',
+                                ticketsCount: 100,
+                                available: true,
+                                soldOut: false,
+                                highlighted: false,
+                                displayNewsletterRegistration: false,
+                                startDate: data.startDate ? DateTime.fromISO(data.startDate) : null,
+                                endDate: data.endDate ? DateTime.fromISO(data.endDate) : null,
+                                message: '',
+                            }
+                            await addDoc(collections.tickets(eventId), defaultTicket as Ticket)
                             onClose(eventId)
                         })
                         .catch((error: Error) => {
