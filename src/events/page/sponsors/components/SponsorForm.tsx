@@ -14,21 +14,22 @@ export type SponsorFormProps = {
 export const SponsorForm = ({ event, sponsor, onSubmit }: SponsorFormProps) => {
     const customFields = event.sponsorCustomFields || []
 
-    const formContext = useForm({
-        defaultValues: sponsor
-            ? sponsor
-            : {
-                  name: '',
-                  logoUrl: '',
-                  website: undefined,
-                  customFields: customFields.reduce(
-                      (acc, field) => {
-                          acc[field.id] = field.type === 'boolean' ? false : ''
-                          return acc
-                      },
-                      {} as { [key: string]: string | boolean }
-                  ),
-              },
+    const defaultCustomFields = customFields.reduce(
+        (acc, field) => {
+            acc[field.id] = field.type === 'boolean' ? false : ''
+            return acc
+        },
+        {} as { [key: string]: string | boolean }
+    )
+
+    const formContext = useForm<Sponsor>({
+        defaultValues: {
+            id: sponsor?.id || '',
+            name: sponsor?.name || '',
+            logoUrl: sponsor?.logoUrl || '',
+            website: sponsor?.website || undefined,
+            customFields: { ...defaultCustomFields, ...sponsor?.customFields },
+        },
     })
     const { formState } = formContext
 
@@ -40,7 +41,7 @@ export const SponsorForm = ({ event, sponsor, onSubmit }: SponsorFormProps) => {
             onSuccess={async (data) => {
                 const customFieldValues: { [key: string]: string | boolean } = {}
                 for (const field of customFields) {
-                    const value = (data as any).customFields?.[field.id]
+                    const value = data.customFields?.[field.id]
                     customFieldValues[field.id] = field.type === 'boolean' ? !!value : value || ''
                 }
 
