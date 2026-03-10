@@ -1,4 +1,4 @@
-import { Category, Track, Format, SponsorCategory, TeamMember, FaqCategory, Social } from '../../../../../../src/types'
+import { Category, Track, Format, SponsorCategory, TeamMember, FaqCategory, Social, SponsorCustomField } from '../../../../../../src/types'
 
 export interface JsonSession {
     id: string
@@ -59,6 +59,7 @@ export interface JsonEvent {
     logoUrl: string | null | undefined
     logoUrl2: string | null | undefined
     backgroundUrl: string | null | undefined
+    sponsorCustomFields: SponsorCustomField[]
 }
 
 export interface JsonPublicOutput {

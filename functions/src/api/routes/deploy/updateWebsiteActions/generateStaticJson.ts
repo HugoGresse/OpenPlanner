@@ -138,6 +138,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         logoUrl: event.logoUrl,
         logoUrl2: event.logoUrl2,
         backgroundUrl: event.backgroundUrl,
+        sponsorCustomFields: event.sponsorCustomFields || [],
     }
 
     const outputPublic: JsonPublicOutput = {
