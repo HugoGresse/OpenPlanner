@@ -117,6 +117,12 @@ export interface EventFiles {
     pdf: string | null
 }
 
+export interface SponsorCustomField {
+    id: string
+    name: string
+    type: 'boolean' | 'text'
+}
+
 export interface EventShortVidSettings {
     template: string | null
     server: string | null
@@ -165,6 +171,7 @@ export interface Event {
     color: string | null
     colorSecondary: string | null
     colorBackground: string | null
+    sponsorCustomFields: SponsorCustomField[]
     bupherSession?: string | null
     bupherOrganizationId?: string | null
     timezone: string | null
@@ -198,6 +205,7 @@ export interface Sponsor {
     logoUrl: string
     website: string | null
     jobPostToken?: string | null // Unique token for sponsor's job management page
+    customFields?: { [key: string]: string | boolean }
 }
 
 export interface SponsorCategory {
