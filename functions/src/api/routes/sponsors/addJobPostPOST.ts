@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { JobPostDao } from '../../dao/jobPostDao'
 import { EventDao } from '../../dao/eventDao'
 import { SponsorDao } from '../../dao/sponsorDao'
@@ -10,7 +10,7 @@ export const TypeBoxJobPost = Type.Object({
     title: Type.String(),
     description: Type.String(),
     location: Type.String(),
-    externalLink: Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })]),
+    externalLink: Type.String({ format: 'uri' }),
     category: Type.String({ enum: JOB_CATEGORIES }),
     salary: Type.Optional(Type.String()),
     requirements: Type.Optional(Type.Array(Type.String())),
@@ -23,7 +23,7 @@ export const TypeBoxSponsorJobPost = Type.Object({
     title: Type.String(),
     description: Type.String(),
     location: Type.String(),
-    externalLink: Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })]),
+    externalLink: Type.String({ format: 'uri' }),
     category: Type.String({ enum: JOB_CATEGORIES }),
     salary: Type.Optional(Type.String()),
     requirements: Type.Optional(Type.Array(Type.String())),

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { Type } from '@sinclair/typebox'
+import Type from 'typebox'
 import puppeteer, { Browser, Page } from 'puppeteer'
 import PDFMerger from '../utils/pdf-merger-ts'
 

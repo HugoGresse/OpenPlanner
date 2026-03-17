@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { Type } from '@sinclair/typebox'
+import Type from 'typebox'
 import { getBupherSessionAndUserId, sendErrorResponse } from './utils/bupherUtils'
 import { postBupherFile } from './utils/postBupherFile'
 import { extractMultipartFormData } from '../file/utils/parseMultipartFiles'

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { Type, Static } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { Error400_401_VerifyRequest, Error400_401_VerifyRequestType } from '../../apiKeyPlugin'
 import { updateWebsiteTriggerWebhooksActionInternal } from './updateWebsiteActions/updateWebsiteTriggerWebhooksAction'
 import { EventDao } from '../../dao/eventDao'

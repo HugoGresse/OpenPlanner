@@ -2,7 +2,7 @@ import fastifyPlugin from 'fastify-plugin'
 import { EventDao } from './dao/eventDao'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyAuthFunction } from '@fastify/auth'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 const verifyRequest = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     // @ts-ignore
     const eventId = request.params?.eventId

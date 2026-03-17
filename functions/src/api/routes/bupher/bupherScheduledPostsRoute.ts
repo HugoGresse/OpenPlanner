@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { Type } from '@sinclair/typebox'
+import Type from 'typebox'
 import { getBupherSessionAndUserId, sendErrorResponse } from './utils/bupherUtils'
 import { getBupherScheduledPost } from './utils/getBupherScheduledPost'
 import { PostsEdge } from './utils/BupherScheduledPost'

@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
-import { FormatRegistry, Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
+import Format from 'typebox/format'
 import { DateTime } from 'luxon'
 import { verifyOverwriteData } from './verifyOverwriteData'
 import { EventDao } from '../../dao/eventDao'
@@ -10,7 +11,7 @@ import { Speaker } from '../../../types'
 
 const MAX_STRING_LENGTH = 10000
 
-FormatRegistry.Set('dateIso8601', function (value: string) {
+Format.Set('dateIso8601', function (value: string) {
     // Doc : https://moment.github.io/luxon/#/parsing?id=iso-8601
     try {
         const result = DateTime.fromISO(value)
@@ -54,13 +55,13 @@ export const SpeakersSessionsType = Type.Object({
                     maxLength: MAX_STRING_LENGTH,
                 })
             ),
-            companyLogoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
+            companyLogoUrl: Type.Optional(Type.String({ format: 'uri' })),
             geolocation: Type.Optional(
                 Type.String({
                     maxLength: MAX_STRING_LENGTH,
                 })
             ),
-            photoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
+            photoUrl: Type.Optional(Type.String({ format: 'uri' })),
             socials: Type.Optional(
                 Type.Array(
                     Type.Object({
@@ -68,7 +69,7 @@ export const SpeakersSessionsType = Type.Object({
                             maxLength: MAX_STRING_LENGTH,
                         }),
                         icon: Type.Optional(Type.String()),
-                        link: Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })]),
+                        link: Type.String({ format: 'uri' }),
                     })
                 )
             ),
@@ -119,15 +120,9 @@ export const SpeakersSessionsType = Type.Object({
                     maxLength: MAX_STRING_LENGTH,
                 })
             ),
-            presentationLink: Type.Optional(
-                Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' }), Type.Null()])
-            ),
-            videoLink: Type.Optional(
-                Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' }), Type.Null()])
-            ),
-            imageUrl: Type.Optional(
-                Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' }), Type.Null()])
-            ),
+            presentationLink: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.Null()])),
+            videoLink: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.Null()])),
+            imageUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.Null()])),
             tags: Type.Optional(
                 Type.Array(
                     Type.String({
@@ -159,8 +154,8 @@ export const SpeakersSessionsType = Type.Object({
             showInFeedback: Type.Optional(Type.Boolean()),
             hideTrackTitle: Type.Optional(Type.Boolean()),
             note: Type.Optional(Type.String()),
-            teaserVideoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
-            teaserImageUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
+            teaserVideoUrl: Type.Optional(Type.String({ format: 'uri' })),
+            teaserImageUrl: Type.Optional(Type.String({ format: 'uri' })),
             teasingHidden: Type.Optional(Type.Boolean()),
         })
     ),

@@ -4,7 +4,7 @@ import FastifySwagger from '@fastify/swagger'
 import { isDev } from './setupFastify'
 import { getFirebaseProjectId } from '../utils/getFirebaseProjectId'
 
-export const registerSwagger = (fastify: FastifyInstance) => {
+export const registerSwagger = (fastify: FastifyInstance<any, any, any, any, any>) => {
     fastify.register(FastifySwagger, {
         swagger: {
             info: {

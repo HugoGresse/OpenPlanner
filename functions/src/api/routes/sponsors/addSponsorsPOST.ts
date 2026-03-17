@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { SponsorDao } from '../../dao/sponsorDao'
 import { getFileName } from '../../other/getFileName'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
@@ -8,8 +8,8 @@ export const TypeBoxSponsor = Type.Object({
     name: Type.String(),
     categoryId: Type.String(),
     categoryName: Type.String(),
-    website: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
-    logoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
+    website: Type.Optional(Type.String({ format: 'uri' })),
+    logoUrl: Type.Optional(Type.String({ format: 'uri' })),
 })
 
 export type SponsorType = Static<typeof TypeBoxSponsor>

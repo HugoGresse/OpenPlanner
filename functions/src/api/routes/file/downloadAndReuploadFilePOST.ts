@@ -1,9 +1,9 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { uploadBufferToStorage } from './utils/uploadBufferToStorage'
 
 export const DownloadReuploadSchema = Type.Object({
-    url: Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })]),
+    url: Type.String({ format: 'uri' }),
     filename: Type.Optional(Type.String()),
 })
 
