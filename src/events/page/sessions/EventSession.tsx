@@ -1,31 +1,20 @@
 import { useCallback, useState } from 'react'
 import { Event, Speaker } from '../../../types'
-import {
-    Box,
-    Button,
-    Card,
-    Checkbox,
-    Container,
-    DialogContentText,
-    FormControlLabel,
-    List,
-    ListItem,
-    Typography,
-} from '@mui/material'
+import { Box, Button, Card, Container, Typography } from '@mui/material'
 import { useSession } from '../../../services/hooks/useSession'
 import { useLocation, useRoute } from 'wouter'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ArrowBack } from '@mui/icons-material'
-import { getQueryParams } from '../../../utils/getQuerySearchParameters'
 import { EventSessionForm } from './EventSessionForm'
 import { deleteDoc, doc, getDocs, query, where } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
-import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
 import { useSpeakersMap } from '../../../services/hooks/useSpeakersMap'
+import { DeleteSessionDialog } from './DeleteSessionDialog'
+import { DeleteOrphanedSpeakersDialog } from './DeleteOrphanedSpeakersDialog'
 
 export type EventSessionProps = {
     event: Event
@@ -41,7 +30,6 @@ export const EventSession = ({ event }: EventSessionProps) => {
     const [orphanedSpeakers, setOrphanedSpeakers] = useState<Speaker[]>([])
     const [orphanDeleteOpen, setOrphanDeleteOpen] = useState(false)
     const [orphanDeleting, setOrphanDeleting] = useState(false)
-    const [selectedOrphanIds, setSelectedOrphanIds] = useState<Set<string>>(new Set())
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.sessions(event.id), sessionId))
     const mutation = useFirestoreDocumentMutation(doc(collections.sessions(event.id), sessionId))
 
@@ -66,18 +54,21 @@ export const EventSession = ({ event }: EventSessionProps) => {
         [event.id, speakersMap.data]
     )
 
-    const deleteSelectedOrphans = useCallback(async () => {
-        setOrphanDeleting(true)
-        try {
-            for (const speakerId of selectedOrphanIds) {
-                await deleteDoc(doc(collections.speakers(event.id), speakerId))
+    const deleteOrphans = useCallback(
+        async (speakerIds: string[]) => {
+            setOrphanDeleting(true)
+            try {
+                for (const speakerId of speakerIds) {
+                    await deleteDoc(doc(collections.speakers(event.id), speakerId))
+                }
+            } finally {
+                setOrphanDeleting(false)
+                setOrphanDeleteOpen(false)
+                setLocation('/sessions')
             }
-        } finally {
-            setOrphanDeleting(false)
-            setOrphanDeleteOpen(false)
-            setLocation('/sessions')
-        }
-    }, [event.id, selectedOrphanIds])
+        },
+        [event.id]
+    )
 
     if (sessionResult.isLoading || !sessionResult.data) {
         return <FirestoreQueryLoaderAndErrorDisplay hookResult={sessionResult} />
@@ -115,15 +106,12 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 )}
             </Box>
 
-            <ConfirmDialog
+            <DeleteSessionDialog
                 open={deleteOpen}
-                title="Delete this session?"
-                acceptButton="Delete session"
-                disabled={documentDeletion.isLoading}
                 loading={documentDeletion.isLoading}
-                cancelButton="cancel"
-                handleClose={() => setDeleteOpen(false)}
-                handleAccept={async () => {
+                session={session}
+                onClose={() => setDeleteOpen(false)}
+                onAccept={async () => {
                     const speakerIds = session.speakers || []
                     await documentDeletion.mutate()
                     setDeleteOpen(false)
@@ -132,60 +120,24 @@ export const EventSession = ({ event }: EventSessionProps) => {
                         const orphaned = await findOrphanedSpeakers(speakerIds)
                         if (orphaned.length > 0) {
                             setOrphanedSpeakers(orphaned)
-                            setSelectedOrphanIds(new Set(orphaned.map((s) => s.id)))
                             setOrphanDeleteOpen(true)
                             return
                         }
                     }
                     setLocation('/sessions')
-                }}>
-                <DialogContentText id="alert-dialog-description">
-                    {' '}
-                    Delete the session {session.title} from this event (not the session's speaker(s))
-                </DialogContentText>
-            </ConfirmDialog>
+                }}
+            />
 
-            <ConfirmDialog
+            <DeleteOrphanedSpeakersDialog
                 open={orphanDeleteOpen}
-                title="Delete orphaned speaker(s)?"
-                acceptButton="Delete selected speaker(s)"
-                disabled={orphanDeleting || selectedOrphanIds.size === 0}
                 loading={orphanDeleting}
-                cancelButton="Keep all"
-                handleClose={() => {
+                speakers={orphanedSpeakers}
+                onClose={() => {
                     setOrphanDeleteOpen(false)
                     setLocation('/sessions')
                 }}
-                handleAccept={deleteSelectedOrphans}>
-                <DialogContentText>
-                    The following speaker(s) are not linked to any other session. Do you want to delete them?
-                </DialogContentText>
-                <List dense>
-                    {orphanedSpeakers.map((speaker) => (
-                        <ListItem key={speaker.id} disablePadding>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={selectedOrphanIds.has(speaker.id)}
-                                        onChange={(e) => {
-                                            setSelectedOrphanIds((prev) => {
-                                                const next = new Set(prev)
-                                                if (e.target.checked) {
-                                                    next.add(speaker.id)
-                                                } else {
-                                                    next.delete(speaker.id)
-                                                }
-                                                return next
-                                            })
-                                        }}
-                                    />
-                                }
-                                label={speaker.name}
-                            />
-                        </ListItem>
-                    ))}
-                </List>
-            </ConfirmDialog>
+                onAccept={deleteOrphans}
+            />
         </Container>
     )
 }
