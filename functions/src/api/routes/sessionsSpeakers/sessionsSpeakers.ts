@@ -54,13 +54,13 @@ export const SpeakersSessionsType = Type.Object({
                     maxLength: MAX_STRING_LENGTH,
                 })
             ),
-            companyLogoUrl: Type.Optional(Type.String({ format: 'uri' })),
+            companyLogoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
             geolocation: Type.Optional(
                 Type.String({
                     maxLength: MAX_STRING_LENGTH,
                 })
             ),
-            photoUrl: Type.Optional(Type.String({ format: 'uri' })),
+            photoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
             socials: Type.Optional(
                 Type.Array(
                     Type.Object({
@@ -68,7 +68,7 @@ export const SpeakersSessionsType = Type.Object({
                             maxLength: MAX_STRING_LENGTH,
                         }),
                         icon: Type.Optional(Type.String()),
-                        link: Type.String({ format: 'uri' }),
+                        link: Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })]),
                     })
                 )
             ),
@@ -119,9 +119,15 @@ export const SpeakersSessionsType = Type.Object({
                     maxLength: MAX_STRING_LENGTH,
                 })
             ),
-            presentationLink: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.Null()])),
-            videoLink: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.Null()])),
-            imageUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.Null()])),
+            presentationLink: Type.Optional(
+                Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' }), Type.Null()])
+            ),
+            videoLink: Type.Optional(
+                Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' }), Type.Null()])
+            ),
+            imageUrl: Type.Optional(
+                Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' }), Type.Null()])
+            ),
             tags: Type.Optional(
                 Type.Array(
                     Type.String({
@@ -153,8 +159,8 @@ export const SpeakersSessionsType = Type.Object({
             showInFeedback: Type.Optional(Type.Boolean()),
             hideTrackTitle: Type.Optional(Type.Boolean()),
             note: Type.Optional(Type.String()),
-            teaserVideoUrl: Type.Optional(Type.String({ format: 'uri' })),
-            teaserImageUrl: Type.Optional(Type.String({ format: 'uri' })),
+            teaserVideoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
+            teaserImageUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
             teasingHidden: Type.Optional(Type.Boolean()),
         })
     ),

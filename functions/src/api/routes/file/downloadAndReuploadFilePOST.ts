@@ -3,7 +3,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { uploadBufferToStorage } from './utils/uploadBufferToStorage'
 
 export const DownloadReuploadSchema = Type.Object({
-    url: Type.String({ format: 'uri' }),
+    url: Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })]),
     filename: Type.Optional(Type.String()),
 })
 

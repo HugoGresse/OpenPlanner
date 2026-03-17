@@ -8,7 +8,7 @@ export const TypeBoxUpdateJobPost = Type.Object({
     title: Type.String(),
     description: Type.String(),
     location: Type.String(),
-    externalLink: Type.String({ format: 'uri' }),
+    externalLink: Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })]),
     category: Type.String({ enum: JOB_CATEGORIES }),
     salary: Type.Optional(Type.String()),
     requirements: Type.Optional(Type.Array(Type.String())),

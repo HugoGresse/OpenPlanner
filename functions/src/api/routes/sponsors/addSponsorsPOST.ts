@@ -8,8 +8,8 @@ export const TypeBoxSponsor = Type.Object({
     name: Type.String(),
     categoryId: Type.String(),
     categoryName: Type.String(),
-    website: Type.Optional(Type.String({ format: 'uri' })),
-    logoUrl: Type.Optional(Type.String({ format: 'uri' })),
+    website: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
+    logoUrl: Type.Optional(Type.Union([Type.String({ format: 'uri' }), Type.String({ format: 'url' })])),
 })
 
 export type SponsorType = Static<typeof TypeBoxSponsor>
