@@ -12,7 +12,6 @@ import {
     useFirestoreDocumentDeletion,
     useFirestoreDocumentMutation,
 } from '../../../services/hooks/firestoreMutationHooks'
-import { useSpeakersMap } from '../../../services/hooks/useSpeakersMap'
 import { DeleteSessionDialog } from './DeleteSessionDialog'
 import { DeleteOrphanedSpeakersDialog } from './DeleteOrphanedSpeakersDialog'
 
@@ -25,7 +24,6 @@ export const EventSession = ({ event }: EventSessionProps) => {
 
     const sessionId = params?.sessionId || ''
     const sessionResult = useSession(event.id, sessionId)
-    const speakersMap = useSpeakersMap(event.id)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [orphanedSpeakers, setOrphanedSpeakers] = useState<Speaker[]>([])
     const [orphanDeleteOpen, setOrphanDeleteOpen] = useState(false)
@@ -36,6 +34,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
     const findOrphanedSpeakers = useCallback(
         async (speakerIds: string[]) => {
             const orphaned: Speaker[] = []
+            const speakersData = sessionResult.data?.speakersData
             for (const speakerId of speakerIds) {
                 const sessionsQuery = query(
                     collections.sessions(event.id),
@@ -43,7 +42,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 )
                 const snapshot = await getDocs(sessionsQuery)
                 if (snapshot.empty) {
-                    const speaker = speakersMap.data?.[speakerId]
+                    const speaker = speakersData?.[speakerId]
                     if (speaker) {
                         orphaned.push(speaker)
                     }
@@ -51,7 +50,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
             }
             return orphaned
         },
-        [event.id, speakersMap.data]
+        [event.id, sessionResult.data?.speakersData]
     )
 
     const deleteOrphans = useCallback(
