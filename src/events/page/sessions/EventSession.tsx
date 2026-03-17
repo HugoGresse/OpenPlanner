@@ -6,7 +6,7 @@ import { useLocation, useRoute } from 'wouter'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ArrowBack } from '@mui/icons-material'
 import { EventSessionForm } from './EventSessionForm'
-import { deleteDoc, doc, getDocs, query, where } from 'firebase/firestore'
+import { deleteDoc, doc, getDocs, query, where, writeBatch } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import {
     useFirestoreDocumentDeletion,
@@ -57,16 +57,21 @@ export const EventSession = ({ event }: EventSessionProps) => {
         async (speakerIds: string[]) => {
             setOrphanDeleting(true)
             try {
+                const batch = writeBatch(collections.speakers(event.id).firestore)
                 for (const speakerId of speakerIds) {
-                    await deleteDoc(doc(collections.speakers(event.id), speakerId))
+                    const speakerRef = doc(collections.speakers(event.id), speakerId)
+                    batch.delete(speakerRef)
                 }
-            } finally {
-                setOrphanDeleting(false)
+                await batch.commit()
                 setOrphanDeleteOpen(false)
                 setLocation('/sessions')
+            } catch (error) {
+                console.error('Failed to delete orphaned speakers', error)
+            } finally {
+                setOrphanDeleting(false)
             }
         },
-        [event.id]
+        [event.id, setLocation]
     )
 
     if (sessionResult.isLoading || !sessionResult.data) {
