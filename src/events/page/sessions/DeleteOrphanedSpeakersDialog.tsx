@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Checkbox, DialogContentText, FormControlLabel, List, ListItem } from '@mui/material'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { Speaker } from '../../../types'
@@ -18,12 +18,21 @@ export const DeleteOrphanedSpeakersDialog = ({
     onClose,
     onAccept,
 }: DeleteOrphanedSpeakersDialogProps) => {
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(speakers.map((s) => s.id)))
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(
+        () => new Set(speakers.map((s) => s.id)),
+    )
 
-    // Keep selectedIds in sync when speakers list changes
-    if (speakers.length > 0 && selectedIds.size === 0) {
+    // Keep selectedIds in sync when the dialog is opened or the speakers list changes
+    useEffect(() => {
+        if (!open) {
+            // Clear selection when dialog is closed to avoid stale IDs on next open
+            setSelectedIds(new Set())
+            return
+        }
+
+        // When dialog is open, select exactly the current speaker IDs
         setSelectedIds(new Set(speakers.map((s) => s.id)))
-    }
+    }, [open, speakers])
 
     return (
         <ConfirmDialog
