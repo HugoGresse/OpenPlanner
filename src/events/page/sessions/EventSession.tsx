@@ -42,7 +42,7 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 )
                 const snapshot = await getDocs(sessionsQuery)
                 if (snapshot.empty) {
-                    const speaker = speakersData?.[speakerId]
+                    const speaker = speakersData?.find((s) => s.id === speakerId)
                     if (speaker) {
                         orphaned.push(speaker)
                     }
