@@ -7,13 +7,14 @@ type ExtendedPdfInput = PdfInput | Buffer | string | PathLike
 class PDFMerger extends PDFMergerBase {
     async _getInputAsUint8Array(input: ExtendedPdfInput): Promise<Uint8Array> {
         if (input instanceof Buffer) {
-            return input
+            return new Uint8Array(input)
         }
 
         if (typeof input === 'string') {
             try {
                 await fs.access(input)
-                return await fs.readFile(input)
+                const fileBuffer = await fs.readFile(input)
+                return new Uint8Array(fileBuffer)
             } catch (e) {
                 try {
                     Boolean(new URL(input))

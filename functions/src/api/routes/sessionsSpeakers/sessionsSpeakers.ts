@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
-import { FormatRegistry, Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
+import Format from 'typebox/format'
 import { DateTime } from 'luxon'
 import { verifyOverwriteData } from './verifyOverwriteData'
 import { EventDao } from '../../dao/eventDao'
@@ -10,7 +11,7 @@ import { Speaker } from '../../../types'
 
 const MAX_STRING_LENGTH = 10000
 
-FormatRegistry.Set('dateIso8601', function (value: string) {
+Format.Set('dateIso8601', function (value: string) {
     // Doc : https://moment.github.io/luxon/#/parsing?id=iso-8601
     try {
         const result = DateTime.fromISO(value)

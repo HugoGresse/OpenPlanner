@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { getUploadFilePathFromEvent } from './updateWebsiteActions/getFilesNames'
 import { EventDao } from '../../dao/eventDao'
 import { Error400_401_VerifyRequest, Error400_401_VerifyRequestType } from '../../apiKeyPlugin'

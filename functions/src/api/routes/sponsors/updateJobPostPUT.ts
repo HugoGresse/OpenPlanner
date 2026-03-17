@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { JobPostDao } from '../../dao/jobPostDao'
 import { SponsorDao } from '../../dao/sponsorDao'
 import { JOB_CATEGORIES } from './JOB_CATEGORIES'

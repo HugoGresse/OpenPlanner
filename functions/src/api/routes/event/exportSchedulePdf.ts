@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox'
+import Type from 'typebox'
 import { FastifyInstance } from 'fastify'
 import { EventDao } from '../../dao/eventDao'
 import { isDev } from '../../setupFastify'
