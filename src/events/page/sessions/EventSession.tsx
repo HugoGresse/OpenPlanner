@@ -118,6 +118,12 @@ export const EventSession = ({ event }: EventSessionProps) => {
                 onAccept={async () => {
                     const speakerIds = session.speakers || []
                     await documentDeletion.mutate()
+
+                    // If the deletion failed, do not proceed to orphan checking or navigation.
+                    if (documentDeletion.isError || documentDeletion.error) {
+                        return
+                    }
+
                     setDeleteOpen(false)
 
                     if (speakerIds.length > 0) {
