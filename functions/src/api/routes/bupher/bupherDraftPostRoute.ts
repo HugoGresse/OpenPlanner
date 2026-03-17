@@ -93,7 +93,7 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                     return sendErrorResponse(reply, 400, 'Invalid file type')
                 }
                 const isVideo = fileType.mime.startsWith('video/')
-                const file = new File([fileBuffer], firstFileKey, { type: fileType.mime })
+                const file = new File([new Uint8Array(fileBuffer)], firstFileKey, { type: fileType.mime })
 
                 // Process thumbnail file if provided
                 let thumbnailUrl: string | undefined
@@ -103,7 +103,9 @@ export const bupherDraftPostRoute = (fastify: FastifyInstance, options: any, don
                     const thumbnailType = await checkFileTypes(thumbnailBuffer, thumbnailKey)
 
                     if (thumbnailType && thumbnailType.mime.startsWith('image/')) {
-                        const thumbnailFile = new File([thumbnailBuffer], thumbnailKey, { type: thumbnailType.mime })
+                        const thumbnailFile = new File([new Uint8Array(thumbnailBuffer)], thumbnailKey, {
+                            type: thumbnailType.mime,
+                        })
                         const thumbnailResponse = await postBupherFile(
                             bupherInfos.bupherSession,
                             bupherInfos.bupherOrganizationId,
