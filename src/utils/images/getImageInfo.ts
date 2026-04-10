@@ -22,9 +22,10 @@ export const getImageInfo = async (imageSrc: string): Promise<ImageInfo> => {
                 if (match) {
                     fileType = match[1]
                 }
-                // Approximate byte length from base64 string
+                // Approximate byte length from base64 string (account for padding)
                 const base64Part = imageSrc.split(',')[1] || ''
-                const fileSize = Math.floor((base64Part.length * 3) / 4)
+                const padding = (base64Part.match(/=/g) || []).length
+                const fileSize = Math.floor((base64Part.length * 3) / 4) - padding
                 resolve({ width, height, fileType, fileSize })
             } else {
                 // For regular URLs, try to fetch the content-type and content-length headers
