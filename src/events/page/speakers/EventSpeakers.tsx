@@ -21,6 +21,7 @@ import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { Clear, ExpandMore } from '@mui/icons-material'
 import { useSessionsRaw } from '../../../services/hooks/useSessions'
 import { SpeakersStatsDialog } from './components/SpeakersStatsDialog'
+import { SpeakerAvatarSizeDialog } from './components/SpeakerAvatarSizeDialog'
 import { useNotification } from '../../../hooks/notificationHook'
 import { exportSpeakersAction, SpeakersExportType } from './actions/exportSpeakersAction'
 
@@ -32,6 +33,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const speakers = useSpeakers(event.id)
     const sessions = useSessionsRaw(event.id)
     const [speakersStatsOpen, setSpeakersStatsOpen] = useState(false)
+    const [avatarSizeOpen, setAvatarSizeOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
     const [showOnlyWithoutSessions, setShowOnlyWithoutSessions] = useState(false)
@@ -89,6 +91,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginBottom={1}>
                 <Typography>{speakers.data?.length} speakers</Typography>
                 <Button onClick={() => setSpeakersStatsOpen(true)}>Stats</Button>
+                <Button onClick={() => setAvatarSizeOpen(true)}>Avatar sizes</Button>
                 <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
                     Export
                 </Button>
@@ -165,6 +168,14 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     speakers={speakers.data || []}
                     sessions={sessions.data || []}
                     event={event}
+                />
+            )}
+            {avatarSizeOpen && (
+                <SpeakerAvatarSizeDialog
+                    isOpen={avatarSizeOpen}
+                    onClose={() => setAvatarSizeOpen(false)}
+                    event={event}
+                    speakers={speakers.data || []}
                 />
             )}
         </Container>
