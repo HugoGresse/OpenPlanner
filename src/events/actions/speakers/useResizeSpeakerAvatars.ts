@@ -5,6 +5,7 @@ import { updateSpeaker } from './updateSpeaker'
 import { useEventFiles } from '../../../services/hooks/useEventFiles'
 import { uploadImage } from '../../../utils/images/uploadImage'
 import { resizeImage } from '../../../utils/images/resizeImage'
+import { useNotification } from '../../../hooks/notificationHook'
 
 export interface SpeakerAvatarInfo {
     speaker: Speaker
@@ -33,6 +34,7 @@ export const useResizeSpeakerAvatars = (event: Event, speakers: Speaker[]) => {
     })
 
     const { filesPath, isLoading: isFilesLoading } = useEventFiles(event)
+    const { createNotification } = useNotification()
 
     // Load image info (including file size) for each speaker avatar
     useEffect(() => {
@@ -77,9 +79,7 @@ export const useResizeSpeakerAvatars = (event: Event, speakers: Speaker[]) => {
                     } else {
                         setAvatarInfos((prev) =>
                             prev.map((item) =>
-                                item.speaker.id === speaker.id
-                                    ? { ...item, imageInfo: info, isLoading: false }
-                                    : item
+                                item.speaker.id === speaker.id ? { ...item, imageInfo: info, isLoading: false } : item
                             )
                         )
                     }
@@ -102,7 +102,10 @@ export const useResizeSpeakerAvatars = (event: Event, speakers: Speaker[]) => {
      */
     const resizeAllAvatars = useCallback(
         async (maxSizeKB: number) => {
-            if (isFilesLoading) return
+            if (isFilesLoading || !filesPath.imageFolder) {
+                createNotification('Storage path not available yet, please try again in a moment.', { type: 'error' })
+                return
+            }
 
             const maxSizeBytes = maxSizeKB * 1024
 
@@ -175,9 +178,7 @@ export const useResizeSpeakerAvatars = (event: Event, speakers: Speaker[]) => {
                         .catch(() => {
                             setAvatarInfos((prev) =>
                                 prev.map((item) =>
-                                    item.speaker.id === speaker.id
-                                        ? { ...item, isLoading: false }
-                                        : item
+                                    item.speaker.id === speaker.id ? { ...item, isLoading: false } : item
                                 )
                             )
                         })

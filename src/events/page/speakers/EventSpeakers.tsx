@@ -38,7 +38,9 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const [search, setSearch] = useState<string>('')
     const [showOnlyWithoutSessions, setShowOnlyWithoutSessions] = useState(false)
     const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
+    const [toolsAnchorEl, setToolsAnchorEl] = useState<null | HTMLElement>(null)
     const isExportMenuOpen = Boolean(exportAnchorEl)
+    const isToolsMenuOpen = Boolean(toolsAnchorEl)
     const { createNotification } = useNotification()
 
     const speakersData = useMemo(() => speakers.data || [], [speakers.data])
@@ -90,8 +92,29 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginBottom={1}>
                 <Typography>{speakers.data?.length} speakers</Typography>
-                <Button onClick={() => setSpeakersStatsOpen(true)}>Stats</Button>
-                <Button onClick={() => setAvatarSizeOpen(true)}>Avatar sizes</Button>
+                <Button onClick={(e) => setToolsAnchorEl(e.currentTarget)} endIcon={<ExpandMore />}>
+                    Tools
+                </Button>
+                <Menu
+                    anchorEl={toolsAnchorEl}
+                    open={isToolsMenuOpen}
+                    onClose={() => setToolsAnchorEl(null)}
+                    MenuListProps={{ 'aria-labelledby': 'tools-button' }}>
+                    <MenuItem
+                        onClick={() => {
+                            setToolsAnchorEl(null)
+                            setSpeakersStatsOpen(true)
+                        }}>
+                        Stats
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setToolsAnchorEl(null)
+                            setAvatarSizeOpen(true)
+                        }}>
+                        Avatar sizes
+                    </MenuItem>
+                </Menu>
                 <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
                     Export
                 </Button>
