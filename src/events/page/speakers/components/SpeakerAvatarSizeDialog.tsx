@@ -57,7 +57,13 @@ export const SpeakerAvatarSizeDialog = ({
         speakers
     )
 
-    const speakersWithPhotos = avatarInfos.filter((info) => info.speaker.photoUrl)
+    const speakersWithPhotos = avatarInfos
+        .filter((info) => info.speaker.photoUrl)
+        .sort((a, b) => {
+            const sizeA = a.imageInfo?.fileSize ?? -1
+            const sizeB = b.imageInfo?.fileSize ?? -1
+            return sizeB - sizeA
+        })
     const speakersNeedingResize = speakersWithPhotos.filter(
         (info) =>
             info.imageInfo?.fileSize !== null &&
