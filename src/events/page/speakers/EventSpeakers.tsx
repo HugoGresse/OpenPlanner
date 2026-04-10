@@ -21,6 +21,7 @@ import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
 import { Clear, ExpandMore } from '@mui/icons-material'
 import { useSessionsRaw } from '../../../services/hooks/useSessions'
 import { SpeakersStatsDialog } from './components/SpeakersStatsDialog'
+import { SpeakerAvatarSizeDialog } from './components/SpeakerAvatarSizeDialog'
 import { useNotification } from '../../../hooks/notificationHook'
 import { exportSpeakersAction, SpeakersExportType } from './actions/exportSpeakersAction'
 
@@ -32,11 +33,14 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const speakers = useSpeakers(event.id)
     const sessions = useSessionsRaw(event.id)
     const [speakersStatsOpen, setSpeakersStatsOpen] = useState(false)
+    const [avatarSizeOpen, setAvatarSizeOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
     const [showOnlyWithoutSessions, setShowOnlyWithoutSessions] = useState(false)
     const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null)
+    const [toolsAnchorEl, setToolsAnchorEl] = useState<null | HTMLElement>(null)
     const isExportMenuOpen = Boolean(exportAnchorEl)
+    const isToolsMenuOpen = Boolean(toolsAnchorEl)
     const { createNotification } = useNotification()
 
     const speakersData = useMemo(() => speakers.data || [], [speakers.data])
@@ -88,7 +92,29 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginBottom={1}>
                 <Typography>{speakers.data?.length} speakers</Typography>
-                <Button onClick={() => setSpeakersStatsOpen(true)}>Stats</Button>
+                <Button onClick={(e) => setToolsAnchorEl(e.currentTarget)} endIcon={<ExpandMore />}>
+                    Tools
+                </Button>
+                <Menu
+                    anchorEl={toolsAnchorEl}
+                    open={isToolsMenuOpen}
+                    onClose={() => setToolsAnchorEl(null)}
+                    MenuListProps={{ 'aria-labelledby': 'tools-button' }}>
+                    <MenuItem
+                        onClick={() => {
+                            setToolsAnchorEl(null)
+                            setSpeakersStatsOpen(true)
+                        }}>
+                        Stats
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setToolsAnchorEl(null)
+                            setAvatarSizeOpen(true)
+                        }}>
+                        Avatar sizes
+                    </MenuItem>
+                </Menu>
                 <Button onClick={(event) => setExportAnchorEl(event.currentTarget)} endIcon={<ExpandMore />}>
                     Export
                 </Button>
@@ -165,6 +191,14 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     speakers={speakers.data || []}
                     sessions={sessions.data || []}
                     event={event}
+                />
+            )}
+            {avatarSizeOpen && (
+                <SpeakerAvatarSizeDialog
+                    isOpen={avatarSizeOpen}
+                    onClose={() => setAvatarSizeOpen(false)}
+                    event={event}
+                    speakers={speakers.data || []}
                 />
             )}
         </Container>
