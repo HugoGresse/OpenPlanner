@@ -23,18 +23,20 @@ import { useState } from 'react'
 import { Event, Speaker } from '../../../../types'
 import { useResizeSpeakerAvatars } from '../../../actions/speakers/useResizeSpeakerAvatars'
 
-const DEFAULT_MAX_SIZE = 400
+/** Default max file size threshold in kilobytes */
+const DEFAULT_MAX_SIZE_KB = 200
 
-const formatDimensions = (width: number, height: number) => `${width}×${height}px`
+const formatFileSize = (bytes: number): string => {
+    if (bytes >= 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+    }
+    return `${Math.round(bytes / 1024)} KB`
+}
 
-const getSizeChipColor = (
-    width: number,
-    height: number,
-    maxSize: number
-): 'default' | 'warning' | 'error' => {
-    const largest = Math.max(width, height)
-    if (largest > maxSize * 2) return 'error'
-    if (largest > maxSize) return 'warning'
+const getSizeChipColor = (bytes: number, maxSizeKB: number): 'default' | 'warning' | 'error' => {
+    const maxBytes = maxSizeKB * 1024
+    if (bytes > maxBytes * 3) return 'error'
+    if (bytes > maxBytes) return 'warning'
     return 'default'
 }
 
@@ -49,7 +51,7 @@ export const SpeakerAvatarSizeDialog = ({
     event: Event
     speakers: Speaker[]
 }) => {
-    const [maxSize, setMaxSize] = useState(DEFAULT_MAX_SIZE)
+    const [maxSizeKB, setMaxSizeKB] = useState(DEFAULT_MAX_SIZE_KB)
     const { avatarInfos, resizeProgress, resizeAllAvatars, isFilesLoading } = useResizeSpeakerAvatars(
         event,
         speakers
@@ -58,48 +60,55 @@ export const SpeakerAvatarSizeDialog = ({
     const speakersWithPhotos = avatarInfos.filter((info) => info.speaker.photoUrl)
     const speakersNeedingResize = speakersWithPhotos.filter(
         (info) =>
-            info.imageInfo &&
-            Math.max(info.imageInfo.width, info.imageInfo.height) > maxSize
+            info.imageInfo?.fileSize !== null &&
+            info.imageInfo?.fileSize !== undefined &&
+            info.imageInfo.fileSize > maxSizeKB * 1024
     )
 
     const handleResize = () => {
-        resizeAllAvatars(maxSize)
+        resizeAllAvatars(maxSizeKB)
     }
 
     return (
-        <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth scroll="body" aria-labelledby="avatar-size-dialog-title">
+        <Dialog
+            open={isOpen}
+            onClose={onClose}
+            maxWidth="md"
+            fullWidth
+            scroll="body"
+            aria-labelledby="avatar-size-dialog-title">
             <DialogTitle id="avatar-size-dialog-title">Speaker Avatar Sizes</DialogTitle>
             <DialogContent>
                 <Typography variant="body2" color="text.secondary" mb={2}>
-                    View and reduce the size of all speaker avatars. Images larger than the selected max
-                    dimension will be highlighted.
+                    View the file size of all speaker avatars. Avatars exceeding the selected threshold will
+                    be highlighted and can be compressed in-browser.
                 </Typography>
 
                 <Box mb={3}>
                     <Typography gutterBottom>
-                        Max dimension: <strong>{maxSize}px</strong>
+                        Max file size threshold: <strong>{maxSizeKB} KB</strong>
                     </Typography>
                     <Slider
-                        value={maxSize}
-                        onChange={(_, value) => setMaxSize(value as number)}
-                        min={100}
+                        value={maxSizeKB}
+                        onChange={(_, value) => setMaxSizeKB(value as number)}
+                        min={50}
                         max={1000}
                         step={50}
                         marks={[
-                            { value: 100, label: '100' },
-                            { value: 400, label: '400' },
-                            { value: 700, label: '700' },
-                            { value: 1000, label: '1000' },
+                            { value: 50, label: '50 KB' },
+                            { value: 200, label: '200 KB' },
+                            { value: 500, label: '500 KB' },
+                            { value: 1000, label: '1 MB' },
                         ]}
                         disabled={resizeProgress.isLoading}
-                        sx={{ maxWidth: 400 }}
+                        sx={{ maxWidth: 450 }}
                     />
                 </Box>
 
                 {resizeProgress.isLoading && (
                     <Box mb={2}>
                         <Typography variant="body2" gutterBottom>
-                            Resizing {resizeProgress.progress}/{resizeProgress.total} avatars…
+                            Compressing {resizeProgress.progress}/{resizeProgress.total} avatars…
                         </Typography>
                         <LinearProgress
                             variant="determinate"
@@ -122,7 +131,7 @@ export const SpeakerAvatarSizeDialog = ({
 
                 {!resizeProgress.isLoading && resizeProgress.total > 0 && resizeProgress.errors.length === 0 && (
                     <Alert severity="success" sx={{ mb: 2 }}>
-                        All avatars have been resized successfully.
+                        All avatars have been compressed successfully.
                     </Alert>
                 )}
 
@@ -135,8 +144,8 @@ export const SpeakerAvatarSizeDialog = ({
                             isFilesLoading ||
                             speakersNeedingResize.length === 0
                         }>
-                        Resize {speakersNeedingResize.length} avatar
-                        {speakersNeedingResize.length !== 1 ? 's' : ''} to ≤{maxSize}px
+                        Compress {speakersNeedingResize.length} avatar
+                        {speakersNeedingResize.length !== 1 ? 's' : ''} above {maxSizeKB} KB
                     </Button>
                     {isFilesLoading && <CircularProgress size={20} />}
                 </Box>
@@ -147,18 +156,16 @@ export const SpeakerAvatarSizeDialog = ({
                             <TableRow>
                                 <TableCell>Avatar</TableCell>
                                 <TableCell>Name</TableCell>
-                                <TableCell>Dimensions</TableCell>
+                                <TableCell>File size</TableCell>
                                 <TableCell>Type</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {speakersWithPhotos.map(({ speaker, imageInfo, isLoading, error }) => {
-                                const largest = imageInfo
-                                    ? Math.max(imageInfo.width, imageInfo.height)
-                                    : 0
-                                const chipColor = imageInfo
-                                    ? getSizeChipColor(imageInfo.width, imageInfo.height, maxSize)
-                                    : 'default'
+                                const fileSize = imageInfo?.fileSize ?? null
+                                const chipColor =
+                                    fileSize !== null ? getSizeChipColor(fileSize, maxSizeKB) : 'default'
+                                const exceedsLimit = fileSize !== null && fileSize > maxSizeKB * 1024
 
                                 return (
                                     <TableRow key={speaker.id}>
@@ -177,13 +184,18 @@ export const SpeakerAvatarSizeDialog = ({
                                                     Error
                                                 </Typography>
                                             )}
-                                            {imageInfo && !isLoading && (
+                                            {!isLoading && fileSize !== null && (
                                                 <Chip
-                                                    label={formatDimensions(imageInfo.width, imageInfo.height)}
+                                                    label={formatFileSize(fileSize)}
                                                     color={chipColor}
                                                     size="small"
-                                                    variant={largest > maxSize ? 'filled' : 'outlined'}
+                                                    variant={exceedsLimit ? 'filled' : 'outlined'}
                                                 />
+                                            )}
+                                            {!isLoading && fileSize === null && !error && (
+                                                <Typography variant="caption" color="text.secondary">
+                                                    Unknown
+                                                </Typography>
                                             )}
                                         </TableCell>
                                         <TableCell>
