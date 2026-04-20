@@ -44,7 +44,7 @@ export const GenerateSessionsTextContentDialog = ({
         GeneratedSessionTeasingTextAnswer
     >(event, generateSessionTeasingTexts)
 
-    const sessionToGenerateFor = sessions
+    const sessionToGenerateFor = sessions.filter((session) => !session.teasingHidden)
 
     const generateAll = () => {
         const updateDoc = !onSuccess

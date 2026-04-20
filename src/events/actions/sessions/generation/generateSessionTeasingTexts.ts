@@ -31,7 +31,8 @@ export const generateSessionTeasingTexts = async (
     const promptSystem = settings.aiSettings.sessions.teasingPromptSystem
     const promptUser = settings.aiSettings.sessions.teasingPromptUser
 
-    const sessionsCount = sessions.length
+    const filteredSessions = sessions.filter((session) => !session.teasingHidden)
+    const sessionsCount = filteredSessions.length
 
     if (!settings.openApiKey || !sessionsCount) {
         return {
@@ -41,7 +42,7 @@ export const generateSessionTeasingTexts = async (
         }
     }
 
-    const input = sessions.flatMap((session) => {
+    const input = filteredSessions.flatMap((session) => {
         return (Object.keys(TeasingPostSocials) as Array<TeasingPostSocialsKeyOf>).map((socialKey) => {
             return limitRunner(
                 async () =>
@@ -73,7 +74,7 @@ export const generateSessionTeasingTexts = async (
 
     return {
         success: true,
-        results: sessions
+        results: filteredSessions
             .map((session) => ({
                 baseSession: session,
                 updatedSession: {
