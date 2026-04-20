@@ -1,18 +1,18 @@
 {
   "projects": {
-    "default": "conferencecenterr"
+    "default": "openplanner"
   },
   "targets": {
-    "conferencecenterr": {
+    "openplanner": {
       "hosting": {
         "conferencecenterr": [
-          "conferencecenterr"
+          "conferencecenterrX"
         ],
         "apiopenplanner": [
-          "apiopenplanner"
+          "apiopenplannerX"
         ],
         "serviceapi": [
-            "serviceapi"
+          "serviceapiX"
         ]
       }
     }
