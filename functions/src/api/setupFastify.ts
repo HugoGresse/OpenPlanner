@@ -13,6 +13,7 @@ import { faqRoutes } from './routes/faq/faq'
 import { transcriptionRoutes } from './routes/transcription/transcription'
 import { filesRoutes } from './routes/file/files'
 import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
+import { speakersRoutes } from './routes/speakers/speakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/eventRoutes'
@@ -58,6 +59,7 @@ export const setupFastify = () => {
     fastify.register(sponsorsRoutes)
     fastify.register(sessionsRoutes)
     fastify.register(sessionsSpeakers)
+    fastify.register(speakersRoutes)
     fastify.register(faqRoutes)
     fastify.register(transcriptionRoutes)
     fastify.register(filesRoutes)

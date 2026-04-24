@@ -1,4 +1,14 @@
-import { Category, Track, Format, SponsorCategory, TeamMember, FaqCategory, Social, SponsorCustomField } from '../../../../../../src/types'
+import {
+    Category,
+    Track,
+    Format,
+    SponsorCategory,
+    TeamMember,
+    FaqCategory,
+    Social,
+    SponsorCustomField,
+    SpeakerCustomField,
+} from '../../../../../../src/types'
 
 export interface JsonSession {
     id: string
@@ -39,6 +49,7 @@ export interface JsonSpeaker {
     companyLogoUrl: string | null | undefined
     photoUrl: string | null | undefined
     socials: Social[]
+    customFields?: { [key: string]: string | boolean }
 }
 
 export interface JsonEvent {
@@ -60,6 +71,7 @@ export interface JsonEvent {
     logoUrl2: string | null | undefined
     backgroundUrl: string | null | undefined
     sponsorCustomFields: SponsorCustomField[]
+    speakerCustomFields: SpeakerCustomField[]
 }
 
 export interface JsonPublicOutput {
