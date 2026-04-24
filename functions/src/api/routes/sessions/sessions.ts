@@ -3,6 +3,22 @@ import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
 
+const CheckMedia = Type.Object({
+    urls: Type.Array(Type.String({ format: 'uri' })),
+})
+type CheckMediaType = Static<typeof CheckMedia>
+
+const CheckMediaReply = Type.Object({
+    results: Type.Array(
+        Type.Object({
+            url: Type.String(),
+            ok: Type.Boolean(),
+            status: Type.Optional(Type.Number()),
+            error: Type.Optional(Type.String()),
+        })
+    ),
+})
+
 /**
  *
  *     backgroundColor: string
@@ -49,6 +65,60 @@ const ShortVidReply = Type.Object({
 type ShortVidReplyType = Static<typeof ShortVidReply>
 
 export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
+    fastify.post<{ Body: CheckMediaType }>(
+        '/v1/:eventId/check-media',
+        {
+            schema: {
+                tags: ['sessions'],
+                summary: 'Check if a list of media URLs are accessible (to avoid CORS issues from the browser).',
+                querystring: {
+                    type: 'object',
+                    additionalProperties: false,
+                    properties: {
+                        apiKey: {
+                            type: 'string',
+                            description: 'The API key of the event',
+                        },
+                    },
+                },
+                body: CheckMedia,
+                response: {
+                    200: CheckMediaReply,
+                    400: Type.Object({
+                        error: Type.String(),
+                    }),
+                },
+                security: [
+                    {
+                        apiKey: [],
+                    },
+                ],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            const { urls } = request.body
+
+            const results = await Promise.all(
+                urls.map(async (url: string) => {
+                    try {
+                        const response = await fetch(url, { method: 'HEAD' })
+                        if (response.ok) {
+                            return { url, ok: true, status: response.status }
+                        }
+                        // Some servers don't support HEAD, try GET
+                        const getResponse = await fetch(url, { method: 'GET' })
+                        return { url, ok: getResponse.ok, status: getResponse.status }
+                    } catch (error: any) {
+                        return { url, ok: false, error: error?.message || 'Unknown error' }
+                    }
+                })
+            )
+
+            reply.status(200).send({ results })
+        }
+    )
+
     fastify.post<{ Body: ShortVidType; Reply: ShortVidReplyType }>(
         '/v1/:eventId/sessions/:sessionId/shortvid',
         {
