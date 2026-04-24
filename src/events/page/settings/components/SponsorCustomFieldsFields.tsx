@@ -2,6 +2,9 @@ import * as React from 'react'
 import { Box, IconButton, Typography } from '@mui/material'
 import { Control, TextFieldElement, SelectElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
+import { SponsorCustomField } from '../../../../types'
+
+type SponsorCustomFieldsForm = { sponsorCustomFields: SponsorCustomField[] }
 
 export type SponsorCustomFieldsFieldsProps = {
     control: Control<any, any>
@@ -9,8 +12,8 @@ export type SponsorCustomFieldsFieldsProps = {
 }
 
 export const SponsorCustomFieldsFields = ({ control, isSubmitting }: SponsorCustomFieldsFieldsProps) => {
-    const { fields, append, remove } = useFieldArray({
-        control,
+    const { fields, append, remove } = useFieldArray<SponsorCustomFieldsForm, 'sponsorCustomFields', 'key'>({
+        control: control as Control<SponsorCustomFieldsForm>,
         name: 'sponsorCustomFields',
         keyName: 'key',
     })

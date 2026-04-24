@@ -2,6 +2,9 @@ import * as React from 'react'
 import { Box, IconButton, Typography } from '@mui/material'
 import { Control, TextFieldElement, SelectElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
+import { SpeakerCustomField } from '../../../../types'
+
+type SpeakerCustomFieldsForm = { speakerCustomFields: SpeakerCustomField[] }
 
 export type SpeakerCustomFieldsFieldsProps = {
     control: Control<any, any>
@@ -9,8 +12,8 @@ export type SpeakerCustomFieldsFieldsProps = {
 }
 
 export const SpeakerCustomFieldsFields = ({ control, isSubmitting }: SpeakerCustomFieldsFieldsProps) => {
-    const { fields, append, remove } = useFieldArray({
-        control,
+    const { fields, append, remove } = useFieldArray<SpeakerCustomFieldsForm, 'speakerCustomFields', 'key'>({
+        control: control as Control<SpeakerCustomFieldsForm>,
         name: 'speakerCustomFields',
         keyName: 'key',
     })
