@@ -87,6 +87,11 @@ export const GenerateSessionsVideoDialog = ({
         return filteredSessions
     }, [sessions, forceGenerate, onlyMissingChecked])
 
+    // Stale check results once the URL set changes
+    React.useEffect(() => {
+        setMediaCheckResult({ inaccessibleUrls: [], checked: false, checking: false })
+    }, [sessionToGenerateFor, event.logoUrl])
+
     const getMediaUrlsToCheck = React.useCallback(() => {
         const urls: string[] = []
         if (shortVidSetting.logoUrl) {
@@ -191,7 +196,7 @@ export const GenerateSessionsVideoDialog = ({
                     <Button
                         variant="outlined"
                         size="small"
-                        disabled={disabledButton || sessionToGenerateFor.length === 0}
+                        disabled={disabledButton || sessionToGenerateFor.length === 0 || !shortVidSetting.eventApiKey}
                         onClick={runMediaCheck}
                         sx={{ mr: 1 }}>
                         {mediaCheckResult.checking ? (
