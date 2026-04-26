@@ -8,6 +8,7 @@ import {
     Typography,
     FormControlLabel,
     Checkbox,
+    Alert,
 } from '@mui/material'
 import * as React from 'react'
 import { convertSecondsToMinutes } from '../../../../utils/dates/convertSecondsToMinutes'
@@ -23,6 +24,7 @@ import {
 import { ShortVidSettings } from './ShortVidSettings'
 import { useNotification } from '../../../../hooks/notificationHook'
 import { ShortVidEndpointDefaultKey } from '../../../actions/sessions/generation/shortVidAPI'
+import { checkMediaUrls, MediaCheckResult } from '../../../actions/sessions/generation/checkMediaUrls'
 
 export const GenerateSessionsVideoDialog = ({
     isOpen,
@@ -43,6 +45,11 @@ export const GenerateSessionsVideoDialog = ({
 }) => {
     const { createNotification } = useNotification()
     const [onlyMissingChecked, setOnlyMissingChecked] = React.useState(onlyMissing)
+    const [mediaCheckResult, setMediaCheckResult] = React.useState<{
+        inaccessibleUrls: MediaCheckResult[]
+        checked: boolean
+        checking: boolean
+    }>({ inaccessibleUrls: [], checked: false, checking: false })
     const { generatingState, generate } = useSessionsGenerationGeneric<
         ShortVidGenerationSettings,
         GeneratedSessionVideoAnswer
@@ -65,7 +72,8 @@ export const GenerateSessionsVideoDialog = ({
 
     const disabledButton =
         generatingState.generationState === GenerationStates.GENERATING ||
-        finalGeneration.generatingState.generationState === GenerationStates.GENERATING
+        finalGeneration.generatingState.generationState === GenerationStates.GENERATING ||
+        mediaCheckResult.checking
 
     const sessionToGenerateFor = React.useMemo(() => {
         let filteredSessions = forceGenerate
@@ -78,6 +86,54 @@ export const GenerateSessionsVideoDialog = ({
 
         return filteredSessions
     }, [sessions, forceGenerate, onlyMissingChecked])
+
+    // Stale check results once the URL set changes
+    React.useEffect(() => {
+        setMediaCheckResult({ inaccessibleUrls: [], checked: false, checking: false })
+    }, [sessionToGenerateFor, event.logoUrl])
+
+    const getMediaUrlsToCheck = React.useCallback(() => {
+        const urls: string[] = []
+        if (shortVidSetting.logoUrl) {
+            urls.push(shortVidSetting.logoUrl)
+        }
+        for (const session of sessionToGenerateFor) {
+            for (const speaker of session.speakersData || []) {
+                if (speaker.photoUrl) {
+                    urls.push(speaker.photoUrl)
+                }
+            }
+        }
+        return [...new Set(urls)]
+    }, [shortVidSetting.logoUrl, sessionToGenerateFor])
+
+    const runMediaCheck = React.useCallback(async () => {
+        const apiKey = shortVidSetting.eventApiKey
+        if (!apiKey) {
+            setMediaCheckResult({
+                inaccessibleUrls: [],
+                checked: true,
+                checking: false,
+            })
+            createNotification(
+                'No API key available yet. Please generate a video first or set an API key in the event settings.',
+                { type: 'warning' }
+            )
+            return
+        }
+
+        setMediaCheckResult({ inaccessibleUrls: [], checked: false, checking: true })
+        const urlsToCheck = getMediaUrlsToCheck()
+        const result = await checkMediaUrls(shortVidSetting.eventId, apiKey, urlsToCheck)
+        setMediaCheckResult({
+            inaccessibleUrls: result.inaccessibleUrls,
+            checked: true,
+            checking: false,
+        })
+        if (!result.success && result.message) {
+            createNotification(result.message, { type: 'error' })
+        }
+    }, [shortVidSetting.eventId, shortVidSetting.eventApiKey, getMediaUrlsToCheck, createNotification])
 
     const generateAllVideos = () => {
         const updateDoc = !onSuccess
@@ -135,6 +191,43 @@ export const GenerateSessionsVideoDialog = ({
                     }
                     label="Only generate for sessions without videos or images"
                 />
+
+                <Box sx={{ mt: 1, mb: 1 }}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={disabledButton || sessionToGenerateFor.length === 0 || !shortVidSetting.eventApiKey}
+                        onClick={runMediaCheck}
+                        sx={{ mr: 1 }}>
+                        {mediaCheckResult.checking ? (
+                            <>
+                                Checking media...
+                                <CircularProgress size={16} sx={{ ml: 1 }} />
+                            </>
+                        ) : (
+                            'Check media accessibility'
+                        )}
+                    </Button>
+                    {mediaCheckResult.checked && mediaCheckResult.inaccessibleUrls.length === 0 && (
+                        <Alert severity="success" sx={{ mt: 1 }}>
+                            All media URLs are accessible.
+                        </Alert>
+                    )}
+                    {mediaCheckResult.checked && mediaCheckResult.inaccessibleUrls.length > 0 && (
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                            <Typography variant="body2" fontWeight="bold">
+                                The following media URLs are not accessible and may cause generation failures:
+                            </Typography>
+                            {mediaCheckResult.inaccessibleUrls.map((r) => (
+                                <Typography key={r.url} variant="body2" sx={{ wordBreak: 'break-all' }}>
+                                    • {r.url}
+                                    {r.status ? ` (HTTP ${r.status})` : ''}
+                                    {r.error ? ` — ${r.error}` : ''}
+                                </Typography>
+                            ))}
+                        </Alert>
+                    )}
+                </Box>
 
                 {!forceGenerate && (
                     <Button
