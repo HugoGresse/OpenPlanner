@@ -4,16 +4,16 @@ import { Control, TextFieldElement, SelectElement, useFieldArray } from 'react-h
 import { Add, Delete } from '@mui/icons-material'
 import { SponsorCustomField } from '../../../../types'
 
-type SponsorCustomFieldsForm = { sponsorCustomFields: SponsorCustomField[] }
+export type SponsorCustomFieldsForm = { sponsorCustomFields: SponsorCustomField[] }
 
 export type SponsorCustomFieldsFieldsProps = {
-    control: Control<any, any>
+    control: Control<SponsorCustomFieldsForm>
     isSubmitting: boolean
 }
 
 export const SponsorCustomFieldsFields = ({ control, isSubmitting }: SponsorCustomFieldsFieldsProps) => {
     const { fields, append, remove } = useFieldArray<SponsorCustomFieldsForm, 'sponsorCustomFields', 'key'>({
-        control: control as Control<SponsorCustomFieldsForm>,
+        control,
         name: 'sponsorCustomFields',
         keyName: 'key',
     })

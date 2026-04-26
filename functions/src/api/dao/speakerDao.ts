@@ -85,16 +85,20 @@ export class SpeakerDao {
         }
 
         const { id, ...rest } = speaker
-        await db
-            .collection(`events/${eventId}/speakers`)
-            .doc(id)
-            .set(
-                {
-                    ...rest,
-                    updatedAt: FieldValue.serverTimestamp(),
-                },
-                { merge: true }
-            )
+        const patchData: { [key: string]: unknown } = {
+            ...rest,
+            updatedAt: FieldValue.serverTimestamp(),
+        }
+
+        if (rest.customFields !== undefined) {
+            const existingCustomFields = (existingSpeakerData as Speaker).customFields || {}
+            patchData.customFields = {
+                ...existingCustomFields,
+                ...rest.customFields,
+            }
+        }
+
+        await db.collection(`events/${eventId}/speakers`).doc(id).set(patchData, { merge: true })
     }
 
     public static async updateOrCreateSpeaker(

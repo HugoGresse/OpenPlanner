@@ -4,16 +4,16 @@ import { Control, TextFieldElement, SelectElement, useFieldArray } from 'react-h
 import { Add, Delete } from '@mui/icons-material'
 import { SpeakerCustomField } from '../../../../types'
 
-type SpeakerCustomFieldsForm = { speakerCustomFields: SpeakerCustomField[] }
+export type SpeakerCustomFieldsForm = { speakerCustomFields: SpeakerCustomField[] }
 
 export type SpeakerCustomFieldsFieldsProps = {
-    control: Control<any, any>
+    control: Control<SpeakerCustomFieldsForm>
     isSubmitting: boolean
 }
 
 export const SpeakerCustomFieldsFields = ({ control, isSubmitting }: SpeakerCustomFieldsFieldsProps) => {
     const { fields, append, remove } = useFieldArray<SpeakerCustomFieldsForm, 'speakerCustomFields', 'key'>({
-        control: control as Control<SpeakerCustomFieldsForm>,
+        control,
         name: 'speakerCustomFields',
         keyName: 'key',
     })
