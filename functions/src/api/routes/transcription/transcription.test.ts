@@ -53,7 +53,9 @@ describe('GET /v1/:eventId/transcription', () => {
             headers: { password: 'wrong' },
         })
         expect(res.statusCode).toBe(401)
-        expect(res.body).toContain('Passwords does not match')
+        expect(JSON.parse(res.body)).toMatchObject({
+            error: 'Password does not match',
+        })
     })
 
     test('returns 401 if files.public is missing', async () => {

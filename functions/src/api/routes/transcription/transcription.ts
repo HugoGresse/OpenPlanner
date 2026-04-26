@@ -52,7 +52,7 @@ export const transcriptionRoutes = (fastify: FastifyInstance, options: any, done
             if (event.transcriptionPassword !== password) {
                 reply.status(401).send(
                     JSON.stringify({
-                        error: 'Passwords does not match',
+                        error: 'Password does not match',
                     })
                 )
                 return
