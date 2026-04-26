@@ -9,8 +9,8 @@ const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
 
 const PatchDates = Type.Union([
     Type.Object({
-        start: Type.Union([Type.String(), Type.Null()]),
-        end: Type.Union([Type.String(), Type.Null()]),
+        start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+        end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     }),
     Type.Null(),
 ])
@@ -114,10 +114,17 @@ export const patchSessionRouteHandler = (fastify: FastifyInstance) => {
                 if (dates === null) {
                     patch.dates = null
                 } else {
-                    patch.dates = {
-                        start: dates.start ? new Date(dates.start) : null,
-                        end: dates.end ? new Date(dates.end) : null,
+                    const start = dates.start ? new Date(dates.start) : null
+                    if (start !== null && Number.isNaN(start.getTime())) {
+                        reply.status(400).send('Invalid dates.start value')
+                        return
                     }
+                    const end = dates.end ? new Date(dates.end) : null
+                    if (end !== null && Number.isNaN(end.getTime())) {
+                        reply.status(400).send('Invalid dates.end value')
+                        return
+                    }
+                    patch.dates = { start, end }
                 }
             }
 

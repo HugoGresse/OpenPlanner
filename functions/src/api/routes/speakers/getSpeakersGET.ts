@@ -76,7 +76,23 @@ export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
             const speakers = await SpeakerDao.getSpeakers(fastify.firebase, eventId)
             const page = speakers.slice(offset, offset + limit)
 
-            const result: ApiSpeakerPublicType[] = page.map(({ note, email, phone, ...rest }) => rest as ApiSpeakerPublicType)
+            const result: ApiSpeakerPublicType[] = page.map((s) => {
+                const out: ApiSpeakerPublicType = {
+                    id: s.id,
+                    conferenceHallId: s.conferenceHallId ?? null,
+                    name: s.name,
+                    pronouns: s.pronouns ?? null,
+                    jobTitle: s.jobTitle ?? null,
+                    bio: s.bio ?? null,
+                    company: s.company ?? null,
+                    companyLogoUrl: s.companyLogoUrl ?? null,
+                    geolocation: s.geolocation ?? null,
+                    photoUrl: s.photoUrl ?? null,
+                    socials: s.socials ?? [],
+                }
+                if (s.customFields !== undefined) out.customFields = s.customFields
+                return out
+            })
 
             reply.status(200).send(result)
         } catch (error: unknown) {

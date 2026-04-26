@@ -6,7 +6,7 @@ const ApiSponsorSchema = Type.Object({
     id: Type.String(),
     name: Type.String(),
     logoUrl: Type.String(),
-    website: Type.Union([Type.String(), Type.Null()]),
+    website: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     jobPostToken: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     customFields: Type.Optional(Type.Record(Type.String(), Type.Union([Type.String(), Type.Boolean()]))),
 })
@@ -58,7 +58,23 @@ export const getSponsorsRouteHandler = (fastify: FastifyInstance) => {
         try {
             const { eventId } = request.params
             const categories = await SponsorDao.getSponsors(fastify.firebase, eventId)
-            reply.status(200).send(categories as ApiSponsorCategoryType[])
+            const result: ApiSponsorCategoryType[] = categories.map((cat) => ({
+                id: cat.id,
+                name: cat.name,
+                ...(cat.order !== undefined ? { order: cat.order } : {}),
+                sponsors: (cat.sponsors ?? []).map((s) => {
+                    const sponsor: Static<typeof ApiSponsorSchema> = {
+                        id: s.id,
+                        name: s.name,
+                        logoUrl: s.logoUrl ?? '',
+                    }
+                    if (s.website !== undefined) sponsor.website = s.website ?? null
+                    if ((s as any).jobPostToken !== undefined) sponsor.jobPostToken = (s as any).jobPostToken
+                    if ((s as any).customFields !== undefined) sponsor.customFields = (s as any).customFields
+                    return sponsor
+                }),
+            }))
+            reply.status(200).send(result)
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : 'Unknown error'
             reply.status(400).send(`Failed to list sponsors: ${msg}`)

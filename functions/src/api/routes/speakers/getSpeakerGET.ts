@@ -83,13 +83,25 @@ export const getSpeakerRouteHandler = (fastify: FastifyInstance) => {
             }
 
             const speaker = speakerData as Speaker
-            const { note, email, phone, ...publicFields } = speaker
 
-            const result: ApiSpeakerResponseType = { ...publicFields }
+            const result: ApiSpeakerResponseType = {
+                id: speaker.id,
+                conferenceHallId: speaker.conferenceHallId ?? null,
+                name: speaker.name,
+                pronouns: speaker.pronouns ?? null,
+                jobTitle: speaker.jobTitle ?? null,
+                bio: speaker.bio ?? null,
+                company: speaker.company ?? null,
+                companyLogoUrl: speaker.companyLogoUrl ?? null,
+                geolocation: speaker.geolocation ?? null,
+                photoUrl: speaker.photoUrl ?? null,
+                socials: speaker.socials ?? [],
+            }
+            if (speaker.customFields !== undefined) result.customFields = speaker.customFields
             if (includePrivate) {
-                result.email = email
-                result.phone = phone
-                result.note = note
+                result.email = speaker.email ?? null
+                result.phone = speaker.phone ?? null
+                result.note = speaker.note ?? null
             }
 
             reply.status(200).send(result)
