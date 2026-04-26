@@ -85,6 +85,25 @@ export class SessionDao {
         return snapshot2.data() as Session
     }
 
+    public static async patchSession(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        session: Partial<Session> & { id: string }
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+
+        const existingSessionData = await SessionDao.doesSessionExist(firebaseApp, eventId, session.id)
+        if (!existingSessionData) {
+            throw new Error('Session not found')
+        }
+
+        const { id, ...rest } = session
+        await db
+            .collection(`events/${eventId}/sessions`)
+            .doc(id)
+            .set({ ...rest, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+    }
+
     public static async updateOrCreateSession(
         firebaseApp: firebase.app.App,
         eventId: string,

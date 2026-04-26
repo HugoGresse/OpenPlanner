@@ -101,6 +101,21 @@ export class SpeakerDao {
         await db.collection(`events/${eventId}/speakers`).doc(id).set(patchData, { merge: true })
     }
 
+    public static async deleteSpeaker(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        speakerId: string
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+
+        const existingSpeakerData = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
+        if (!existingSpeakerData) {
+            throw new Error('Speaker not found')
+        }
+
+        await db.collection(`events/${eventId}/speakers`).doc(speakerId).delete()
+    }
+
     public static async updateOrCreateSpeaker(
         firebaseApp: firebase.app.App,
         eventId: string,
