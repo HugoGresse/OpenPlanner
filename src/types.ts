@@ -58,6 +58,7 @@ export interface Speaker {
     photoUrl: string | null
     socials: Social[]
     note: string | null
+    customFields?: { [key: string]: string | boolean }
 }
 
 export interface TeasingPosts {
@@ -123,6 +124,13 @@ export interface SponsorCustomField {
     type: 'boolean' | 'text'
 }
 
+export interface SpeakerCustomField {
+    id: string
+    name: string
+    type: 'boolean' | 'text'
+    privacy: 'public' | 'private'
+}
+
 export interface EventShortVidSettings {
     template: string | null
     server: string | null
@@ -172,6 +180,7 @@ export interface Event {
     colorSecondary: string | null
     colorBackground: string | null
     sponsorCustomFields: SponsorCustomField[]
+    speakerCustomFields: SpeakerCustomField[]
     bupherSession?: string | null
     bupherOrganizationId?: string | null
     timezone: string | null

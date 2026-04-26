@@ -48,6 +48,7 @@ export interface Speaker {
     photoUrl: string | null
     socials: Social[]
     note: string | null
+    customFields?: { [key: string]: string | boolean }
 }
 
 export interface Session {

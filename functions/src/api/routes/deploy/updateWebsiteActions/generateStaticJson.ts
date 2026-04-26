@@ -139,21 +139,35 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         logoUrl2: event.logoUrl2,
         backgroundUrl: event.backgroundUrl,
         sponsorCustomFields: event.sponsorCustomFields || [],
+        speakerCustomFields: event.speakerCustomFields || [],
     }
+
+    const publicSpeakerCustomFieldIds = (event.speakerCustomFields || [])
+        .filter((f) => f.privacy !== 'private')
+        .map((f) => f.id)
 
     const outputPublic: JsonPublicOutput = {
         event: outputEvent,
-        speakers: speakers.map((s) => ({
-            id: s.id,
-            name: s.name,
-            pronouns: s.pronouns,
-            jobTitle: s.jobTitle,
-            bio: s.bio,
-            company: s.company,
-            companyLogoUrl: s.companyLogoUrl,
-            photoUrl: s.photoUrl,
-            socials: s.socials,
-        })),
+        speakers: speakers.map((s) => {
+            const publicCustomFields: { [key: string]: string | boolean } = {}
+            for (const id of publicSpeakerCustomFieldIds) {
+                if (s.customFields && id in s.customFields) {
+                    publicCustomFields[id] = s.customFields[id]
+                }
+            }
+            return {
+                id: s.id,
+                name: s.name,
+                pronouns: s.pronouns,
+                jobTitle: s.jobTitle,
+                bio: s.bio,
+                company: s.company,
+                companyLogoUrl: s.companyLogoUrl,
+                photoUrl: s.photoUrl,
+                socials: s.socials,
+                customFields: publicCustomFields,
+            }
+        }),
         sessions: outputSessions,
         sponsors: outputSponsor,
         team,

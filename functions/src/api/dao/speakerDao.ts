@@ -72,6 +72,35 @@ export class SpeakerDao {
             })
     }
 
+    public static async patchSpeaker(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        speaker: Partial<Speaker> & { id: string }
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+
+        const existingSpeakerData = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speaker.id)
+        if (!existingSpeakerData) {
+            throw new Error('Speaker not found')
+        }
+
+        const { id, ...rest } = speaker
+        const patchData: { [key: string]: unknown } = {
+            ...rest,
+            updatedAt: FieldValue.serverTimestamp(),
+        }
+
+        if (rest.customFields !== undefined) {
+            const existingCustomFields = (existingSpeakerData as Speaker).customFields || {}
+            patchData.customFields = {
+                ...existingCustomFields,
+                ...rest.customFields,
+            }
+        }
+
+        await db.collection(`events/${eventId}/speakers`).doc(id).set(patchData, { merge: true })
+    }
+
     public static async updateOrCreateSpeaker(
         firebaseApp: firebase.app.App,
         eventId: string,

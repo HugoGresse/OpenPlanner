@@ -21,7 +21,6 @@ import { deleteSessionsAndSpeakers } from '../../actions/deleteSessionsAndSpeake
 import { CategoriesFields } from './components/CategoriesFields'
 import { FormatsFields } from './components/FormatsFields'
 import { TrackFields } from './components/TrackFields'
-import { SponsorCustomFieldsFields } from './components/SponsorCustomFieldsFields'
 import { mapEventSettingsFormToMutateObject } from './mapEventSettingsFormToMutateObject'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { EventSettingsFormatCategoriesGrid } from './EventSettingsFormatCategoriesGrid'
@@ -39,7 +38,6 @@ const schema = yup
 const convertInputEvent = (event: Event): EventForForm => {
     return {
         ...event,
-        sponsorCustomFields: event.sponsorCustomFields || [],
         timezone: event.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
         dates: {
             start: event.dates.start ? DateTime.fromJSDate(event.dates.start).toFormat("kkkk-LL-dd'T'T") : null,
@@ -57,7 +55,6 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
     const [expandedGeneralInfo, setExpandedGeneralInfo] = useState(true)
     const [expandedMoreDetails, setExpandedMoreDetails] = useState(true)
     const [expandedTracks, setExpandedTracks] = useState(true)
-    const [expandedSponsorFields, setExpandedSponsorFields] = useState(true)
     const { createNotification } = useNotification()
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
@@ -380,39 +377,6 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     </LoadingButton>
                                     {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}
                                 </Grid>
-                            </Grid>
-                        </Collapse>
-                    </Card>
-                    <Card sx={{ paddingX: 2, mt: 4 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
-                            <Typography fontSize="large" sx={{ mt: 2 }}>
-                                {' '}
-                                Sponsor custom fields{' '}
-                            </Typography>
-                            <IconButton
-                                size="small"
-                                onClick={() => setExpandedSponsorFields(!expandedSponsorFields)}
-                                sx={{
-                                    transform: expandedSponsorFields ? 'rotate(0deg)' : 'rotate(-90deg)',
-                                    transition: '0.3s',
-                                }}>
-                                <ExpandMoreIcon />
-                            </IconButton>
-                        </Box>
-                        <Collapse in={expandedSponsorFields}>
-                            <SponsorCustomFieldsFields control={control} isSubmitting={formState.isSubmitting} />
-
-                            <Grid item xs={12}>
-                                <LoadingButton
-                                    type="submit"
-                                    disabled={formState.isSubmitting}
-                                    loading={formState.isSubmitting}
-                                    fullWidth
-                                    variant="contained"
-                                    sx={{ mt: 2, mb: 2 }}>
-                                    Save
-                                </LoadingButton>
-                                {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}
                             </Grid>
                         </Collapse>
                     </Card>

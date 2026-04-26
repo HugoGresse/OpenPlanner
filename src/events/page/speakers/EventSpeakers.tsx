@@ -18,12 +18,14 @@ import { Event, Speaker } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { EventSpeakerItem } from './EventSpeakerItem'
 import { useSpeakers } from '../../../services/hooks/useSpeakersMap'
-import { Clear, ExpandMore } from '@mui/icons-material'
+import { Clear, ExpandMore, Settings } from '@mui/icons-material'
+import Tooltip from '@mui/material/Tooltip'
 import { useSessionsRaw } from '../../../services/hooks/useSessions'
 import { SpeakersStatsDialog } from './components/SpeakersStatsDialog'
 import { SpeakerAvatarSizeDialog } from './components/SpeakerAvatarSizeDialog'
 import { useNotification } from '../../../hooks/notificationHook'
 import { exportSpeakersAction, SpeakersExportType } from './actions/exportSpeakersAction'
+import { SpeakerCustomFieldsDialog } from './components/SpeakerCustomFieldsDialog'
 
 export type EventSpeakersProps = {
     event: Event
@@ -34,6 +36,7 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const sessions = useSessionsRaw(event.id)
     const [speakersStatsOpen, setSpeakersStatsOpen] = useState(false)
     const [avatarSizeOpen, setAvatarSizeOpen] = useState(false)
+    const [customFieldsOpen, setCustomFieldsOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
     const [showOnlyWithoutSessions, setShowOnlyWithoutSessions] = useState(false)
@@ -142,6 +145,11 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                         Displayed speakers (CSV)
                     </MenuItem>
                 </Menu>
+                <Tooltip title="Custom fields settings">
+                    <IconButton aria-label="Custom fields settings" onClick={() => setCustomFieldsOpen(true)}>
+                        <Settings />
+                    </IconButton>
+                </Tooltip>
                 <Button href="/speakers/new" variant="contained">
                     Add speaker
                 </Button>
@@ -199,6 +207,13 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     onClose={() => setAvatarSizeOpen(false)}
                     event={event}
                     speakers={speakers.data || []}
+                />
+            )}
+            {customFieldsOpen && (
+                <SpeakerCustomFieldsDialog
+                    event={event}
+                    open={customFieldsOpen}
+                    onClose={() => setCustomFieldsOpen(false)}
                 />
             )}
         </Container>
