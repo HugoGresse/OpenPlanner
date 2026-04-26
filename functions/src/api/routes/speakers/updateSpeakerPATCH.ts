@@ -33,7 +33,8 @@ export const TypeBoxUpdateSpeaker = Type.Object(
         customFields: Type.Optional(
             Type.Record(
                 Type.String({ maxLength: MAX_STRING_LENGTH }),
-                Type.Union([Type.String({ maxLength: MAX_STRING_LENGTH }), Type.Boolean()])
+                // Boolean first so AJV's type coercion does not stringify true/false values.
+                Type.Union([Type.Boolean(), Type.String({ maxLength: MAX_STRING_LENGTH })])
             )
         ),
     },

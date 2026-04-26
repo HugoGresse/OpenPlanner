@@ -10,6 +10,8 @@
         "logs": "firebase functions:log",
         "apiOnly": "NODE_ENV=development nodemon src/api/index.ts",
         "test": "vitest --dir src",
+        "test:emulator": "firebase emulators:exec --only firestore --project demo-openplanner-test \"vitest run -c vitest.emulator.config.ts\"",
+        "test:all": "npm run test -- run && npm run test:emulator",
         "gcp-build": "node node_modules/puppeteer/install.mjs"
     },
     "engines": {
