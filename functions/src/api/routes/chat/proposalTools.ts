@@ -201,13 +201,18 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
         function: {
             name: 'proposePatchSpeaker',
             description:
-                'Propose a partial update to a speaker. Does NOT apply the change — emits a proposal that the user reviews and confirms in the UI. Always call listSpeakers first to find the correct speakerId. Private fields (email, phone, note) ARE patchable through this tool: the user sees the proposed value in the diff and explicitly approves it before the change is written.',
+                'Propose a partial update to a speaker. Does NOT apply the change — emits a proposal that the user reviews and confirms in the UI. Always call listSpeakers first to find the correct speakerId. You MUST also pass expectedSpeakerName matching the speaker name returned by listSpeakers — the server uses it as a sanity check and rejects the call if the name does not match the document at speakerId. Private fields (email, phone, note) ARE patchable through this tool: the user sees the proposed value in the diff and explicitly approves it before the change is written.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
-                required: ['speakerId', 'patch'],
+                required: ['speakerId', 'expectedSpeakerName', 'patch'],
                 properties: {
                     speakerId: { type: 'string' },
+                    expectedSpeakerName: {
+                        type: 'string',
+                        description:
+                            "The speaker's exact `name` as returned by listSpeakers. Used as a sanity check against the speakerId.",
+                    },
                     patch: {
                         type: 'object',
                         additionalProperties: false,
@@ -223,13 +228,18 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
         function: {
             name: 'proposePatchSession',
             description:
-                'Propose a partial update to a session. Does NOT apply the change — emits a proposal for user review.',
+                'Propose a partial update to a session. Does NOT apply the change — emits a proposal for user review. You MUST also pass expectedSessionTitle matching the session title returned by listSessions — the server uses it as a sanity check and rejects the call if the title does not match the document at sessionId.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
-                required: ['sessionId', 'patch'],
+                required: ['sessionId', 'expectedSessionTitle', 'patch'],
                 properties: {
                     sessionId: { type: 'string' },
+                    expectedSessionTitle: {
+                        type: 'string',
+                        description:
+                            "The session's exact `title` as returned by listSessions. Used as a sanity check against the sessionId.",
+                    },
                     patch: {
                         type: 'object',
                         additionalProperties: false,
@@ -266,13 +276,18 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
         function: {
             name: 'proposeDeleteSpeaker',
             description:
-                'Propose deleting a speaker. Does NOT apply — the user must explicitly confirm the deletion in the UI.',
+                'Propose deleting a speaker. Does NOT apply — the user must explicitly confirm the deletion in the UI. You MUST pass expectedSpeakerName matching the speaker name returned by listSpeakers; the server rejects the call if it does not match the document at speakerId.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
-                required: ['speakerId'],
+                required: ['speakerId', 'expectedSpeakerName'],
                 properties: {
                     speakerId: { type: 'string' },
+                    expectedSpeakerName: {
+                        type: 'string',
+                        description:
+                            "The speaker's exact `name` as returned by listSpeakers. Used as a sanity check against the speakerId.",
+                    },
                     rationale: { type: 'string' },
                 },
             },
@@ -291,6 +306,32 @@ export type BuildProposalArgs = {
 
 export type BuildProposalResult = { ok: true; proposal: Proposal } | { ok: false; error: string }
 
+const normalizeForCompare = (value: unknown): string =>
+    typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').toLowerCase() : ''
+
+const expectedNameMismatch = (
+    expected: unknown,
+    actual: unknown,
+    targetType: 'speaker' | 'session',
+    targetId: string
+): string | null => {
+    if (typeof expected !== 'string' || expected.trim().length === 0) {
+        return `expected${
+            targetType === 'speaker' ? 'SpeakerName' : 'SessionTitle'
+        } is required and must be the value returned by list${targetType === 'speaker' ? 'Speakers' : 'Sessions'}.`
+    }
+    if (normalizeForCompare(expected) !== normalizeForCompare(actual)) {
+        return `${targetType === 'speaker' ? 'expectedSpeakerName' : 'expectedSessionTitle'} (${JSON.stringify(
+            expected
+        )}) does not match the ${targetType} document at ${targetId} (current: ${JSON.stringify(
+            actual ?? null
+        )}). Re-run list${
+            targetType === 'speaker' ? 'Speakers' : 'Sessions'
+        } to find the correct id+name pair before proposing.`
+    }
+    return null
+}
+
 export const buildProposal = async ({
     firebaseApp,
     eventId,
@@ -306,6 +347,8 @@ export const buildProposal = async ({
         const existing = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
         if (!existing || existing === true) return { ok: false, error: `Speaker not found: ${speakerId}` }
         const speaker = { id: speakerId, ...(existing as any) }
+        const mismatch = expectedNameMismatch(args?.expectedSpeakerName, (speaker as any).name, 'speaker', speakerId)
+        if (mismatch) return { ok: false, error: mismatch }
         return {
             ok: true,
             proposal: {
@@ -330,6 +373,8 @@ export const buildProposal = async ({
         const existing = await SessionDao.doesSessionExist(firebaseApp, eventId, sessionId)
         if (!existing || existing === true) return { ok: false, error: `Session not found: ${sessionId}` }
         const session = { id: sessionId, ...(existing as any) }
+        const mismatch = expectedNameMismatch(args?.expectedSessionTitle, (session as any).title, 'session', sessionId)
+        if (mismatch) return { ok: false, error: mismatch }
         return {
             ok: true,
             proposal: {
@@ -371,6 +416,8 @@ export const buildProposal = async ({
         const existing = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
         if (!existing || existing === true) return { ok: false, error: `Speaker not found: ${speakerId}` }
         const speaker = { id: speakerId, ...(existing as any) }
+        const mismatch = expectedNameMismatch(args?.expectedSpeakerName, (speaker as any).name, 'speaker', speakerId)
+        if (mismatch) return { ok: false, error: mismatch }
         const { email, phone, note, ...sanitized } = speaker
         return {
             ok: true,

@@ -40,8 +40,11 @@ export const ProposalCard = ({ entry, onApply, onReject }: ProposalCardProps) =>
                 </Typography>
             </Stack>
             {proposal.summary && (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                    {proposal.summary}
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1, fontStyle: 'italic' }}>
+                    Reason (from assistant): {proposal.summary}
                 </Typography>
             )}
 
