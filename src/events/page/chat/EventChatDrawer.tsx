@@ -17,17 +17,27 @@ export type EventChatDrawerProps = {
 export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) => {
     const [apiKey, setApiKey] = React.useState<string | null>(event.apiKey ?? null)
     const [provisioning, setProvisioning] = React.useState(false)
+    const [provisioningError, setProvisioningError] = React.useState<string | null>(null)
     const { state, send, cancel, reset } = useChatStream(event.id, apiKey)
 
     React.useEffect(() => {
         if (!open || apiKey || provisioning) return
         let cancelled = false
         setProvisioning(true)
+        setProvisioningError(null)
         ;(async () => {
             try {
                 const generated = generateApiKey()
                 await updateEvent(event.id, { apiKey: generated })
                 if (!cancelled) setApiKey(generated)
+            } catch (error) {
+                if (!cancelled) {
+                    setProvisioningError(
+                        error instanceof Error
+                            ? `Failed to provision an event API key: ${error.message}`
+                            : 'Failed to provision an event API key.'
+                    )
+                }
             } finally {
                 if (!cancelled) setProvisioning(false)
             }
@@ -37,8 +47,19 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
         }
     }, [open, apiKey, provisioning, event.id])
 
+    // Closing the drawer should also stop any in-flight stream so we stop
+    // burning OpenRouter tokens / CPU when the user dismisses the panel.
+    const handleClose = React.useCallback(() => {
+        cancel()
+        onClose()
+    }, [cancel, onClose])
+
     return (
-        <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: '100%', sm: 480 } } }}>
+        <Drawer
+            anchor="right"
+            open={open}
+            onClose={handleClose}
+            PaperProps={{ sx: { width: { xs: '100%', sm: 480 } } }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Box
                     sx={{
@@ -61,7 +82,7 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
                         <IconButton size="small" onClick={reset} aria-label="Reset conversation" sx={{ mr: 0.5 }}>
                             <Typography variant="caption">Clear</Typography>
                         </IconButton>
-                        <IconButton size="small" onClick={onClose} aria-label="Close">
+                        <IconButton size="small" onClick={handleClose} aria-label="Close">
                             <CloseIcon />
                         </IconButton>
                     </Box>
@@ -75,6 +96,12 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
                 {!event.openRouterAPIKey && (
                     <Alert severity="warning" sx={{ mx: 1, mb: 1 }}>
                         OpenRouter API key not set. Add it in Event Settings → Other stuffs → OpenRouter API key.
+                    </Alert>
+                )}
+
+                {provisioningError && (
+                    <Alert severity="error" sx={{ mx: 1, mb: 1 }}>
+                        {provisioningError}
                     </Alert>
                 )}
 

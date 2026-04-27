@@ -11,7 +11,10 @@ const MAX_TOOL_ROUNDS = 8
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 export const ChatMessage = Type.Object({
-    role: Type.Union([Type.Literal('user'), Type.Literal('assistant'), Type.Literal('system')]),
+    // Deliberately exclude 'system' — the server injects its own system prompt.
+    // Allowing client-supplied system messages would let callers override the
+    // built-in guardrails / privacy framing.
+    role: Type.Union([Type.Literal('user'), Type.Literal('assistant')]),
     content: Type.String({ maxLength: MAX_CONTENT_LENGTH }),
 })
 
@@ -79,7 +82,8 @@ Always call list/find tools (listSessions, listSpeakers, listSponsors, getFaq) b
 
 const consumeOpenRouterStream = async (
     response: Response,
-    onDelta: (delta: any) => void
+    onDelta: (delta: any) => void,
+    isAborted: () => boolean = () => false
 ): Promise<{ message: OpenRouterMessage; finishReason: string | null }> => {
     if (!response.body) {
         throw new Error('OpenRouter response has no body')
@@ -95,6 +99,14 @@ const consumeOpenRouterStream = async (
     let finishReason: string | null = null
 
     while (true) {
+        if (isAborted()) {
+            try {
+                await reader.cancel()
+            } catch {
+                /* noop */
+            }
+            break
+        }
         const { value, done } = await reader.read()
         if (done) break
         buffer += decoder.decode(value, { stream: true })
@@ -178,7 +190,19 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
             SpeakerDao.getSpeakers(fastify.firebase, eventId).catch(() => [] as unknown[]),
         ])
 
-        const requestOrigin = (request.headers.origin as string | undefined) || '*'
+        const requestOrigin = (request.headers.origin as string | undefined) || ''
+        // CORS: reply.hijack() bypasses Fastify's onSend hook (and therefore
+        // @fastify/cors), so CORS headers must be set manually here. We do NOT
+        // send Access-Control-Allow-Credentials together with the wildcard
+        // origin (browsers reject that combination). Only echo a concrete
+        // Origin header back when one was provided by the request.
+        const corsHeaders: Record<string, string> = requestOrigin
+            ? {
+                  'Access-Control-Allow-Origin': requestOrigin,
+                  'Access-Control-Allow-Credentials': 'true',
+                  Vary: 'Origin',
+              }
+            : { 'Access-Control-Allow-Origin': '*' }
         reply.raw.writeHead(200, {
             'Content-Type': 'text/event-stream; charset=utf-8',
             'Cache-Control': 'no-cache, no-transform',
@@ -188,13 +212,24 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
             'Content-Encoding': 'identity',
             'X-Accel-Buffering': 'no',
             Connection: 'keep-alive',
-            // reply.hijack() bypasses Fastify's onSend hook, including @fastify/cors,
-            // so CORS headers must be written manually.
-            'Access-Control-Allow-Origin': requestOrigin,
-            'Access-Control-Allow-Credentials': 'true',
-            Vary: 'Origin',
+            ...corsHeaders,
         })
         reply.hijack()
+        // Track client disconnects so we can abort the upstream OpenRouter
+        // fetch (and stop the tool-call loop) the moment the user navigates
+        // away or the proxy drops the socket.
+        const upstreamAbort = new AbortController()
+        let clientGone = false
+        const onClose = () => {
+            clientGone = true
+            try {
+                upstreamAbort.abort()
+            } catch {
+                /* noop */
+            }
+        }
+        reply.raw.on('close', onClose)
+        request.raw.on?.('close', onClose)
         // Disable Nagle's algorithm so each write is flushed to the wire immediately.
         try {
             reply.raw.socket?.setNoDelay(true)
@@ -223,6 +258,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
             ]
 
             for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+                if (clientGone) break
                 const orResponse = await fetch(OPENROUTER_URL, {
                     method: 'POST',
                     headers: {
@@ -237,6 +273,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                         messages: conversation,
                         tools: READ_ONLY_TOOLS,
                     }),
+                    signal: upstreamAbort.signal,
                 })
 
                 if (!orResponse.ok) {
@@ -249,12 +286,14 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     break
                 }
 
-                const { message, finishReason } = await consumeOpenRouterStream(orResponse, (delta) =>
-                    writeSSE(reply, delta)
+                const { message, finishReason } = await consumeOpenRouterStream(
+                    orResponse,
+                    (delta) => writeSSE(reply, delta),
+                    () => clientGone
                 )
                 conversation.push(message)
 
-                if (finishReason !== 'tool_calls' || !message.tool_calls?.length) {
+                if (clientGone || finishReason !== 'tool_calls' || !message.tool_calls?.length) {
                     break
                 }
 
@@ -297,12 +336,26 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
 
             reply.raw.write('data: [DONE]\n\n')
         } catch (error) {
-            writeSSE(reply, {
-                type: 'error',
-                error: error instanceof Error ? error.message : 'Unknown error',
-            })
+            const err = error as { name?: string }
+            // AbortError is the expected outcome when the client disconnected.
+            if (!clientGone && err?.name !== 'AbortError') {
+                try {
+                    writeSSE(reply, {
+                        type: 'error',
+                        error: error instanceof Error ? error.message : 'Unknown error',
+                    })
+                } catch {
+                    /* socket may already be closed */
+                }
+            }
         } finally {
-            reply.raw.end()
+            reply.raw.off('close', onClose)
+            request.raw.off?.('close', onClose)
+            try {
+                reply.raw.end()
+            } catch {
+                /* noop */
+            }
         }
     }
 }

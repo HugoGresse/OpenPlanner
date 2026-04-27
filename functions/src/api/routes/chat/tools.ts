@@ -24,6 +24,63 @@ const stripPrivateSessionFields = (session: any) => {
     return rest
 }
 
+// Sponsor docs may carry an internal management token plus other fields the
+// model has no business seeing. Whitelist what we forward.
+const sanitizeSponsor = (sponsor: any) => ({
+    id: sponsor?.id,
+    name: sponsor?.name,
+    logoUrl: sponsor?.logoUrl,
+    website: sponsor?.website ?? null,
+    customFields: sponsor?.customFields,
+})
+
+const sanitizeSponsorCategory = (category: any) => ({
+    id: category?.id,
+    name: category?.name,
+    order: category?.order,
+    sponsors: Array.isArray(category?.sponsors) ? category.sponsors.map(sanitizeSponsor) : [],
+})
+
+// Event docs hold credentials (api keys, transcription password, repo tokens,
+// OpenRouter key). Whitelist event fields exposed to the model.
+const sanitizeEvent = (event: any) => ({
+    id: event?.id,
+    name: event?.name,
+    dates: event?.dates ?? null,
+    timezone: event?.timezone ?? null,
+    locationName: event?.locationName ?? null,
+    locationUrl: event?.locationUrl ?? null,
+    logoUrl: event?.logoUrl ?? null,
+    logoUrl2: event?.logoUrl2 ?? null,
+    backgroundUrl: event?.backgroundUrl ?? null,
+    color: event?.color ?? null,
+    colorSecondary: event?.colorSecondary ?? null,
+    colorBackground: event?.colorBackground ?? null,
+    formats: event?.formats ?? [],
+    categories: event?.categories ?? [],
+    tracks: event?.tracks ?? [],
+    sponsorCustomFields: event?.sponsorCustomFields ?? [],
+    speakerCustomFields: event?.speakerCustomFields ?? [],
+    scheduleVisible: event?.scheduleVisible ?? false,
+    publicEnabled: event?.publicEnabled ?? false,
+})
+
+const sanitizeFaqCategory = (category: any) => ({
+    id: category?.id,
+    name: category?.name,
+    order: category?.order,
+    items: Array.isArray(category?.items)
+        ? category.items.map((item: any) => ({
+              id: item?.id,
+              question: item?.question,
+              answer: item?.answer,
+              order: item?.order,
+              createdAt: item?.createdAt,
+              updatedAt: item?.updatedAt,
+          }))
+        : [],
+})
+
 export const READ_ONLY_TOOLS: ToolDefinition[] = [
     {
         type: 'function',
@@ -61,7 +118,8 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
         type: 'function',
         function: {
             name: 'listSpeakers',
-            description: 'List all speakers for the current event. Private fields (email, phone, note) are stripped.',
+            description:
+                'List all speakers for the current event. Private fields (email, phone, note) are always stripped.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
@@ -75,15 +133,12 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
         type: 'function',
         function: {
             name: 'getSpeaker',
-            description: 'Fetch a single speaker by ID. Private fields stripped unless includePrivate=true.',
+            description: 'Fetch a single speaker by ID. Private fields (email, phone, note) are always stripped.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
                 required: ['speakerId'],
-                properties: {
-                    speakerId: { type: 'string' },
-                    includePrivate: { type: 'boolean' },
-                },
+                properties: { speakerId: { type: 'string' } },
             },
         },
     },
@@ -91,7 +146,8 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
         type: 'function',
         function: {
             name: 'listSponsors',
-            description: 'List sponsor categories with their sponsors for the current event.',
+            description:
+                'List sponsor categories with their sponsors for the current event. Internal tokens are not included.',
             parameters: { type: 'object', additionalProperties: false, properties: {} },
         },
     },
@@ -100,7 +156,7 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
         function: {
             name: 'getEvent',
             description:
-                'Fetch the event document (name, dates, location, theme, tracks/formats/categories, custom-field schemas).',
+                'Fetch a sanitized view of the event document (name, dates, location, theme, tracks/formats/categories, custom-field schemas).',
             parameters: { type: 'object', additionalProperties: false, properties: {} },
         },
     },
@@ -108,7 +164,8 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
         type: 'function',
         function: {
             name: 'getFaq',
-            description: 'List the full FAQ (categories + their items) for the current event.',
+            description:
+                'List the public FAQ (categories + their items) for the current event. Private/non-shared categories are not included.',
             parameters: { type: 'object', additionalProperties: false, properties: {} },
         },
     },
@@ -145,14 +202,22 @@ export const executeTool = async (
             const speakers = await SpeakerDao.getSpeakers(firebaseApp, eventId)
             const speaker = speakers.find((s: any) => s.id === args.speakerId)
             if (!speaker) return { error: 'Speaker not found' }
-            return args.includePrivate ? speaker : stripPrivateSpeakerFields(speaker)
+            return stripPrivateSpeakerFields(speaker)
         }
-        case 'listSponsors':
-            return await SponsorDao.getSponsors(firebaseApp, eventId)
-        case 'getEvent':
-            return await EventDao.getEvent(firebaseApp, eventId)
-        case 'getFaq':
-            return await FaqDao.getFullFaqs(firebaseApp, eventId)
+        case 'listSponsors': {
+            const sponsors = await SponsorDao.getSponsors(firebaseApp, eventId)
+            return Array.isArray(sponsors) ? sponsors.map(sanitizeSponsorCategory) : []
+        }
+        case 'getEvent': {
+            const event = await EventDao.getEvent(firebaseApp, eventId)
+            return sanitizeEvent(event)
+        }
+        case 'getFaq': {
+            const categories = await FaqDao.getFullFaqs(firebaseApp, eventId)
+            return Array.isArray(categories)
+                ? categories.filter((c: any) => c?.share === true && c?.private !== true).map(sanitizeFaqCategory)
+                : []
+        }
         default:
             return { error: `Unknown tool: ${name}` }
     }

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FUNCTION_API_URL } from '../../../env'
 import { ChatMessage, ChatStreamEvent, EventSummary, ToolInvocation } from './types'
 
@@ -49,6 +49,15 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
         eventSummary: null,
     })
     const abortRef = useRef<AbortController | null>(null)
+    const mountedRef = useRef(true)
+
+    useEffect(() => {
+        return () => {
+            mountedRef.current = false
+            abortRef.current?.abort()
+            abortRef.current = null
+        }
+    }, [])
 
     const cancel = useCallback(() => {
         abortRef.current?.abort()
