@@ -35,11 +35,18 @@ import {
     TrackJobPostClickPOSTTypes,
     trackJobPostClickPOSTSchema,
 } from './trackJobPostClickPOST'
+import { getSponsorsGETSchema, GetSponsorsGETTypes, getSponsorsRouteHandler } from './getSponsorsGET'
 
 export { SponsorType } from './addSponsorsPOST'
 export { JobPostType } from './addJobPostPOST'
 
 export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
+    fastify.get<GetSponsorsGETTypes>(
+        '/v1/:eventId/sponsors',
+        { schema: getSponsorsGETSchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        getSponsorsRouteHandler(fastify)
+    )
+
     fastify.post<AddSponsorPOSTTypes>(
         '/v1/:eventId/sponsors',
         {

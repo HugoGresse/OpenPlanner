@@ -2,6 +2,21 @@ import { FastifyInstance } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
+import {
+    getSessionsGETSchema,
+    GetSessionsGETTypes,
+    getSessionsRouteHandler,
+} from './getSessionsGET'
+import {
+    getSessionGETSchema,
+    GetSessionGETTypes,
+    getSessionRouteHandler,
+} from './getSessionGET'
+import {
+    patchSessionPATCHSchema,
+    PatchSessionPATCHTypes,
+    patchSessionRouteHandler,
+} from './patchSessionPATCH'
 
 const CHECK_MEDIA_MAX_URLS = 100
 const CHECK_MEDIA_TIMEOUT_MS = 5000
@@ -140,6 +155,25 @@ const ShortVidReply = Type.Object({
 type ShortVidReplyType = Static<typeof ShortVidReply>
 
 export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
+    fastify.get<GetSessionsGETTypes>(
+        '/v1/:eventId/sessions',
+        { schema: getSessionsGETSchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        getSessionsRouteHandler(fastify)
+    )
+
+    fastify.get<GetSessionGETTypes>(
+        '/v1/:eventId/sessions/:sessionId',
+        { schema: getSessionGETSchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        getSessionRouteHandler(fastify)
+    )
+
+    fastify.patch<PatchSessionPATCHTypes>(
+        '/v1/:eventId/sessions/:sessionId',
+        { schema: patchSessionPATCHSchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        patchSessionRouteHandler(fastify)
+    )
+
+
     fastify.post<{ Body: CheckMediaType }>(
         '/v1/:eventId/check-media',
         {

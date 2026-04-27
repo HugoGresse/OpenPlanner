@@ -85,6 +85,24 @@ export class EventDao {
             })
     }
 
+    public static async patchEvent(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        patch: Record<string, unknown>
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+
+        const eventSnapshot = await db.collection('events').doc(eventId).get()
+        if (!eventSnapshot.exists) {
+            throw new Error('Event not found')
+        }
+
+        await db
+            .collection('events')
+            .doc(eventId)
+            .set({ ...patch, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+    }
+
     public static async saveBupherSession(
         firebaseApp: firebase.app.App,
         eventId: string,
