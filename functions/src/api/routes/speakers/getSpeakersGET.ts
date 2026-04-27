@@ -21,6 +21,9 @@ export const ApiSpeakerPublicSchema = Type.Object({
     photoUrl: Type.Union([Type.String(), Type.Null()]),
     socials: Type.Array(ApiSocialSchema),
     customFields: Type.Optional(Type.Record(Type.String(), Type.Union([Type.String(), Type.Boolean()]))),
+    email: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    phone: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    note: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 })
 export type ApiSpeakerPublicType = Static<typeof ApiSpeakerPublicSchema>
 
@@ -29,7 +32,7 @@ const MAX_LIMIT = 500
 
 export type GetSpeakersGETTypes = {
     Params: { eventId: string }
-    Querystring: { apiKey?: string; limit?: number; offset?: number }
+    Querystring: { apiKey?: string; limit?: number; offset?: number; includePrivate?: boolean }
     Reply: ApiSpeakerPublicType[] | string
 }
 
@@ -37,7 +40,7 @@ export const getSpeakersGETSchema = {
     tags: ['speakers'],
     summary: 'List speakers',
     description:
-        'Returns speakers for an event. Private fields (note, email, phone) are stripped from the response.',
+        'Returns speakers for an event. Private fields (note, email, phone) are stripped from the response unless `includePrivate=true` is passed.',
     params: {
         type: 'object',
         properties: {
@@ -52,6 +55,7 @@ export const getSpeakersGETSchema = {
             apiKey: { type: 'string', description: 'The API key of the event' },
             limit: { type: 'integer', minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT },
             offset: { type: 'integer', minimum: 0, default: 0 },
+            includePrivate: { type: 'boolean', description: 'Include private fields (note, email, phone)' },
         },
     },
     response: {
@@ -65,13 +69,13 @@ export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
     return async (
         request: FastifyRequest<{
             Params: { eventId: string }
-            Querystring: { limit?: number; offset?: number }
+            Querystring: { limit?: number; offset?: number; includePrivate?: boolean }
         }>,
         reply: FastifyReply
     ) => {
         try {
             const { eventId } = request.params
-            const { limit = DEFAULT_LIMIT, offset = 0 } = request.query
+            const { limit = DEFAULT_LIMIT, offset = 0, includePrivate } = request.query
 
             const speakers = await SpeakerDao.getSpeakers(fastify.firebase, eventId)
             const page = speakers.slice(offset, offset + limit)
@@ -91,6 +95,11 @@ export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
                     socials: s.socials ?? [],
                 }
                 if (s.customFields !== undefined) out.customFields = s.customFields
+                if (includePrivate) {
+                    out.email = s.email ?? null
+                    out.phone = s.phone ?? null
+                    out.note = s.note ?? null
+                }
                 return out
             })
 
