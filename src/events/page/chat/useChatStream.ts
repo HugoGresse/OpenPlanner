@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { API_URL } from '../../../env'
+import { FUNCTION_API_URL } from '../../../env'
 import { ChatMessage, ChatStreamEvent, EventSummary, ToolInvocation } from './types'
 
 export type ChatTurn = ChatMessage & {
@@ -14,7 +14,11 @@ export type UseChatStreamState = {
 }
 
 const buildChatUrl = (eventId: string, eventApiKey: string) => {
-    const apiUrl = new URL(API_URL as string)
+    // Always go through the direct Cloud Functions URL (FUNCTION_API_URL) for
+    // chat. Firebase Hosting buffers streamed SSE responses, which makes the
+    // browser receive every event at once when this same path is fronted by
+    // Hosting. Hitting the function host directly preserves streaming.
+    const apiUrl = new URL(FUNCTION_API_URL as string)
     const basePath = apiUrl.pathname.replace(/\/$/, '')
     apiUrl.pathname = `${basePath}/v1/${eventId}/chat`
     apiUrl.searchParams.set('apiKey', eventApiKey)
