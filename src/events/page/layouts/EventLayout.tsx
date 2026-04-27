@@ -14,11 +14,13 @@ import {
 } from '@mui/material'
 import { Menu } from '../EventScreenMenuItems'
 import MenuIcon from '@mui/icons-material/Menu'
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import { useRoute } from 'wouter'
 import { Event } from '../../../types'
 import { EventDrawerContent } from './EventDrawerContent'
 import { EventFilesProvider } from '../../../context/EventFilesContext'
 import { createPortal } from 'react-dom'
+import { EventChatDrawer } from '../chat/EventChatDrawer'
 
 const drawerWidth: number = 240
 
@@ -90,6 +92,7 @@ export const EventLayout = ({ children, event, customTitle }: EventLayoutProps) 
     const [__, subParams] = useRoute('/:routeName/:subRoute')
     const [mobileOpen, setMobileOpen] = useState(true)
     const [isClosing, setIsClosing] = useState(false)
+    const [chatOpen, setChatOpen] = useState(false)
 
     // Portal targets refs
     const [rightToolbarElement, setRightToolbarElement] = useState<HTMLElement | null>(null)
@@ -167,10 +170,19 @@ export const EventLayout = ({ children, event, customTitle }: EventLayoutProps) 
                                         </Typography>
                                     )}
                                 </Box>
-                                <div ref={setRightToolbarElement} />
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <div ref={setRightToolbarElement} />
+                                    <IconButton
+                                        color="inherit"
+                                        aria-label="open chat assistant"
+                                        onClick={() => setChatOpen(true)}>
+                                        <ChatBubbleOutlineIcon />
+                                    </IconButton>
+                                </Box>
                             </Toolbar>
                         </AppBar>
                     )}
+                    <EventChatDrawer event={event} open={chatOpen} onClose={() => setChatOpen(false)} />
 
                     <Box
                         component="nav"

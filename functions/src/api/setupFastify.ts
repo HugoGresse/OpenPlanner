@@ -18,6 +18,7 @@ import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/eventRoutes'
 import { bupherRoutes } from './routes/bupher/bupher'
+import { chatRoutes } from './routes/chat/chat'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
 import { deployRoutes } from './routes/deploy/deploy'
 import { noCacheHook } from '../utils/noCacheHook'
@@ -67,6 +68,7 @@ export const setupFastify = () => {
     fastify.register(deployFilesRoutes)
     fastify.register(helloRoute)
     fastify.register(bupherRoutes)
+    fastify.register(chatRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
 
