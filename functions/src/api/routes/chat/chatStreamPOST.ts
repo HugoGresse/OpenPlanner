@@ -4,6 +4,8 @@ import { EventDao } from '../../dao/eventDao'
 import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { READ_ONLY_TOOLS, executeTool } from './tools'
+import { PROPOSAL_TOOLS, buildProposal, isProposalTool } from './proposalTools'
+import { AiUsageDao } from '../../dao/aiUsageDao'
 
 const MAX_MESSAGES = 50
 const MAX_CONTENT_LENGTH = 50000
@@ -74,17 +76,25 @@ type OpenRouterMessage = {
 const buildSystemPrompt = (
     eventId: string,
     eventName: string
-) => `You are an OpenPlanner assistant helping the user explore the event "${eventName}" (id: ${eventId}).
+) => `You are an OpenPlanner assistant helping the user manage the event "${eventName}" (id: ${eventId}).
 
-You can READ event data via tools but you CANNOT mutate anything in this version of the assistant. Do not pretend to perform writes; if the user asks to edit something, explain that write support is coming in a later version.
+Read tools (listSessions, getSession, listSpeakers, getSpeaker, listSponsors, getEvent, getFaq) return data directly.
 
-Always call list/find tools (listSessions, listSpeakers, listSponsors, getFaq) before referring to specific IDs — never invent IDs. Keep responses concise.`
+Write tools (proposePatchSpeaker, proposePatchSession, proposePatchEvent, proposeDeleteSpeaker) DO NOT apply changes. They emit a proposal that the user reviews and approves in the UI. The tool result tells you whether the proposal was emitted successfully — it is NOT confirmation that the change happened. Never claim a change was made.
+
+Rules:
+- Always call list/find tools before referring to a specific id; never invent ids.
+- Emit at most ONE write proposal per turn. Wait for the user to approve or reject before proposing more.
+- Keep responses concise.
+- If a proposal is emitted, end your reply with a short summary of what the user will see.`
+
+type RoundUsage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
 
 const consumeOpenRouterStream = async (
     response: Response,
     onDelta: (delta: any) => void,
     isAborted: () => boolean = () => false
-): Promise<{ message: OpenRouterMessage; finishReason: string | null }> => {
+): Promise<{ message: OpenRouterMessage; finishReason: string | null; usage: RoundUsage | null }> => {
     if (!response.body) {
         throw new Error('OpenRouter response has no body')
     }
@@ -97,6 +107,7 @@ const consumeOpenRouterStream = async (
         { id: string; type: 'function'; function: { name: string; arguments: string } }
     >()
     let finishReason: string | null = null
+    let usage: RoundUsage | null = null
 
     while (true) {
         if (isAborted()) {
@@ -124,6 +135,9 @@ const consumeOpenRouterStream = async (
             }
             try {
                 const parsed = JSON.parse(payload)
+                if (parsed.usage && typeof parsed.usage === 'object') {
+                    usage = parsed.usage
+                }
                 const choice = parsed.choices?.[0]
                 if (!choice) continue
                 const delta = choice.delta ?? {}
@@ -160,7 +174,7 @@ const consumeOpenRouterStream = async (
         content: assembledContent.length > 0 ? assembledContent : null,
     }
     if (toolCalls.length > 0) message.tool_calls = toolCalls
-    return { message, finishReason }
+    return { message, finishReason, usage }
 }
 
 export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
@@ -183,6 +197,18 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
             return
         }
         const chosenModel = model || (event as any).openRouterModel || 'anthropic/claude-sonnet-4'
+
+        // Per-event monthly token cap. Treat 0 / null / undefined as "no cap".
+        const monthlyCap = Number((event as any).openRouterMonthlyTokenCap) || 0
+        if (monthlyCap > 0) {
+            const used = await AiUsageDao.getMonthTokens(fastify.firebase, eventId).catch(() => 0)
+            if (used >= monthlyCap) {
+                reply.status(429).send({
+                    error: `Monthly OpenRouter token cap reached (${used.toLocaleString()} / ${monthlyCap.toLocaleString()}). Increase openRouterMonthlyTokenCap in event settings or wait for the next month.`,
+                })
+                return
+            }
+        }
 
         // Pre-compute small summary so the UI can render before the model emits anything.
         const [sessions, speakers] = await Promise.all([
@@ -271,7 +297,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                         model: chosenModel,
                         stream: true,
                         messages: conversation,
-                        tools: READ_ONLY_TOOLS,
+                        tools: [...READ_ONLY_TOOLS, ...PROPOSAL_TOOLS],
                     }),
                     signal: upstreamAbort.signal,
                 })
@@ -286,17 +312,30 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     break
                 }
 
-                const { message, finishReason } = await consumeOpenRouterStream(
+                const { message, finishReason, usage } = await consumeOpenRouterStream(
                     orResponse,
                     (delta) => writeSSE(reply, delta),
                     () => clientGone
                 )
                 conversation.push(message)
 
+                if (usage && (usage.total_tokens || usage.prompt_tokens || usage.completion_tokens)) {
+                    AiUsageDao.incrementUsage(fastify.firebase, eventId, {
+                        prompt: usage.prompt_tokens || 0,
+                        completion: usage.completion_tokens || 0,
+                        total: usage.total_tokens || (usage.prompt_tokens || 0) + (usage.completion_tokens || 0),
+                    }).catch((err) => {
+                        // Don't fail the stream over usage bookkeeping.
+                        console.warn('Failed to record AI usage:', err)
+                    })
+                    writeSSE(reply, { type: 'usage', usage })
+                }
+
                 if (clientGone || finishReason !== 'tool_calls' || !message.tool_calls?.length) {
                     break
                 }
 
+                let proposalAlreadyEmittedThisRound = false
                 for (const tc of message.tool_calls) {
                     let parsedArgs: Record<string, any> = {}
                     try {
@@ -312,10 +351,36 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     })
 
                     let toolResult: unknown
-                    try {
-                        toolResult = await executeTool(fastify.firebase, eventId, tc.function.name, parsedArgs)
-                    } catch (error) {
-                        toolResult = { error: error instanceof Error ? error.message : 'Unknown error' }
+                    if (isProposalTool(tc.function.name)) {
+                        if (proposalAlreadyEmittedThisRound) {
+                            toolResult = {
+                                status: 'rejected',
+                                error: 'Only one proposal per turn is allowed. Wait for the user to approve or reject the previous one.',
+                            }
+                        } else {
+                            const built = await buildProposal({
+                                firebaseApp: fastify.firebase,
+                                eventId,
+                                name: tc.function.name,
+                                args: parsedArgs,
+                            })
+                            if (!built.ok) {
+                                toolResult = { status: 'rejected', error: built.error }
+                            } else {
+                                writeSSE(reply, { type: 'proposal', id: tc.id, proposal: built.proposal })
+                                proposalAlreadyEmittedThisRound = true
+                                toolResult = {
+                                    status: 'pending_user_approval',
+                                    note: 'Proposal sent to the user. Do NOT claim the change has been applied. Stop calling write tools and let the user act.',
+                                }
+                            }
+                        }
+                    } else {
+                        try {
+                            toolResult = await executeTool(fastify.firebase, eventId, tc.function.name, parsedArgs)
+                        } catch (error) {
+                            toolResult = { error: error instanceof Error ? error.message : 'Unknown error' }
+                        }
                     }
 
                     writeSSE(reply, {

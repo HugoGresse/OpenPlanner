@@ -178,4 +178,42 @@ describe('POST /v1/:eventId/chat', () => {
         expect(res.body).toContain('Two speakers found')
         expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
+
+    test('emits a proposal SSE event when the model calls a write tool (no DAO write)', async () => {
+        mockEventLookup(fastify)
+        mockEventLoad()
+        vi.spyOn(SessionDao, 'getSessions').mockResolvedValue([] as any)
+        vi.spyOn(SpeakerDao, 'getSpeakers').mockResolvedValue([{ id: 'sp1', name: 'Alice', bio: 'old bio' }] as any)
+
+        // Round 1: model asks for proposePatchSpeaker
+        const args = JSON.stringify({ speakerId: 'sp1', patch: { bio: 'new bio' } })
+        fetchSpy.mockResolvedValueOnce(
+            sseStream([
+                `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_w","function":{"name":"proposePatchSpeaker","arguments":${JSON.stringify(
+                    args
+                )}}}]},"finish_reason":"tool_calls"}]}\n\n`,
+                'data: [DONE]\n\n',
+            ])
+        )
+        // Round 2: model wraps up
+        fetchSpy.mockResolvedValueOnce(
+            sseStream([
+                'data: {"choices":[{"delta":{"content":"Proposal sent"},"finish_reason":"stop"}]}\n\n',
+                'data: [DONE]\n\n',
+            ])
+        )
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url,
+            payload: { messages: [{ role: 'user', content: 'change alice bio' }] },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toContain('"type":"proposal"')
+        expect(res.body).toContain('"kind":"patchSpeaker"')
+        expect(res.body).toContain('"path":"/v1/evt-1/speakers/sp1"')
+        expect(res.body).toContain('"before"')
+        expect(res.body).toContain('"after"')
+        expect(res.body).toContain('"status":"pending_user_approval"')
+    })
 })

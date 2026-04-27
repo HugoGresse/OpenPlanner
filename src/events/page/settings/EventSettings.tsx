@@ -313,6 +313,17 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     <TextFieldElement
                                         margin="normal"
                                         fullWidth
+                                        id="openRouterMonthlyTokenCap"
+                                        label="OpenRouter monthly token cap (optional)"
+                                        name="openRouterMonthlyTokenCap"
+                                        type="number"
+                                        variant="filled"
+                                        helperText="Hard cap on total tokens used by the chat assistant per calendar month. Leave empty or set to 0 to disable."
+                                        disabled={formState.isSubmitting}
+                                    />
+                                    <TextFieldElement
+                                        margin="normal"
+                                        fullWidth
                                         id="transcriptionPassword"
                                         label="Password to access transcription"
                                         name="transcriptionPassword"

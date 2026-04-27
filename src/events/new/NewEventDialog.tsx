@@ -73,6 +73,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         gladiaAPIKey: null,
                         openRouterAPIKey: null,
                         openRouterModel: null,
+                        openRouterMonthlyTokenCap: null,
                         transcriptionPassword: null,
                         enableVoxxrin: false,
                         aiSettings: null,

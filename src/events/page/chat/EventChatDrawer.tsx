@@ -18,7 +18,7 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
     const [apiKey, setApiKey] = React.useState<string | null>(event.apiKey ?? null)
     const [provisioning, setProvisioning] = React.useState(false)
     const [provisioningError, setProvisioningError] = React.useState<string | null>(null)
-    const { state, send, cancel, reset } = useChatStream(event.id, apiKey)
+    const { state, send, cancel, reset, applyProposal, rejectProposal } = useChatStream(event.id, apiKey)
 
     React.useEffect(() => {
         if (!open || apiKey || provisioning) return
@@ -89,8 +89,8 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
                 </Box>
 
                 <Alert severity="info" sx={{ m: 1 }}>
-                    This assistant can read your event data but cannot make changes yet. Write support is coming in a
-                    later version.
+                    The assistant proposes changes that you must explicitly approve. Nothing is written to the event
+                    until you click <strong>Apply</strong> on a proposal card.
                 </Alert>
 
                 {!event.openRouterAPIKey && (
@@ -111,7 +111,13 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
                     </Alert>
                 )}
 
-                <ChatMessages turns={state.turns} streaming={state.streaming} />
+                <ChatMessages
+                    turns={state.turns}
+                    streaming={state.streaming}
+                    proposals={state.proposals}
+                    onApplyProposal={applyProposal}
+                    onRejectProposal={rejectProposal}
+                />
 
                 <ChatInput
                     streaming={state.streaming}
