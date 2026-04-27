@@ -4,6 +4,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import { Event } from '../../../types'
 import { ChatInput } from './ChatInput'
 import { ChatMessages } from './ChatMessages'
+import { ChatSetupPanel } from './ChatSetupPanel'
 import { useChatStream } from './useChatStream'
 import { generateApiKey } from '../../../utils/generateApiKey'
 import { updateEvent } from '../../actions/updateEvent'
@@ -18,11 +19,21 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
     const [apiKey, setApiKey] = React.useState<string | null>(event.apiKey ?? null)
     const [provisioning, setProvisioning] = React.useState(false)
     const [provisioningError, setProvisioningError] = React.useState<string | null>(null)
+    // Track the OpenRouter key locally so the setup panel can flip the drawer
+    // into chat mode the moment the user saves a valid key, without waiting
+    // for the parent component to re-fetch the event doc from Firestore.
+    const [openRouterKeyConfigured, setOpenRouterKeyConfigured] = React.useState<boolean>(!!event.openRouterAPIKey)
+    React.useEffect(() => {
+        setOpenRouterKeyConfigured(!!event.openRouterAPIKey)
+    }, [event.openRouterAPIKey])
     const { state, send, cancel, reset, applyProposal, rejectProposal, applyAllProposals, rejectAllProposals } =
         useChatStream(event.id, apiKey)
 
     React.useEffect(() => {
-        if (!open || apiKey || provisioning) return
+        // Only auto-provision the OpenPlanner apiKey when the user is past the
+        // setup step. No point creating one before they've added an OpenRouter
+        // key (which they may decide not to do at all).
+        if (!open || apiKey || provisioning || !openRouterKeyConfigured) return
         let cancelled = false
         setProvisioning(true)
         setProvisioningError(null)
@@ -46,7 +57,7 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
         return () => {
             cancelled = true
         }
-    }, [open, apiKey, provisioning, event.id])
+    }, [open, apiKey, provisioning, openRouterKeyConfigured, event.id])
 
     // Closing the drawer should also stop any in-flight stream so we stop
     // burning OpenRouter tokens / CPU when the user dismisses the panel.
@@ -89,45 +100,45 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
                     </Box>
                 </Box>
 
-                <Alert severity="info" sx={{ m: 1 }}>
-                    The assistant proposes changes that you must explicitly approve. Nothing is written to the event
-                    until you click <strong>Apply</strong> on a proposal card.
-                </Alert>
+                {openRouterKeyConfigured ? (
+                    <>
+                        <Alert severity="info" sx={{ m: 1 }}>
+                            The assistant proposes changes that you must explicitly approve. Nothing is written to the
+                            event until you click <strong>Apply</strong> on a proposal card.
+                        </Alert>
 
-                {!event.openRouterAPIKey && (
-                    <Alert severity="warning" sx={{ mx: 1, mb: 1 }}>
-                        OpenRouter API key not set. Add it in Event Settings → Other stuffs → OpenRouter API key.
-                    </Alert>
+                        {provisioningError && (
+                            <Alert severity="error" sx={{ mx: 1, mb: 1 }}>
+                                {provisioningError}
+                            </Alert>
+                        )}
+
+                        {state.error && (
+                            <Alert severity="error" sx={{ mx: 1, mb: 1 }}>
+                                {state.error}
+                            </Alert>
+                        )}
+
+                        <ChatMessages
+                            turns={state.turns}
+                            streaming={state.streaming}
+                            proposals={state.proposals}
+                            onApplyProposal={applyProposal}
+                            onRejectProposal={rejectProposal}
+                            onApplyAllProposals={applyAllProposals}
+                            onRejectAllProposals={rejectAllProposals}
+                        />
+
+                        <ChatInput
+                            streaming={state.streaming}
+                            disabled={!apiKey || provisioning}
+                            onSend={send}
+                            onCancel={cancel}
+                        />
+                    </>
+                ) : (
+                    <ChatSetupPanel event={event} onSaved={() => setOpenRouterKeyConfigured(true)} />
                 )}
-
-                {provisioningError && (
-                    <Alert severity="error" sx={{ mx: 1, mb: 1 }}>
-                        {provisioningError}
-                    </Alert>
-                )}
-
-                {state.error && (
-                    <Alert severity="error" sx={{ mx: 1, mb: 1 }}>
-                        {state.error}
-                    </Alert>
-                )}
-
-                <ChatMessages
-                    turns={state.turns}
-                    streaming={state.streaming}
-                    proposals={state.proposals}
-                    onApplyProposal={applyProposal}
-                    onRejectProposal={rejectProposal}
-                    onApplyAllProposals={applyAllProposals}
-                    onRejectAllProposals={rejectAllProposals}
-                />
-
-                <ChatInput
-                    streaming={state.streaming}
-                    disabled={!apiKey || provisioning || !event.openRouterAPIKey}
-                    onSend={send}
-                    onCancel={cancel}
-                />
             </Box>
         </Drawer>
     )
