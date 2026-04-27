@@ -13,6 +13,12 @@ import {
 export type ChatTurn = ChatMessage & {
     tools?: ToolInvocation[]
     proposalIds?: string[]
+    /**
+     * Set after a toolResult to mark a round boundary. The next content
+     * delta consumes the flag and prepends a paragraph break so text
+     * emitted across two OpenRouter rounds doesn't run together.
+     */
+    pendingSeparator?: boolean
 }
 
 export type UseChatStreamState = {
@@ -359,7 +365,14 @@ const applyEvent = (
             const turns = [...s.turns]
             const last = turns[turns.length - 1]
             if (last && last.role === 'assistant') {
-                turns[turns.length - 1] = { ...last, content: last.content + evt.delta }
+                const needsSeparator =
+                    last.pendingSeparator && last.content.length > 0 && !last.content.endsWith('\n')
+                const delta = needsSeparator ? `\n\n${evt.delta}` : evt.delta
+                turns[turns.length - 1] = {
+                    ...last,
+                    content: last.content + delta,
+                    pendingSeparator: false,
+                }
             }
             return { ...s, turns }
         }
@@ -377,7 +390,7 @@ const applyEvent = (
             const last = turns[turns.length - 1]
             if (last && last.role === 'assistant' && last.tools) {
                 const tools = last.tools.map((t) => (t.id === evt.id ? { ...t, result: evt.result } : t))
-                turns[turns.length - 1] = { ...last, tools }
+                turns[turns.length - 1] = { ...last, tools, pendingSeparator: true }
             }
             return { ...s, turns }
         }
