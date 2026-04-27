@@ -3,6 +3,7 @@ import { Box, Button, Chip, Paper, Stack, Typography, useTheme } from '@mui/mate
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import ReactMarkdown from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
 import { ChatTurn } from './useChatStream'
 import { ProposalCard } from './ProposalCard'
 import { ProposalEntry } from './types'
@@ -117,7 +118,7 @@ export const ChatMessages = ({
                                         '& table': { borderCollapse: 'collapse' },
                                         '& th, & td': { border: '1px solid', borderColor: 'divider', px: 1, py: 0.5 },
                                     }}>
-                                    <ReactMarkdown>{turn.content}</ReactMarkdown>
+                                    <ReactMarkdown remarkPlugins={[remarkBreaks]}>{turn.content}</ReactMarkdown>
                                 </Box>
                             ) : (
                                 <Typography variant="body2" color="text.secondary">
