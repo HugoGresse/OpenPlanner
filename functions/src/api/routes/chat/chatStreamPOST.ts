@@ -180,8 +180,12 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
 
         const requestOrigin = (request.headers.origin as string | undefined) || '*'
         reply.raw.writeHead(200, {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
+            'Content-Type': 'text/event-stream; charset=utf-8',
+            'Cache-Control': 'no-cache, no-transform',
+            // Prevent any proxy / Firebase Hosting / Cloud Run intermediary from
+            // gzipping the stream (compression buffers chunks until enough body
+            // accumulates, which makes SSE arrive in one big lump).
+            'Content-Encoding': 'identity',
             'X-Accel-Buffering': 'no',
             Connection: 'keep-alive',
             // reply.hijack() bypasses Fastify's onSend hook, including @fastify/cors,
@@ -191,6 +195,15 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
             Vary: 'Origin',
         })
         reply.hijack()
+        // Disable Nagle's algorithm so each write is flushed to the wire immediately.
+        try {
+            reply.raw.socket?.setNoDelay(true)
+        } catch {
+            /* socket may already be detached on some runtimes */
+        }
+        // Push 2KB of padding as an SSE comment so the browser's MIME sniffer
+        // and any proxy buffer commit to the connection before the first real event.
+        reply.raw.write(`: ${' '.repeat(2048)}\n\n`)
 
         try {
             writeSSE(reply, {

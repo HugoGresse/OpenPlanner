@@ -125,7 +125,7 @@ describe('POST /v1/:eventId/chat', () => {
             payload: { messages: [{ role: 'user', content: 'hi' }] },
         })
         expect(res.statusCode).toBe(200)
-        expect(res.headers['content-type']).toBe('text/event-stream')
+        expect(String(res.headers['content-type'])).toContain('text/event-stream')
         expect(res.body).toContain('"type":"eventSummary"')
         expect(res.body).toContain('"sessionsCount":2')
         expect(res.body).toContain('"speakersCount":1')
