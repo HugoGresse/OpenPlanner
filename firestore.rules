@@ -23,25 +23,8 @@ service cloud.firestore {
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /speakers/{speakerId} {
-                // Speakers can read and patch their OWN doc (including private
-                // fields email/phone/note) when the signed-in user's email
-                // matches the speaker's `email` field. They cannot reassign
-                // ownership: the email field has to stay the same on writes.
-                function isSelf() {
-                    return authenticated()
-                        && resource.data.email != null
-                        && request.auth.token.email == resource.data.email;
-                }
-                allow read: if authenticated() && (
-                    isAdmin(eventData(eventId))
-                    || isSuperAdmin(request.auth.uid)
-                    || isSelf()
-                );
-                allow update: if authenticated() && (
-                    isAdmin(eventData(eventId))
-                    || (isSelf() && request.resource.data.email == resource.data.email)
-                );
-                allow create, delete: if authenticated() && isAdmin(eventData(eventId));
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
+                allow write: if authenticated() && isAdmin(eventData(eventId));
             }
             match /sponsors/{sponsorId} {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
