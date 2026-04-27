@@ -18,6 +18,12 @@ const SPEAKER_PATCH_FIELDS = [
     'photoUrl',
     'socials',
     'customFields',
+    // Private fields. Patching them through the chat assistant is allowed
+    // because every change is gated by the user's explicit approval via the
+    // proposal/diff card before the underlying PATCH endpoint is hit.
+    'email',
+    'phone',
+    'note',
 ] as const
 
 const SESSION_PATCH_FIELDS = [
@@ -99,7 +105,7 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
         function: {
             name: 'proposePatchSpeaker',
             description:
-                'Propose a partial update to a speaker. Does NOT apply the change — emits a proposal that the user reviews and confirms in the UI. Always call listSpeakers first to find the correct speakerId.',
+                'Propose a partial update to a speaker. Does NOT apply the change — emits a proposal that the user reviews and confirms in the UI. Always call listSpeakers first to find the correct speakerId. Private fields (email, phone, note) ARE patchable through this tool: the user sees the proposed value in the diff and explicitly approves it before the change is written.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
