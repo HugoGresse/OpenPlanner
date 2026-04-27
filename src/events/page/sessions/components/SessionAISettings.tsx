@@ -8,7 +8,7 @@ import { doc } from 'firebase/firestore'
 import { collections } from '../../../../services/firebase'
 import { Event, EventAISettings } from '../../../../types'
 import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
-import { BASE_OPENAI_SETTINGS, useAiModelList } from '../../../../services/openai'
+import { BASE_OPENROUTER_SETTINGS, useAiModelList } from '../../../../services/openRouter'
 
 export const SessionAISettings = ({ event }: { event: Event }) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
@@ -19,11 +19,11 @@ export const SessionAISettings = ({ event }: { event: Event }) => {
                 event.aiSettings?.sessions.teasingPromptSystem || GenerateSessionsTeasingContentPrompts.fr.system,
             teasingPromptUser:
                 event.aiSettings?.sessions.teasingPromptUser || GenerateSessionsTeasingContentPrompts.fr.user,
-            model: event.aiSettings?.model || BASE_OPENAI_SETTINGS.model,
-            temperature: event.aiSettings?.temperature || BASE_OPENAI_SETTINGS.temperature,
+            model: event.aiSettings?.model || BASE_OPENROUTER_SETTINGS.model,
+            temperature: event.aiSettings?.temperature || BASE_OPENROUTER_SETTINGS.temperature,
         },
     })
-    const modelList = useAiModelList(event.openAPIKey || '')
+    const modelList = useAiModelList(event.openRouterAPIKey || '')
     const { formState } = formContext
 
     return (
@@ -77,7 +77,7 @@ export const SessionAISettings = ({ event }: { event: Event }) => {
                             fullWidth
                             label="Model"
                             name="model"
-                            helperText="See model list here: https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4"
+                            helperText="See model list at https://openrouter.ai/models"
                             variant="filled"
                             disabled={formState.isSubmitting}
                             options={modelList.map((m) => ({ id: m.id, label: m.id }))}
@@ -100,8 +100,8 @@ export const SessionAISettings = ({ event }: { event: Event }) => {
                                 formContext.reset({
                                     teasingPromptSystem: GenerateSessionsTeasingContentPrompts.fr.system,
                                     teasingPromptUser: GenerateSessionsTeasingContentPrompts.fr.user,
-                                    model: BASE_OPENAI_SETTINGS.model,
-                                    temperature: BASE_OPENAI_SETTINGS.temperature,
+                                    model: BASE_OPENROUTER_SETTINGS.model,
+                                    temperature: BASE_OPENROUTER_SETTINGS.temperature,
                                 })
                             }}>
                             Reset to default

@@ -31,8 +31,9 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         start: data.dates.start ? (DateTime.fromISO(data.dates.start).toJSDate() as Date) : null,
         end: data.dates.end ? (DateTime.fromISO(data.dates.end).toJSDate() as Date) : null,
     }
-    const openAPIKey = data.openAPIKey || ''
     const gladiaAPIKey = data.gladiaAPIKey || ''
+    const openRouterAPIKey = data.openRouterAPIKey || ''
+    const openRouterModel = data.openRouterModel || ''
     const transcriptionPassword = data.transcriptionPassword || ''
     const timezone = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
 
@@ -53,8 +54,9 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         tracks,
         formats,
         categories,
-        openAPIKey,
         gladiaAPIKey,
+        openRouterAPIKey,
+        openRouterModel,
         transcriptionPassword,
         timezone,
     }

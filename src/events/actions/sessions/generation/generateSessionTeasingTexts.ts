@@ -11,7 +11,7 @@ const limitRunner = pLimit(PARALLEL_REQUEST)
 
 export type GenerateSessionTeasingTextsSettings = {
     aiSettings: EventAISettings
-    openApiKey: string | null
+    openRouterApiKey: string | null
 } & GenerateBaseSettings
 
 export type GeneratedSessionTeasingTextAnswer = {
@@ -34,10 +34,10 @@ export const generateSessionTeasingTexts = async (
     const filteredSessions = sessions.filter((session) => !session.teasingHidden)
     const sessionsCount = filteredSessions.length
 
-    if (!settings.openApiKey || !sessionsCount) {
+    if (!settings.openRouterApiKey || !sessionsCount) {
         return {
             success: false,
-            message: 'No sessions to generate or no openAPIKey',
+            message: 'No sessions to generate or no OpenRouter API key',
             results: [],
         }
     }
@@ -47,7 +47,7 @@ export const generateSessionTeasingTexts = async (
             return limitRunner(
                 async () =>
                     await generateSessionTeasingContent(
-                        settings.openApiKey!!,
+                        settings.openRouterApiKey!!,
                         TeasingPostSocials[socialKey],
                         session,
                         promptSystem,

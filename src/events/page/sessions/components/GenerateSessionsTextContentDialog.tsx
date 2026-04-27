@@ -32,7 +32,7 @@ export const GenerateSessionsTextContentDialog = ({
     const { createNotification } = useNotification()
     const llmSettings: GenerateSessionTeasingTextsSettings = {
         aiSettings: event.aiSettings || BaseAiSettings,
-        openApiKey: event.openAPIKey,
+        openRouterApiKey: event.openRouterAPIKey,
     }
 
     const { generatingState, generate } = useSessionsGenerationGeneric<
@@ -81,15 +81,15 @@ export const GenerateSessionsTextContentDialog = ({
             <DialogContent sx={{ minHeight: '80vh' }}>
                 <Typography variant="h5">Generate media content for sessions</Typography>
                 <Typography>
-                    This will do generate post content using OpenAI ChatGPT3.5-turbo (through OpenAI ChatGPT API)
+                    This will generate post content via OpenRouter using the configured model.
                     <br />
                 </Typography>
 
                 <SessionAISettings event={event} />
 
-                {!event.openAPIKey && (
+                {!event.openRouterAPIKey && (
                     <Typography>
-                        You need to set up an OpenRouter.ai API key in the event settings to use this feature.
+                        You need to set up an OpenRouter API key in the event settings to use this feature.
                         <Button href="/settings">Go to event settings</Button>
                     </Typography>
                 )}
