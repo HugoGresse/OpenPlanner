@@ -1,5 +1,7 @@
 import * as React from 'react'
-import { Box, Chip, Paper, Typography, useTheme } from '@mui/material'
+import { Box, Button, Chip, Paper, Stack, Typography, useTheme } from '@mui/material'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import ReactMarkdown from 'react-markdown'
 import { ChatTurn } from './useChatStream'
 import { ProposalCard } from './ProposalCard'
@@ -11,9 +13,19 @@ export type ChatMessagesProps = {
     proposals: Record<string, ProposalEntry>
     onApplyProposal: (id: string) => void
     onRejectProposal: (id: string) => void
+    onApplyAllProposals: (ids: string[]) => void
+    onRejectAllProposals: (ids: string[]) => void
 }
 
-export const ChatMessages = ({ turns, streaming, proposals, onApplyProposal, onRejectProposal }: ChatMessagesProps) => {
+export const ChatMessages = ({
+    turns,
+    streaming,
+    proposals,
+    onApplyProposal,
+    onRejectProposal,
+    onApplyAllProposals,
+    onRejectAllProposals,
+}: ChatMessagesProps) => {
     const theme = useTheme()
     const scrollRef = React.useRef<HTMLDivElement>(null)
     React.useEffect(() => {
@@ -113,6 +125,51 @@ export const ChatMessages = ({ turns, streaming, proposals, onApplyProposal, onR
                                 </Typography>
                             )}
                         </Paper>
+                        {turnProposals.length > 1 && turnProposals.some((p) => p.status === 'pending') && (
+                            <Paper
+                                variant="outlined"
+                                sx={{
+                                    mt: 1,
+                                    px: 1.5,
+                                    py: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    bgcolor: 'background.paper',
+                                }}>
+                                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                    Batch: {turnProposals.filter((p) => p.status === 'pending').length} pending
+                                    {' · '}
+                                    {turnProposals.filter((p) => p.status === 'applied').length} applied
+                                    {' · '}
+                                    {turnProposals.filter((p) => p.status === 'rejected').length} rejected
+                                </Typography>
+                                <Stack direction="row" spacing={1}>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<CheckIcon />}
+                                        onClick={() =>
+                                            onApplyAllProposals(
+                                                turnProposals.filter((p) => p.status === 'pending').map((p) => p.id)
+                                            )
+                                        }>
+                                        Apply all
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={<CloseIcon />}
+                                        onClick={() =>
+                                            onRejectAllProposals(
+                                                turnProposals.filter((p) => p.status === 'pending').map((p) => p.id)
+                                            )
+                                        }>
+                                        Reject all
+                                    </Button>
+                                </Stack>
+                            </Paper>
+                        )}
                         {turnProposals.map((entry) => (
                             <ProposalCard
                                 key={entry.id}

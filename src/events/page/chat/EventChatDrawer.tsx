@@ -18,7 +18,8 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
     const [apiKey, setApiKey] = React.useState<string | null>(event.apiKey ?? null)
     const [provisioning, setProvisioning] = React.useState(false)
     const [provisioningError, setProvisioningError] = React.useState<string | null>(null)
-    const { state, send, cancel, reset, applyProposal, rejectProposal } = useChatStream(event.id, apiKey)
+    const { state, send, cancel, reset, applyProposal, rejectProposal, applyAllProposals, rejectAllProposals } =
+        useChatStream(event.id, apiKey)
 
     React.useEffect(() => {
         if (!open || apiKey || provisioning) return
@@ -117,6 +118,8 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
                     proposals={state.proposals}
                     onApplyProposal={applyProposal}
                     onRejectProposal={rejectProposal}
+                    onApplyAllProposals={applyAllProposals}
+                    onRejectAllProposals={rejectAllProposals}
                 />
 
                 <ChatInput

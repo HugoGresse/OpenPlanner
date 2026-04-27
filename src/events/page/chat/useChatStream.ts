@@ -208,6 +208,31 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
         [state.proposals, setProposalStatus, recordAuditLog]
     )
 
+    // Batch helpers: apply / reject a list of proposal ids in order. Apply
+    // is sequential to avoid two PATCHes hitting the same doc concurrently
+    // and clobbering each other; reject is just a state flip + audit-log
+    // write per entry.
+    const applyAllProposals = useCallback(
+        async (ids: string[]) => {
+            for (const id of ids) {
+                if (state.proposals[id]?.status === 'pending') {
+                    await applyProposal(id)
+                }
+            }
+        },
+        [applyProposal, state.proposals]
+    )
+    const rejectAllProposals = useCallback(
+        (ids: string[]) => {
+            for (const id of ids) {
+                if (state.proposals[id]?.status === 'pending') {
+                    rejectProposal(id)
+                }
+            }
+        },
+        [rejectProposal, state.proposals]
+    )
+
     const send = useCallback(
         async (userMessage: string) => {
             if (!eventApiKey) {
@@ -314,7 +339,16 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
         [eventId, eventApiKey, state.turns]
     )
 
-    return { state, send, cancel, reset, applyProposal, rejectProposal }
+    return {
+        state,
+        send,
+        cancel,
+        reset,
+        applyProposal,
+        rejectProposal,
+        applyAllProposals,
+        rejectAllProposals,
+    }
 }
 
 const applyEvent = (

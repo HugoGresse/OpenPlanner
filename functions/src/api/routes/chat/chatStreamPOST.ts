@@ -10,6 +10,7 @@ import { AiUsageDao } from '../../dao/aiUsageDao'
 const MAX_MESSAGES = 50
 const MAX_CONTENT_LENGTH = 50000
 const MAX_TOOL_ROUNDS = 8
+const MAX_PROPOSALS_PER_REQUEST = 25
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 export const ChatMessage = Type.Object({
@@ -82,11 +83,15 @@ Read tools (listSessions, getSession, listSpeakers, getSpeaker, listSponsors, ge
 
 Write tools (proposePatchSpeaker, proposePatchSession, proposePatchEvent, proposeDeleteSpeaker) DO NOT apply changes. They emit a proposal that the user reviews and approves in the UI. The tool result tells you whether the proposal was emitted successfully — it is NOT confirmation that the change happened. Never claim a change was made.
 
+Batching:
+- When the user asks for several related changes (e.g. "fix typos in all session titles", "set the language for tracks A and B"), emit ONE proposal per change in the same turn — the UI groups them into a batch the user can approve or reject all at once.
+- Cap a single batch at ~10 proposals; if more would be needed, do the most important ones first and ask the user to confirm before continuing.
+- Group only changes that fit a single user request together. Don't mix unrelated edits.
+
 Rules:
 - Always call list/find tools before referring to a specific id; never invent ids.
-- Emit at most ONE write proposal per turn. Wait for the user to approve or reject before proposing more.
 - Keep responses concise.
-- If a proposal is emitted, end your reply with a short summary of what the user will see.`
+- After a batch, end your reply with a short summary of what the user will see (e.g. "5 sessions queued for review").`
 
 type RoundUsage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
 
@@ -286,8 +291,9 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                 ...messages.map((m) => ({ role: m.role, content: m.content })),
             ]
 
-            // Enforce "at most one proposal per request" across all tool-call rounds.
-            let proposalAlreadyEmitted = false
+            // Cap total proposals per request so the model can't run away with
+            // thousands of writes. Counted across all tool-call rounds.
+            let proposalsEmittedCount = 0
             for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
                 if (clientGone) break
                 const orResponse = await fetch(OPENROUTER_URL, {
@@ -356,10 +362,10 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
 
                     let toolResult: unknown
                     if (isProposalTool(tc.function.name)) {
-                        if (proposalAlreadyEmitted) {
+                        if (proposalsEmittedCount >= MAX_PROPOSALS_PER_REQUEST) {
                             toolResult = {
                                 status: 'rejected',
-                                error: 'Only one proposal per request is allowed. Wait for the user to approve or reject the previous one before proposing another change.',
+                                error: `Cap of ${MAX_PROPOSALS_PER_REQUEST} proposals per request reached. Stop emitting more write tools and ask the user to apply or reject the current batch first.`,
                             }
                         } else {
                             const built = await buildProposal({
@@ -372,10 +378,10 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                                 toolResult = { status: 'rejected', error: built.error }
                             } else {
                                 writeSSE(reply, { type: 'proposal', id: tc.id, proposal: built.proposal })
-                                proposalAlreadyEmitted = true
+                                proposalsEmittedCount++
                                 toolResult = {
                                     status: 'pending_user_approval',
-                                    note: 'Proposal sent to the user. Do NOT claim the change has been applied. Stop calling write tools and let the user act.',
+                                    note: 'Proposal queued. The UI batches all proposals from this turn and the user will approve/reject them together. Continue if more related changes are needed for this user request, but do NOT claim any change has been applied yet.',
                                 }
                             }
                         }
