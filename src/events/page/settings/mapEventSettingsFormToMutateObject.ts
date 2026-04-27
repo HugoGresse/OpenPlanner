@@ -34,10 +34,17 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
     const gladiaAPIKey = data.gladiaAPIKey || ''
     const openRouterAPIKey = data.openRouterAPIKey || ''
     const openRouterModel = data.openRouterModel || ''
-    const openRouterMonthlyTokenCap =
-        data.openRouterMonthlyTokenCap === undefined || data.openRouterMonthlyTokenCap === null
-            ? null
-            : Number(data.openRouterMonthlyTokenCap) || 0
+    // Persist null when empty / unset; otherwise a non-negative integer. Any
+    // non-numeric / negative / non-finite input is normalized to null so it
+    // doesn't silently disable the cap or store nonsense.
+    const openRouterMonthlyTokenCap = (() => {
+        const raw: unknown = data.openRouterMonthlyTokenCap
+        if (raw === undefined || raw === null) return null
+        if (typeof raw === 'string' && raw.trim() === '') return null
+        const parsed = Number(raw)
+        if (!Number.isFinite(parsed) || parsed < 0) return null
+        return Math.floor(parsed)
+    })()
     const transcriptionPassword = data.transcriptionPassword || ''
     const timezone = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
 

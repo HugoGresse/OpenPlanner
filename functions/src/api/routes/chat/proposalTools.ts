@@ -210,9 +210,9 @@ export const buildProposal = async ({
         const patch = pickAllowedFields(args?.patch ?? {}, SPEAKER_PATCH_FIELDS)
         if (Object.keys(patch).length === 0)
             return { ok: false, error: 'patch must contain at least one allowed field' }
-        const speakers = await SpeakerDao.getSpeakers(firebaseApp, eventId)
-        const speaker = speakers.find((s: any) => s.id === speakerId)
-        if (!speaker) return { ok: false, error: `Speaker not found: ${speakerId}` }
+        const existing = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
+        if (!existing || existing === true) return { ok: false, error: `Speaker not found: ${speakerId}` }
+        const speaker = { id: speakerId, ...(existing as any) }
         return {
             ok: true,
             proposal: {
@@ -234,9 +234,9 @@ export const buildProposal = async ({
         const patch = pickAllowedFields(args?.patch ?? {}, SESSION_PATCH_FIELDS)
         if (Object.keys(patch).length === 0)
             return { ok: false, error: 'patch must contain at least one allowed field' }
-        const sessions = await SessionDao.getSessions(firebaseApp, eventId)
-        const session = sessions.find((s: any) => s.id === sessionId)
-        if (!session) return { ok: false, error: `Session not found: ${sessionId}` }
+        const existing = await SessionDao.doesSessionExist(firebaseApp, eventId, sessionId)
+        if (!existing || existing === true) return { ok: false, error: `Session not found: ${sessionId}` }
+        const session = { id: sessionId, ...(existing as any) }
         return {
             ok: true,
             proposal: {
@@ -275,9 +275,9 @@ export const buildProposal = async ({
     if (name === 'proposeDeleteSpeaker') {
         const speakerId = String(args?.speakerId ?? '')
         if (!speakerId) return { ok: false, error: 'speakerId is required' }
-        const speakers = await SpeakerDao.getSpeakers(firebaseApp, eventId)
-        const speaker = speakers.find((s: any) => s.id === speakerId) as any
-        if (!speaker) return { ok: false, error: `Speaker not found: ${speakerId}` }
+        const existing = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
+        if (!existing || existing === true) return { ok: false, error: `Speaker not found: ${speakerId}` }
+        const speaker = { id: speakerId, ...(existing as any) }
         const { email, phone, note, ...sanitized } = speaker
         return {
             ok: true,

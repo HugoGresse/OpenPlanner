@@ -318,8 +318,9 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                         name="openRouterMonthlyTokenCap"
                                         type="number"
                                         variant="filled"
-                                        helperText="Hard cap on total tokens used by the chat assistant per calendar month. Leave empty or set to 0 to disable."
+                                        helperText="Hard cap on total tokens used by the chat assistant per calendar month. Leave empty or set to 0 to disable. Negative values are ignored."
                                         disabled={formState.isSubmitting}
+                                        inputProps={{ min: 0, step: 1000 }}
                                     />
                                     <TextFieldElement
                                         margin="normal"

@@ -198,8 +198,10 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
         }
         const chosenModel = model || (event as any).openRouterModel || 'anthropic/claude-sonnet-4'
 
-        // Per-event monthly token cap. Treat 0 / null / undefined as "no cap".
-        const monthlyCap = Number((event as any).openRouterMonthlyTokenCap) || 0
+        // Per-event monthly token cap. Stored as a non-negative integer; null /
+        // undefined / 0 / NaN / negative all mean "no cap".
+        const rawCap = Number((event as any).openRouterMonthlyTokenCap)
+        const monthlyCap = Number.isFinite(rawCap) && Number.isInteger(rawCap) && rawCap > 0 ? rawCap : 0
         if (monthlyCap > 0) {
             const used = await AiUsageDao.getMonthTokens(fastify.firebase, eventId).catch(() => 0)
             if (used >= monthlyCap) {
@@ -276,6 +278,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     sessionsCount: sessions.length,
                     speakersCount: speakers.length,
                 },
+                model: chosenModel,
             })
 
             const conversation: OpenRouterMessage[] = [
@@ -283,6 +286,8 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                 ...messages.map((m) => ({ role: m.role, content: m.content })),
             ]
 
+            // Enforce "at most one proposal per request" across all tool-call rounds.
+            let proposalAlreadyEmitted = false
             for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
                 if (clientGone) break
                 const orResponse = await fetch(OPENROUTER_URL, {
@@ -335,7 +340,6 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     break
                 }
 
-                let proposalAlreadyEmittedThisRound = false
                 for (const tc of message.tool_calls) {
                     let parsedArgs: Record<string, any> = {}
                     try {
@@ -352,10 +356,10 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
 
                     let toolResult: unknown
                     if (isProposalTool(tc.function.name)) {
-                        if (proposalAlreadyEmittedThisRound) {
+                        if (proposalAlreadyEmitted) {
                             toolResult = {
                                 status: 'rejected',
-                                error: 'Only one proposal per turn is allowed. Wait for the user to approve or reject the previous one.',
+                                error: 'Only one proposal per request is allowed. Wait for the user to approve or reject the previous one before proposing another change.',
                             }
                         } else {
                             const built = await buildProposal({
@@ -368,7 +372,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                                 toolResult = { status: 'rejected', error: built.error }
                             } else {
                                 writeSSE(reply, { type: 'proposal', id: tc.id, proposal: built.proposal })
-                                proposalAlreadyEmittedThisRound = true
+                                proposalAlreadyEmitted = true
                                 toolResult = {
                                     status: 'pending_user_approval',
                                     note: 'Proposal sent to the user. Do NOT claim the change has been applied. Stop calling write tools and let the user act.',

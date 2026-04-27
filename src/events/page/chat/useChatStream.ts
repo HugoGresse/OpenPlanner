@@ -73,8 +73,10 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
         proposals: {},
         usage: null,
     })
-    const lastUserPromptRef = useRef<string>('')
-    const lastModelRef = useRef<string | undefined>(undefined)
+    // Mutable holders for the current in-flight request so we can attach the
+    // exact prompt + model to each `proposal` event the server emits.
+    const inflightPromptRef = useRef<string>('')
+    const inflightModelRef = useRef<string | undefined>(undefined)
     const abortRef = useRef<AbortController | null>(null)
     const mountedRef = useRef(true)
 
@@ -114,27 +116,42 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
     }, [])
 
     const recordAuditLog = useCallback(
-        async (proposal: Proposal, applied: boolean, rejected: boolean) => {
-            if (!eventApiKey) return
+        async (entry: ProposalEntry, applied: boolean, rejected: boolean): Promise<boolean> => {
+            if (!eventApiKey) return false
             try {
-                await fetch(buildHostedUrl(`/v1/${eventId}/ai-actions`, eventApiKey), {
+                const response = await fetch(buildHostedUrl(`/v1/${eventId}/ai-actions`, eventApiKey), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        tool: proposal.kind,
-                        target: proposal.target,
-                        args: proposal.endpoint.body || {},
-                        diff: proposal.diff,
-                        summary: proposal.summary,
-                        prompt: lastUserPromptRef.current,
-                        model: lastModelRef.current,
+                        tool: entry.proposal.kind,
+                        target: entry.proposal.target,
+                        // Persist enough context to replay/audit: the target id+label,
+                        // the body the user would have applied (null for deletes), and
+                        // the SSE proposal id the server emitted.
+                        args: {
+                            proposalId: entry.id,
+                            target: entry.proposal.target,
+                            method: entry.proposal.endpoint.method,
+                            path: entry.proposal.endpoint.path,
+                            body: entry.proposal.endpoint.body ?? null,
+                        },
+                        diff: entry.proposal.diff,
+                        summary: entry.proposal.summary,
+                        prompt: entry.prompt,
+                        model: entry.model,
                         applied,
                         rejected,
                     }),
                 })
+                if (!response.ok) {
+                    const text = await response.text().catch(() => '')
+                    console.warn(`AI audit log returned ${response.status}: ${text || response.statusText}`)
+                    return false
+                }
+                return true
             } catch (error) {
-                // Audit log is best-effort; surface in console only.
                 console.warn('Failed to record AI action audit log:', error)
+                return false
             }
         },
         [eventId, eventApiKey]
@@ -165,7 +182,12 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
                     return
                 }
                 setProposalStatus(id, { status: 'applied' })
-                recordAuditLog(entry.proposal, true, false)
+                const ok = await recordAuditLog(entry, true, false)
+                if (!ok) {
+                    setProposalStatus(id, {
+                        error: 'Change applied, but writing the audit log failed. The action was performed.',
+                    })
+                }
             } catch (error) {
                 setProposalStatus(id, {
                     status: 'failed',
@@ -181,7 +203,7 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
             const entry = state.proposals[id]
             if (!entry || entry.status !== 'pending') return
             setProposalStatus(id, { status: 'rejected' })
-            recordAuditLog(entry.proposal, false, true)
+            recordAuditLog(entry, false, true)
         },
         [state.proposals, setProposalStatus, recordAuditLog]
     )
@@ -194,7 +216,10 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
             }
             if (!userMessage.trim()) return
 
-            lastUserPromptRef.current = userMessage
+            inflightPromptRef.current = userMessage
+            // Reset the model ref; the server emits the chosen model in the
+            // eventSummary event, which lands before the first proposal.
+            inflightModelRef.current = undefined
 
             const baseTurns: ChatTurn[] = [...state.turns, { role: 'user', content: userMessage }]
             setState((s) => ({
@@ -239,6 +264,19 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
                 const decoder = new TextDecoder()
                 let buffer = ''
 
+                const handleEvent = (evt: ChatStreamEvent) => {
+                    if (evt.type === 'eventSummary' && evt.model) {
+                        inflightModelRef.current = evt.model
+                    }
+                    if (evt.type === 'proposal') {
+                        const promptSnapshot = inflightPromptRef.current
+                        const modelSnapshot = inflightModelRef.current
+                        setState((s) => applyEvent(s, evt, { prompt: promptSnapshot, model: modelSnapshot }))
+                    } else {
+                        setState((s) => applyEvent(s, evt))
+                    }
+                }
+
                 while (true) {
                     const { value, done } = await reader.read()
                     if (done) break
@@ -249,13 +287,13 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
                     buffer = buffer.slice(splitIdx + 2)
 
                     for (const evt of parseSseChunk(ready)) {
-                        setState((s) => applyEvent(s, evt))
+                        handleEvent(evt)
                     }
                 }
 
                 if (buffer.trim().length > 0) {
                     for (const evt of parseSseChunk(buffer)) {
-                        setState((s) => applyEvent(s, evt))
+                        handleEvent(evt)
                     }
                 }
             } catch (error: unknown) {
@@ -279,7 +317,11 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
     return { state, send, cancel, reset, applyProposal, rejectProposal }
 }
 
-const applyEvent = (s: UseChatStreamState, evt: ChatStreamEvent): UseChatStreamState => {
+const applyEvent = (
+    s: UseChatStreamState,
+    evt: ChatStreamEvent,
+    proposalContext?: { prompt?: string; model?: string }
+): UseChatStreamState => {
     switch (evt.type) {
         case 'eventSummary':
             return { ...s, eventSummary: evt.event }
@@ -311,7 +353,16 @@ const applyEvent = (s: UseChatStreamState, evt: ChatStreamEvent): UseChatStreamS
         }
         case 'proposal': {
             const status: ProposalStatus = 'pending'
-            const proposals = { ...s.proposals, [evt.id]: { id: evt.id, proposal: evt.proposal, status } }
+            const proposals = {
+                ...s.proposals,
+                [evt.id]: {
+                    id: evt.id,
+                    proposal: evt.proposal,
+                    status,
+                    prompt: proposalContext?.prompt,
+                    model: proposalContext?.model,
+                },
+            }
             const turns = [...s.turns]
             const last = turns[turns.length - 1]
             if (last && last.role === 'assistant') {
