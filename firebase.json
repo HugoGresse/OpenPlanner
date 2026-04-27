@@ -10,13 +10,6 @@
             "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
             "rewrites": [
                 {
-                    "source": "**/v1/*/chat",
-                    "function": {
-                        "functionId": "chatStream",
-                        "region": "europe-west1"
-                    }
-                },
-                {
                     "source": "**/api/**",
                     "function": {
                         "functionId": "api",
@@ -41,13 +34,6 @@
             "public": "api-swagger",
             "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
             "rewrites": [
-                {
-                    "source": "**/v1/*/chat",
-                    "function": {
-                        "functionId": "chatStream",
-                        "region": "europe-west1"
-                    }
-                },
                 {
                     "source": "**",
                     "function": {
