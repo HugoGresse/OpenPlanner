@@ -24,7 +24,10 @@ export type ProposalKind = 'patchSpeaker' | 'patchSession' | 'patchEvent' | 'del
 
 export type Proposal = {
     kind: ProposalKind
+    /** Auto-generated label (server-built from the resolved target). Always present. */
     summary: string
+    /** Optional model-authored explanation (rationale arg on the propose* tool). */
+    rationale?: string
     endpoint: { method: 'PATCH' | 'DELETE'; path: string; body?: Record<string, unknown> }
     target: { id: string; label?: string }
     diff: { before: Record<string, unknown>; after: Record<string, unknown> | null }

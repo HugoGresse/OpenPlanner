@@ -187,12 +187,28 @@ export type ProposalKind = 'patchSpeaker' | 'patchSession' | 'patchEvent' | 'del
 
 export type Proposal = {
     kind: ProposalKind
+    /**
+     * Auto-generated label describing the proposal (e.g. "Update speaker Alice").
+     * Built by the server from the resolved target — never sourced from the model.
+     */
     summary: string
+    /**
+     * Optional model-authored explanation passed via the propose* tool's
+     * `rationale` argument. Surface in the UI as "Reason (from assistant):"
+     * so the user reads it as model-provided context, not authoritative truth.
+     */
+    rationale?: string
     /** Endpoint to call (relative to API base) when the user clicks "Apply". */
     endpoint: { method: 'PATCH' | 'DELETE'; path: string; body?: Record<string, any> }
     target: { id: string; label?: string }
     /** Field-level before/after for patches. For deletes, `before` is the full sanitized record. */
     diff: { before: Record<string, any>; after: Record<string, any> | null }
+}
+
+const sanitizeRationale = (value: unknown): string | undefined => {
+    if (typeof value !== 'string') return undefined
+    const trimmed = value.trim()
+    return trimmed.length === 0 ? undefined : trimmed
 }
 
 export const PROPOSAL_TOOLS: ToolDefinition[] = [
@@ -201,13 +217,18 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
         function: {
             name: 'proposePatchSpeaker',
             description:
-                'Propose a partial update to a speaker. Does NOT apply the change — emits a proposal that the user reviews and confirms in the UI. Always call listSpeakers first to find the correct speakerId. Private fields (email, phone, note) ARE patchable through this tool: the user sees the proposed value in the diff and explicitly approves it before the change is written.',
+                'Propose a partial update to a speaker. Does NOT apply the change — emits a proposal that the user reviews and confirms in the UI. Always call listSpeakers first to find the correct speakerId. You MUST also pass expectedSpeakerName matching the speaker name returned by listSpeakers — the server uses it as a sanity check and rejects the call if the name does not match the document at speakerId. Private fields (email, phone, note) ARE patchable through this tool: the user sees the proposed value in the diff and explicitly approves it before the change is written.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
-                required: ['speakerId', 'patch'],
+                required: ['speakerId', 'expectedSpeakerName', 'patch'],
                 properties: {
                     speakerId: { type: 'string' },
+                    expectedSpeakerName: {
+                        type: 'string',
+                        description:
+                            "The speaker's `name` as returned by listSpeakers. Used as a sanity check against the speakerId; the comparison is case- and whitespace-insensitive but the value should still come straight from listSpeakers.",
+                    },
                     patch: {
                         type: 'object',
                         additionalProperties: false,
@@ -223,13 +244,18 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
         function: {
             name: 'proposePatchSession',
             description:
-                'Propose a partial update to a session. Does NOT apply the change — emits a proposal for user review.',
+                'Propose a partial update to a session. Does NOT apply the change — emits a proposal for user review. You MUST also pass expectedSessionTitle matching the session title returned by listSessions — the server uses it as a sanity check and rejects the call if the title does not match the document at sessionId.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
-                required: ['sessionId', 'patch'],
+                required: ['sessionId', 'expectedSessionTitle', 'patch'],
                 properties: {
                     sessionId: { type: 'string' },
+                    expectedSessionTitle: {
+                        type: 'string',
+                        description:
+                            "The session's `title` as returned by listSessions. Used as a sanity check against the sessionId; the comparison is case- and whitespace-insensitive but the value should still come straight from listSessions.",
+                    },
                     patch: {
                         type: 'object',
                         additionalProperties: false,
@@ -266,13 +292,18 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
         function: {
             name: 'proposeDeleteSpeaker',
             description:
-                'Propose deleting a speaker. Does NOT apply — the user must explicitly confirm the deletion in the UI.',
+                'Propose deleting a speaker. Does NOT apply — the user must explicitly confirm the deletion in the UI. You MUST pass expectedSpeakerName matching the speaker name returned by listSpeakers; the server rejects the call if it does not match the document at speakerId.',
             parameters: {
                 type: 'object',
                 additionalProperties: false,
-                required: ['speakerId'],
+                required: ['speakerId', 'expectedSpeakerName'],
                 properties: {
                     speakerId: { type: 'string' },
+                    expectedSpeakerName: {
+                        type: 'string',
+                        description:
+                            "The speaker's `name` as returned by listSpeakers. Used as a sanity check against the speakerId; the comparison is case- and whitespace-insensitive but the value should still come straight from listSpeakers.",
+                    },
                     rationale: { type: 'string' },
                 },
             },
@@ -291,12 +322,39 @@ export type BuildProposalArgs = {
 
 export type BuildProposalResult = { ok: true; proposal: Proposal } | { ok: false; error: string }
 
+const normalizeForCompare = (value: unknown): string =>
+    typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').toLowerCase() : ''
+
+const expectedNameMismatch = (
+    expected: unknown,
+    actual: unknown,
+    targetType: 'speaker' | 'session',
+    targetId: string
+): string | null => {
+    if (typeof expected !== 'string' || expected.trim().length === 0) {
+        return `expected${
+            targetType === 'speaker' ? 'SpeakerName' : 'SessionTitle'
+        } is required and must be the value returned by list${targetType === 'speaker' ? 'Speakers' : 'Sessions'}.`
+    }
+    if (normalizeForCompare(expected) !== normalizeForCompare(actual)) {
+        return `${targetType === 'speaker' ? 'expectedSpeakerName' : 'expectedSessionTitle'} (${JSON.stringify(
+            expected
+        )}) does not match the ${targetType} document at ${targetId} (current: ${JSON.stringify(
+            actual ?? null
+        )}). Re-run list${
+            targetType === 'speaker' ? 'Speakers' : 'Sessions'
+        } to find the correct id+name pair before proposing.`
+    }
+    return null
+}
+
 export const buildProposal = async ({
     firebaseApp,
     eventId,
     name,
     args,
 }: BuildProposalArgs): Promise<BuildProposalResult> => {
+    const rationale = sanitizeRationale(args?.rationale)
     if (name === 'proposePatchSpeaker') {
         const speakerId = String(args?.speakerId ?? '')
         if (!speakerId) return { ok: false, error: 'speakerId is required' }
@@ -304,19 +362,22 @@ export const buildProposal = async ({
         if (Object.keys(patch).length === 0)
             return { ok: false, error: 'patch must contain at least one allowed field' }
         const existing = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
-        if (!existing || existing === true) return { ok: false, error: `Speaker not found: ${speakerId}` }
-        const speaker = { id: speakerId, ...(existing as any) }
+        if (!existing) return { ok: false, error: `Speaker not found: ${speakerId}` }
+        const speaker: Record<string, any> = { id: speakerId, ...(existing as unknown as Record<string, any>) }
+        const mismatch = expectedNameMismatch(args?.expectedSpeakerName, speaker.name, 'speaker', speakerId)
+        if (mismatch) return { ok: false, error: mismatch }
         return {
             ok: true,
             proposal: {
                 kind: 'patchSpeaker',
-                summary: args?.rationale || `Update speaker ${(speaker as any).name ?? speakerId}`,
+                summary: `Update speaker ${speaker.name ?? speakerId}`,
+                rationale,
                 endpoint: {
                     method: 'PATCH',
                     path: `/v1/${eventId}/speakers/${speakerId}`,
                     body: patch,
                 },
-                target: { id: speakerId, label: (speaker as any).name ?? speakerId },
+                target: { id: speakerId, label: speaker.name ?? speakerId },
                 diff: { before: pick(speaker, Object.keys(patch)), after: patch },
             },
         }
@@ -328,19 +389,22 @@ export const buildProposal = async ({
         if (Object.keys(patch).length === 0)
             return { ok: false, error: 'patch must contain at least one allowed field' }
         const existing = await SessionDao.doesSessionExist(firebaseApp, eventId, sessionId)
-        if (!existing || existing === true) return { ok: false, error: `Session not found: ${sessionId}` }
-        const session = { id: sessionId, ...(existing as any) }
+        if (!existing) return { ok: false, error: `Session not found: ${sessionId}` }
+        const session: Record<string, any> = { id: sessionId, ...(existing as unknown as Record<string, any>) }
+        const mismatch = expectedNameMismatch(args?.expectedSessionTitle, session.title, 'session', sessionId)
+        if (mismatch) return { ok: false, error: mismatch }
         return {
             ok: true,
             proposal: {
                 kind: 'patchSession',
-                summary: args?.rationale || `Update session ${(session as any).title ?? sessionId}`,
+                summary: `Update session ${session.title ?? sessionId}`,
+                rationale,
                 endpoint: {
                     method: 'PATCH',
                     path: `/v1/${eventId}/sessions/${sessionId}`,
                     body: patch,
                 },
-                target: { id: sessionId, label: (session as any).title ?? sessionId },
+                target: { id: sessionId, label: session.title ?? sessionId },
                 diff: { before: pick(session, Object.keys(patch)), after: patch },
             },
         }
@@ -349,18 +413,19 @@ export const buildProposal = async ({
         const patch = pickAllowedFields(args?.patch ?? {}, EVENT_PATCH_FIELDS)
         if (Object.keys(patch).length === 0)
             return { ok: false, error: 'patch must contain at least one allowed field' }
-        const event = await EventDao.getEvent(firebaseApp, eventId)
+        const event = (await EventDao.getEvent(firebaseApp, eventId)) as unknown as Record<string, any>
         return {
             ok: true,
             proposal: {
                 kind: 'patchEvent',
-                summary: args?.rationale || `Update event ${(event as any).name ?? eventId}`,
+                summary: `Update event ${event.name ?? eventId}`,
+                rationale,
                 endpoint: {
                     method: 'PATCH',
                     path: `/v1/${eventId}/event`,
                     body: patch,
                 },
-                target: { id: eventId, label: (event as any).name ?? eventId },
+                target: { id: eventId, label: event.name ?? eventId },
                 diff: { before: pick(event, Object.keys(patch)), after: patch },
             },
         }
@@ -369,14 +434,17 @@ export const buildProposal = async ({
         const speakerId = String(args?.speakerId ?? '')
         if (!speakerId) return { ok: false, error: 'speakerId is required' }
         const existing = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
-        if (!existing || existing === true) return { ok: false, error: `Speaker not found: ${speakerId}` }
-        const speaker = { id: speakerId, ...(existing as any) }
-        const { email, phone, note, ...sanitized } = speaker
+        if (!existing) return { ok: false, error: `Speaker not found: ${speakerId}` }
+        const speaker: Record<string, any> = { id: speakerId, ...(existing as unknown as Record<string, any>) }
+        const mismatch = expectedNameMismatch(args?.expectedSpeakerName, speaker.name, 'speaker', speakerId)
+        if (mismatch) return { ok: false, error: mismatch }
+        const { email: _email, phone: _phone, note: _note, ...sanitized } = speaker
         return {
             ok: true,
             proposal: {
                 kind: 'deleteSpeaker',
-                summary: args?.rationale || `Delete speaker ${speaker.name ?? speakerId}`,
+                summary: `Delete speaker ${speaker.name ?? speakerId}`,
+                rationale,
                 endpoint: { method: 'DELETE', path: `/v1/${eventId}/speakers/${speakerId}` },
                 target: { id: speakerId, label: speaker.name ?? speakerId },
                 diff: { before: sanitized, after: null },

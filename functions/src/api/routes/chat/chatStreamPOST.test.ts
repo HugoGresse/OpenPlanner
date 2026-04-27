@@ -190,8 +190,16 @@ describe('POST /v1/:eventId/chat', () => {
         doesExist.mockResolvedValueOnce(sp1 as any)
         doesExist.mockResolvedValueOnce(sp2 as any)
 
-        const args1 = JSON.stringify({ speakerId: 'sp1', patch: { bio: 'a' } })
-        const args2 = JSON.stringify({ speakerId: 'sp2', patch: { bio: 'b' } })
+        const args1 = JSON.stringify({
+            speakerId: 'sp1',
+            expectedSpeakerName: 'Alice',
+            patch: { bio: 'a' },
+        })
+        const args2 = JSON.stringify({
+            speakerId: 'sp2',
+            expectedSpeakerName: 'Bob',
+            patch: { bio: 'b' },
+        })
 
         // Single round: model emits two proposal tool calls in parallel.
         fetchSpy.mockResolvedValueOnce(
@@ -238,7 +246,11 @@ describe('POST /v1/:eventId/chat', () => {
             id: `call_${i}`,
             function: {
                 name: 'proposePatchSpeaker',
-                arguments: JSON.stringify({ speakerId: 'sp1', patch: { bio: `v${i}` } }),
+                arguments: JSON.stringify({
+                    speakerId: 'sp1',
+                    expectedSpeakerName: 'Alice',
+                    patch: { bio: `v${i}` },
+                }),
             },
         }))
         const argsPayload = JSON.stringify({ tool_calls: toolCalls })
@@ -275,7 +287,11 @@ describe('POST /v1/:eventId/chat', () => {
         vi.spyOn(SpeakerDao, 'doesSpeakerExist').mockResolvedValue(speaker as any)
 
         // Round 1: model asks for proposePatchSpeaker
-        const args = JSON.stringify({ speakerId: 'sp1', patch: { bio: 'new bio' } })
+        const args = JSON.stringify({
+            speakerId: 'sp1',
+            expectedSpeakerName: 'Alice',
+            patch: { bio: 'new bio' },
+        })
         fetchSpy.mockResolvedValueOnce(
             sseStream([
                 `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_w","function":{"name":"proposePatchSpeaker","arguments":${JSON.stringify(
@@ -304,5 +320,43 @@ describe('POST /v1/:eventId/chat', () => {
         expect(res.body).toContain('"before"')
         expect(res.body).toContain('"after"')
         expect(res.body).toContain('"status":"pending_user_approval"')
+    })
+
+    test('rejects a proposal when expectedSpeakerName does not match the speaker doc', async () => {
+        mockEventLookup(fastify)
+        mockEventLoad()
+        vi.spyOn(SessionDao, 'getSessions').mockResolvedValue([] as any)
+        const speaker = { id: 'sp1', name: 'Alice', bio: 'old' }
+        vi.spyOn(SpeakerDao, 'getSpeakers').mockResolvedValue([speaker] as any)
+        vi.spyOn(SpeakerDao, 'doesSpeakerExist').mockResolvedValue(speaker as any)
+
+        // Model picked the right id (sp1 = Alice) but typed the wrong name in
+        // expectedSpeakerName. The server must refuse rather than emit a
+        // proposal that would patch the wrong-looking speaker.
+        const args = JSON.stringify({
+            speakerId: 'sp1',
+            expectedSpeakerName: 'Bob',
+            patch: { bio: 'something' },
+        })
+        fetchSpy.mockResolvedValueOnce(
+            sseStream([
+                `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_x","function":{"name":"proposePatchSpeaker","arguments":${JSON.stringify(
+                    args
+                )}}}]},"finish_reason":"tool_calls"}]}\n\n`,
+                'data: [DONE]\n\n',
+            ])
+        )
+        fetchSpy.mockResolvedValueOnce(
+            sseStream(['data: {"choices":[{"delta":{"content":"ok"},"finish_reason":"stop"}]}\n\n', 'data: [DONE]\n\n'])
+        )
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url,
+            payload: { messages: [{ role: 'user', content: 'change alice bio' }] },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(res.body).not.toContain('"type":"proposal"')
+        expect(res.body).toContain('does not match the speaker document')
     })
 })

@@ -88,7 +88,9 @@ Batching:
 - Group only changes that fit a single user request together. Don't mix unrelated edits.
 
 Rules:
-- Always call list/find tools before referring to a specific id; never invent ids.
+- Always call list/find tools before referring to a specific id; never invent ids. When you call a propose* tool, you MUST pass expectedSpeakerName / expectedSessionTitle that exactly matches what listSpeakers / listSessions returned for that id. The server uses it as a sanity check and rejects the call if the value doesn't match the document at the given id (this prevents you from accidentally proposing a change against the wrong speaker / session).
+- If a propose* call comes back rejected with an "expected*…" message, RE-RUN the matching list tool to refresh the id+name pairs before retrying.
+- Make the rationale match the same speaker / session you're patching: it appears next to the resolved name in the user's review card, so a mismatch is confusing.
 - Keep responses concise.
 - After a batch, end your reply with a short summary of what the user will see (e.g. "5 sessions queued for review").`
 
