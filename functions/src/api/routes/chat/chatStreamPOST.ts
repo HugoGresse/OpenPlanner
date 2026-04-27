@@ -178,11 +178,17 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
             SpeakerDao.getSpeakers(fastify.firebase, eventId).catch(() => [] as unknown[]),
         ])
 
+        const requestOrigin = (request.headers.origin as string | undefined) || '*'
         reply.raw.writeHead(200, {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
             'X-Accel-Buffering': 'no',
             Connection: 'keep-alive',
+            // reply.hijack() bypasses Fastify's onSend hook, including @fastify/cors,
+            // so CORS headers must be written manually.
+            'Access-Control-Allow-Origin': requestOrigin,
+            'Access-Control-Allow-Credentials': 'true',
+            Vary: 'Origin',
         })
         reply.hijack()
 
