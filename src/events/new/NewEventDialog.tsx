@@ -70,7 +70,6 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         statusBadgeImage: null,
                         statusBadgeLink: null,
                         apiKey: generateApiKey(),
-                        openAPIKey: null,
                         gladiaAPIKey: null,
                         openRouterAPIKey: null,
                         openRouterModel: null,

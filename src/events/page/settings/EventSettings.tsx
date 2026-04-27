@@ -283,16 +283,6 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     <TextFieldElementPrivate
                                         margin="normal"
                                         fullWidth
-                                        id="openAPIKey"
-                                        label="OpenAI API key"
-                                        name="openAPIKey"
-                                        variant="filled"
-                                        disabled={formState.isSubmitting}
-                                    />
-
-                                    <TextFieldElementPrivate
-                                        margin="normal"
-                                        fullWidth
                                         id="gladiaAPIKey"
                                         label="Gladia.io API key or token"
                                         name="gladiaAPIKey"

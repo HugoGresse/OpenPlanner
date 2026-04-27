@@ -165,7 +165,6 @@ export interface Event {
     files: EventFiles | null
     statusBadgeImage: string | null
     statusBadgeLink: string | null
-    openAPIKey: string | null
     gladiaAPIKey: string | null
     openRouterAPIKey: string | null
     openRouterModel: string | null
