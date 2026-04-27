@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { API_URL } from '../../../env'
 import { ChatMessage, ChatStreamEvent, EventSummary, ToolInvocation } from './types'
 
@@ -46,47 +46,6 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
     })
     const abortRef = useRef<AbortController | null>(null)
 
-    // rAF-throttled event buffer. Without this, fast streams that complete
-    // within one or two browser tasks let React 18 auto-batching collapse all
-    // setState calls into a single render — content appears to "pop in".
-    const pendingRef = useRef<ChatStreamEvent[]>([])
-    const rafRef = useRef<number | null>(null)
-    const scheduleFlush = useCallback(() => {
-        if (rafRef.current !== null) return
-        rafRef.current = requestAnimationFrame(() => {
-            rafRef.current = null
-            const queued = pendingRef.current
-            if (queued.length === 0) return
-            pendingRef.current = []
-            setState((s) => queued.reduce((acc, evt) => applyEvent(acc, evt), s))
-        })
-    }, [])
-
-    useEffect(() => {
-        return () => {
-            if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-        }
-    }, [])
-
-    const queueEvent = useCallback(
-        (evt: ChatStreamEvent) => {
-            pendingRef.current.push(evt)
-            scheduleFlush()
-        },
-        [scheduleFlush]
-    )
-
-    const flushPendingNow = useCallback(() => {
-        if (rafRef.current !== null) {
-            cancelAnimationFrame(rafRef.current)
-            rafRef.current = null
-        }
-        const queued = pendingRef.current
-        if (queued.length === 0) return
-        pendingRef.current = []
-        setState((s) => queued.reduce((acc, evt) => applyEvent(acc, evt), s))
-    }, [])
-
     const cancel = useCallback(() => {
         abortRef.current?.abort()
         abortRef.current = null
@@ -96,11 +55,6 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
     const reset = useCallback(() => {
         abortRef.current?.abort()
         abortRef.current = null
-        pendingRef.current = []
-        if (rafRef.current !== null) {
-            cancelAnimationFrame(rafRef.current)
-            rafRef.current = null
-        }
         setState({ turns: [], streaming: false, error: null, eventSummary: null })
     }, [])
 
@@ -165,18 +119,17 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
                     buffer = buffer.slice(splitIdx + 2)
 
                     for (const evt of parseSseChunk(ready)) {
-                        queueEvent(evt)
+                        setState((s) => applyEvent(s, evt))
                     }
                 }
 
                 if (buffer.trim().length > 0) {
                     for (const evt of parseSseChunk(buffer)) {
-                        queueEvent(evt)
+                        setState((s) => applyEvent(s, evt))
                     }
                 }
             } catch (error: unknown) {
                 if ((error as Error)?.name === 'AbortError') {
-                    flushPendingNow()
                     setState((s) => ({ ...s, streaming: false }))
                     return
                 }
@@ -187,11 +140,10 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
                 }))
             } finally {
                 abortRef.current = null
-                flushPendingNow()
                 setState((s) => ({ ...s, streaming: false }))
             }
         },
-        [eventId, eventApiKey, state.turns, queueEvent, flushPendingNow]
+        [eventId, eventApiKey, state.turns]
     )
 
     return { state, send, cancel, reset }
