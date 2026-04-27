@@ -29,7 +29,14 @@ const validateAgainstOpenRouter = async (key: string): Promise<{ ok: true } | { 
     try {
         const res = await fetch(OPENROUTER_AUTH_KEY_URL, {
             method: 'GET',
-            headers: { Authorization: `Bearer ${key}` },
+            headers: {
+                Authorization: `Bearer ${key}`,
+                // Same attribution headers the rest of the codebase sends on
+                // OpenRouter requests (services/openRouter.ts +
+                // functions/src/api/routes/chat/chatStreamPOST.ts).
+                'HTTP-Referer': 'https://openplanner.fr',
+                'X-Title': 'OpenPlanner',
+            },
         })
         if (res.status === 401 || res.status === 403) {
             return { ok: false, error: 'OpenRouter rejected this key (unauthorized).' }
@@ -126,7 +133,9 @@ export const ChatSetupPanel = ({ event, onSaved }: ChatSetupPanelProps) => {
                     OpenRouter
                 </Link>
                 . You bring your own API key — billing happens directly on your OpenRouter account, not OpenPlanner. The
-                key is stored on this event document and only the OpenPlanner backend reads it.
+                key is stored on this event document. Anyone with admin access to this event can read it (same level as
+                the existing OpenAI / Gladia keys), and the OpenPlanner backend uses it to call OpenRouter on your
+                behalf.
             </Alert>
 
             <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
