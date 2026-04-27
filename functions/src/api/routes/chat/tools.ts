@@ -16,8 +16,12 @@ export type ToolDefinition = {
 
 // Token-budget guardrails. Heavy fields like bio / abstract are excluded from
 // list and getX results by default — the model can opt them in per call via
-// the `fields` array. Private fields (email/phone/note for speakers, note for
-// sessions) are NEVER returned to the model regardless of `fields`.
+// the `fields` array. Private fields (email/phone/note on speakers, note on
+// sessions) are also gated behind `fields`: they sit in ALLOWED but not in
+// DEFAULT, so the model only sees them when it explicitly asks. The chat
+// route is apiKey-protected, so this matches the access level granted by
+// the underlying GET endpoints (which expose the same fields via
+// includePrivate=true).
 
 const ALLOWED_SPEAKER_FIELDS = [
     'id',
@@ -32,6 +36,10 @@ const ALLOWED_SPEAKER_FIELDS = [
     'socials',
     'customFields',
     'conferenceHallId',
+    // Private — opt-in via fields[].
+    'email',
+    'phone',
+    'note',
 ] as const
 const DEFAULT_SPEAKER_FIELDS = ['id', 'name', 'pronouns', 'jobTitle', 'company', 'customFields'] as const
 
@@ -57,6 +65,8 @@ const ALLOWED_SESSION_FIELDS = [
     'teaserVideoUrl',
     'teaserImageUrl',
     'conferenceHallId',
+    // Private — opt-in via fields[].
+    'note',
 ] as const
 const DEFAULT_SESSION_FIELDS = [
     'id',
@@ -90,16 +100,6 @@ const projectFields = (
     // Always carry the id so the model can correlate / reference items.
     if (obj?.id !== undefined && out.id === undefined) out.id = obj.id
     return out
-}
-
-const stripPrivateSpeakerFields = (speaker: any) => {
-    const { email, phone, note, ...rest } = speaker
-    return rest
-}
-
-const stripPrivateSessionFields = (session: any) => {
-    const { note, ...rest } = session
-    return rest
 }
 
 // Sponsor docs may carry an internal management token plus other fields the
@@ -173,7 +173,7 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
             name: 'listSessions',
             description: `List sessions for the current event. Returns a lean projection by default (${DEFAULT_SESSION_FIELDS.join(
                 ', '
-            )}) to keep token usage low. Pass the optional fields[] to opt into heavier fields like abstract or imageUrl. Private notes are always stripped.`,
+            )}) to keep token usage low. Pass the optional fields[] to opt into heavier fields like abstract / imageUrl, or into the private 'note' field.`,
             parameters: {
                 type: 'object',
                 additionalProperties: false,
@@ -194,7 +194,7 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
             name: 'getSession',
             description: `Fetch a single session by ID. Returns a lean projection by default (${DEFAULT_SESSION_FIELDS.join(
                 ', '
-            )}); pass fields[] to opt into heavier fields. Private notes are always stripped.`,
+            )}); pass fields[] to opt into heavier or private fields (e.g. 'abstract', 'note').`,
             parameters: {
                 type: 'object',
                 additionalProperties: false,
@@ -212,7 +212,7 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
             name: 'listSpeakers',
             description: `List speakers for the current event. Returns a lean projection by default (${DEFAULT_SPEAKER_FIELDS.join(
                 ', '
-            )}); pass fields[] to opt into heavier fields like bio or photoUrl. Private fields (email, phone, note) are always stripped.`,
+            )}); pass fields[] to opt into heavier fields like bio / photoUrl or private fields (email, phone, note). Only ask for private fields when the user's request actually needs them.`,
             parameters: {
                 type: 'object',
                 additionalProperties: false,
@@ -229,7 +229,7 @@ export const READ_ONLY_TOOLS: ToolDefinition[] = [
             name: 'getSpeaker',
             description: `Fetch a single speaker by ID. Returns a lean projection by default (${DEFAULT_SPEAKER_FIELDS.join(
                 ', '
-            )}); pass fields[] to opt into heavier fields. Private fields (email, phone, note) are always stripped.`,
+            )}); pass fields[] to opt into heavier or private fields (e.g. 'bio', 'photoUrl', 'email', 'phone', 'note'). Only ask for private fields when the user's request actually needs them.`,
             parameters: {
                 type: 'object',
                 additionalProperties: false,
@@ -286,38 +286,26 @@ export const executeTool = async (
             const limit = typeof args.limit === 'number' ? Math.min(args.limit, 500) : 200
             return sessions
                 .slice(0, limit)
-                .map(stripPrivateSessionFields)
                 .map((s) => projectFields(s, args.fields, ALLOWED_SESSION_FIELDS, DEFAULT_SESSION_FIELDS))
         }
         case 'getSession': {
             const sessions = await SessionDao.getSessions(firebaseApp, eventId)
             const session = sessions.find((s: any) => s.id === args.sessionId)
             if (!session) return { error: 'Session not found' }
-            return projectFields(
-                stripPrivateSessionFields(session),
-                args.fields,
-                ALLOWED_SESSION_FIELDS,
-                DEFAULT_SESSION_FIELDS
-            )
+            return projectFields(session, args.fields, ALLOWED_SESSION_FIELDS, DEFAULT_SESSION_FIELDS)
         }
         case 'listSpeakers': {
             const speakers = await SpeakerDao.getSpeakers(firebaseApp, eventId)
             const limit = typeof args.limit === 'number' ? Math.min(args.limit, 500) : 200
             return speakers
                 .slice(0, limit)
-                .map(stripPrivateSpeakerFields)
                 .map((s) => projectFields(s, args.fields, ALLOWED_SPEAKER_FIELDS, DEFAULT_SPEAKER_FIELDS))
         }
         case 'getSpeaker': {
             const speakers = await SpeakerDao.getSpeakers(firebaseApp, eventId)
             const speaker = speakers.find((s: any) => s.id === args.speakerId)
             if (!speaker) return { error: 'Speaker not found' }
-            return projectFields(
-                stripPrivateSpeakerFields(speaker),
-                args.fields,
-                ALLOWED_SPEAKER_FIELDS,
-                DEFAULT_SPEAKER_FIELDS
-            )
+            return projectFields(speaker, args.fields, ALLOWED_SPEAKER_FIELDS, DEFAULT_SPEAKER_FIELDS)
         }
         case 'listSponsors': {
             const sponsors = await SponsorDao.getSponsors(firebaseApp, eventId)

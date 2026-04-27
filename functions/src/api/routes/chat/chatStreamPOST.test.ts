@@ -268,6 +268,47 @@ describe('POST /v1/:eventId/chat', () => {
         expect(res.body).not.toContain('"photoUrl"')
     })
 
+    test('listSpeakers exposes private fields when explicitly requested via fields[]', async () => {
+        mockEventLookup(fastify)
+        mockEventLoad()
+        vi.spyOn(SessionDao, 'getSessions').mockResolvedValue([] as any)
+        const speakers = [
+            {
+                id: 'sp1',
+                name: 'Alice',
+                jobTitle: 'Engineer',
+                email: 'alice@example.com',
+                phone: '+1-555-1234',
+                note: 'top contributor',
+            },
+        ]
+        vi.spyOn(SpeakerDao, 'getSpeakers').mockResolvedValue(speakers as any)
+
+        const args = JSON.stringify({ fields: ['name', 'email', 'phone'] })
+        fetchSpy.mockResolvedValueOnce(
+            sseStream([
+                `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_x","function":{"name":"listSpeakers","arguments":${JSON.stringify(
+                    args
+                )}}}]},"finish_reason":"tool_calls"}]}\n\n`,
+                'data: [DONE]\n\n',
+            ])
+        )
+        fetchSpy.mockResolvedValueOnce(
+            sseStream(['data: {"choices":[{"delta":{"content":"ok"},"finish_reason":"stop"}]}\n\n', 'data: [DONE]\n\n'])
+        )
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url,
+            payload: { messages: [{ role: 'user', content: 'list with email + phone' }] },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toContain('alice@example.com')
+        expect(res.body).toContain('+1-555-1234')
+        // note was NOT requested → still absent.
+        expect(res.body).not.toContain('top contributor')
+    })
+
     test('emits multiple proposals in one turn for batch review', async () => {
         mockEventLookup(fastify)
         mockEventLoad()
