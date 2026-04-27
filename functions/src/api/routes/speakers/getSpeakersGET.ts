@@ -8,7 +8,7 @@ const ApiSocialSchema = Type.Object({
     link: Type.String(),
 })
 
-export const ApiSpeakerPublicSchema = Type.Object({
+export const ApiSpeakerSchema = Type.Object({
     id: Type.String(),
     conferenceHallId: Type.Union([Type.String(), Type.Null()]),
     name: Type.String(),
@@ -25,7 +25,7 @@ export const ApiSpeakerPublicSchema = Type.Object({
     phone: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     note: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 })
-export type ApiSpeakerPublicType = Static<typeof ApiSpeakerPublicSchema>
+export type ApiSpeakerType = Static<typeof ApiSpeakerSchema>
 
 const DEFAULT_LIMIT = 200
 const MAX_LIMIT = 500
@@ -33,7 +33,7 @@ const MAX_LIMIT = 500
 export type GetSpeakersGETTypes = {
     Params: { eventId: string }
     Querystring: { apiKey?: string; limit?: number; offset?: number; includePrivate?: boolean }
-    Reply: ApiSpeakerPublicType[] | string
+    Reply: ApiSpeakerType[] | string
 }
 
 export const getSpeakersGETSchema = {
@@ -59,7 +59,7 @@ export const getSpeakersGETSchema = {
         },
     },
     response: {
-        200: Type.Array(ApiSpeakerPublicSchema),
+        200: Type.Array(ApiSpeakerSchema),
         400: Type.String(),
     },
     security: [{ apiKey: [] }],
@@ -80,8 +80,8 @@ export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
             const speakers = await SpeakerDao.getSpeakers(fastify.firebase, eventId)
             const page = speakers.slice(offset, offset + limit)
 
-            const result: ApiSpeakerPublicType[] = page.map((s) => {
-                const out: ApiSpeakerPublicType = {
+            const result: ApiSpeakerType[] = page.map((s) => {
+                const out: ApiSpeakerType = {
                     id: s.id,
                     conferenceHallId: s.conferenceHallId ?? null,
                     name: s.name,

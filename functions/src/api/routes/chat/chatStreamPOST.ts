@@ -39,9 +39,9 @@ export type ChatStreamPOSTTypes = {
 
 export const chatStreamPOSTSchema = {
     tags: ['chat'],
-    summary: 'Stream a chatbot response (read-only) for the event using OpenRouter + tool calling',
+    summary: 'Stream the OpenPlanner chat assistant for an event (read + propose-write)',
     description:
-        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n`. Tool execution happens server-side; only read-only tools are allowed in this version.',
+        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n` and executes whitelisted read tools server-side. Write tools (proposePatchSpeaker / proposePatchSession / proposePatchEvent / proposeDeleteSpeaker) NEVER mutate Firestore directly — they emit a `proposal` event with a field-level diff that the client renders for explicit user approval before the corresponding PATCH/DELETE endpoint is hit. A request is capped at 25 proposals (model batches related changes for review). The route also emits `usage` events so callers can track per-event monthly token spend.',
     params: {
         type: 'object',
         properties: { eventId: { type: 'string' } },
@@ -205,6 +205,13 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
 
         // Per-event monthly token cap. Stored as a non-negative integer; null /
         // undefined / 0 / NaN / negative all mean "no cap".
+        //
+        // Note: soft cap. The check (read usage) and the increment (after the
+        // OpenRouter response) are not atomic, so two concurrent requests can
+        // each pass the check before either has incremented. Strict enforcement
+        // would need a transactional pre-reservation of an estimated token
+        // budget reconciled against real usage afterward — fine to add later
+        // if it ever becomes a problem; the assistant is admin-only today.
         const rawCap = Number((event as any).openRouterMonthlyTokenCap)
         const monthlyCap = Number.isFinite(rawCap) && Number.isInteger(rawCap) && rawCap > 0 ? rawCap : 0
         if (monthlyCap > 0) {

@@ -79,6 +79,102 @@ const pickAllowedFields = <T extends string>(
     return out
 }
 
+// JSON Schema fragments per allowed patch field. These are advertised to
+// OpenRouter as the tool parameter schemas so the model knows the expected
+// type for each field instead of treating everything as `any`. Aligns with
+// the actual PATCH endpoint schemas (see updateSpeakerPATCH / patchSessionPATCH /
+// patchEventPATCH). Anything not listed here defaults to "any" via the spread.
+const STRING_FIELD = { type: ['string', 'null'] }
+const URI_FIELD = { type: ['string', 'null'], format: 'uri' }
+const BOOLEAN_FIELD = { type: 'boolean' }
+const NUMBER_FIELD = { type: 'number' }
+const STRING_ARRAY_FIELD = { type: 'array', items: { type: 'string' } }
+const SOCIALS_FIELD = {
+    type: 'array',
+    items: {
+        type: 'object',
+        properties: {
+            name: { type: 'string' },
+            icon: { type: 'string' },
+            link: { type: 'string', format: 'uri' },
+        },
+        required: ['name', 'link'],
+        additionalProperties: false,
+    },
+}
+const CUSTOM_FIELDS_FIELD = {
+    type: 'object',
+    additionalProperties: { anyOf: [{ type: 'string' }, { type: 'boolean' }] },
+}
+const DATE_RANGE_FIELD = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+        start: { type: ['string', 'null'] },
+        end: { type: ['string', 'null'] },
+    },
+}
+const ITEM_LIST_FIELD = {
+    type: 'array',
+    items: { type: 'object', additionalProperties: true },
+}
+
+const SPEAKER_FIELD_SCHEMAS: Record<(typeof SPEAKER_PATCH_FIELDS)[number], object> = {
+    name: { type: 'string' },
+    pronouns: STRING_FIELD,
+    jobTitle: STRING_FIELD,
+    bio: STRING_FIELD,
+    company: STRING_FIELD,
+    companyLogoUrl: URI_FIELD,
+    geolocation: STRING_FIELD,
+    photoUrl: URI_FIELD,
+    socials: SOCIALS_FIELD,
+    customFields: CUSTOM_FIELDS_FIELD,
+    email: STRING_FIELD,
+    phone: STRING_FIELD,
+    note: STRING_FIELD,
+}
+
+const SESSION_FIELD_SCHEMAS: Record<(typeof SESSION_PATCH_FIELDS)[number], object> = {
+    title: { type: 'string' },
+    abstract: STRING_FIELD,
+    durationMinutes: NUMBER_FIELD,
+    speakers: STRING_ARRAY_FIELD,
+    trackId: STRING_FIELD,
+    language: STRING_FIELD,
+    level: STRING_FIELD,
+    presentationLink: URI_FIELD,
+    videoLink: URI_FIELD,
+    imageUrl: URI_FIELD,
+    tags: STRING_ARRAY_FIELD,
+    format: STRING_FIELD,
+    category: STRING_FIELD,
+    showInFeedback: BOOLEAN_FIELD,
+    hideTrackTitle: BOOLEAN_FIELD,
+    teasingHidden: BOOLEAN_FIELD,
+}
+
+const EVENT_FIELD_SCHEMAS: Record<(typeof EVENT_PATCH_FIELDS)[number], object> = {
+    name: { type: 'string' },
+    dates: DATE_RANGE_FIELD,
+    locationName: STRING_FIELD,
+    locationUrl: STRING_FIELD,
+    logoUrl: STRING_FIELD,
+    logoUrl2: STRING_FIELD,
+    backgroundUrl: STRING_FIELD,
+    color: STRING_FIELD,
+    colorSecondary: STRING_FIELD,
+    colorBackground: STRING_FIELD,
+    tracks: ITEM_LIST_FIELD,
+    formats: ITEM_LIST_FIELD,
+    categories: ITEM_LIST_FIELD,
+    sponsorCustomFields: ITEM_LIST_FIELD,
+    speakerCustomFields: ITEM_LIST_FIELD,
+    timezone: STRING_FIELD,
+    scheduleVisible: BOOLEAN_FIELD,
+    publicEnabled: BOOLEAN_FIELD,
+}
+
 const pick = (obj: any, keys: string[]): Record<string, any> => {
     const out: Record<string, any> = {}
     for (const k of keys) {
@@ -115,10 +211,7 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
                     patch: {
                         type: 'object',
                         additionalProperties: false,
-                        properties: SPEAKER_PATCH_FIELDS.reduce<Record<string, any>>((acc, k) => {
-                            acc[k] = {}
-                            return acc
-                        }, {}),
+                        properties: SPEAKER_FIELD_SCHEMAS,
                     },
                     rationale: { type: 'string', description: 'One short sentence explaining why.' },
                 },
@@ -140,10 +233,7 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
                     patch: {
                         type: 'object',
                         additionalProperties: false,
-                        properties: SESSION_PATCH_FIELDS.reduce<Record<string, any>>((acc, k) => {
-                            acc[k] = {}
-                            return acc
-                        }, {}),
+                        properties: SESSION_FIELD_SCHEMAS,
                     },
                     rationale: { type: 'string' },
                 },
@@ -164,10 +254,7 @@ export const PROPOSAL_TOOLS: ToolDefinition[] = [
                     patch: {
                         type: 'object',
                         additionalProperties: false,
-                        properties: EVENT_PATCH_FIELDS.reduce<Record<string, any>>((acc, k) => {
-                            acc[k] = {}
-                            return acc
-                        }, {}),
+                        properties: EVENT_FIELD_SCHEMAS,
                     },
                     rationale: { type: 'string' },
                 },

@@ -35,15 +35,16 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
     const openRouterAPIKey = data.openRouterAPIKey || ''
     const openRouterModel = data.openRouterModel || ''
     // Persist null when empty / unset; otherwise a non-negative integer. Any
-    // non-numeric / negative / non-finite input is normalized to null so it
-    // doesn't silently disable the cap or store nonsense.
+    // non-numeric / negative / non-finite / non-integer input is normalized to
+    // null so it doesn't silently disable the cap or store nonsense (e.g. 0.5
+    // would have rounded down to 0 = "no cap").
     const openRouterMonthlyTokenCap = (() => {
         const raw: unknown = data.openRouterMonthlyTokenCap
         if (raw === undefined || raw === null) return null
         if (typeof raw === 'string' && raw.trim() === '') return null
         const parsed = Number(raw)
-        if (!Number.isFinite(parsed) || parsed < 0) return null
-        return Math.floor(parsed)
+        if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0) return null
+        return parsed
     })()
     const transcriptionPassword = data.transcriptionPassword || ''
     const timezone = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
