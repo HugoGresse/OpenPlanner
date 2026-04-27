@@ -94,4 +94,50 @@ describe('PATCH /v1/:eventId/sessions/:sessionId', () => {
         expect((call.dates as any).start).toBeInstanceOf(Date)
         expect((call.dates as any).end).toBeInstanceOf(Date)
     })
+
+    test('returns 400 when dates.start is an invalid date string', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        const patchSpy = vi.spyOn(SessionDao, 'patchSession').mockResolvedValue(undefined)
+
+        const res = await fastify.inject({
+            method: 'PATCH',
+            url: `/v1/${eventId}/sessions/${sessionId}?apiKey=${apiKey}`,
+            payload: { dates: { start: 'not-a-real-date' } },
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body).toContain('Invalid dates.start')
+        expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('only updates dates.start when end is omitted (true partial update)', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        const patchSpy = vi.spyOn(SessionDao, 'patchSession').mockResolvedValue(undefined)
+
+        const res = await fastify.inject({
+            method: 'PATCH',
+            url: `/v1/${eventId}/sessions/${sessionId}?apiKey=${apiKey}`,
+            payload: { dates: { start: '2024-06-01T09:00:00.000Z' } },
+        })
+
+        expect(res.statusCode).toBe(200)
+        const call = patchSpy.mock.calls[0][2]
+        expect(call.dates).toBeTruthy()
+        expect((call.dates as any).start).toBeInstanceOf(Date)
+        expect((call.dates as any).end).toBeUndefined()
+    })
+
+    test('clears dates with explicit null', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        const patchSpy = vi.spyOn(SessionDao, 'patchSession').mockResolvedValue(undefined)
+
+        const res = await fastify.inject({
+            method: 'PATCH',
+            url: `/v1/${eventId}/sessions/${sessionId}?apiKey=${apiKey}`,
+            payload: { dates: null },
+        })
+
+        expect(res.statusCode).toBe(200)
+        expect(patchSpy.mock.calls[0][2].dates).toBeNull()
+    })
 })

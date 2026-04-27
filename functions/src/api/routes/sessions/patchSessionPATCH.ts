@@ -114,17 +114,26 @@ export const patchSessionRouteHandler = (fastify: FastifyInstance) => {
                 if (dates === null) {
                     patch.dates = null
                 } else {
-                    const start = dates.start ? new Date(dates.start) : null
-                    if (start !== null && Number.isNaN(start.getTime())) {
-                        reply.status(400).send('Invalid dates.start value')
-                        return
+                    const datesPatch: { start?: Date | null; end?: Date | null } = {}
+                    if (dates.start !== undefined) {
+                        const start = dates.start ? new Date(dates.start) : null
+                        if (start !== null && Number.isNaN(start.getTime())) {
+                            reply.status(400).send('Invalid dates.start value')
+                            return
+                        }
+                        datesPatch.start = start
                     }
-                    const end = dates.end ? new Date(dates.end) : null
-                    if (end !== null && Number.isNaN(end.getTime())) {
-                        reply.status(400).send('Invalid dates.end value')
-                        return
+                    if (dates.end !== undefined) {
+                        const end = dates.end ? new Date(dates.end) : null
+                        if (end !== null && Number.isNaN(end.getTime())) {
+                            reply.status(400).send('Invalid dates.end value')
+                            return
+                        }
+                        datesPatch.end = end
                     }
-                    patch.dates = { start, end }
+                    if (Object.keys(datesPatch).length > 0) {
+                        patch.dates = datesPatch as Session['dates']
+                    }
                 }
             }
 

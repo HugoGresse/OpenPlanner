@@ -93,4 +93,36 @@ describe('PATCH /v1/:eventId/event', () => {
         expect((call.dates as any).start).toBeInstanceOf(Date)
         expect((call.dates as any).end).toBeInstanceOf(Date)
     })
+
+    test('returns 400 when dates.end is an invalid date string', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        const patchSpy = vi.spyOn(EventDao, 'patchEvent').mockResolvedValue(undefined)
+
+        const res = await fastify.inject({
+            method: 'PATCH',
+            url: `/v1/${eventId}/event?apiKey=${apiKey}`,
+            payload: { dates: { start: '2024-06-01', end: 'banana' } },
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.body).toContain('Invalid dates.end')
+        expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('only updates dates.end when start is omitted (true partial update)', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        const patchSpy = vi.spyOn(EventDao, 'patchEvent').mockResolvedValue(undefined)
+
+        const res = await fastify.inject({
+            method: 'PATCH',
+            url: `/v1/${eventId}/event?apiKey=${apiKey}`,
+            payload: { dates: { end: '2024-06-03' } },
+        })
+
+        expect(res.statusCode).toBe(200)
+        const call = patchSpy.mock.calls[0][2]
+        expect(call.dates).toBeTruthy()
+        expect((call.dates as any).start).toBeUndefined()
+        expect((call.dates as any).end).toBeInstanceOf(Date)
+    })
 })

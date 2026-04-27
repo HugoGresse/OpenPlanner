@@ -42,6 +42,34 @@ describe('GET /v1/:eventId/speakers', () => {
         expect(res.statusCode).toBe(400)
     })
 
+    test('normalizes missing nullable fields to null/[] for sparse Firestore docs', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        vi.spyOn(SpeakerDao, 'getSpeakers').mockResolvedValue([
+            { id: 'spk-sparse', name: 'Bob' } as any,
+        ])
+
+        const res = await fastify.inject({
+            method: 'GET',
+            url: `/v1/${eventId}/speakers?apiKey=${apiKey}`,
+        })
+
+        expect(res.statusCode).toBe(200)
+        const body = JSON.parse(res.body)
+        expect(body[0]).toMatchObject({
+            id: 'spk-sparse',
+            name: 'Bob',
+            conferenceHallId: null,
+            pronouns: null,
+            jobTitle: null,
+            bio: null,
+            company: null,
+            companyLogoUrl: null,
+            geolocation: null,
+            photoUrl: null,
+            socials: [],
+        })
+    })
+
     test('returns 200 and strips private fields by default', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
         const getSpy = vi.spyOn(SpeakerDao, 'getSpeakers').mockResolvedValue([

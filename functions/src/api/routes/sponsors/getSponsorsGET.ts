@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SponsorDao } from '../../dao/sponsorDao'
+import { Sponsor } from '../../../../../src/types'
 
 const ApiSponsorSchema = Type.Object({
     id: Type.String(),
@@ -62,15 +63,15 @@ export const getSponsorsRouteHandler = (fastify: FastifyInstance) => {
                 id: cat.id,
                 name: cat.name,
                 ...(cat.order !== undefined ? { order: cat.order } : {}),
-                sponsors: (cat.sponsors ?? []).map((s) => {
+                sponsors: (cat.sponsors ?? []).map((s: Sponsor) => {
                     const sponsor: Static<typeof ApiSponsorSchema> = {
                         id: s.id,
                         name: s.name,
                         logoUrl: s.logoUrl ?? '',
                     }
                     if (s.website !== undefined) sponsor.website = s.website ?? null
-                    if ((s as any).jobPostToken !== undefined) sponsor.jobPostToken = (s as any).jobPostToken
-                    if ((s as any).customFields !== undefined) sponsor.customFields = (s as any).customFields
+                    if (s.jobPostToken !== undefined) sponsor.jobPostToken = s.jobPostToken ?? null
+                    if (s.customFields !== undefined) sponsor.customFields = s.customFields
                     return sponsor
                 }),
             }))
