@@ -167,6 +167,8 @@ export interface Event {
     statusBadgeLink: string | null
     openAPIKey: string | null
     gladiaAPIKey: string | null
+    openRouterAPIKey: string | null
+    openRouterModel: string | null
     transcriptionPassword: string | null
     enableVoxxrin: boolean
     aiSettings: EventAISettings | null

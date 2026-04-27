@@ -29,6 +29,7 @@ const mockEventLoad = (overrides: Partial<Event> = {}) => {
         id: eventId,
         name: 'Test Event',
         apiKey,
+        openRouterAPIKey: 'or-test',
         dates: { start: null, end: null },
         ...overrides,
     } as Event)
@@ -48,18 +49,13 @@ const sseStream = (chunks: string[]): Response => {
 describe('POST /v1/:eventId/chat', () => {
     const fastify = setupFastify()
     let fetchSpy: ReturnType<typeof vi.fn>
-    let originalEnv: string | undefined
 
     beforeEach(() => {
-        originalEnv = process.env.OPENROUTER_API_KEY
-        process.env.OPENROUTER_API_KEY = 'or-test'
         fetchSpy = vi.fn()
         globalThis.fetch = fetchSpy as unknown as typeof fetch
     })
 
     afterEach(() => {
-        if (originalEnv === undefined) delete process.env.OPENROUTER_API_KEY
-        else process.env.OPENROUTER_API_KEY = originalEnv
         vi.restoreAllMocks()
     })
 
@@ -96,17 +92,17 @@ describe('POST /v1/:eventId/chat', () => {
         expect(res.statusCode).toBe(400)
     })
 
-    test('returns 500 when OPENROUTER_API_KEY is unset', async () => {
-        delete process.env.OPENROUTER_API_KEY
+    test('returns 400 when the event has no OpenRouter API key', async () => {
         mockEventLookup(fastify)
+        mockEventLoad({ openRouterAPIKey: null } as unknown as Event)
 
         const res = await fastify.inject({
             method: 'POST',
             url,
             payload: { messages: [{ role: 'user', content: 'hi' }] },
         })
-        expect(res.statusCode).toBe(500)
-        expect(JSON.parse(res.body)).toMatchObject({ error: 'OpenRouter API key not configured' })
+        expect(res.statusCode).toBe(400)
+        expect(JSON.parse(res.body).error).toContain('OpenRouter API key is not set on this event')
     })
 
     test('streams an eventSummary prelude and forwards a content delta', async () => {

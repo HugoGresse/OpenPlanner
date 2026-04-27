@@ -72,6 +72,12 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
                     later version.
                 </Alert>
 
+                {!event.openRouterAPIKey && (
+                    <Alert severity="warning" sx={{ mx: 1, mb: 1 }}>
+                        OpenRouter API key not set. Add it in Event Settings → Other stuffs → OpenRouter API key.
+                    </Alert>
+                )}
+
                 {state.error && (
                     <Alert severity="error" sx={{ mx: 1, mb: 1 }}>
                         {state.error}
@@ -82,7 +88,7 @@ export const EventChatDrawer = ({ event, open, onClose }: EventChatDrawerProps) 
 
                 <ChatInput
                     streaming={state.streaming}
-                    disabled={!apiKey || provisioning}
+                    disabled={!apiKey || provisioning || !event.openRouterAPIKey}
                     onSend={send}
                     onCancel={cancel}
                 />

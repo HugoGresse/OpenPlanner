@@ -159,17 +159,18 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
         }>,
         reply: FastifyReply
     ) => {
-        const apiKey = process.env.OPENROUTER_API_KEY
-        if (!apiKey) {
-            reply.status(500).send({ error: 'OpenRouter API key not configured' })
-            return
-        }
-
         const { eventId } = request.params
         const { messages, model } = request.body
-        const chosenModel = model || process.env.OPENROUTER_DEFAULT_MODEL || 'anthropic/claude-sonnet-4'
 
         const event = await EventDao.getEvent(fastify.firebase, eventId)
+        const openRouterApiKey = (event as any).openRouterAPIKey
+        if (!openRouterApiKey) {
+            reply.status(400).send({
+                error: 'OpenRouter API key is not set on this event. Add it under Event Settings → Other stuffs → OpenRouter API key.',
+            })
+            return
+        }
+        const chosenModel = model || (event as any).openRouterModel || 'anthropic/claude-sonnet-4'
 
         // Pre-compute small summary so the UI can render before the model emits anything.
         const [sessions, speakers] = await Promise.all([
@@ -207,7 +208,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${apiKey}`,
+                        Authorization: `Bearer ${openRouterApiKey}`,
                         'HTTP-Referer': 'https://openplanner.fr',
                         'X-Title': 'OpenPlanner',
                     },

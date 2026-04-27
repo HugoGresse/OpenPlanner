@@ -33,6 +33,8 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
     }
     const openAPIKey = data.openAPIKey || ''
     const gladiaAPIKey = data.gladiaAPIKey || ''
+    const openRouterAPIKey = data.openRouterAPIKey || ''
+    const openRouterModel = data.openRouterModel || ''
     const transcriptionPassword = data.transcriptionPassword || ''
     const timezone = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
 
@@ -55,6 +57,8 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         categories,
         openAPIKey,
         gladiaAPIKey,
+        openRouterAPIKey,
+        openRouterModel,
         transcriptionPassword,
         timezone,
     }

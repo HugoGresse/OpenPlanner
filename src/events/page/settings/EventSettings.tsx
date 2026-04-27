@@ -300,6 +300,26 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                         helperText="Used for the transcription pages. Don't forget to set the password below or the Gladia.io API Key could be accessed freely"
                                         disabled={formState.isSubmitting}
                                     />
+                                    <TextFieldElementPrivate
+                                        margin="normal"
+                                        fullWidth
+                                        id="openRouterAPIKey"
+                                        label="OpenRouter API key"
+                                        name="openRouterAPIKey"
+                                        variant="filled"
+                                        helperText="Used for the in-app chat assistant. Get one at https://openrouter.ai/keys."
+                                        disabled={formState.isSubmitting}
+                                    />
+                                    <TextFieldElement
+                                        margin="normal"
+                                        fullWidth
+                                        id="openRouterModel"
+                                        label="OpenRouter model (optional)"
+                                        name="openRouterModel"
+                                        variant="filled"
+                                        helperText="Defaults to anthropic/claude-sonnet-4 if empty."
+                                        disabled={formState.isSubmitting}
+                                    />
                                     <TextFieldElement
                                         margin="normal"
                                         fullWidth
