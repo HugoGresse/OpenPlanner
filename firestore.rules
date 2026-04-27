@@ -50,6 +50,13 @@ service cloud.firestore {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
+            // AI assistant audit log. Written by the API (firebase-admin
+            // bypasses rules); clients are read-only so the trail can't be
+            // tampered with from the browser.
+            match /aiActions/{actionId} {
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
+                allow write: if false;
+            }
         }
 
         match /admins/users/admins/{userId} {

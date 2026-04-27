@@ -1,14 +1,31 @@
 import * as React from 'react'
-import { Box, Chip, Paper, Typography, useTheme } from '@mui/material'
+import { Box, Button, Chip, Paper, Stack, Typography, useTheme } from '@mui/material'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import ReactMarkdown from 'react-markdown'
 import { ChatTurn } from './useChatStream'
+import { ProposalCard } from './ProposalCard'
+import { ProposalEntry } from './types'
 
 export type ChatMessagesProps = {
     turns: ChatTurn[]
     streaming: boolean
+    proposals: Record<string, ProposalEntry>
+    onApplyProposal: (id: string) => void
+    onRejectProposal: (id: string) => void
+    onApplyAllProposals: (ids: string[]) => void
+    onRejectAllProposals: (ids: string[]) => void
 }
 
-export const ChatMessages = ({ turns, streaming }: ChatMessagesProps) => {
+export const ChatMessages = ({
+    turns,
+    streaming,
+    proposals,
+    onApplyProposal,
+    onRejectProposal,
+    onApplyAllProposals,
+    onRejectAllProposals,
+}: ChatMessagesProps) => {
     const theme = useTheme()
     const scrollRef = React.useRef<HTMLDivElement>(null)
     React.useEffect(() => {
@@ -21,82 +38,147 @@ export const ChatMessages = ({ turns, streaming }: ChatMessagesProps) => {
             sx={{ flexGrow: 1, overflowY: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {turns.map((turn, idx) => {
                 const isUser = turn.role === 'user'
+                const turnProposals = (turn.proposalIds ?? [])
+                    .map((id) => proposals[id])
+                    .filter(Boolean) as ProposalEntry[]
                 return (
-                    <Paper
+                    <Box
                         key={idx}
-                        elevation={0}
                         sx={{
                             alignSelf: isUser ? 'flex-end' : 'flex-start',
-                            maxWidth: '85%',
-                            bgcolor: isUser ? 'primary.main' : 'action.hover',
-                            color: isUser ? 'primary.contrastText' : 'text.primary',
-                            px: 1.5,
-                            py: 1,
-                            borderRadius: 2,
+                            maxWidth: '95%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.5,
                         }}>
-                        {turn.tools && turn.tools.length > 0 && (
-                            <Box sx={{ mb: turn.content ? 1 : 0, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {turn.tools.map((tool) => (
-                                    <Chip
-                                        key={tool.id}
-                                        size="small"
-                                        label={`${tool.name}${tool.result === undefined ? '…' : ''}`}
-                                        variant="outlined"
-                                        sx={{ fontSize: '0.7rem' }}
-                                    />
-                                ))}
-                            </Box>
-                        )}
-                        {isUser ? (
-                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                                {turn.content}
-                            </Typography>
-                        ) : turn.content ? (
-                            <Box
+                        <Paper
+                            elevation={0}
+                            sx={{
+                                alignSelf: isUser ? 'flex-end' : 'flex-start',
+                                maxWidth: '100%',
+                                bgcolor: isUser ? 'primary.main' : 'action.hover',
+                                color: isUser ? 'primary.contrastText' : 'text.primary',
+                                px: 1.5,
+                                py: 1,
+                                borderRadius: 2,
+                            }}>
+                            {turn.tools && turn.tools.length > 0 && (
+                                <Box sx={{ mb: turn.content ? 1 : 0, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {turn.tools.map((tool) => (
+                                        <Chip
+                                            key={tool.id}
+                                            size="small"
+                                            label={`${tool.name}${tool.result === undefined ? '…' : ''}`}
+                                            variant="outlined"
+                                            sx={{ fontSize: '0.7rem' }}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
+                            {isUser ? (
+                                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                    {turn.content}
+                                </Typography>
+                            ) : turn.content ? (
+                                <Box
+                                    sx={{
+                                        fontSize: theme.typography.body2.fontSize,
+                                        lineHeight: theme.typography.body2.lineHeight,
+                                        color: 'text.primary',
+                                        wordBreak: 'break-word',
+                                        '& p': { m: 0, mb: 1, '&:last-child': { mb: 0 } },
+                                        '& ul, & ol': { pl: 3, m: 0, mb: 1 },
+                                        '& li': { mb: 0.25 },
+                                        '& code': {
+                                            bgcolor: 'action.selected',
+                                            px: 0.5,
+                                            py: 0.1,
+                                            borderRadius: 0.5,
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.85em',
+                                        },
+                                        '& pre': {
+                                            bgcolor: 'action.selected',
+                                            p: 1,
+                                            borderRadius: 1,
+                                            overflowX: 'auto',
+                                            mb: 1,
+                                        },
+                                        '& pre code': { bgcolor: 'transparent', p: 0 },
+                                        '& a': { color: 'primary.main' },
+                                        '& h1, & h2, & h3, & h4': { mt: 1, mb: 0.5, fontWeight: 600 },
+                                        '& blockquote': {
+                                            borderLeft: '3px solid',
+                                            borderColor: 'divider',
+                                            pl: 1.5,
+                                            ml: 0,
+                                            color: 'text.secondary',
+                                        },
+                                        '& table': { borderCollapse: 'collapse' },
+                                        '& th, & td': { border: '1px solid', borderColor: 'divider', px: 1, py: 0.5 },
+                                    }}>
+                                    <ReactMarkdown>{turn.content}</ReactMarkdown>
+                                </Box>
+                            ) : (
+                                <Typography variant="body2" color="text.secondary">
+                                    {streaming && idx === turns.length - 1 ? '…' : ''}
+                                </Typography>
+                            )}
+                        </Paper>
+                        {turnProposals.length > 1 && turnProposals.some((p) => p.status === 'pending') && (
+                            <Paper
+                                variant="outlined"
                                 sx={{
-                                    fontSize: theme.typography.body2.fontSize,
-                                    lineHeight: theme.typography.body2.lineHeight,
-                                    color: 'text.primary',
-                                    wordBreak: 'break-word',
-                                    '& p': { m: 0, mb: 1, '&:last-child': { mb: 0 } },
-                                    '& ul, & ol': { pl: 3, m: 0, mb: 1 },
-                                    '& li': { mb: 0.25 },
-                                    '& code': {
-                                        bgcolor: 'action.selected',
-                                        px: 0.5,
-                                        py: 0.1,
-                                        borderRadius: 0.5,
-                                        fontFamily: 'monospace',
-                                        fontSize: '0.85em',
-                                    },
-                                    '& pre': {
-                                        bgcolor: 'action.selected',
-                                        p: 1,
-                                        borderRadius: 1,
-                                        overflowX: 'auto',
-                                        mb: 1,
-                                    },
-                                    '& pre code': { bgcolor: 'transparent', p: 0 },
-                                    '& a': { color: 'primary.main' },
-                                    '& h1, & h2, & h3, & h4': { mt: 1, mb: 0.5, fontWeight: 600 },
-                                    '& blockquote': {
-                                        borderLeft: '3px solid',
-                                        borderColor: 'divider',
-                                        pl: 1.5,
-                                        ml: 0,
-                                        color: 'text.secondary',
-                                    },
-                                    '& table': { borderCollapse: 'collapse' },
-                                    '& th, & td': { border: '1px solid', borderColor: 'divider', px: 1, py: 0.5 },
+                                    mt: 1,
+                                    px: 1.5,
+                                    py: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    bgcolor: 'background.paper',
                                 }}>
-                                <ReactMarkdown>{turn.content}</ReactMarkdown>
-                            </Box>
-                        ) : (
-                            <Typography variant="body2" color="text.secondary">
-                                {streaming && idx === turns.length - 1 ? '…' : ''}
-                            </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                    Batch: {turnProposals.filter((p) => p.status === 'pending').length} pending
+                                    {' · '}
+                                    {turnProposals.filter((p) => p.status === 'applied').length} applied
+                                    {' · '}
+                                    {turnProposals.filter((p) => p.status === 'rejected').length} rejected
+                                </Typography>
+                                <Stack direction="row" spacing={1}>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<CheckIcon />}
+                                        onClick={() =>
+                                            onApplyAllProposals(
+                                                turnProposals.filter((p) => p.status === 'pending').map((p) => p.id)
+                                            )
+                                        }>
+                                        Apply all
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={<CloseIcon />}
+                                        onClick={() =>
+                                            onRejectAllProposals(
+                                                turnProposals.filter((p) => p.status === 'pending').map((p) => p.id)
+                                            )
+                                        }>
+                                        Reject all
+                                    </Button>
+                                </Stack>
+                            </Paper>
                         )}
-                    </Paper>
+                        {turnProposals.map((entry) => (
+                            <ProposalCard
+                                key={entry.id}
+                                entry={entry}
+                                onApply={onApplyProposal}
+                                onReject={onRejectProposal}
+                            />
+                        ))}
+                    </Box>
                 )
             })}
         </Box>

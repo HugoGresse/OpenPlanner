@@ -4,10 +4,12 @@ import { EventDao } from '../../dao/eventDao'
 import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { READ_ONLY_TOOLS, executeTool } from './tools'
+import { PROPOSAL_TOOLS, buildProposal, isProposalTool } from './proposalTools'
 
 const MAX_MESSAGES = 50
 const MAX_CONTENT_LENGTH = 50000
 const MAX_TOOL_ROUNDS = 8
+const MAX_PROPOSALS_PER_REQUEST = 25
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 export const ChatMessage = Type.Object({
@@ -36,9 +38,9 @@ export type ChatStreamPOSTTypes = {
 
 export const chatStreamPOSTSchema = {
     tags: ['chat'],
-    summary: 'Stream a chatbot response (read-only) for the event using OpenRouter + tool calling',
+    summary: 'Stream the OpenPlanner chat assistant for an event (read + propose-write)',
     description:
-        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n`. Tool execution happens server-side; only read-only tools are allowed in this version.',
+        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n` and executes whitelisted read tools server-side. Write tools (proposePatchSpeaker / proposePatchSession / proposePatchEvent / proposeDeleteSpeaker) NEVER mutate Firestore directly — they emit a `proposal` event with a field-level diff that the client renders for explicit user approval before the corresponding PATCH/DELETE endpoint is hit. A request is capped at 25 proposals (model batches related changes for review).',
     params: {
         type: 'object',
         properties: { eventId: { type: 'string' } },
@@ -74,11 +76,21 @@ type OpenRouterMessage = {
 const buildSystemPrompt = (
     eventId: string,
     eventName: string
-) => `You are an OpenPlanner assistant helping the user explore the event "${eventName}" (id: ${eventId}).
+) => `You are an OpenPlanner assistant helping the user manage the event "${eventName}" (id: ${eventId}).
 
-You can READ event data via tools but you CANNOT mutate anything in this version of the assistant. Do not pretend to perform writes; if the user asks to edit something, explain that write support is coming in a later version.
+Read tools (listSessions, getSession, listSpeakers, getSpeaker, listSponsors, getEvent, getFaq) return data directly.
 
-Always call list/find tools (listSessions, listSpeakers, listSponsors, getFaq) before referring to specific IDs — never invent IDs. Keep responses concise.`
+Write tools (proposePatchSpeaker, proposePatchSession, proposePatchEvent, proposeDeleteSpeaker) DO NOT apply changes. They emit a proposal that the user reviews and approves in the UI. The tool result tells you whether the proposal was emitted successfully — it is NOT confirmation that the change happened. Never claim a change was made.
+
+Batching:
+- When the user asks for several related changes (e.g. "fix typos in all session titles", "set the language for tracks A and B"), emit ONE proposal per change in the same turn — the UI groups them into a batch the user can approve or reject all at once.
+- Cap a single batch at ~10 proposals; if more would be needed, do the most important ones first and ask the user to confirm before continuing.
+- Group only changes that fit a single user request together. Don't mix unrelated edits.
+
+Rules:
+- Always call list/find tools before referring to a specific id; never invent ids.
+- Keep responses concise.
+- After a batch, end your reply with a short summary of what the user will see (e.g. "5 sessions queued for review").`
 
 const consumeOpenRouterStream = async (
     response: Response,
@@ -250,6 +262,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     sessionsCount: sessions.length,
                     speakersCount: speakers.length,
                 },
+                model: chosenModel,
             })
 
             const conversation: OpenRouterMessage[] = [
@@ -257,6 +270,9 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                 ...messages.map((m) => ({ role: m.role, content: m.content })),
             ]
 
+            // Cap total proposals per request so the model can't run away with
+            // thousands of writes. Counted across all tool-call rounds.
+            let proposalsEmittedCount = 0
             for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
                 if (clientGone) break
                 const orResponse = await fetch(OPENROUTER_URL, {
@@ -271,7 +287,7 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                         model: chosenModel,
                         stream: true,
                         messages: conversation,
-                        tools: READ_ONLY_TOOLS,
+                        tools: [...READ_ONLY_TOOLS, ...PROPOSAL_TOOLS],
                     }),
                     signal: upstreamAbort.signal,
                 })
@@ -312,10 +328,36 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     })
 
                     let toolResult: unknown
-                    try {
-                        toolResult = await executeTool(fastify.firebase, eventId, tc.function.name, parsedArgs)
-                    } catch (error) {
-                        toolResult = { error: error instanceof Error ? error.message : 'Unknown error' }
+                    if (isProposalTool(tc.function.name)) {
+                        if (proposalsEmittedCount >= MAX_PROPOSALS_PER_REQUEST) {
+                            toolResult = {
+                                status: 'rejected',
+                                error: `Cap of ${MAX_PROPOSALS_PER_REQUEST} proposals per request reached. Stop emitting more write tools and ask the user to apply or reject the current batch first.`,
+                            }
+                        } else {
+                            const built = await buildProposal({
+                                firebaseApp: fastify.firebase,
+                                eventId,
+                                name: tc.function.name,
+                                args: parsedArgs,
+                            })
+                            if (!built.ok) {
+                                toolResult = { status: 'rejected', error: built.error }
+                            } else {
+                                writeSSE(reply, { type: 'proposal', id: tc.id, proposal: built.proposal })
+                                proposalsEmittedCount++
+                                toolResult = {
+                                    status: 'pending_user_approval',
+                                    note: 'Proposal queued. The UI batches all proposals from this turn and the user will approve/reject them together. Continue if more related changes are needed for this user request, but do NOT claim any change has been applied yet.',
+                                }
+                            }
+                        }
+                    } else {
+                        try {
+                            toolResult = await executeTool(fastify.firebase, eventId, tc.function.name, parsedArgs)
+                        } catch (error) {
+                            toolResult = { error: error instanceof Error ? error.message : 'Unknown error' }
+                        }
                     }
 
                     writeSSE(reply, {

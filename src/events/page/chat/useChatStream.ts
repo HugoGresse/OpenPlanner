@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FUNCTION_API_URL } from '../../../env'
-import { ChatMessage, ChatStreamEvent, EventSummary, ToolInvocation } from './types'
+import { API_URL, FUNCTION_API_URL } from '../../../env'
+import {
+    ChatMessage,
+    ChatStreamEvent,
+    EventSummary,
+    Proposal,
+    ProposalEntry,
+    ProposalStatus,
+    ToolInvocation,
+} from './types'
 
 export type ChatTurn = ChatMessage & {
     tools?: ToolInvocation[]
+    proposalIds?: string[]
 }
 
 export type UseChatStreamState = {
@@ -11,6 +20,7 @@ export type UseChatStreamState = {
     streaming: boolean
     error: string | null
     eventSummary: EventSummary | null
+    proposals: Record<string, ProposalEntry>
 }
 
 const buildChatUrl = (eventId: string, eventApiKey: string) => {
@@ -21,6 +31,17 @@ const buildChatUrl = (eventId: string, eventApiKey: string) => {
     const apiUrl = new URL(FUNCTION_API_URL as string)
     const basePath = apiUrl.pathname.replace(/\/$/, '')
     apiUrl.pathname = `${basePath}/v1/${eventId}/chat`
+    apiUrl.searchParams.set('apiKey', eventApiKey)
+    return apiUrl.href
+}
+
+const buildHostedUrl = (path: string, eventApiKey: string) => {
+    // Non-streaming endpoints (PATCH/DELETE/POST audit log) go through the
+    // Hosting-backed API URL so they share the same auth/CORS path as the
+    // rest of the admin app.
+    const apiUrl = new URL(API_URL as string)
+    const basePath = apiUrl.pathname.replace(/\/$/, '')
+    apiUrl.pathname = `${basePath}${path}`
     apiUrl.searchParams.set('apiKey', eventApiKey)
     return apiUrl.href
 }
@@ -47,7 +68,12 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
         streaming: false,
         error: null,
         eventSummary: null,
+        proposals: {},
     })
+    // Mutable holders for the current in-flight request so we can attach the
+    // exact prompt + model to each `proposal` event the server emits.
+    const inflightPromptRef = useRef<string>('')
+    const inflightModelRef = useRef<string | undefined>(undefined)
     const abortRef = useRef<AbortController | null>(null)
     const mountedRef = useRef(true)
 
@@ -68,8 +94,140 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
     const reset = useCallback(() => {
         abortRef.current?.abort()
         abortRef.current = null
-        setState({ turns: [], streaming: false, error: null, eventSummary: null })
+        setState({
+            turns: [],
+            streaming: false,
+            error: null,
+            eventSummary: null,
+            proposals: {},
+        })
     }, [])
+
+    const setProposalStatus = useCallback((id: string, patch: Partial<ProposalEntry>) => {
+        setState((s) => {
+            const existing = s.proposals[id]
+            if (!existing) return s
+            return { ...s, proposals: { ...s.proposals, [id]: { ...existing, ...patch } } }
+        })
+    }, [])
+
+    const recordAuditLog = useCallback(
+        async (entry: ProposalEntry, applied: boolean, rejected: boolean): Promise<boolean> => {
+            if (!eventApiKey) return false
+            try {
+                const response = await fetch(buildHostedUrl(`/v1/${eventId}/ai-actions`, eventApiKey), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tool: entry.proposal.kind,
+                        target: entry.proposal.target,
+                        // Persist enough context to replay/audit: the target id+label,
+                        // the body the user would have applied (null for deletes), and
+                        // the SSE proposal id the server emitted.
+                        args: {
+                            proposalId: entry.id,
+                            target: entry.proposal.target,
+                            method: entry.proposal.endpoint.method,
+                            path: entry.proposal.endpoint.path,
+                            body: entry.proposal.endpoint.body ?? null,
+                        },
+                        diff: entry.proposal.diff,
+                        summary: entry.proposal.summary,
+                        prompt: entry.prompt,
+                        model: entry.model,
+                        applied,
+                        rejected,
+                    }),
+                })
+                if (!response.ok) {
+                    const text = await response.text().catch(() => '')
+                    console.warn(`AI audit log returned ${response.status}: ${text || response.statusText}`)
+                    return false
+                }
+                return true
+            } catch (error) {
+                console.warn('Failed to record AI action audit log:', error)
+                return false
+            }
+        },
+        [eventId, eventApiKey]
+    )
+
+    const applyProposal = useCallback(
+        async (id: string) => {
+            if (!eventApiKey) return
+            const entry = state.proposals[id]
+            if (!entry || entry.status !== 'pending') return
+            setProposalStatus(id, { status: 'applying', error: undefined })
+            try {
+                const url = buildHostedUrl(entry.proposal.endpoint.path, eventApiKey)
+                const init: RequestInit = {
+                    method: entry.proposal.endpoint.method,
+                    headers: { 'Content-Type': 'application/json' },
+                }
+                if (entry.proposal.endpoint.body && entry.proposal.endpoint.method !== 'DELETE') {
+                    init.body = JSON.stringify(entry.proposal.endpoint.body)
+                }
+                const response = await fetch(url, init)
+                if (!response.ok) {
+                    const text = await response.text().catch(() => '')
+                    setProposalStatus(id, {
+                        status: 'failed',
+                        error: `${response.status}: ${text || response.statusText}`,
+                    })
+                    return
+                }
+                setProposalStatus(id, { status: 'applied' })
+                const ok = await recordAuditLog(entry, true, false)
+                if (!ok) {
+                    setProposalStatus(id, {
+                        error: 'Change applied, but writing the audit log failed. The action was performed.',
+                    })
+                }
+            } catch (error) {
+                setProposalStatus(id, {
+                    status: 'failed',
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                })
+            }
+        },
+        [eventApiKey, state.proposals, setProposalStatus, recordAuditLog]
+    )
+
+    const rejectProposal = useCallback(
+        (id: string) => {
+            const entry = state.proposals[id]
+            if (!entry || entry.status !== 'pending') return
+            setProposalStatus(id, { status: 'rejected' })
+            recordAuditLog(entry, false, true)
+        },
+        [state.proposals, setProposalStatus, recordAuditLog]
+    )
+
+    // Batch helpers: apply / reject a list of proposal ids in order. Apply
+    // is sequential to avoid two PATCHes hitting the same doc concurrently
+    // and clobbering each other; reject is just a state flip + audit-log
+    // write per entry.
+    const applyAllProposals = useCallback(
+        async (ids: string[]) => {
+            for (const id of ids) {
+                if (state.proposals[id]?.status === 'pending') {
+                    await applyProposal(id)
+                }
+            }
+        },
+        [applyProposal, state.proposals]
+    )
+    const rejectAllProposals = useCallback(
+        (ids: string[]) => {
+            for (const id of ids) {
+                if (state.proposals[id]?.status === 'pending') {
+                    rejectProposal(id)
+                }
+            }
+        },
+        [rejectProposal, state.proposals]
+    )
 
     const send = useCallback(
         async (userMessage: string) => {
@@ -79,10 +237,15 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
             }
             if (!userMessage.trim()) return
 
+            inflightPromptRef.current = userMessage
+            // Reset the model ref; the server emits the chosen model in the
+            // eventSummary event, which lands before the first proposal.
+            inflightModelRef.current = undefined
+
             const baseTurns: ChatTurn[] = [...state.turns, { role: 'user', content: userMessage }]
             setState((s) => ({
                 ...s,
-                turns: [...baseTurns, { role: 'assistant', content: '', tools: [] }],
+                turns: [...baseTurns, { role: 'assistant', content: '', tools: [], proposalIds: [] }],
                 streaming: true,
                 error: null,
             }))
@@ -122,6 +285,19 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
                 const decoder = new TextDecoder()
                 let buffer = ''
 
+                const handleEvent = (evt: ChatStreamEvent) => {
+                    if (evt.type === 'eventSummary' && evt.model) {
+                        inflightModelRef.current = evt.model
+                    }
+                    if (evt.type === 'proposal') {
+                        const promptSnapshot = inflightPromptRef.current
+                        const modelSnapshot = inflightModelRef.current
+                        setState((s) => applyEvent(s, evt, { prompt: promptSnapshot, model: modelSnapshot }))
+                    } else {
+                        setState((s) => applyEvent(s, evt))
+                    }
+                }
+
                 while (true) {
                     const { value, done } = await reader.read()
                     if (done) break
@@ -132,13 +308,13 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
                     buffer = buffer.slice(splitIdx + 2)
 
                     for (const evt of parseSseChunk(ready)) {
-                        setState((s) => applyEvent(s, evt))
+                        handleEvent(evt)
                     }
                 }
 
                 if (buffer.trim().length > 0) {
                     for (const evt of parseSseChunk(buffer)) {
-                        setState((s) => applyEvent(s, evt))
+                        handleEvent(evt)
                     }
                 }
             } catch (error: unknown) {
@@ -159,10 +335,23 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
         [eventId, eventApiKey, state.turns]
     )
 
-    return { state, send, cancel, reset }
+    return {
+        state,
+        send,
+        cancel,
+        reset,
+        applyProposal,
+        rejectProposal,
+        applyAllProposals,
+        rejectAllProposals,
+    }
 }
 
-const applyEvent = (s: UseChatStreamState, evt: ChatStreamEvent): UseChatStreamState => {
+const applyEvent = (
+    s: UseChatStreamState,
+    evt: ChatStreamEvent,
+    proposalContext?: { prompt?: string; model?: string }
+): UseChatStreamState => {
     switch (evt.type) {
         case 'eventSummary':
             return { ...s, eventSummary: evt.event }
@@ -191,6 +380,26 @@ const applyEvent = (s: UseChatStreamState, evt: ChatStreamEvent): UseChatStreamS
                 turns[turns.length - 1] = { ...last, tools }
             }
             return { ...s, turns }
+        }
+        case 'proposal': {
+            const status: ProposalStatus = 'pending'
+            const proposals = {
+                ...s.proposals,
+                [evt.id]: {
+                    id: evt.id,
+                    proposal: evt.proposal,
+                    status,
+                    prompt: proposalContext?.prompt,
+                    model: proposalContext?.model,
+                },
+            }
+            const turns = [...s.turns]
+            const last = turns[turns.length - 1]
+            if (last && last.role === 'assistant') {
+                const proposalIds = [...(last.proposalIds ?? []), evt.id]
+                turns[turns.length - 1] = { ...last, proposalIds }
+            }
+            return { ...s, turns, proposals }
         }
         case 'error':
             return { ...s, error: evt.error, streaming: false }

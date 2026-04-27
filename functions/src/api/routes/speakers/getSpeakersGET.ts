@@ -8,7 +8,7 @@ const ApiSocialSchema = Type.Object({
     link: Type.String(),
 })
 
-export const ApiSpeakerPublicSchema = Type.Object({
+export const ApiSpeakerSchema = Type.Object({
     id: Type.String(),
     conferenceHallId: Type.Union([Type.String(), Type.Null()]),
     name: Type.String(),
@@ -21,23 +21,26 @@ export const ApiSpeakerPublicSchema = Type.Object({
     photoUrl: Type.Union([Type.String(), Type.Null()]),
     socials: Type.Array(ApiSocialSchema),
     customFields: Type.Optional(Type.Record(Type.String(), Type.Union([Type.String(), Type.Boolean()]))),
+    email: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    phone: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    note: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 })
-export type ApiSpeakerPublicType = Static<typeof ApiSpeakerPublicSchema>
+export type ApiSpeakerType = Static<typeof ApiSpeakerSchema>
 
 const DEFAULT_LIMIT = 200
 const MAX_LIMIT = 500
 
 export type GetSpeakersGETTypes = {
     Params: { eventId: string }
-    Querystring: { apiKey?: string; limit?: number; offset?: number }
-    Reply: ApiSpeakerPublicType[] | string
+    Querystring: { apiKey?: string; limit?: number; offset?: number; includePrivate?: boolean }
+    Reply: ApiSpeakerType[] | string
 }
 
 export const getSpeakersGETSchema = {
     tags: ['speakers'],
     summary: 'List speakers',
     description:
-        'Returns speakers for an event. Private fields (note, email, phone) are stripped from the response.',
+        'Returns speakers for an event. Private fields (note, email, phone) are stripped from the response unless `includePrivate=true` is passed.',
     params: {
         type: 'object',
         properties: {
@@ -52,10 +55,11 @@ export const getSpeakersGETSchema = {
             apiKey: { type: 'string', description: 'The API key of the event' },
             limit: { type: 'integer', minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT },
             offset: { type: 'integer', minimum: 0, default: 0 },
+            includePrivate: { type: 'boolean', description: 'Include private fields (note, email, phone)' },
         },
     },
     response: {
-        200: Type.Array(ApiSpeakerPublicSchema),
+        200: Type.Array(ApiSpeakerSchema),
         400: Type.String(),
     },
     security: [{ apiKey: [] }],
@@ -65,19 +69,19 @@ export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
     return async (
         request: FastifyRequest<{
             Params: { eventId: string }
-            Querystring: { limit?: number; offset?: number }
+            Querystring: { limit?: number; offset?: number; includePrivate?: boolean }
         }>,
         reply: FastifyReply
     ) => {
         try {
             const { eventId } = request.params
-            const { limit = DEFAULT_LIMIT, offset = 0 } = request.query
+            const { limit = DEFAULT_LIMIT, offset = 0, includePrivate } = request.query
 
             const speakers = await SpeakerDao.getSpeakers(fastify.firebase, eventId)
             const page = speakers.slice(offset, offset + limit)
 
-            const result: ApiSpeakerPublicType[] = page.map((s) => {
-                const out: ApiSpeakerPublicType = {
+            const result: ApiSpeakerType[] = page.map((s) => {
+                const out: ApiSpeakerType = {
                     id: s.id,
                     conferenceHallId: s.conferenceHallId ?? null,
                     name: s.name,
@@ -91,6 +95,11 @@ export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
                     socials: s.socials ?? [],
                 }
                 if (s.customFields !== undefined) out.customFields = s.customFields
+                if (includePrivate) {
+                    out.email = s.email ?? null
+                    out.phone = s.phone ?? null
+                    out.note = s.note ?? null
+                }
                 return out
             })
 
