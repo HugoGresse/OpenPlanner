@@ -179,52 +179,6 @@ describe('POST /v1/:eventId/chat', () => {
         expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
 
-    test('returns 429 when the monthly token cap is reached', async () => {
-        mockEventLookup(fastify)
-        mockEventLoad({ openRouterMonthlyTokenCap: 1000 } as unknown as Event)
-        const { AiUsageDao } = await import('../../dao/aiUsageDao')
-        vi.spyOn(AiUsageDao, 'getMonthTokens').mockResolvedValue(2000)
-
-        const res = await fastify.inject({
-            method: 'POST',
-            url,
-            payload: { messages: [{ role: 'user', content: 'hi' }] },
-        })
-        expect(res.statusCode).toBe(429)
-        expect(JSON.parse(res.body).error).toContain('Monthly OpenRouter token cap reached')
-    })
-
-    test('records token usage and emits a usage SSE event after a round', async () => {
-        mockEventLookup(fastify)
-        mockEventLoad()
-        vi.spyOn(SessionDao, 'getSessions').mockResolvedValue([] as any)
-        vi.spyOn(SpeakerDao, 'getSpeakers').mockResolvedValue([] as any)
-        const { AiUsageDao } = await import('../../dao/aiUsageDao')
-        const incSpy = vi.spyOn(AiUsageDao, 'incrementUsage').mockResolvedValue(undefined)
-
-        fetchSpy.mockResolvedValueOnce(
-            sseStream([
-                'data: {"choices":[{"delta":{"content":"hi"},"finish_reason":"stop"}]}\n\n',
-                'data: {"usage":{"prompt_tokens":12,"completion_tokens":3,"total_tokens":15}}\n\n',
-                'data: [DONE]\n\n',
-            ])
-        )
-
-        const res = await fastify.inject({
-            method: 'POST',
-            url,
-            payload: { messages: [{ role: 'user', content: 'hello' }] },
-        })
-        expect(res.statusCode).toBe(200)
-        expect(res.body).toContain('"type":"usage"')
-        expect(res.body).toContain('"total_tokens":15')
-        expect(incSpy).toHaveBeenCalledWith(
-            fastify.firebase,
-            eventId,
-            expect.objectContaining({ prompt: 12, completion: 3, total: 15 })
-        )
-    })
-
     test('emits multiple proposals in one turn for batch review', async () => {
         mockEventLookup(fastify)
         mockEventLoad()

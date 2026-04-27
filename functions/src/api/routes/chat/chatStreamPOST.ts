@@ -5,7 +5,6 @@ import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { READ_ONLY_TOOLS, executeTool } from './tools'
 import { PROPOSAL_TOOLS, buildProposal, isProposalTool } from './proposalTools'
-import { AiUsageDao } from '../../dao/aiUsageDao'
 
 const MAX_MESSAGES = 50
 const MAX_CONTENT_LENGTH = 50000
@@ -41,7 +40,7 @@ export const chatStreamPOSTSchema = {
     tags: ['chat'],
     summary: 'Stream the OpenPlanner chat assistant for an event (read + propose-write)',
     description:
-        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n` and executes whitelisted read tools server-side. Write tools (proposePatchSpeaker / proposePatchSession / proposePatchEvent / proposeDeleteSpeaker) NEVER mutate Firestore directly — they emit a `proposal` event with a field-level diff that the client renders for explicit user approval before the corresponding PATCH/DELETE endpoint is hit. A request is capped at 25 proposals (model batches related changes for review). The route also emits `usage` events so callers can track per-event monthly token spend.',
+        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n` and executes whitelisted read tools server-side. Write tools (proposePatchSpeaker / proposePatchSession / proposePatchEvent / proposeDeleteSpeaker) NEVER mutate Firestore directly — they emit a `proposal` event with a field-level diff that the client renders for explicit user approval before the corresponding PATCH/DELETE endpoint is hit. A request is capped at 25 proposals (model batches related changes for review).',
     params: {
         type: 'object',
         properties: { eventId: { type: 'string' } },
@@ -93,13 +92,11 @@ Rules:
 - Keep responses concise.
 - After a batch, end your reply with a short summary of what the user will see (e.g. "5 sessions queued for review").`
 
-type RoundUsage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
-
 const consumeOpenRouterStream = async (
     response: Response,
     onDelta: (delta: any) => void,
     isAborted: () => boolean = () => false
-): Promise<{ message: OpenRouterMessage; finishReason: string | null; usage: RoundUsage | null }> => {
+): Promise<{ message: OpenRouterMessage; finishReason: string | null }> => {
     if (!response.body) {
         throw new Error('OpenRouter response has no body')
     }
@@ -112,7 +109,6 @@ const consumeOpenRouterStream = async (
         { id: string; type: 'function'; function: { name: string; arguments: string } }
     >()
     let finishReason: string | null = null
-    let usage: RoundUsage | null = null
 
     while (true) {
         if (isAborted()) {
@@ -140,9 +136,6 @@ const consumeOpenRouterStream = async (
             }
             try {
                 const parsed = JSON.parse(payload)
-                if (parsed.usage && typeof parsed.usage === 'object') {
-                    usage = parsed.usage
-                }
                 const choice = parsed.choices?.[0]
                 if (!choice) continue
                 const delta = choice.delta ?? {}
@@ -179,7 +172,7 @@ const consumeOpenRouterStream = async (
         content: assembledContent.length > 0 ? assembledContent : null,
     }
     if (toolCalls.length > 0) message.tool_calls = toolCalls
-    return { message, finishReason, usage }
+    return { message, finishReason }
 }
 
 export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
@@ -202,27 +195,6 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
             return
         }
         const chosenModel = model || (event as any).openRouterModel || 'anthropic/claude-sonnet-4'
-
-        // Per-event monthly token cap. Stored as a non-negative integer; null /
-        // undefined / 0 / NaN / negative all mean "no cap".
-        //
-        // Note: soft cap. The check (read usage) and the increment (after the
-        // OpenRouter response) are not atomic, so two concurrent requests can
-        // each pass the check before either has incremented. Strict enforcement
-        // would need a transactional pre-reservation of an estimated token
-        // budget reconciled against real usage afterward — fine to add later
-        // if it ever becomes a problem; the assistant is admin-only today.
-        const rawCap = Number((event as any).openRouterMonthlyTokenCap)
-        const monthlyCap = Number.isFinite(rawCap) && Number.isInteger(rawCap) && rawCap > 0 ? rawCap : 0
-        if (monthlyCap > 0) {
-            const used = await AiUsageDao.getMonthTokens(fastify.firebase, eventId).catch(() => 0)
-            if (used >= monthlyCap) {
-                reply.status(429).send({
-                    error: `Monthly OpenRouter token cap reached (${used.toLocaleString()} / ${monthlyCap.toLocaleString()}). Increase openRouterMonthlyTokenCap in event settings or wait for the next month.`,
-                })
-                return
-            }
-        }
 
         // Pre-compute small summary so the UI can render before the model emits anything.
         const [sessions, speakers] = await Promise.all([
@@ -330,24 +302,12 @@ export const chatStreamRouteHandler = (fastify: FastifyInstance) => {
                     break
                 }
 
-                const { message, finishReason, usage } = await consumeOpenRouterStream(
+                const { message, finishReason } = await consumeOpenRouterStream(
                     orResponse,
                     (delta) => writeSSE(reply, delta),
                     () => clientGone
                 )
                 conversation.push(message)
-
-                if (usage && (usage.total_tokens || usage.prompt_tokens || usage.completion_tokens)) {
-                    AiUsageDao.incrementUsage(fastify.firebase, eventId, {
-                        prompt: usage.prompt_tokens || 0,
-                        completion: usage.completion_tokens || 0,
-                        total: usage.total_tokens || (usage.prompt_tokens || 0) + (usage.completion_tokens || 0),
-                    }).catch((err) => {
-                        // Don't fail the stream over usage bookkeeping.
-                        console.warn('Failed to record AI usage:', err)
-                    })
-                    writeSSE(reply, { type: 'usage', usage })
-                }
 
                 if (clientGone || finishReason !== 'tool_calls' || !message.tool_calls?.length) {
                     break

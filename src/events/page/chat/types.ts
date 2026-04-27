@@ -42,17 +42,10 @@ export type ProposalEntry = {
     model?: string
 }
 
-export type UsageEvent = {
-    prompt_tokens?: number
-    completion_tokens?: number
-    total_tokens?: number
-}
-
 export type ChatStreamEvent =
     | { type: 'eventSummary'; event: EventSummary; model?: string }
     | { type: 'content'; delta: string }
     | { type: 'toolCall'; id: string; name: string; arguments: Record<string, unknown> }
     | { type: 'toolResult'; id: string; name: string; result: unknown }
     | { type: 'proposal'; id: string; proposal: Proposal }
-    | { type: 'usage'; usage: UsageEvent }
     | { type: 'error'; status?: number; error: string }

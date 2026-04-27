@@ -168,7 +168,6 @@ export interface Event {
     gladiaAPIKey: string | null
     openRouterAPIKey: string | null
     openRouterModel: string | null
-    openRouterMonthlyTokenCap?: number | null
     transcriptionPassword: string | null
     enableVoxxrin: boolean
     aiSettings: EventAISettings | null

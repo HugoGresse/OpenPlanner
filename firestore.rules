@@ -57,13 +57,6 @@ service cloud.firestore {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if false;
             }
-            // AI assistant monthly token usage. Same model as aiActions:
-            // server-managed via firebase-admin; clients can read but never
-            // mutate so the spend cap can't be bypassed from the browser.
-            match /aiUsage/{monthKey} {
-                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
-                allow write: if false;
-            }
         }
 
         match /admins/users/admins/{userId} {

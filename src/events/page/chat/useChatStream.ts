@@ -8,7 +8,6 @@ import {
     ProposalEntry,
     ProposalStatus,
     ToolInvocation,
-    UsageEvent,
 } from './types'
 
 export type ChatTurn = ChatMessage & {
@@ -22,7 +21,6 @@ export type UseChatStreamState = {
     error: string | null
     eventSummary: EventSummary | null
     proposals: Record<string, ProposalEntry>
-    usage: UsageEvent | null
 }
 
 const buildChatUrl = (eventId: string, eventApiKey: string) => {
@@ -71,7 +69,6 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
         error: null,
         eventSummary: null,
         proposals: {},
-        usage: null,
     })
     // Mutable holders for the current in-flight request so we can attach the
     // exact prompt + model to each `proposal` event the server emits.
@@ -103,7 +100,6 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
             error: null,
             eventSummary: null,
             proposals: {},
-            usage: null,
         })
     }, [])
 
@@ -405,8 +401,6 @@ const applyEvent = (
             }
             return { ...s, turns, proposals }
         }
-        case 'usage':
-            return { ...s, usage: evt.usage }
         case 'error':
             return { ...s, error: evt.error, streaming: false }
         default:
