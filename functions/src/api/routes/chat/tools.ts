@@ -89,10 +89,14 @@ const projectFields = (
     allowed: readonly string[],
     defaults: readonly string[]
 ): Record<string, any> => {
-    const fields: string[] = Array.isArray(requestedFields)
+    // Distinguish "fields argument missing" (use default projection) from
+    // "fields explicitly provided" (use the listed fields, even if empty).
+    // An empty array is a valid "I only want the id" request.
+    const provided = Array.isArray(requestedFields)
+    const requested: string[] = provided
         ? (requestedFields.filter((f): f is string => typeof f === 'string') as string[])
         : []
-    const effective = fields.length > 0 ? fields.filter((f) => allowed.includes(f)) : [...defaults]
+    const effective = provided ? requested.filter((f) => allowed.includes(f)) : [...defaults]
     const out: Record<string, any> = {}
     for (const k of effective) {
         if (obj && obj[k] !== undefined) out[k] = obj[k]
