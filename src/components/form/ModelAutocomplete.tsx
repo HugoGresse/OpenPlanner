@@ -1,10 +1,12 @@
-import { Autocomplete, Box, TextField, Typography } from '@mui/material'
+import { Autocomplete, Box, createFilterOptions, TextField, Typography } from '@mui/material'
 import * as React from 'react'
 import { Controller, FieldValues, Path, useFormContext } from 'react-hook-form'
 import { getTopModelIds, OpenRouterModel } from '../../services/openRouter'
 
 const TOP_GROUP = 'Top picks'
 const ALL_GROUP = 'All models'
+
+type Option = { id: string; isTop: boolean; model: OpenRouterModel }
 
 type ModelAutocompleteProps<T extends FieldValues> = {
     name: Path<T>
@@ -18,7 +20,11 @@ type ModelAutocompleteProps<T extends FieldValues> = {
     variant?: 'standard' | 'filled' | 'outlined'
 }
 
-type Option = { id: string; isTop: boolean; model: OpenRouterModel }
+// Match against both the human-readable name and the id, so typing "claude"
+// finds "anthropic/claude-sonnet-4" and typing the slug works too.
+const filterOptions = createFilterOptions<Option>({
+    stringify: (option) => `${option.model.name ?? ''} ${option.id}`,
+})
 
 // Convert OpenRouter's per-token price (USD per token, given as a string) into
 // a short "$X" string per million tokens — what users actually compare across
@@ -69,17 +75,21 @@ export function ModelAutocomplete<T extends FieldValues>({
             isTop: topIds.has(m.id),
             model: m,
         }))
-        // "Top picks" first (sorted most-recent within the group), then the
-        // long tail alphabetically.
+        // "Top picks" first, alphabetical within each group.
         enriched.sort((a, b) => {
             if (a.isTop !== b.isTop) return a.isTop ? -1 : 1
-            if (a.isTop && b.isTop) {
-                return (b.model.created ?? 0) - (a.model.created ?? 0)
-            }
             return a.id.localeCompare(b.id)
         })
         return enriched
     }, [models, topIds])
+
+    // O(1) id -> option lookup so the controller renderer doesn't linearly
+    // scan the (potentially ~300-entry) catalog on every keystroke.
+    const optionsById = React.useMemo(() => {
+        const map = new Map<string, Option>()
+        for (const o of options) map.set(o.id, o)
+        return map
+    }, [options])
 
     return (
         <Controller
@@ -88,12 +98,13 @@ export function ModelAutocomplete<T extends FieldValues>({
             rules={{ required }}
             render={({ field: { value, onChange, onBlur, ref }, fieldState: { error } }) => {
                 const stringValue = typeof value === 'string' ? value : ''
-                const matched = options.find((o) => o.id === stringValue)
+                const matched = optionsById.get(stringValue)
                 return (
                     <Autocomplete<Option, false, false, true>
                         freeSolo
                         autoHighlight
                         options={options}
+                        filterOptions={filterOptions}
                         disabled={disabled}
                         value={matched ?? stringValue}
                         onChange={(_, next) => {

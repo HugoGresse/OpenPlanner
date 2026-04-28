@@ -65,7 +65,11 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
         defaultValues: convertInputEvent(event),
     })
     const { control, formState, watch } = formContext
-    const modelList = useAiModelList(event.openRouterAPIKey || '')
+    // Drive the model list off the live form value so pasting a fresh API
+    // key into the field above immediately repopulates the picker, instead
+    // of staying empty until the user saves and reopens the page.
+    const openRouterAPIKey = watch('openRouterAPIKey') || ''
+    const modelList = useAiModelList(openRouterAPIKey)
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
 
