@@ -1,6 +1,8 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, Card, Container, DialogContentText, Grid, Typography, IconButton, Collapse } from '@mui/material'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { ModelAutocomplete } from '../../../components/form/ModelAutocomplete'
+import { useAiModelList } from '../../../services/openRouter'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
@@ -63,6 +65,11 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
         defaultValues: convertInputEvent(event),
     })
     const { control, formState, watch } = formContext
+    // Drive the model list off the live form value so pasting a fresh API
+    // key into the field above immediately repopulates the picker, instead
+    // of staying empty until the user saves and reopens the page.
+    const openRouterAPIKey = watch('openRouterAPIKey') || ''
+    const modelList = useAiModelList(openRouterAPIKey)
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
 
@@ -300,15 +307,13 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                         helperText="Used for the in-app chat assistant. Get one at https://openrouter.ai/keys."
                                         disabled={formState.isSubmitting}
                                     />
-                                    <TextFieldElement
-                                        margin="normal"
-                                        fullWidth
-                                        id="openRouterModel"
-                                        label="OpenRouter model (optional)"
+                                    <ModelAutocomplete
                                         name="openRouterModel"
-                                        variant="filled"
+                                        label="OpenRouter model (optional)"
                                         helperText="Defaults to anthropic/claude-sonnet-4 if empty."
                                         disabled={formState.isSubmitting}
+                                        margin="normal"
+                                        models={modelList}
                                     />
                                     <TextFieldElement
                                         margin="normal"
