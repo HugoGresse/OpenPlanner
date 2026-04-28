@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Redirect, Route, Switch } from 'wouter'
 import { EventLayout } from './layouts/EventLayout'
 import { useEvent } from '../../services/hooks/useEvent'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { Event } from '../../types'
 import { SuspenseLoader } from '../../components/SuspenseLoader'
+import { lazyWithRetry } from '../../components/lazyWithRetry'
 
 import { NewMember } from './team/NewMember'
 import { NewSponsor } from './sponsors/NewSponsor'
@@ -14,34 +15,44 @@ import { EventSpeaker } from './speakers/EventSpeaker'
 import { EventSocial } from './social/EventSocial'
 import { NewTicket } from './tickets/NewTicket'
 
-const EventSettings = lazy(() =>
+const EventSettings = lazyWithRetry(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
 )
-const EventAPI = lazy(() => import('./api/Api').then((module) => ({ default: module.API })))
-const EventSchedule = lazy(() =>
+const EventAPI = lazyWithRetry(() => import('./api/Api').then((module) => ({ default: module.API })))
+const EventSchedule = lazyWithRetry(() =>
     import('./schedule/EventSchedule').then((module) => ({ default: module.EventSchedule }))
 )
-const EventScheduleTemplate = lazy(() =>
+const EventScheduleTemplate = lazyWithRetry(() =>
     import('./schedule/EventScheduleTemplate').then((module) => ({ default: module.EventScheduleTemplate }))
 )
-const EventSessions = lazy(() =>
+const EventSessions = lazyWithRetry(() =>
     import('./sessions/list/EventSessions').then((module) => ({ default: module.EventSessions }))
 )
-const EventSession = lazy(() => import('./sessions/EventSession').then((module) => ({ default: module.EventSession })))
-const EventSpeakers = lazy(() =>
+const EventSession = lazyWithRetry(() =>
+    import('./sessions/EventSession').then((module) => ({ default: module.EventSession }))
+)
+const EventSpeakers = lazyWithRetry(() =>
     import('./speakers/EventSpeakers').then((module) => ({ default: module.EventSpeakers }))
 )
-const EventSponsors = lazy(() =>
+const EventSponsors = lazyWithRetry(() =>
     import('./sponsors/EventSponsors').then((module) => ({ default: module.EventSponsors }))
 )
-const Sponsor = lazy(() => import('./sponsors/Sponsor').then((module) => ({ default: module.Sponsor })))
-const JobPosts = lazy(() => import('./sponsors/jobposts/JobPosts').then((module) => ({ default: module.JobPosts })))
+const Sponsor = lazyWithRetry(() => import('./sponsors/Sponsor').then((module) => ({ default: module.Sponsor })))
+const JobPosts = lazyWithRetry(() =>
+    import('./sponsors/jobposts/JobPosts').then((module) => ({ default: module.JobPosts }))
+)
 
-const EventTeam = lazy(() => import('./team/EventTeam').then((module) => ({ default: module.EventTeam })))
-const EventMember = lazy(() => import('./team/EventMember').then((module) => ({ default: module.EventMember })))
-const EventFaq = lazy(() => import('./faq/EventFaq').then((module) => ({ default: module.EventFAQ })))
-const EventTickets = lazy(() => import('./tickets/EventTickets').then((module) => ({ default: module.EventTickets })))
-const EventTicket = lazy(() => import('./tickets/EventTicket').then((module) => ({ default: module.EventTicket })))
+const EventTeam = lazyWithRetry(() => import('./team/EventTeam').then((module) => ({ default: module.EventTeam })))
+const EventMember = lazyWithRetry(() =>
+    import('./team/EventMember').then((module) => ({ default: module.EventMember }))
+)
+const EventFaq = lazyWithRetry(() => import('./faq/EventFaq').then((module) => ({ default: module.EventFAQ })))
+const EventTickets = lazyWithRetry(() =>
+    import('./tickets/EventTickets').then((module) => ({ default: module.EventTickets }))
+)
+const EventTicket = lazyWithRetry(() =>
+    import('./tickets/EventTicket').then((module) => ({ default: module.EventTicket }))
+)
 
 export const EventApp = ({ eventId }: { eventId?: string }) => {
     const event = useEvent(eventId)
