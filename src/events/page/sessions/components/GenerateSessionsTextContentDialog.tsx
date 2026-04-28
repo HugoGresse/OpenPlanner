@@ -1,4 +1,4 @@
-import { Event, Session } from '../../../../types'
+import { Event, EventAISettings, Session } from '../../../../types'
 import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
 import {
@@ -30,8 +30,11 @@ export const GenerateSessionsTextContentDialog = ({
     forceGenerate?: boolean
 }) => {
     const { createNotification } = useNotification()
+    // Mirror the AI settings form so "Generate preview" runs against unsaved
+    // edits in the prompt/model/temperature inputs.
+    const [liveAiSettings, setLiveAiSettings] = React.useState<EventAISettings>(event.aiSettings || BaseAiSettings)
     const llmSettings: GenerateSessionTeasingTextsSettings = {
-        aiSettings: event.aiSettings || BaseAiSettings,
+        aiSettings: liveAiSettings,
         openRouterApiKey: event.openRouterAPIKey,
     }
 
@@ -85,7 +88,7 @@ export const GenerateSessionsTextContentDialog = ({
                     <br />
                 </Typography>
 
-                <SessionAISettings event={event} />
+                <SessionAISettings event={event} onValuesChange={setLiveAiSettings} />
 
                 {!event.openRouterAPIKey && (
                     <Typography>

@@ -2,7 +2,7 @@ import { FormContainer, SelectElement, TextFieldElement, useForm } from 'react-h
 import { Box, Button, Grid, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../../components/form/SaveShortcut'
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useFirestoreDocumentMutation } from '../../../../services/hooks/firestoreMutationHooks'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../../services/firebase'
@@ -10,7 +10,13 @@ import { Event, EventAISettings } from '../../../../types'
 import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 import { BASE_OPENROUTER_SETTINGS, useAiModelList } from '../../../../services/openRouter'
 
-export const SessionAISettings = ({ event }: { event: Event }) => {
+export const SessionAISettings = ({
+    event,
+    onValuesChange,
+}: {
+    event: Event
+    onValuesChange?: (values: EventAISettings) => void
+}) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
 
     const formContext = useForm({
@@ -25,6 +31,35 @@ export const SessionAISettings = ({ event }: { event: Event }) => {
     })
     const modelList = useAiModelList(event.openRouterAPIKey || '')
     const { formState } = formContext
+
+    // Forward unsaved form values upward so callers (e.g. the teasing dialog's
+    // "Generate preview") can run a generation against what's currently in the
+    // inputs without forcing the user to Save first.
+    const onValuesChangeRef = useRef(onValuesChange)
+    onValuesChangeRef.current = onValuesChange
+    useEffect(() => {
+        if (!onValuesChangeRef.current) return
+        const toSettings = (v: {
+            teasingPromptSystem?: string
+            teasingPromptUser?: string
+            model?: string
+            temperature?: string | number
+        }): EventAISettings => ({
+            model: v.model ?? '',
+            temperature: `${v.temperature ?? ''}`,
+            sessions: {
+                teasingPromptSystem: v.teasingPromptSystem ?? '',
+                teasingPromptUser: v.teasingPromptUser ?? '',
+            },
+        })
+        // Seed parent with the current values, then keep it in sync.
+        onValuesChangeRef.current(toSettings(formContext.getValues()))
+        const subscription = formContext.watch((value) => {
+            if (!onValuesChangeRef.current) return
+            onValuesChangeRef.current(toSettings(value))
+        })
+        return () => subscription.unsubscribe()
+    }, [formContext])
 
     return (
         <Box padding={2} borderRadius={2} border={1} borderColor="#66666688" mt={2} mb={2}>
