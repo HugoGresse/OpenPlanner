@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
 import { Box, createTheme, CssBaseline, Typography, ThemeProvider, useMediaQuery } from '@mui/material'
 import { Link, Redirect, Route, Router, Switch } from 'wouter'
 import { RequireLogin } from './auth/RequireLogin'
@@ -14,8 +14,9 @@ import { PublicApp } from './public/PublicApp'
 import { ForgotPasswordScreen } from './auth/ForgotPasswordScreen'
 import { AdminScreen } from './events/admin/AdminScreen'
 import { EventApp } from './events/page/EventApp'
+import { lazyWithRetry } from './components/lazyWithRetry'
 
-const EventsScreen = lazy(() =>
+const EventsScreen = lazyWithRetry(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
 )
 
