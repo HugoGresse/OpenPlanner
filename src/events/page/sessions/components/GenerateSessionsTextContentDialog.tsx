@@ -1,4 +1,4 @@
-import { Event, Session } from '../../../../types'
+import { Event, EventAISettings, Session } from '../../../../types'
 import { Box, Button, CircularProgress, Dialog, DialogContent, Typography } from '@mui/material'
 import * as React from 'react'
 import {
@@ -30,10 +30,15 @@ export const GenerateSessionsTextContentDialog = ({
     forceGenerate?: boolean
 }) => {
     const { createNotification } = useNotification()
-    const llmSettings: GenerateSessionTeasingTextsSettings = {
-        aiSettings: event.aiSettings || BaseAiSettings,
+    // Mirror the AI settings form so "Generate preview" runs against unsaved
+    // edits in the prompt/model/temperature inputs. Held in a ref so a
+    // keystroke doesn't re-render the whole dialog; we read it lazily when
+    // the user actually clicks a generate button.
+    const liveAiSettingsRef = React.useRef<EventAISettings>(event.aiSettings || BaseAiSettings)
+    const buildLlmSettings = (): GenerateSessionTeasingTextsSettings => ({
+        aiSettings: liveAiSettingsRef.current,
         openRouterApiKey: event.openRouterAPIKey,
-    }
+    })
 
     const { generatingState, generate } = useSessionsGenerationGeneric<
         GenerateSessionTeasingTextsSettings,
@@ -48,7 +53,7 @@ export const GenerateSessionsTextContentDialog = ({
 
     const generateAll = () => {
         const updateDoc = !onSuccess
-        finalGeneration.generate(sessionToGenerateFor, updateDoc, llmSettings).then(({ results, success }) => {
+        finalGeneration.generate(sessionToGenerateFor, updateDoc, buildLlmSettings()).then(({ results, success }) => {
             if (onSuccess && success && results.length) {
                 onSuccess(results[0].updatedSession.teasingPosts)
             }
@@ -85,7 +90,12 @@ export const GenerateSessionsTextContentDialog = ({
                     <br />
                 </Typography>
 
-                <SessionAISettings event={event} />
+                <SessionAISettings
+                    event={event}
+                    onValuesChange={(values) => {
+                        liveAiSettingsRef.current = values
+                    }}
+                />
 
                 {!event.openRouterAPIKey && (
                     <Typography>
@@ -99,7 +109,7 @@ export const GenerateSessionsTextContentDialog = ({
                         variant="outlined"
                         disabled={generatingState.generationState === GenerationStates.GENERATING}
                         sx={{ marginRight: 2 }}
-                        onClick={() => generate(sessionToGenerateFor.slice(0, 1), false, llmSettings)}>
+                        onClick={() => generate(sessionToGenerateFor.slice(0, 1), false, buildLlmSettings())}>
                         {generatingState.generationState === 'GENERATING' ? (
                             <>
                                 Generating...

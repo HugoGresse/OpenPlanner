@@ -30,6 +30,10 @@ export const generateSessionTeasingTexts = async (
 ): Promise<GeneratedSessionTeasingTextAnswer> => {
     const promptSystem = settings.aiSettings.sessions.teasingPromptSystem
     const promptUser = settings.aiSettings.sessions.teasingPromptUser
+    const generationSettings = {
+        model: settings.aiSettings.model,
+        temperature: settings.aiSettings.temperature,
+    }
 
     const filteredSessions = sessions.filter((session) => !session.teasingHidden)
     const sessionsCount = filteredSessions.length
@@ -51,7 +55,8 @@ export const generateSessionTeasingTexts = async (
                         TeasingPostSocials[socialKey],
                         session,
                         promptSystem,
-                        promptUser
+                        promptUser,
+                        generationSettings
                     )
             ).then((result) => ({
                 social: TeasingPostSocials[socialKey],
