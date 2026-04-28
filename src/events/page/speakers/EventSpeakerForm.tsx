@@ -9,6 +9,11 @@ import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldEl
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { isMobileOrTablet } from '../../../hooks/sizesHooks'
 
+// Strip visual separators (spaces, parens, dots, dashes) so the resulting
+// `tel:` URI is dial-clean across user agents. Keeps a leading `+`, digits,
+// and `*`/`#` for IVR / extension chars.
+const normalizeTelHref = (value: string) => value.replace(/[^\d+*#]/g, '')
+
 export type EventSpeakerFormProps = {
     event: Event
     speaker?: Speaker
@@ -212,7 +217,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
                         variant="filled"
                         disabled={isSubmitting}
                         size="small"
-                        type="phone"
+                        type="tel"
                         InputProps={
                             isMobile && phoneValue
                                 ? {
@@ -221,7 +226,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
                                               <Tooltip title="Call">
                                                   <IconButton
                                                       aria-label="Call phone number"
-                                                      href={`tel:${phoneValue}`}
+                                                      href={`tel:${normalizeTelHref(phoneValue)}`}
                                                       edge="end">
                                                       <Phone />
                                                   </IconButton>

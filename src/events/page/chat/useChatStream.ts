@@ -366,8 +366,10 @@ const applyEvent = (
             const last = turns[turns.length - 1]
             if (last && last.role === 'assistant') {
                 const needsSeparator =
-                    last.pendingSeparator && last.content.length > 0 && !last.content.endsWith('\n')
-                const delta = needsSeparator ? `\n\n${evt.delta}` : evt.delta
+                    last.pendingSeparator && last.content.length > 0 && !last.content.endsWith('\n\n')
+                const delta = needsSeparator
+                    ? `${last.content.endsWith('\n') ? '\n' : '\n\n'}${evt.delta}`
+                    : evt.delta
                 turns[turns.length - 1] = {
                     ...last,
                     content: last.content + delta,
