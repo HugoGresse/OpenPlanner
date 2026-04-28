@@ -21,16 +21,41 @@ const isChunkLoadError = (error: unknown): boolean => {
     )
 }
 
+const clearReloadFlag = (): void => {
+    try {
+        window.sessionStorage.removeItem(RELOAD_FLAG)
+    } catch {
+        // Ignore storage access failures so successful imports still resolve.
+    }
+}
+
+const hasAlreadyRetried = (): boolean => {
+    try {
+        return window.sessionStorage.getItem(RELOAD_FLAG) === '1'
+    } catch {
+        // If storage is unavailable, avoid a reload attempt and surface the original error.
+        return true
+    }
+}
+
+const markReloadAttempted = (): void => {
+    try {
+        window.sessionStorage.setItem(RELOAD_FLAG, '1')
+    } catch {
+        // Ignore storage access failures; caller will continue with a safe fallback path.
+    }
+}
+
 export const lazyWithRetry = <T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) =>
     lazy(async () => {
         try {
             const mod = await factory()
-            window.sessionStorage.removeItem(RELOAD_FLAG)
+            clearReloadFlag()
             return mod
         } catch (error) {
-            const alreadyTried = window.sessionStorage.getItem(RELOAD_FLAG) === '1'
+            const alreadyTried = hasAlreadyRetried()
             if (isChunkLoadError(error) && !alreadyTried) {
-                window.sessionStorage.setItem(RELOAD_FLAG, '1')
+                markReloadAttempted()
                 window.location.reload()
                 return new Promise<{ default: T }>(() => {})
             }
