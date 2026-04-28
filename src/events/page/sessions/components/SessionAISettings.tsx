@@ -7,7 +7,7 @@ import { useFirestoreDocumentMutation } from '../../../../services/hooks/firesto
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../../services/firebase'
 import { Event, EventAISettings } from '../../../../types'
-import { GenerateSessionsTeasingContentPrompts } from '../../../actions/sessions/generation/generateSessionTeasingContent'
+import { GenerateSessionsTeasingContentPrompts, BaseAiSettings } from '../../../actions/sessions/generation/generateSessionTeasingContent'
 import { BASE_OPENROUTER_SETTINGS, useAiModelList } from '../../../../services/openRouter'
 
 export const SessionAISettings = ({
@@ -39,19 +39,26 @@ export const SessionAISettings = ({
     onValuesChangeRef.current = onValuesChange
     useEffect(() => {
         if (!onValuesChangeRef.current) return
+        // Empty/cleared inputs fall back to the persisted (or hard-coded
+        // default) settings so a half-edited form can't ship `temperature: ''`
+        // (which downstream parses to `NaN`) or an empty model id.
+        const fallback = event.aiSettings ?? BaseAiSettings
         const toSettings = (v: {
             teasingPromptSystem?: string
             teasingPromptUser?: string
             model?: string
             temperature?: string | number
-        }): EventAISettings => ({
-            model: v.model ?? '',
-            temperature: `${v.temperature ?? ''}`,
-            sessions: {
-                teasingPromptSystem: v.teasingPromptSystem ?? '',
-                teasingPromptUser: v.teasingPromptUser ?? '',
-            },
-        })
+        }): EventAISettings => {
+            const tempIsEmpty = v.temperature === undefined || v.temperature === null || v.temperature === ''
+            return {
+                model: v.model || fallback.model,
+                temperature: tempIsEmpty ? fallback.temperature : `${v.temperature}`,
+                sessions: {
+                    teasingPromptSystem: v.teasingPromptSystem || fallback.sessions.teasingPromptSystem,
+                    teasingPromptUser: v.teasingPromptUser || fallback.sessions.teasingPromptUser,
+                },
+            }
+        }
         // Seed parent with the current values, then keep it in sync.
         onValuesChangeRef.current(toSettings(formContext.getValues()))
         const subscription = formContext.watch((value) => {
@@ -59,7 +66,7 @@ export const SessionAISettings = ({
             onValuesChangeRef.current(toSettings(value))
         })
         return () => subscription.unsubscribe()
-    }, [formContext])
+    }, [formContext, event.aiSettings])
 
     return (
         <Box padding={2} borderRadius={2} border={1} borderColor="#66666688" mt={2} mb={2}>
