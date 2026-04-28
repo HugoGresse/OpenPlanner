@@ -1,4 +1,5 @@
-import { FormContainer, SelectElement, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { ModelAutocomplete } from '../../../../components/form/ModelAutocomplete'
 import { Box, Button, Grid, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../../components/form/SaveShortcut'
@@ -113,16 +114,13 @@ export const SessionAISettings = ({
                         />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                        <SelectElement
-                            margin="dense"
-                            required
-                            fullWidth
-                            label="Model"
+                        <ModelAutocomplete
                             name="model"
+                            label="Model"
                             helperText="See model list at https://openrouter.ai/models"
-                            variant="filled"
                             disabled={formState.isSubmitting}
-                            options={modelList.map((m) => ({ id: m.id, label: m.id }))}
+                            required
+                            models={modelList}
                         />
                         <TextFieldElement
                             margin="dense"

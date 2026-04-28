@@ -1,6 +1,8 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, Card, Container, DialogContentText, Grid, Typography, IconButton, Collapse } from '@mui/material'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { ModelAutocomplete } from '../../../components/form/ModelAutocomplete'
+import { useAiModelList } from '../../../services/openRouter'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
@@ -63,6 +65,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
         defaultValues: convertInputEvent(event),
     })
     const { control, formState, watch } = formContext
+    const modelList = useAiModelList(event.openRouterAPIKey || '')
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
 
@@ -300,15 +303,13 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                         helperText="Used for the in-app chat assistant. Get one at https://openrouter.ai/keys."
                                         disabled={formState.isSubmitting}
                                     />
-                                    <TextFieldElement
-                                        margin="normal"
-                                        fullWidth
-                                        id="openRouterModel"
-                                        label="OpenRouter model (optional)"
+                                    <ModelAutocomplete
                                         name="openRouterModel"
-                                        variant="filled"
+                                        label="OpenRouter model (optional)"
                                         helperText="Defaults to anthropic/claude-sonnet-4 if empty."
                                         disabled={formState.isSubmitting}
+                                        margin="normal"
+                                        models={modelList}
                                     />
                                     <TextFieldElement
                                         margin="normal"
