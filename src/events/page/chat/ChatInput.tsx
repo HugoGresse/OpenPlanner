@@ -12,6 +12,13 @@ export type ChatInputProps = {
 
 export const ChatInput = ({ streaming, disabled, onSend, onCancel }: ChatInputProps) => {
     const [value, setValue] = React.useState('')
+    const inputRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
+
+    // Focus on mount and whenever the field becomes enabled (e.g. after the
+    // event API key finishes provisioning when the drawer first opens).
+    React.useEffect(() => {
+        if (!disabled) inputRef.current?.focus()
+    }, [disabled])
 
     const submit = () => {
         const trimmed = value.trim()
@@ -31,6 +38,8 @@ export const ChatInput = ({ streaming, disabled, onSend, onCancel }: ChatInputPr
                 borderColor: 'divider',
             }}>
             <TextField
+                inputRef={inputRef}
+                autoFocus
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 onKeyDown={(e) => {

@@ -1,11 +1,18 @@
 import * as React from 'react'
 import { Event, Speaker } from '../../../types'
 import { FormContainer, SwitchElement, TextFieldElement, useForm } from 'react-hook-form-mui'
-import { Grid, Typography } from '@mui/material'
+import { Grid, IconButton, InputAdornment, Tooltip, Typography } from '@mui/material'
+import { Phone } from '@mui/icons-material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SpeakerSocialFields } from './SpeakerSocials'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { isMobileOrTablet } from '../../../hooks/sizesHooks'
+
+// Strip visual separators (spaces, parens, dots, dashes) so the resulting
+// `tel:` URI is dial-clean across user agents. Keeps a leading `+`, digits,
+// and `*`/`#` for IVR / extension chars.
+const normalizeTelHref = (value: string) => value.replace(/[^\d+*#]/g, '')
 
 export type EventSpeakerFormProps = {
     event: Event
@@ -29,9 +36,11 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
               } as Speaker)
             : { customFields: defaultCustomFields },
     })
-    const { formState, control } = formContext
+    const { formState, control, watch } = formContext
 
     const isSubmitting = formState.isSubmitting
+    const isMobile = isMobileOrTablet()
+    const phoneValue = watch('phone')
 
     const publicCustomFields = customFields.filter((f) => f.privacy !== 'private')
     const privateCustomFields = customFields.filter((f) => f.privacy === 'private')
@@ -208,7 +217,25 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
                         variant="filled"
                         disabled={isSubmitting}
                         size="small"
-                        type="phone"
+                        type="tel"
+                        InputProps={
+                            isMobile && phoneValue
+                                ? {
+                                      endAdornment: (
+                                          <InputAdornment position="end">
+                                              <Tooltip title="Call">
+                                                  <IconButton
+                                                      aria-label="Call phone number"
+                                                      href={`tel:${normalizeTelHref(phoneValue)}`}
+                                                      edge="end">
+                                                      <Phone />
+                                                  </IconButton>
+                                              </Tooltip>
+                                          </InputAdornment>
+                                      ),
+                                  }
+                                : undefined
+                        }
                     />
                     <TextFieldElement
                         margin="dense"
