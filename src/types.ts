@@ -129,6 +129,50 @@ export interface SpeakerCustomField {
     name: string
     type: 'boolean' | 'text'
     privacy: 'public' | 'private'
+    editableBySpeaker?: boolean
+}
+
+export interface SpeakerSelfEditSettings {
+    enabled: boolean
+    editableFields?: string[]
+}
+
+export type SpeakerSelfEditableField =
+    | 'name'
+    | 'pronouns'
+    | 'jobTitle'
+    | 'bio'
+    | 'company'
+    | 'companyLogoUrl'
+    | 'geolocation'
+    | 'photoUrl'
+    | 'socials'
+
+export const SPEAKER_SELF_EDITABLE_FIELDS: SpeakerSelfEditableField[] = [
+    'name',
+    'pronouns',
+    'jobTitle',
+    'bio',
+    'company',
+    'companyLogoUrl',
+    'geolocation',
+    'photoUrl',
+    'socials',
+]
+
+export interface SpeakerPendingEdit {
+    id: string
+    speakerId: string
+    eventId: string
+    submittedAt: Timestamp
+    tokenId: string
+    ip?: string | null
+    status: 'pending' | 'approved' | 'rejected'
+    reviewedBy?: string | null
+    reviewedAt?: Timestamp | null
+    reviewNote?: string | null
+    patch: Partial<Speaker>
+    baseSnapshot: Partial<Speaker>
 }
 
 export interface EventShortVidSettings {
@@ -182,6 +226,7 @@ export interface Event {
     colorBackground: string | null
     sponsorCustomFields: SponsorCustomField[]
     speakerCustomFields: SpeakerCustomField[]
+    speakerSelfEdit?: SpeakerSelfEditSettings | null
     bupherSession?: string | null
     bupherOrganizationId?: string | null
     timezone: string | null

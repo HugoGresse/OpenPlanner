@@ -51,6 +51,29 @@ export interface Speaker {
     customFields?: { [key: string]: string | boolean }
 }
 
+export type SpeakerSelfEditableField =
+    | 'name'
+    | 'pronouns'
+    | 'jobTitle'
+    | 'bio'
+    | 'company'
+    | 'companyLogoUrl'
+    | 'geolocation'
+    | 'photoUrl'
+    | 'socials'
+
+export const SPEAKER_SELF_EDITABLE_FIELDS: SpeakerSelfEditableField[] = [
+    'name',
+    'pronouns',
+    'jobTitle',
+    'bio',
+    'company',
+    'companyLogoUrl',
+    'geolocation',
+    'photoUrl',
+    'socials',
+]
+
 export interface Session {
     id: string
     conferenceHallId: string | null

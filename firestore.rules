@@ -26,6 +26,26 @@ service cloud.firestore {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
             }
+            // Magic-link tokens for speaker self-edit. Written exclusively by
+            // the Cloud Functions API (firebase-admin bypasses rules). Never
+            // exposed to clients — token hashes here grant edit access.
+            match /speakerEditTokens/{tokenId} {
+                allow read: if false;
+                allow write: if false;
+            }
+            // Speaker-submitted pending edits awaiting admin review. Backend
+            // writes via admin SDK; admin UI reads through the API, not the
+            // SDK, so client access stays denied.
+            match /speakerPendingEdits/{requestId} {
+                allow read: if false;
+                allow write: if false;
+            }
+            // Rate-limit counters for speaker edit link requests. Admin-only,
+            // bumped from the backend.
+            match /speakerEditRateLimits/{docId} {
+                allow read: if false;
+                allow write: if false;
+            }
             match /sponsors/{sponsorId} {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if authenticated() && isAdmin(eventData(eventId));
@@ -63,6 +83,13 @@ service cloud.firestore {
         	allow read: if authenticated() && isSuperAdmin(request.auth.uid);
             allow write: if false;
             allow create: if false;
+        }
+
+        // Firebase Trigger Email extension queue. Written by the backend; the
+        // extension reads, sends, and updates docs server-side.
+        match /mail/{docId} {
+            allow read: if false;
+            allow write: if false;
         }
 
     }

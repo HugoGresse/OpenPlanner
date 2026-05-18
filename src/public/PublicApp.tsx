@@ -6,6 +6,8 @@ import { PublicEventFaqApp } from './faq/PublicEventFaqApp'
 import { PublicEventContainer } from './event/PublicEventContainer'
 import { PublicEventJobAdd } from './jobs/PublicEventJobAdd'
 import { PublicEventJobManagement } from './jobs/PublicEventJobManagement'
+import { PublicSpeakerEditRequest } from './speakerEdit/PublicSpeakerEditRequest'
+import { PublicSpeakerEditForm } from './speakerEdit/PublicSpeakerEditForm'
 
 export type PublicAppProps = {}
 export const PublicApp = (props: PublicAppProps) => {
@@ -34,6 +36,12 @@ export const PublicApp = (props: PublicAppProps) => {
                 </Route>
                 <Route path="/jobsSponsors/">
                     <PublicEventJobManagement eventId={eventId} />
+                </Route>
+                <Route path="/speaker-edit">
+                    <PublicSpeakerEditRequest eventId={eventId} />
+                </Route>
+                <Route path="/speaker-edit/:speakerId">
+                    {(params) => <PublicSpeakerEditForm eventId={eventId} speakerId={params.speakerId} />}
                 </Route>
                 <Route>
                     <PublicEventContainer eventId={eventId} />

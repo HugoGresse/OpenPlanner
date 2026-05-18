@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Box, IconButton, Typography } from '@mui/material'
-import { Control, TextFieldElement, SelectElement, useFieldArray } from 'react-hook-form-mui'
+import { Control, TextFieldElement, SelectElement, SwitchElement, useFieldArray } from 'react-hook-form-mui'
 import { Add, Delete } from '@mui/icons-material'
 import { SpeakerCustomField } from '../../../../types'
 
@@ -69,6 +69,12 @@ export const SpeakerCustomFieldsFields = ({ control, isSubmitting }: SpeakerCust
                             ]}
                             sx={{ minWidth: 120 }}
                         />
+                        <SwitchElement
+                            label="Editable by speaker"
+                            name={`speakerCustomFields.${index}.editableBySpeaker`}
+                            control={control}
+                            disabled={isSubmitting}
+                        />
                         <IconButton
                             aria-label="Remove custom field"
                             onClick={() => {
@@ -87,6 +93,7 @@ export const SpeakerCustomFieldsFields = ({ control, isSubmitting }: SpeakerCust
                             name: '',
                             type: 'text',
                             privacy: 'public',
+                            editableBySpeaker: false,
                         })
                     }}>
                     <Add />

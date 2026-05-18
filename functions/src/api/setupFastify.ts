@@ -5,6 +5,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { addContentTypeParserForServerless } from './other/addContentTypeParserForServerless'
 import { firebasePlugin } from './dao/firebasePlugin'
 import { apiKeyPlugin } from './apiKeyPlugin'
+import { speakerEditTokenPlugin } from './speakerEditTokenPlugin'
 import cors from '@fastify/cors'
 import { registerSwagger } from './swagger'
 import { sponsorsRoutes } from './routes/sponsors/sponsors'
@@ -28,6 +29,7 @@ declare module 'fastify' {
     interface FastifyInstance {
         firebase: Firebase
         verifyApiKey: FastifyAuthFunction
+        verifySpeakerEditToken: FastifyAuthFunction
     }
 }
 
@@ -50,6 +52,7 @@ export const setupFastify = () => {
     fastify.register(fastifyAuth)
     fastify.register(firebasePlugin)
     fastify.register(apiKeyPlugin)
+    fastify.register(speakerEditTokenPlugin)
     fastify.register(cors, {
         origin: '*',
     })
