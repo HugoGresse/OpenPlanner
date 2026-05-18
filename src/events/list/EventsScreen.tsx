@@ -83,11 +83,7 @@ export const EventsScreen = ({}) => {
                 )
             })}
 
-            <Alert severity="info" sx={{ mt: 4 }}>
-                ConferenceHall integration is now directly managed within ConferenceHall, using OpenPlanner API key.
-            </Alert>
-
-            <Box display="flex" flexDirection="column" alignItems="center" gap={1} maxWidth={500} marginX="auto" mt={2}>
+            <Box display="flex" flexDirection="column" alignItems="center" gap={1} maxWidth={500} marginX="auto" mt={4}>
                 <Typography>
                     This project is open source on{' '}
                     <Link component="a" href="https://github.com/HugoGresse/openplanner" target="_blank">
