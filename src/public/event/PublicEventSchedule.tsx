@@ -19,8 +19,7 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
     const [searchParams] = useSearchParams()
     const selectedDay = params?.day
     const hideHeader = searchParams.get('hideHeader') === 'true'
-    const queryLanguage = searchParams.get('lang')
-    const language = (queryLanguage || event.event.language || 'FR').toUpperCase()
+    const language = (event.event.language || 'FR').toUpperCase()
     const locale = language === 'EN' ? 'en' : 'fr'
 
     const sessionsByDay = useMemo(() => {
