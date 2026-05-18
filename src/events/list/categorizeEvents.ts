@@ -12,12 +12,16 @@ export const EVENT_CATEGORY_LABEL: Record<EventCategory, string> = {
 }
 
 export const getEventCategory = (event: Event, now: Date = new Date()): EventCategory => {
-    const { start, end } = event.dates
-    if (!start && !end) return 'unscheduled'
-    if (start && end && start.getTime() <= now.getTime() && now.getTime() <= end.getTime()) return 'active'
-    if (start && start.getTime() > now.getTime()) return 'upcoming'
-    if (end && end.getTime() < now.getTime()) return 'past'
-    return 'unscheduled'
+    const startMs = event.dates.start?.getTime() ?? null
+    const endMs = event.dates.end?.getTime() ?? null
+    if (startMs === null && endMs === null) return 'unscheduled'
+    const nowMs = now.getTime()
+    if (startMs !== null && endMs !== null) {
+        if (startMs <= nowMs && nowMs <= endMs) return 'active'
+        return startMs > nowMs ? 'upcoming' : 'past'
+    }
+    if (startMs !== null) return startMs > nowMs ? 'upcoming' : 'past'
+    return endMs! < nowMs ? 'past' : 'upcoming'
 }
 
 export const groupEventsByCategory = (events: Event[]): Record<EventCategory, Event[]> => {
