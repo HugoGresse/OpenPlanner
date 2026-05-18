@@ -43,7 +43,8 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
     const initialDateRef = useRef<string | undefined>(undefined)
     if (initialDateRef.current === undefined) {
         const parsedDay = dayParam ? DateTime.fromFormat(dayParam, DAY_URL_FORMAT) : null
-        initialDateRef.current = parsedDay && parsedDay.isValid ? parsedDay.toISO() : event.dates.start?.toISOString()
+        const parsedDayISO = parsedDay && parsedDay.isValid ? parsedDay.toISO() : null
+        initialDateRef.current = parsedDayISO ?? event.dates.start?.toISOString()
     }
 
     useEffect(() => {
