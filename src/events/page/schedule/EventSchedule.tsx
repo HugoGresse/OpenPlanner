@@ -1,6 +1,6 @@
 import { Box, Button, Card, Dialog, Link, Typography } from '@mui/material'
 import * as React from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Event, Session } from '../../../types'
 import { useSessions } from '../../../services/hooks/useSessions'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -11,7 +11,7 @@ import { DateTime } from 'luxon'
 import { EventSourceInput } from '@fullcalendar/core'
 import { onFullCalendarEventChange } from './eventScheduleFunctions'
 import { SessionCardContent } from './components/SessionCardContent'
-import { useLocation } from 'wouter'
+import { useLocation, useSearchParams } from 'wouter'
 import { FullCalendarBase } from './components/FullCalendarBase'
 import { useSessionTemplate } from '../../../services/hooks/useSessionsTemplate'
 import { getSessionBackgroundColor } from './components/getSessionBackgroundColor'
@@ -25,16 +25,37 @@ import { useNotification } from '../../../hooks/notificationHook'
 export type EventScheduleProps = {
     event: Event
 }
+const DAY_URL_FORMAT = 'yyyy-MM-dd'
+
 export const EventSchedule = ({ event }: EventScheduleProps) => {
     const calendarRef = useRef(null)
     const templateCalendarRef = useRef(null)
     const numberOfDays = diffDays(event.dates.start, event.dates.end)
     const [_, setLocation] = useLocation()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const dayParam = searchParams.get('day')
     const sessions = useSessions(event)
     const sessionsTemplate = useSessionTemplate(event)
     const [daysToDisplay, setDaysToDisplay] = useState<number>(1)
     const [exportDialogOpen, setExportDialogOpen] = useState(false)
     const { createNotification } = useNotification()
+
+    const initialDateRef = useRef<string | undefined>(undefined)
+    if (initialDateRef.current === undefined) {
+        const parsedDay = dayParam ? DateTime.fromFormat(dayParam, DAY_URL_FORMAT) : null
+        initialDateRef.current = parsedDay && parsedDay.isValid ? parsedDay.toISO() : event.dates.start?.toISOString()
+    }
+
+    useEffect(() => {
+        if (!dayParam) return
+        const parsed = DateTime.fromFormat(dayParam, DAY_URL_FORMAT)
+        if (!parsed.isValid) return
+        const targetDate = parsed.toJSDate()
+        const calendarApi = (calendarRef.current as any)?.getApi()
+        if (calendarApi && calendarApi.getDate().getTime() !== targetDate.getTime()) {
+            calendarApi.gotoDate(targetDate)
+        }
+    }, [dayParam])
 
     if (numberOfDays <= 0 || !event.dates.start || !event.dates.end) {
         return (
@@ -153,6 +174,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                     startTime={startTime}
                     daysToDisplay={daysToDisplay}
                     event={event}
+                    initialDate={initialDateRef.current}
                     events={
                         sessionsWithDates.map((s: Session) => ({
                             title: s.title,
@@ -173,6 +195,18 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                         )
                     }}
                     customButtons={customButtons}
+                    datesSet={(arg) => {
+                        const day = DateTime.fromJSDate(arg.start).toFormat(DAY_URL_FORMAT)
+                        if (day !== searchParams.get('day')) {
+                            const newParams = new URLSearchParams(searchParams)
+                            newParams.set('day', day)
+                            setSearchParams(newParams)
+                        }
+                        const templateApi = (templateCalendarRef.current as any)?.getApi()
+                        if (templateApi && templateApi.getDate().getTime() !== arg.start.getTime()) {
+                            templateApi.gotoDate(arg.start)
+                        }
+                    }}
                     drop={(info) => {
                         const sessionId = info.draggedEl.getAttribute('data-id')
                         const trackId = info.resource?.id
@@ -214,6 +248,7 @@ export const EventSchedule = ({ event }: EventScheduleProps) => {
                             event={event}
                             daysToDisplay={daysToDisplay}
                             startTime={startTime}
+                            initialDate={initialDateRef.current}
                             events={sessionsTemplateArray.map((template) => {
                                 return {
                                     title: template.title,
