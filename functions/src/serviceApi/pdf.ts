@@ -103,6 +103,15 @@ const mergeSettings = (settings?: PDFSettings): MergedPDFSettings => ({
     language: normalizeLanguage(settings?.language),
 })
 
+// Chromium's --lang flag is the only reliable way to set the locale that
+// Intl.DateTimeFormat (and therefore Luxon/toLocaleString) uses. Patching
+// navigator.language at runtime does not propagate into ICU.
+const launchBrowser = (language: string): Promise<Browser> =>
+    puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', `--lang=${language}`],
+    })
+
 const setupPage = async (browser: Browser, settings: MergedPDFSettings): Promise<Page> => {
     const page = await browser.newPage()
     await page.setViewport({
@@ -206,12 +215,9 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
 
             let browser: Browser | null = null
             try {
-                browser = await puppeteer.launch({
-                    headless: true,
-                    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-                })
-                const merger = new PDFMerger()
                 const mergedSettings = mergeSettings(settings)
+                browser = await launchBrowser(mergedSettings.language)
+                const merger = new PDFMerger()
 
                 for (const url of urls) {
                     const page = await setupPage(browser, mergedSettings)
@@ -273,12 +279,9 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
 
             let browser: Browser | null = null
             try {
-                browser = await puppeteer.launch({
-                    headless: true,
-                    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-                })
-                const merger = new PDFMerger()
                 const mergedSettings = mergeSettings(settings)
+                browser = await launchBrowser(mergedSettings.language)
+                const merger = new PDFMerger()
 
                 for (const html of htmlContents) {
                     const page = await setupPage(browser, mergedSettings)
