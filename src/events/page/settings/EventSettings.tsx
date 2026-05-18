@@ -34,6 +34,7 @@ const schema = yup
     .object({
         name: yup.string().required(),
         timezone: yup.string().required(),
+        language: yup.string().required(),
     })
     .required()
 
@@ -41,6 +42,7 @@ const convertInputEvent = (event: Event): EventForForm => {
     return {
         ...event,
         timezone: event.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: event.language || 'FR',
         dates: {
             start: event.dates.start ? DateTime.fromJSDate(event.dates.start).toFormat("kkkk-LL-dd'T'T") : null,
             end: event.dates.end ? DateTime.fromJSDate(event.dates.end).toFormat("kkkk-LL-dd'T'T") : null,
@@ -147,6 +149,17 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 variant="filled"
                                 disabled={formState.isSubmitting}
                                 helperText="eg: Europe/Paris"
+                            />
+                            <TextFieldElement
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="language"
+                                label="Language"
+                                name="language"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                                helperText="FR | en |  BCP-47 code like fr-FR"
                             />
                             {days ? days + ' day(s)' : ''}
 

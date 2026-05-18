@@ -23,6 +23,7 @@ interface PDFSettings {
         }
     }
     timezone?: string
+    language?: string
 }
 
 const DEFAULT_SETTINGS: PDFSettings = {
@@ -45,6 +46,7 @@ const DEFAULT_SETTINGS: PDFSettings = {
         },
     },
     timezone: 'UTC',
+    language: 'fr-FR',
 }
 
 interface MergedPDFSettings {
@@ -67,6 +69,20 @@ interface MergedPDFSettings {
         }
     }
     timezone: string
+    language: string
+}
+
+const LANGUAGE_TO_LOCALE: Record<string, string> = {
+    FR: 'fr-FR',
+    EN: 'en-US',
+}
+
+const normalizeLanguage = (language: string | undefined): string => {
+    if (!language) return DEFAULT_SETTINGS.language!
+    const upper = language.toUpperCase()
+    if (LANGUAGE_TO_LOCALE[upper]) return LANGUAGE_TO_LOCALE[upper]
+    // Accept BCP-47 tags like "fr-FR" or "en-GB" verbatim.
+    return language
 }
 
 const mergeSettings = (settings?: PDFSettings): MergedPDFSettings => ({
@@ -84,6 +100,7 @@ const mergeSettings = (settings?: PDFSettings): MergedPDFSettings => ({
         margin: settings?.pdf?.margin ?? DEFAULT_SETTINGS.pdf!.margin!,
     },
     timezone: settings?.timezone ?? DEFAULT_SETTINGS.timezone!,
+    language: normalizeLanguage(settings?.language),
 })
 
 const setupPage = async (browser: Browser, settings: MergedPDFSettings): Promise<Page> => {
@@ -94,6 +111,14 @@ const setupPage = async (browser: Browser, settings: MergedPDFSettings): Promise
         deviceScaleFactor: settings.viewport.deviceScaleFactor,
     })
     await page.emulateTimezone(settings.timezone)
+    await page.setExtraHTTPHeaders({ 'Accept-Language': settings.language })
+    // Override navigator.language(s) so client-side `Intl` / `Date` formatting
+    // matches the requested locale instead of the headless browser default.
+    const language = settings.language
+    await page.evaluateOnNewDocument((locale: string) => {
+        Object.defineProperty(navigator, 'language', { get: () => locale })
+        Object.defineProperty(navigator, 'languages', { get: () => [locale] })
+    }, language)
     return page
 }
 
@@ -145,6 +170,7 @@ const pdfSettingsSchema = Type.Optional(
             })
         ),
         timezone: Type.Optional(Type.String()),
+        language: Type.Optional(Type.String()),
     })
 )
 

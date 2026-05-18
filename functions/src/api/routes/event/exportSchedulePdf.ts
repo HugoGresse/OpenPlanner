@@ -69,6 +69,7 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
             })
 
             const timezone = event.timezone
+            const language = event.language || 'FR'
 
             try {
                 const firebaseProjectId = getFirebaseProjectId()
@@ -101,6 +102,7 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
                                 },
                             },
                             timezone: timezone,
+                            language: language,
                         },
                     }),
                 })

@@ -86,6 +86,7 @@ export const NewEventDialog = ({ isOpen, onClose }: NewEventDialogProps) => {
                         colorSecondary: null,
                         colorBackground: null,
                         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        language: 'FR',
                         sponsorCustomFields: [],
                         speakerCustomFields: [],
                         publicEnabled: false,
