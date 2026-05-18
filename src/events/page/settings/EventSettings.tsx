@@ -159,7 +159,7 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 name="language"
                                 variant="filled"
                                 disabled={formState.isSubmitting}
-                                helperText="FR or EN"
+                                helperText="FR | en |  BCP-47 code like fr-FR"
                             />
                             {days ? days + ' day(s)' : ''}
 
