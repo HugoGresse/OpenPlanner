@@ -11,6 +11,7 @@ type FullCalendarBaseProps = {
     events: EventSourceInput
     daysToDisplay: number
     startTime: string
+    initialDate?: string
     customButtons?: Record<string, any>
     drop?: (arg: DropArg) => void
     eventDrop?: (arg: EventDropArg) => void
@@ -28,6 +29,7 @@ export const FullCalendarBase = ({
     events,
     startTime,
     daysToDisplay,
+    initialDate,
     customButtons,
     drop,
     eventDrop,
@@ -53,7 +55,7 @@ export const FullCalendarBase = ({
             }}
             customButtons={customButtons}
             initialView="resourceTimeGridFourDay"
-            initialDate={event.dates.start?.toISOString()}
+            initialDate={initialDate ?? event.dates.start?.toISOString()}
             validRange={{
                 start: event.dates.start?.toISOString(),
                 end: event.dates.end?.toISOString(),
