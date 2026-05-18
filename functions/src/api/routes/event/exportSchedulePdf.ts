@@ -62,10 +62,11 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
             }
 
             const individualEventDaysAsyearMonthDay = getIndividualDays(event.dates.start, event.dates.end)
+            const language = (event.language || 'FR').toUpperCase()
             const scheduleUrls = individualEventDaysAsyearMonthDay.map((day) => {
                 return `https://openplanner.fr/public/event/${eventId}/schedule/${day.start.toFormat(
                     'yyyy-MM-dd'
-                )}?hideHeader=true`
+                )}?hideHeader=true&lang=${encodeURIComponent(language)}`
             })
 
             const timezone = event.timezone

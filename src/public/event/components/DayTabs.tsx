@@ -6,9 +6,10 @@ type DayTabsProps = {
     days: string[]
     selectedDay: string
     onDayChange: (event: React.SyntheticEvent, day: string) => void
+    locale: string
 }
 
-export const DayTabs = ({ days, selectedDay, onDayChange }: DayTabsProps) => {
+export const DayTabs = ({ days, selectedDay, onDayChange, locale }: DayTabsProps) => {
     return (
         <Tabs
             value={selectedDay}
@@ -18,7 +19,11 @@ export const DayTabs = ({ days, selectedDay, onDayChange }: DayTabsProps) => {
             allowScrollButtonsMobile
             sx={{ '& .MuiTab-root': { fontSize: '1.2rem' } }}>
             {days.map((day) => (
-                <Tab key={day} value={day} label={DateTime.fromISO(day).toLocaleString({ weekday: 'long' })} />
+                <Tab
+                    key={day}
+                    value={day}
+                    label={DateTime.fromISO(day).setLocale(locale).toLocaleString({ weekday: 'long' })}
+                />
             ))}
         </Tabs>
     )

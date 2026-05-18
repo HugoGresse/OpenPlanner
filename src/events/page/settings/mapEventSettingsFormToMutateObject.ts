@@ -36,6 +36,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
     const openRouterModel = data.openRouterModel || ''
     const transcriptionPassword = data.transcriptionPassword || ''
     const timezone = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const language = (data.language || 'FR').toUpperCase()
 
     return {
         ...event,
@@ -59,6 +60,7 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         openRouterModel,
         transcriptionPassword,
         timezone,
+        language,
     }
 }
 

@@ -171,6 +171,7 @@ export interface Event {
     bupherSession?: string | null;
     bupherOrganizationId?: string | null;
     timezone: string | null;
+    language?: string | null;
     repoUrl?: string | null;
     repoToken?: string | null;
 }

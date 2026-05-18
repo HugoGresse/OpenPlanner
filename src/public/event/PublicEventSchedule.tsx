@@ -19,6 +19,9 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
     const [searchParams] = useSearchParams()
     const selectedDay = params?.day
     const hideHeader = searchParams.get('hideHeader') === 'true'
+    const queryLanguage = searchParams.get('lang')
+    const language = (queryLanguage || event.event.language || 'FR').toUpperCase()
+    const locale = language === 'EN' ? 'en' : 'fr'
 
     const sessionsByDay = useMemo(() => {
         const sessions = event.sessions
@@ -78,8 +81,22 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
                     colorBackground={event.event.colorBackground}
                 />
             )}
+            {hideHeader && event.event.logoUrl && (
+                <Box width="100%" display="flex" justifyContent="flex-start" mb={1}>
+                    <Box
+                        component="img"
+                        src={event.event.logoUrl}
+                        alt={`${event.event.name} logo`}
+                        sx={{
+                            maxHeight: 80,
+                            width: 'auto',
+                            objectFit: 'contain',
+                        }}
+                    />
+                </Box>
+            )}
 
-            <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
+            <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} locale={locale} />
 
             <DaySchedule
                 day={selectedDay}
@@ -95,7 +112,8 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
                     py: 2,
                 }}>
                 <Typography variant="caption" color="text.secondary">
-                    Updated on {DateTime.fromISO(event.generatedAt).toLocaleString(DateTime.DATETIME_FULL)}
+                    {language === 'EN' ? 'Updated on' : 'Mis à jour le'}{' '}
+                    {DateTime.fromISO(event.generatedAt).setLocale(locale).toLocaleString(DateTime.DATETIME_FULL)}
                 </Typography>
             </Box>
         </Box>
