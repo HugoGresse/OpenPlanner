@@ -103,14 +103,30 @@ const mergeSettings = (settings?: PDFSettings): MergedPDFSettings => ({
     language: normalizeLanguage(settings?.language),
 })
 
-// Chromium's --lang flag is the only reliable way to set the locale that
-// Intl.DateTimeFormat (and therefore Luxon/toLocaleString) uses. Patching
-// navigator.language at runtime does not propagate into ICU.
-const launchBrowser = (language: string): Promise<Browser> =>
-    puppeteer.launch({
+// BCP-47 `fr-FR` → POSIX `fr_FR.UTF-8` for the LANG/LC_ALL env vars used
+// by Chromium's ICU when picking the default Intl locale.
+const toPosixLocale = (bcp47: string): string => {
+    const [lang, region] = bcp47.split('-')
+    return region ? `${lang}_${region.toUpperCase()}.UTF-8` : `${lang}.UTF-8`
+}
+
+// Chromium's --lang flag plus the LANG/LC_ALL env vars are needed to make
+// Intl.DateTimeFormat (and therefore Luxon/toLocaleString) default to the
+// requested locale. The --lang flag alone is not enough on Cloud Functions
+// nor on macOS — ICU still falls back to the process locale.
+const launchBrowser = (language: string): Promise<Browser> => {
+    const posix = toPosixLocale(language)
+    return puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', `--lang=${language}`],
+        env: {
+            ...process.env,
+            LANG: posix,
+            LC_ALL: posix,
+            LANGUAGE: language,
+        },
     })
+}
 
 const setupPage = async (browser: Browser, settings: MergedPDFSettings): Promise<Page> => {
     const page = await browser.newPage()
