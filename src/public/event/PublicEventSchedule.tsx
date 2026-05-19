@@ -78,22 +78,26 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
                     colorBackground={event.event.colorBackground}
                 />
             )}
-            {hideHeader && event.event.logoUrl && (
-                <Box width="100%" display="flex" justifyContent="flex-start" mb={1}>
+            {hideHeader && event.event.logoUrl ? (
+                <Box display="flex" alignItems="center" gap={3} width="100%">
                     <Box
                         component="img"
                         src={event.event.logoUrl}
                         alt={`${event.event.name} logo`}
                         sx={{
-                            maxHeight: 80,
+                            height: 60,
                             width: 'auto',
                             objectFit: 'contain',
+                            flexShrink: 0,
                         }}
                     />
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
+                    </Box>
                 </Box>
+            ) : (
+                <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
             )}
-
-            <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
 
             <DaySchedule
                 day={selectedDay}
