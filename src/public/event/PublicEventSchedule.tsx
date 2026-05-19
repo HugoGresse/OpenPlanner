@@ -71,32 +71,24 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
             alignItems="center"
             sx={{ minHeight: 'calc(100vh - 124px)' }} // Subtract margin-top value to prevent overflow
         >
-            {!hideHeader && (
-                <ScheduleHeader
-                    eventName={event.event.name}
-                    logoUrl={event.event.logoUrl}
-                    colorBackground={event.event.colorBackground}
-                />
-            )}
-            {hideHeader && event.event.logoUrl ? (
-                <Box display="flex" alignItems="center" gap={3} width="100%">
-                    <Box
-                        component="img"
-                        src={event.event.logoUrl}
-                        alt={`${event.event.name} logo`}
-                        sx={{
-                            height: 60,
-                            width: 'auto',
-                            objectFit: 'contain',
-                            flexShrink: 0,
-                        }}
+            {hideHeader ? (
+                <Box display="flex" alignItems="center" justifyContent="center" gap={3} flexWrap="wrap">
+                    <ScheduleHeader
+                        eventName={event.event.name}
+                        logoUrl={event.event.logoUrl}
+                        colorBackground={event.event.colorBackground}
                     />
-                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                        <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
-                    </Box>
+                    <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
                 </Box>
             ) : (
-                <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
+                <>
+                    <ScheduleHeader
+                        eventName={event.event.name}
+                        logoUrl={event.event.logoUrl}
+                        colorBackground={event.event.colorBackground}
+                    />
+                    <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
+                </>
             )}
 
             <DaySchedule
