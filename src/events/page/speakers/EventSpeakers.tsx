@@ -27,7 +27,6 @@ import { useNotification } from '../../../hooks/notificationHook'
 import { exportSpeakersAction, SpeakersExportType } from './actions/exportSpeakersAction'
 import { SpeakerCustomFieldsDialog } from './components/SpeakerCustomFieldsDialog'
 import { SpeakerSelfEditSettings } from './components/SpeakerSelfEditSettings'
-import { PendingEditsDialog } from './components/PendingEditsDialog'
 
 export type EventSpeakersProps = {
     event: Event
@@ -39,7 +38,6 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
     const [speakersStatsOpen, setSpeakersStatsOpen] = useState(false)
     const [avatarSizeOpen, setAvatarSizeOpen] = useState(false)
     const [customFieldsOpen, setCustomFieldsOpen] = useState(false)
-    const [pendingEditsOpen, setPendingEditsOpen] = useState(false)
     const [displayedSpeakers, setDisplayedSpeakers] = useState<Speaker[]>([])
     const [search, setSearch] = useState<string>('')
     const [showOnlyWithoutSessions, setShowOnlyWithoutSessions] = useState(false)
@@ -153,9 +151,6 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                         <Settings />
                     </IconButton>
                 </Tooltip>
-                {event.speakerSelfEdit?.enabled && (
-                    <Button onClick={() => setPendingEditsOpen(true)}>Pending edits</Button>
-                )}
                 <Button href="/speakers/new" variant="contained">
                     Add speaker
                 </Button>
@@ -221,13 +216,6 @@ export const EventSpeakers = ({ event }: EventSpeakersProps) => {
                     event={event}
                     open={customFieldsOpen}
                     onClose={() => setCustomFieldsOpen(false)}
-                />
-            )}
-            {pendingEditsOpen && (
-                <PendingEditsDialog
-                    event={event}
-                    isOpen={pendingEditsOpen}
-                    onClose={() => setPendingEditsOpen(false)}
                 />
             )}
         </Container>
