@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react'
 // is served from our own deploy instead of a third-party CDN — closes
 // the supply-chain vector that the previous jsdelivr <script> opened.
 import '@cap.js/widget'
+import { CAP_API_ENDPOINT } from '../../env'
 
 declare global {
     namespace JSX {
@@ -17,8 +18,6 @@ declare global {
         }
     }
 }
-
-const CAP_API_ENDPOINT = 'https://captcha.openplanner.fr/'
 
 export type CapWidgetProps = {
     onSolve: (token: string) => void
