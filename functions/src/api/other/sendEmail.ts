@@ -45,14 +45,30 @@ const getTransporter = (): Transporter => {
     }
     // Port defaults to 465 (implicit TLS) — the most common Mailgun setup.
     // 587 + STARTTLS is also supported by passing MAILGUN_SMTP_PORT=587.
-    const port = Number(process.env.MAILGUN_SMTP_PORT || 465)
+    // Validate explicitly so a malformed env var (empty string, alphabetic,
+    // out-of-range) fails fast with a clear configuration error instead of
+    // hitting nodemailer with `0` / `NaN` and getting a cryptic socket
+    // error at first send.
+    const rawPort = process.env.MAILGUN_SMTP_PORT
+    let port = 465
+    if (rawPort !== undefined && rawPort !== '') {
+        const parsed = Number(rawPort)
+        if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
+            throw new Error(`MAILGUN_SMTP_PORT must be an integer between 1 and 65535 (got "${rawPort}")`)
+        }
+        port = parsed
+    }
     // `secure: true` = implicit TLS from byte zero (port 465). For 587 we
     // want STARTTLS, which nodemailer negotiates when `secure: false`.
+    // `requireTLS: true` makes that negotiation mandatory — without it,
+    // nodemailer would happily fall back to plaintext if the server fails
+    // to advertise STARTTLS, leaking the SMTP credentials.
     const secure = port === 465
     cachedTransporter = nodemailer.createTransport({
         host,
         port,
         secure,
+        requireTLS: !secure,
         auth: { user, pass: password },
         pool: true,
         maxConnections: 3,

@@ -132,7 +132,7 @@ describe('sendEmail', () => {
         })
     })
 
-    test('uses STARTTLS (secure=false) on port 587', async () => {
+    test('uses STARTTLS (secure=false) with requireTLS on port 587', async () => {
         __resetEmailTransporterForTests()
         process.env.MAILGUN_SMTP_PORT = '587'
         const setSpy = vi.fn(() => Promise.resolve())
@@ -145,7 +145,57 @@ describe('sendEmail', () => {
             text: 'body',
         })
         const opts = nodemailerMocks.createTransport.mock.calls[0][0]
-        expect(opts).toMatchObject({ port: 587, secure: false })
+        // requireTLS forces the STARTTLS upgrade — without it nodemailer
+        // would silently fall back to plaintext if the server does not
+        // advertise STARTTLS, leaking the SMTP credentials.
+        expect(opts).toMatchObject({ port: 587, secure: false, requireTLS: true })
+    })
+
+    test('omits requireTLS on the implicit-TLS port (465 already secure)', async () => {
+        const setSpy = vi.fn(() => Promise.resolve())
+        const addSpy = vi.fn()
+        nodemailerMocks.sendMail.mockResolvedValueOnce({ messageId: 'mid-5', response: '250 OK' })
+
+        await sendEmail(makeFirebaseApp(setSpy, addSpy), {
+            to: 'jane@example.com',
+            subject: 'Hi',
+            text: 'body',
+        })
+        const opts = nodemailerMocks.createTransport.mock.calls[0][0]
+        expect(opts).toMatchObject({ port: 465, secure: true, requireTLS: false })
+    })
+
+    test.each([
+        ['empty string', ''],
+        ['non-numeric', 'abc'],
+        ['decimal', '587.5'],
+        ['zero', '0'],
+        ['too large', '70000'],
+        ['negative', '-1'],
+    ])('rejects an invalid MAILGUN_SMTP_PORT (%s)', async (_label, value) => {
+        __resetEmailTransporterForTests()
+        process.env.MAILGUN_SMTP_PORT = value
+        const setSpy = vi.fn(() => Promise.resolve())
+        const addSpy = vi.fn()
+        if (value === '') {
+            // empty string falls back to the default 465 path, so a send
+            // should succeed — verify rather than assert a throw.
+            nodemailerMocks.sendMail.mockResolvedValueOnce({ messageId: 'x', response: '250' })
+            await sendEmail(makeFirebaseApp(setSpy, addSpy), {
+                to: 'a@b.c',
+                subject: 'x',
+                text: 'x',
+            })
+            expect(nodemailerMocks.createTransport.mock.calls[0][0]).toMatchObject({ port: 465 })
+            return
+        }
+        await expect(
+            sendEmail(makeFirebaseApp(setSpy, addSpy), {
+                to: 'a@b.c',
+                subject: 'x',
+                text: 'x',
+            })
+        ).rejects.toThrow(/MAILGUN_SMTP_PORT/)
     })
 
     test('writes ERROR delivery when MAIL_FROM is missing', async () => {
