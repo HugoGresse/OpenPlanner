@@ -1,4 +1,5 @@
 import { Speaker } from '../../types'
+import { buildSpeakerEmailFooter } from './speakerEmailFooter'
 
 const FIELD_LABELS: Record<string, string> = {
     name: 'Name',
@@ -55,7 +56,8 @@ export const renderApprovedEmail = (
             `Hello ${speakerName},\n\n` +
             `Your profile changes for "${eventName}" have been approved by an administrator and will be public soon.\n\n` +
             `Changes applied:\n${changes}\n\n` +
-            `If you did not request these changes, please contact the event organisers.`,
+            `If you did not request these changes, please contact the event organisers.\n\n` +
+            buildSpeakerEmailFooter(eventName),
     }
 }
 
@@ -73,6 +75,7 @@ export const renderRejectedEmail = (
             `Hello ${speakerName},\n\n` +
             `Your recent profile changes for "${eventName}" were not applied by the administrators.\n\n` +
             `Changes you proposed:\n${changes}${noteSection}\n\n` +
-            `You can request a fresh edit link from the speaker self-edit page if you want to retry.`,
+            `You can request a fresh edit link from the speaker self-edit page if you want to retry.\n\n` +
+            buildSpeakerEmailFooter(eventName),
     }
 }
