@@ -39,7 +39,40 @@ const FIELD_LABELS: Record<string, string> = {
     photoUrl: 'Photo URL',
 }
 
-const TEXT_FIELDS = ['name', 'pronouns', 'jobTitle', 'company', 'companyLogoUrl', 'geolocation', 'photoUrl']
+// All speaker self-edit fields are optional EXCEPT `name`, which the
+// backend enforces as a non-empty string. Anything else is OK to leave
+// blank — we surface that visually so the speaker does not feel pressured
+// to fill every box.
+const REQUIRED_FIELDS = new Set<string>(['name'])
+
+const labelFor = (field: string): string => {
+    const base = FIELD_LABELS[field] || field
+    return REQUIRED_FIELDS.has(field) ? base : `${base} (optional)`
+}
+
+// Plain text fields rendered in the top block. photoUrl is intentionally
+// excluded — it is rendered separately alongside the file-upload button.
+const TEXT_FIELDS = ['name', 'pronouns', 'jobTitle', 'company', 'companyLogoUrl', 'geolocation']
+
+const extractApiError = async (response: Response, fallback: string): Promise<string> => {
+    // Surface the backend's `error` field verbatim when present so the
+    // speaker sees the real cause (e.g. "Token already used", "Daily
+    // upload limit reached") instead of a generic message. The body may
+    // not be JSON at all on some error paths, hence the safe parse.
+    try {
+        const body = await response.clone().json()
+        if (body && typeof body.error === 'string') return body.error
+    } catch {
+        // fall through to text + fallback
+    }
+    try {
+        const text = await response.text()
+        if (text) return text
+    } catch {
+        // ignore
+    }
+    return fallback
+}
 
 export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditFormProps) => {
     const [token, setToken] = useState<string | null>(null)
@@ -69,8 +102,7 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                 url.searchParams.append('t', t)
                 const response = await fetch(url.href)
                 if (!response.ok) {
-                    const body = await response.json().catch(() => ({}))
-                    setError(body.error || 'Invalid or expired link')
+                    setError(await extractApiError(response, 'Invalid or expired link'))
                     return
                 }
                 const json = (await response.json()) as SelfResponse
@@ -88,8 +120,12 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                 setSocials(json.speaker.socials || [])
                 setCustomFields((json.speaker.customFields as { [k: string]: string | boolean }) || {})
             } catch (err) {
-                console.error(err)
-                setError('Failed to load')
+                // Network / JSON-parse errors land here. Raw err.message
+                // ("Failed to fetch", "Unexpected token <") is meaningless
+                // to a speaker — keep the user-facing string stable and
+                // log the real cause for ops.
+                console.error('Failed to load speaker self-edit form', err)
+                setError('Failed to load. Please check your connection and try again.')
             } finally {
                 setLoading(false)
             }
@@ -101,6 +137,7 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
     const handlePhotoUpload = async (file: File) => {
         if (!token) return
         setUploadingPhoto(true)
+        setError(null)
         try {
             const formData = new FormData()
             formData.append(file.name, file)
@@ -108,15 +145,22 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
             url.pathname += `v1/${eventId}/speakers/${speakerId}/self/photo`
             url.searchParams.append('t', token)
             const response = await fetch(url.href, { method: 'POST', body: formData })
+            if (!response.ok) {
+                setError(await extractApiError(response, 'Upload failed'))
+                return
+            }
             const json = await response.json()
-            if (!response.ok || !json.success) {
+            if (!json.success) {
                 setError(json.error || 'Upload failed')
                 return
             }
             setForm((f) => ({ ...f, photoUrl: json.publicFileUrl }))
         } catch (err) {
-            console.error(err)
-            setError('Upload failed')
+            // Raw err.message here is typically a network / parse failure;
+            // surface a stable user-facing string and keep the technical
+            // detail in the console for ops.
+            console.error('Speaker self-edit photo upload failed', err)
+            setError('Upload failed. Please try again.')
         } finally {
             setUploadingPhoto(false)
         }
@@ -148,7 +192,8 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
         setError(null)
         try {
             const body: Record<string, unknown> = {}
-            for (const field of TEXT_FIELDS) {
+            const allTextFields = [...TEXT_FIELDS, 'photoUrl']
+            for (const field of allTextFields) {
                 if (isEditable(field)) {
                     const value = (form as Record<string, unknown>)[field]
                     if (field === 'name') {
@@ -176,15 +221,23 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
             })
+            if (!response.ok) {
+                setError(await extractApiError(response, 'Submit failed'))
+                return
+            }
             const json = await response.json()
-            if (!response.ok || !json.success) {
+            if (!json.success) {
                 setError(json.error || 'Submit failed')
                 return
             }
             setSubmitted(true)
         } catch (err) {
-            console.error(err)
-            setError('Submit failed')
+            // Backend `{ error }` strings are surfaced via extractApiError
+            // when response.ok is false. Reaching this catch means a
+            // network / parse failure — show a stable user-facing message
+            // and log the raw error for diagnosis.
+            console.error('Speaker self-edit submit failed', err)
+            setError('Submit failed. Please try again.')
         } finally {
             setSubmitting(false)
         }
@@ -234,8 +287,9 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                         <TextField
                             key={field}
                             fullWidth
+                            required={REQUIRED_FIELDS.has(field)}
                             margin="dense"
-                            label={FIELD_LABELS[field] || field}
+                            label={labelFor(field)}
                             value={(form as Record<string, unknown>)[field] || ''}
                             onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
                             disabled={submitting}
@@ -248,7 +302,7 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                             multiline
                             minRows={4}
                             margin="dense"
-                            label="Bio"
+                            label={labelFor('bio')}
                             value={form.bio || ''}
                             onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
                             disabled={submitting}
@@ -256,25 +310,40 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                         />
                     )}
                     {isEditable('photoUrl') && (
-                        <Box mt={1} mb={2}>
-                            <Button variant="outlined" component="label" disabled={uploadingPhoto}>
-                                {uploadingPhoto ? 'Uploading…' : 'Upload new photo'}
-                                <input
-                                    hidden
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        const f = e.target.files?.[0]
-                                        if (f) handlePhotoUpload(f)
-                                    }}
+                        <Box mt={2} mb={1}>
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="stretch">
+                                <Button
+                                    variant="outlined"
+                                    component="label"
+                                    disabled={uploadingPhoto || submitting}
+                                    sx={{ whiteSpace: 'nowrap', alignSelf: { sm: 'center' } }}>
+                                    {uploadingPhoto ? 'Uploading…' : 'Upload new photo'}
+                                    <input
+                                        hidden
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const f = e.target.files?.[0]
+                                            if (f) handlePhotoUpload(f)
+                                        }}
+                                    />
+                                </Button>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    margin="dense"
+                                    label={labelFor('photoUrl')}
+                                    value={form.photoUrl || ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, photoUrl: e.target.value }))}
+                                    disabled={submitting}
                                 />
-                            </Button>
+                            </Stack>
                         </Box>
                     )}
                     {isEditable('socials') && (
                         <Box mt={2}>
                             <Typography variant="subtitle2" mb={1}>
-                                Socials
+                                Socials (optional)
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                                 Pick a network from the list and paste the full link (https://…). The icon is derived
@@ -332,14 +401,14 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                     {data && data.editableCustomFieldIds.length > 0 && (
                         <Box mt={2}>
                             <Typography variant="subtitle2" mb={1}>
-                                Custom fields
+                                Custom fields (optional)
                             </Typography>
                             {data.editableCustomFieldIds.map((id) => {
                                 const value = customFields[id]
                                 if (typeof value === 'boolean' || value === undefined) {
                                     return (
                                         <Stack key={id} direction="row" alignItems="center" spacing={1}>
-                                            <Typography>{id}</Typography>
+                                            <Typography>{id} (optional)</Typography>
                                             <Switch
                                                 checked={!!value}
                                                 onChange={(e) =>
@@ -358,7 +427,7 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                                         fullWidth
                                         margin="dense"
                                         size="small"
-                                        label={id}
+                                        label={`${id} (optional)`}
                                         value={value}
                                         onChange={(e) => setCustomFields((c) => ({ ...c, [id]: e.target.value }))}
                                     />

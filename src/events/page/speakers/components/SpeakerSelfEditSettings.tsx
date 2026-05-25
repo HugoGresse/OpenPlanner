@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
     Accordion,
     AccordionDetails,
@@ -19,6 +19,8 @@ import { ContentCopy, ExpandMore } from '@mui/icons-material'
 import { Event, SPEAKER_SELF_EDITABLE_FIELDS, SpeakerSelfEditableField } from '../../../../types'
 import { updateEvent } from '../../../actions/updateEvent'
 import { useNotification } from '../../../../hooks/notificationHook'
+import { fetchOpenPlannerApi } from '../../../../services/hooks/useOpenPlannerApi'
+import { PendingEditsDialog } from './PendingEditsDialog'
 
 export type SpeakerSelfEditSettingsProps = {
     event: Event
@@ -44,6 +46,32 @@ export const SpeakerSelfEditSettings = ({ event }: SpeakerSelfEditSettingsProps)
         (settings.editableFields as SpeakerSelfEditableField[]) || [...SPEAKER_SELF_EDITABLE_FIELDS]
     )
     const [saving, setSaving] = useState(false)
+    const [pendingEditsOpen, setPendingEditsOpen] = useState(false)
+    const [pendingCount, setPendingCount] = useState<number>(0)
+
+    // The pending-edits queue is only meaningful while the feature is enabled
+    // on the saved event (not the unsaved toggle). Read the count from the
+    // same API the review dialog uses so this stays in sync with the queue
+    // the admin actually approves.
+    const refreshPendingCount = useCallback(async () => {
+        if (!event.speakerSelfEdit?.enabled || !event.apiKey) {
+            setPendingCount(0)
+            return
+        }
+        try {
+            const data = await fetchOpenPlannerApi<{ items: unknown[] }>(event, 'speaker-pending-edits', {
+                method: 'GET',
+                query: { status: 'pending' },
+            })
+            setPendingCount(Array.isArray(data.items) ? data.items.length : 0)
+        } catch (err) {
+            console.error('Failed to load pending edits count', err)
+        }
+    }, [event])
+
+    useEffect(() => {
+        refreshPendingCount()
+    }, [refreshPendingCount])
 
     const publicUrl = useMemo(() => {
         return `${window.location.origin}/public/event/${event.id}/speaker-edit`
@@ -82,18 +110,48 @@ export const SpeakerSelfEditSettings = ({ event }: SpeakerSelfEditSettingsProps)
         setSelectedFields((prev) => (prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]))
     }
 
+    // Shared "Pending edits (N)" warning button used both in the collapsed
+    // accordion summary and inside the expanded details. The pendingCount
+    // is included in the label so admins notice the queue without having
+    // to expand the panel. Click handler stops propagation so opening the
+    // dialog from the summary does NOT toggle the accordion.
+    const renderPendingEditsButton = (placement: 'summary' | 'details') => {
+        if (!event.speakerSelfEdit?.enabled) return null
+        return (
+            <Button
+                variant="contained"
+                color="warning"
+                size="small"
+                onClick={(e) => {
+                    e.stopPropagation()
+                    setPendingEditsOpen(true)
+                }}
+                // The Accordion summary listens for click + focus to toggle
+                // expanded state; muting these on the button keeps the
+                // accordion stable when the user only wants to open the
+                // dialog.
+                onFocus={(e) => e.stopPropagation()}
+                sx={placement === 'summary' ? { ml: 2 } : { mt: 1 }}>
+                Pending edits ({pendingCount})
+            </Button>
+        )
+    }
+
     return (
         <Accordion sx={{ mb: 2 }}>
             <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography fontWeight={600}>
-                    Speaker self-edit{' '}
-                    <Chip
-                        size="small"
-                        color={enabled ? 'success' : 'default'}
-                        label={enabled ? 'Enabled' : 'Disabled'}
-                        sx={{ ml: 1 }}
-                    />
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                    <Typography fontWeight={600}>
+                        Speaker self-edit{' '}
+                        <Chip
+                            size="small"
+                            color={enabled ? 'success' : 'default'}
+                            label={enabled ? 'Enabled' : 'Disabled'}
+                            sx={{ ml: 1 }}
+                        />
+                    </Typography>
+                    {renderPendingEditsButton('summary')}
+                </Stack>
             </AccordionSummary>
             <AccordionDetails>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -156,12 +214,27 @@ export const SpeakerSelfEditSettings = ({ event }: SpeakerSelfEditSettingsProps)
                     </>
                 )}
 
+                {renderPendingEditsButton('details')}
+
                 <Box mt={3}>
                     <Button variant="contained" onClick={handleSave} disabled={saving}>
                         Save settings
                     </Button>
                 </Box>
             </AccordionDetails>
+            {pendingEditsOpen && (
+                <PendingEditsDialog
+                    event={event}
+                    isOpen={pendingEditsOpen}
+                    onClose={() => {
+                        setPendingEditsOpen(false)
+                        // Refresh the count after the admin reviews — an
+                        // approval/rejection inside the dialog drops the
+                        // queue length and the button should reflect it.
+                        refreshPendingCount()
+                    }}
+                />
+            )}
         </Accordion>
     )
 }
