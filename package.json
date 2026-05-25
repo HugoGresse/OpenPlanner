@@ -15,6 +15,7 @@
         "test:rules": "firebase emulators:exec --only firestore,storage 'node firestore.rules.test.mjs'"
     },
     "dependencies": {
+        "@cap.js/widget": "0.1.53",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
         "@emotion/react": "^11.11.1",

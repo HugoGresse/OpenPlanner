@@ -1,5 +1,11 @@
 import * as React from 'react'
 import { useEffect, useRef } from 'react'
+// Side-effect import: registers the <cap-widget> custom element on
+// `window.customElements`. The widget is now bundled from the
+// `@cap.js/widget` npm package (pinned in package.json) so the script
+// is served from our own deploy instead of a third-party CDN — closes
+// the supply-chain vector that the previous jsdelivr <script> opened.
+import '@cap.js/widget'
 
 declare global {
     namespace JSX {
@@ -13,66 +19,34 @@ declare global {
 }
 
 const CAP_API_ENDPOINT = 'https://captcha.openplanner.fr/'
-const CAP_WIDGET_SCRIPT = 'https://cdn.jsdelivr.net/npm/@cap.js/widget'
 
 export type CapWidgetProps = {
     onSolve: (token: string) => void
     onReset?: () => void
 }
 
-let scriptLoaded = false
-
-const ensureScript = (): Promise<void> => {
-    if (scriptLoaded) return Promise.resolve()
-    return new Promise((resolve, reject) => {
-        const existing = document.querySelector(`script[src="${CAP_WIDGET_SCRIPT}"]`)
-        if (existing) {
-            scriptLoaded = true
-            resolve()
-            return
-        }
-        const s = document.createElement('script')
-        s.src = CAP_WIDGET_SCRIPT
-        s.async = true
-        s.onload = () => {
-            scriptLoaded = true
-            resolve()
-        }
-        s.onerror = () => reject(new Error('Failed to load Cap widget script'))
-        document.head.appendChild(s)
-    })
-}
-
 export const CapWidget = ({ onSolve, onReset }: CapWidgetProps) => {
     const containerRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        let cancelled = false
-        let widgetEl: HTMLElement | null = null
+        if (!containerRef.current) return
+        const widgetEl = document.createElement('cap-widget')
+        widgetEl.setAttribute('data-cap-api-endpoint', CAP_API_ENDPOINT)
+
         const handleSolve = (e: Event) => {
             const detail = (e as CustomEvent<{ token?: string }>).detail
             if (detail?.token) onSolve(detail.token)
         }
         const handleReset = () => onReset?.()
 
-        ensureScript()
-            .then(() => {
-                if (cancelled || !containerRef.current) return
-                widgetEl = document.createElement('cap-widget')
-                widgetEl.setAttribute('data-cap-api-endpoint', CAP_API_ENDPOINT)
-                widgetEl.addEventListener('solve', handleSolve as EventListener)
-                widgetEl.addEventListener('reset', handleReset as EventListener)
-                containerRef.current.appendChild(widgetEl)
-            })
-            .catch((err) => console.error(err))
+        widgetEl.addEventListener('solve', handleSolve as EventListener)
+        widgetEl.addEventListener('reset', handleReset as EventListener)
+        containerRef.current.appendChild(widgetEl)
 
         return () => {
-            cancelled = true
-            if (widgetEl) {
-                widgetEl.removeEventListener('solve', handleSolve as EventListener)
-                widgetEl.removeEventListener('reset', handleReset as EventListener)
-                widgetEl.remove()
-            }
+            widgetEl.removeEventListener('solve', handleSolve as EventListener)
+            widgetEl.removeEventListener('reset', handleReset as EventListener)
+            widgetEl.remove()
         }
     }, [])
 

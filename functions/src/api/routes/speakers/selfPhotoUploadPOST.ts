@@ -2,7 +2,15 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type from 'typebox'
 import { extractMultipartFormData } from '../file/utils/parseMultipartFiles'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
+import { checkFileTypes } from '../../other/checkFileTypes'
 import { EventDao } from '../../dao/eventDao'
+
+// Hard whitelist of MIME types speakers may upload as their profile photo.
+// SVG is intentionally excluded — it can carry inline <script> and is
+// rendered as HTML by many browsers, so allowing it here would let a
+// speaker inject script that runs on every page that embeds their photo.
+const ALLOWED_PHOTO_MIMES = new Set<string>(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 
 export type SelfPhotoUploadPOSTTypes = {
     Params: { eventId: string; speakerId: string }
@@ -81,6 +89,29 @@ export const selfPhotoUploadRouteHandler = (fastify: FastifyInstance) => {
 
         const firstKey = Object.keys(result.uploads)[0]
         const buffer = result.uploads[firstKey]
+
+        // Enforce a hard size cap independent of busboy's transport limit:
+        // accidental large files waste storage and pending-edit quota.
+        if (buffer.length > MAX_PHOTO_SIZE_BYTES) {
+            reply.status(400).send({ success: false, error: 'File too large (max 5 MB)' })
+            return
+        }
+
+        // Sniff the buffer magic bytes (file-type lib) and refuse anything
+        // outside the explicit image whitelist. Do NOT trust the client
+        // filename or the multipart Content-Type — both are attacker-
+        // controlled. This is the only gate that prevents an EXE/PDF/SVG
+        // from landing under a `photoUrl` that admins later approve and
+        // browsers may render inline.
+        const fileType = await checkFileTypes(buffer, firstKey)
+        if (!fileType || !ALLOWED_PHOTO_MIMES.has(fileType.mime)) {
+            reply.status(400).send({
+                success: false,
+                error: 'Unsupported file type. Allowed: JPEG, PNG, WebP, GIF.',
+            })
+            return
+        }
+
         const safeName = `pending-edit-${speakerId}-${Date.now()}`
 
         const [success, publicFileUrlOrError] = await uploadBufferToStorage(fastify.firebase, buffer, eventId, safeName)

@@ -13,6 +13,22 @@ vi.mock('../../dao/firebasePlugin', async (importOriginal) => {
     }
 })
 
+// Photo upload tests need to drive the multipart parser and file-type sniffer
+// without actually shipping bytes through busboy. The mocks let each test
+// pick the buffer + sniffed MIME the handler will see.
+const multipartMock = vi.hoisted(() => ({
+    extractMultipartFormData: vi.fn(),
+}))
+const fileTypesMock = vi.hoisted(() => ({
+    checkFileTypes: vi.fn(),
+}))
+const uploadMock = vi.hoisted(() => ({
+    uploadBufferToStorage: vi.fn(),
+}))
+vi.mock('../file/utils/parseMultipartFiles', () => multipartMock)
+vi.mock('../../other/checkFileTypes', () => fileTypesMock)
+vi.mock('../file/utils/uploadBufferToStorage', () => uploadMock)
+
 const eventId = 'evt-1'
 const speakerId = 'spk-1'
 const apiKey = 'xxx'
@@ -537,6 +553,140 @@ describe('Speaker self-edit endpoints', () => {
         })
         expect(res.statusCode).toBe(404)
         expect(JSON.parse(res.body)).toMatchObject({ error: 'Feature not enabled' })
+    })
+
+    test('POST self/photo rejects non-image MIME (e.g. application/pdf)', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+        multipartMock.extractMultipartFormData.mockResolvedValueOnce({
+            uploads: { 'evil.pdf': Buffer.from([0x25, 0x50, 0x44, 0x46]) },
+            fields: {},
+        })
+        fileTypesMock.checkFileTypes.mockResolvedValueOnce({ mime: 'application/pdf', extension: 'pdf' })
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/photo?t=${RAW_TOKEN}`,
+            payload: {},
+        })
+        expect(res.statusCode).toBe(400)
+        expect(JSON.parse(res.body).error).toMatch(/Unsupported file type/)
+        expect(uploadMock.uploadBufferToStorage).not.toHaveBeenCalled()
+    })
+
+    test('POST self/photo rejects SVG (script-carrier vector)', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+        multipartMock.extractMultipartFormData.mockResolvedValueOnce({
+            uploads: { 'evil.svg': Buffer.from('<svg></svg>') },
+            fields: {},
+        })
+        fileTypesMock.checkFileTypes.mockResolvedValueOnce({ mime: 'image/svg+xml', extension: 'svg' })
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/photo?t=${RAW_TOKEN}`,
+            payload: {},
+        })
+        expect(res.statusCode).toBe(400)
+        expect(uploadMock.uploadBufferToStorage).not.toHaveBeenCalled()
+    })
+
+    test('POST self/photo rejects files over 5 MB', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+        multipartMock.extractMultipartFormData.mockResolvedValueOnce({
+            uploads: { 'big.jpg': Buffer.alloc(5 * 1024 * 1024 + 1) },
+            fields: {},
+        })
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/photo?t=${RAW_TOKEN}`,
+            payload: {},
+        })
+        expect(res.statusCode).toBe(400)
+        expect(JSON.parse(res.body).error).toMatch(/too large/i)
+        expect(fileTypesMock.checkFileTypes).not.toHaveBeenCalled()
+        expect(uploadMock.uploadBufferToStorage).not.toHaveBeenCalled()
+    })
+
+    test('POST self/photo accepts a valid PNG and stores it under pending-edit prefix', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+        multipartMock.extractMultipartFormData.mockResolvedValueOnce({
+            uploads: { 'photo.png': Buffer.from([0x89, 0x50, 0x4e, 0x47]) },
+            fields: {},
+        })
+        fileTypesMock.checkFileTypes.mockResolvedValueOnce({ mime: 'image/png', extension: 'png' })
+        uploadMock.uploadBufferToStorage.mockResolvedValueOnce([true, 'https://storage/x.png'])
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/photo?t=${RAW_TOKEN}`,
+            payload: {},
+        })
+        expect(res.statusCode).toBe(200)
+        expect(JSON.parse(res.body)).toMatchObject({ success: true, publicFileUrl: 'https://storage/x.png' })
+        expect(uploadMock.uploadBufferToStorage).toHaveBeenCalledOnce()
+        const callArgs = uploadMock.uploadBufferToStorage.mock.calls[0]
+        expect(callArgs[3]).toMatch(/^pending-edit-spk-1-/)
     })
 
     test('POST request-edit-link silently passes when PUBLIC_APP_URL is not set', async () => {
