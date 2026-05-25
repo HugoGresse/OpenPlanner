@@ -120,8 +120,12 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                 setSocials(json.speaker.socials || [])
                 setCustomFields((json.speaker.customFields as { [k: string]: string | boolean }) || {})
             } catch (err) {
-                console.error(err)
-                setError(err instanceof Error ? err.message : 'Failed to load')
+                // Network / JSON-parse errors land here. Raw err.message
+                // ("Failed to fetch", "Unexpected token <") is meaningless
+                // to a speaker — keep the user-facing string stable and
+                // log the real cause for ops.
+                console.error('Failed to load speaker self-edit form', err)
+                setError('Failed to load. Please check your connection and try again.')
             } finally {
                 setLoading(false)
             }
@@ -152,8 +156,11 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
             }
             setForm((f) => ({ ...f, photoUrl: json.publicFileUrl }))
         } catch (err) {
-            console.error(err)
-            setError(err instanceof Error ? err.message : 'Upload failed')
+            // Raw err.message here is typically a network / parse failure;
+            // surface a stable user-facing string and keep the technical
+            // detail in the console for ops.
+            console.error('Speaker self-edit photo upload failed', err)
+            setError('Upload failed. Please try again.')
         } finally {
             setUploadingPhoto(false)
         }
@@ -225,8 +232,12 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
             }
             setSubmitted(true)
         } catch (err) {
-            console.error(err)
-            setError(err instanceof Error ? err.message : 'Submit failed')
+            // Backend `{ error }` strings are surfaced via extractApiError
+            // when response.ok is false. Reaching this catch means a
+            // network / parse failure — show a stable user-facing message
+            // and log the raw error for diagnosis.
+            console.error('Speaker self-edit submit failed', err)
+            setError('Submit failed. Please try again.')
         } finally {
             setSubmitting(false)
         }
@@ -397,7 +408,7 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                                 if (typeof value === 'boolean' || value === undefined) {
                                     return (
                                         <Stack key={id} direction="row" alignItems="center" spacing={1}>
-                                            <Typography>{id}</Typography>
+                                            <Typography>{id} (optional)</Typography>
                                             <Switch
                                                 checked={!!value}
                                                 onChange={(e) =>
