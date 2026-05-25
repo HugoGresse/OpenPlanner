@@ -256,8 +256,15 @@ describe('Speaker self-edit endpoints', () => {
     // Capture the original env values so the suite-level set + restore
     // never leaks credentials between suites when vitest runs files in
     // parallel. Snapshot once, restore in afterAll.
-    const ORIGINAL_SMTP_URI = process.env.MAILGUN_SMTP_URI
-    const ORIGINAL_MAIL_FROM = process.env.MAIL_FROM
+    const SMTP_KEYS = [
+        'MAILGUN_SMTP_HOST',
+        'MAILGUN_SMTP_PORT',
+        'MAILGUN_SMTP_USER',
+        'MAILGUN_SMTP_PASSWORD',
+        'MAIL_FROM',
+    ] as const
+    const ORIGINAL_ENV: Record<string, string | undefined> = {}
+    for (const k of SMTP_KEYS) ORIGINAL_ENV[k] = process.env[k]
 
     beforeAll(async () => {
         await fastify.ready()
@@ -265,7 +272,10 @@ describe('Speaker self-edit endpoints', () => {
         // so the values themselves do not need to be real credentials,
         // they just need to be present so sendEmail does not early-return
         // with a configuration error.
-        process.env.MAILGUN_SMTP_URI = 'smtps://test:test@localhost:465'
+        process.env.MAILGUN_SMTP_HOST = 'smtp.test.local'
+        process.env.MAILGUN_SMTP_PORT = '465'
+        process.env.MAILGUN_SMTP_USER = 'postmaster@test.local'
+        process.env.MAILGUN_SMTP_PASSWORD = 'test-secret'
         process.env.MAIL_FROM = 'OpenPlanner Test <noreply@test.local>'
     })
 
@@ -273,10 +283,10 @@ describe('Speaker self-edit endpoints', () => {
         // Restore the previous values (or delete if they were unset) so the
         // suite does not contaminate concurrent test files that exercise the
         // missing-env-var branches of sendEmail.
-        if (ORIGINAL_SMTP_URI === undefined) delete process.env.MAILGUN_SMTP_URI
-        else process.env.MAILGUN_SMTP_URI = ORIGINAL_SMTP_URI
-        if (ORIGINAL_MAIL_FROM === undefined) delete process.env.MAIL_FROM
-        else process.env.MAIL_FROM = ORIGINAL_MAIL_FROM
+        for (const k of SMTP_KEYS) {
+            if (ORIGINAL_ENV[k] === undefined) delete process.env[k]
+            else process.env[k] = ORIGINAL_ENV[k]
+        }
     })
 
     afterEach(() => {
