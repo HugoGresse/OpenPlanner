@@ -65,11 +65,15 @@ const sanitiseSubject = (raw: string): string => {
  * send happens synchronously inside this Cloud Function — no extension is
  * required, and the per-email cost collapses to ordinary Mailgun pricing.
  *
- * The function is designed to be fire-and-forget from the caller's point
- * of view: it returns void and surfaces failures through the `mail`
- * audit row (delivery.state = 'ERROR' + delivery.error) and a console
- * log. Callers MUST guard the call with try/catch if they want to react
- * to a failure.
+ * Failures surface in three places:
+ *   1. The `mail/{docId}` audit row is patched with
+ *      delivery.state = 'ERROR' + delivery.error.
+ *   2. A `console.error` is emitted from inside this helper with the
+ *      contextual metadata (recipient, message id, error message) so the
+ *      Cloud Function logs always show the failure even if a caller
+ *      forgets to log around the throw.
+ *   3. The error is re-thrown — callers MUST guard the call with try/catch
+ *      if they want to react to it (most do).
  */
 export const sendEmail = async (
     firebaseApp: firebase.app.App,
@@ -131,6 +135,15 @@ export const sendEmail = async (
         )
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err)
+        // Log with the audit doc id + recipient so Cloud Function logs are
+        // self-sufficient — operators do not need to grep Firestore to
+        // diagnose a failed send.
+        console.error('sendEmail SMTP failure', {
+            mailDocId: docRef.id,
+            to: message.to,
+            error: errorMessage,
+            ...(extraMetadata || {}),
+        })
         await docRef.set(
             {
                 delivery: {
@@ -145,9 +158,12 @@ export const sendEmail = async (
     }
 }
 
-// Test-only helper to drop the cached transporter between vitest cases.
-// Not exported to runtime callers — vitest imports this file directly and
-// can reach it through the module namespace.
+// Test-only escape hatch for dropping the cached transporter between
+// vitest cases. It IS exported (vitest imports this module directly), but
+// the underscore-prefixed name marks it as private API and the runtime
+// guard below makes it a no-op outside `NODE_ENV=test` so an accidental
+// production call cannot break the warm-instance pool.
 export const __resetEmailTransporterForTests = (): void => {
+    if (process.env.NODE_ENV !== 'test') return
     cachedTransporter = null
 }
