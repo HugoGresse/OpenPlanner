@@ -4,7 +4,7 @@ import { SpeakerPendingEditDao } from '../../dao/speakerPendingEditDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { EventDao } from '../../dao/eventDao'
 import { deletePendingPhotoFromUrl } from '../../other/deletePendingPhoto'
-import { sendTriggerEmail } from '../../other/sendTriggerEmail'
+import { sendEmail } from '../../other/sendEmail'
 import { renderRejectedEmail } from '../../other/renderPendingEditDecisionEmail'
 import { Speaker } from '../../../types'
 
@@ -100,7 +100,7 @@ export const rejectPendingEditRouteHandler = (fastify: FastifyInstance) => {
                     pending.patch,
                     request.body.reviewNote
                 )
-                await sendTriggerEmail(
+                await sendEmail(
                     fastify.firebase,
                     { to: speakerBefore.email, subject: email.subject, text: email.text },
                     { eventId, speakerId: pending.speakerId, type: 'speaker-edit-rejected', requestId }

@@ -1,11 +1,19 @@
 import './other/typeBoxAdditionalsFormats'
 import { onRequest } from 'firebase-functions/v2/https'
 import { setupFastify } from './setupFastify'
+import { emailSecrets } from './other/emailSecrets'
 
 export const fastify = setupFastify()
 
 export const fastifyFunction = onRequest(
-    { timeoutSeconds: 300, region: 'europe-west1', memory: '512MiB' },
+    {
+        timeoutSeconds: 300,
+        region: 'europe-west1',
+        memory: '512MiB',
+        // Mount the SMTP secrets into the runtime as env vars so the
+        // sendEmail helper can read them without explicit param wiring.
+        secrets: emailSecrets,
+    },
     async (request, reply) => {
         // Await both Fastify readiness and the outgoing response actually
         // finishing — otherwise Cloud Functions can close the underlying

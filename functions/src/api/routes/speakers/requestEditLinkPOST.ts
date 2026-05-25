@@ -5,7 +5,7 @@ import { SpeakerDao } from '../../dao/speakerDao'
 import { SpeakerEditTokenDao } from '../../dao/speakerEditTokenDao'
 import { SpeakerEditRateLimitDao } from '../../dao/speakerEditRateLimitDao'
 import { verifyCaptchaToken } from '../../other/captchaVerify'
-import { sendTriggerEmail } from '../../other/sendTriggerEmail'
+import { sendEmail } from '../../other/sendEmail'
 
 const TypeBoxRequestEditLink = Type.Object(
     {
@@ -128,7 +128,7 @@ export const requestEditLinkRouteHandler = (fastify: FastifyInstance) => {
         const email_ = renderEmail(matching.name, event.name, link, lang)
 
         try {
-            await sendTriggerEmail(
+            await sendEmail(
                 fastify.firebase,
                 { to: matching.email as string, subject: email_.subject, text: email_.text },
                 { eventId, speakerId: matching.id, type: 'speaker-edit-link' }

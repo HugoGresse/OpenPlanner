@@ -13,6 +13,21 @@ vi.mock('../../dao/firebasePlugin', async (importOriginal) => {
     }
 })
 
+// Stub nodemailer for every integration test. The send happens inline now
+// (no Trigger Email extension), so leaving the real transport in place
+// would attempt to open a TCP connection during tests. The audit row is
+// still written to Firestore, so `mailAddSpy` assertions keep working.
+vi.mock('nodemailer', () => ({
+    default: {
+        createTransport: () => ({
+            sendMail: () => Promise.resolve({ messageId: 'test-mid', response: '250 OK' }),
+        }),
+    },
+    createTransport: () => ({
+        sendMail: () => Promise.resolve({ messageId: 'test-mid', response: '250 OK' }),
+    }),
+}))
+
 // Photo upload tests need to drive the multipart parser and file-type sniffer
 // without actually shipping bytes through busboy. The mocks let each test
 // pick the buffer + sniffed MIME the handler will see.
@@ -240,6 +255,12 @@ describe('Speaker self-edit endpoints', () => {
 
     beforeAll(async () => {
         await fastify.ready()
+        // sendEmail reads these at call time; nodemailer is mocked above
+        // so the values themselves do not need to be real credentials,
+        // they just need to be present so sendEmail does not early-return
+        // with a configuration error.
+        process.env.MAILGUN_SMTP_URI = 'smtps://test:test@localhost:465'
+        process.env.MAIL_FROM = 'OpenPlanner Test <noreply@test.local>'
     })
 
     afterEach(() => {
