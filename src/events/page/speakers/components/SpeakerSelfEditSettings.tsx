@@ -117,10 +117,14 @@ export const SpeakerSelfEditSettings = ({ event }: SpeakerSelfEditSettingsProps)
     // dialog from the summary does NOT toggle the accordion.
     const renderPendingEditsButton = (placement: 'summary' | 'details') => {
         if (!event.speakerSelfEdit?.enabled) return null
+        // Only highlight in warning orange when there is actually a queue
+        // to review. Empty queue stays on the default theme colour so the
+        // accordion summary does not look perpetually alarmed.
+        const hasPending = pendingCount > 0
         return (
             <Button
-                variant="contained"
-                color="warning"
+                variant={hasPending ? 'contained' : 'outlined'}
+                color={hasPending ? 'warning' : 'primary'}
                 size="small"
                 onClick={(e) => {
                     e.stopPropagation()
