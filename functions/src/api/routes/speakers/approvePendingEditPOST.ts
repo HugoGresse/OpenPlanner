@@ -4,7 +4,7 @@ import { SpeakerPendingEditDao } from '../../dao/speakerPendingEditDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { EventDao } from '../../dao/eventDao'
 import { Speaker } from '../../../types'
-import { sendTriggerEmail } from '../../other/sendTriggerEmail'
+import { sendEmail } from '../../other/sendEmail'
 import { renderApprovedEmail } from '../../other/renderPendingEditDecisionEmail'
 
 const TypeBoxApproveBody = Type.Object(
@@ -98,7 +98,7 @@ export const approvePendingEditRouteHandler = (fastify: FastifyInstance) => {
                     event?.name || 'the event',
                     pending.patch
                 )
-                await sendTriggerEmail(
+                await sendEmail(
                     fastify.firebase,
                     { to: speakerBefore.email, subject: email.subject, text: email.text },
                     { eventId, speakerId: pending.speakerId, type: 'speaker-edit-approved', requestId }

@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { setupFastify } from '../../setupFastify'
 import { Event, Speaker } from '../../../types'
 import { hashToken } from '../../dao/speakerEditTokenDao'
@@ -12,6 +12,21 @@ vi.mock('../../dao/firebasePlugin', async (importOriginal) => {
         }),
     }
 })
+
+// Stub nodemailer for every integration test. The send happens inline now
+// (no Trigger Email extension), so leaving the real transport in place
+// would attempt to open a TCP connection during tests. The audit row is
+// still written to Firestore, so `mailAddSpy` assertions keep working.
+vi.mock('nodemailer', () => ({
+    default: {
+        createTransport: () => ({
+            sendMail: () => Promise.resolve({ messageId: 'test-mid', response: '250 OK' }),
+        }),
+    },
+    createTransport: () => ({
+        sendMail: () => Promise.resolve({ messageId: 'test-mid', response: '250 OK' }),
+    }),
+}))
 
 // Photo upload tests need to drive the multipart parser and file-type sniffer
 // without actually shipping bytes through busboy. The mocks let each test
@@ -238,8 +253,30 @@ const makeFirestore = (stores: Stores) => {
 describe('Speaker self-edit endpoints', () => {
     const fastify = setupFastify()
 
+    // Capture the original env values so the suite-level set + restore
+    // never leaks credentials between suites when vitest runs files in
+    // parallel. Snapshot once, restore in afterAll.
+    const ORIGINAL_SMTP_URI = process.env.MAILGUN_SMTP_URI
+    const ORIGINAL_MAIL_FROM = process.env.MAIL_FROM
+
     beforeAll(async () => {
         await fastify.ready()
+        // sendEmail reads these at call time; nodemailer is mocked above
+        // so the values themselves do not need to be real credentials,
+        // they just need to be present so sendEmail does not early-return
+        // with a configuration error.
+        process.env.MAILGUN_SMTP_URI = 'smtps://test:test@localhost:465'
+        process.env.MAIL_FROM = 'OpenPlanner Test <noreply@test.local>'
+    })
+
+    afterAll(() => {
+        // Restore the previous values (or delete if they were unset) so the
+        // suite does not contaminate concurrent test files that exercise the
+        // missing-env-var branches of sendEmail.
+        if (ORIGINAL_SMTP_URI === undefined) delete process.env.MAILGUN_SMTP_URI
+        else process.env.MAILGUN_SMTP_URI = ORIGINAL_SMTP_URI
+        if (ORIGINAL_MAIL_FROM === undefined) delete process.env.MAIL_FROM
+        else process.env.MAIL_FROM = ORIGINAL_MAIL_FROM
     })
 
     afterEach(() => {

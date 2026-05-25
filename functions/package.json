@@ -29,6 +29,7 @@
         "firebase-admin": "^11.11.0",
         "firebase-functions": "^4.5.0",
         "luxon": "^3.4.4",
+        "nodemailer": "^8.0.8",
         "pdf-lib": "^1.17.1",
         "puppeteer": "^24.10.1",
         "ts-custom-error": "^3.3.1",
@@ -36,6 +37,7 @@
         "uuid": "^9.0.1"
     },
     "devDependencies": {
+        "@types/nodemailer": "^8.0.0",
         "@typescript-eslint/eslint-plugin": "^5.12.0",
         "@typescript-eslint/parser": "^5.12.0",
         "eslint": "^8.9.0",

@@ -85,8 +85,9 @@ service cloud.firestore {
             allow create: if false;
         }
 
-        // Firebase Trigger Email extension queue. Written by the backend; the
-        // extension reads, sends, and updates docs server-side.
+        // Outbound email audit log. The Cloud Functions API sends mail
+        // directly via SMTP (Mailgun) and writes one row per attempt here
+        // for traceability and retry inspection. Client access is denied.
         match /mail/{docId} {
             allow read: if false;
             allow write: if false;
