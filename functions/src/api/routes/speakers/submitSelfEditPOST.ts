@@ -2,9 +2,8 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { EventDao } from '../../dao/eventDao'
-import { SpeakerEditTokenDao } from '../../dao/speakerEditTokenDao'
 import { SpeakerPendingEditDao } from '../../dao/speakerPendingEditDao'
-import { Speaker, SPEAKER_SELF_EDITABLE_FIELDS } from '../../../types'
+import { Speaker, SPEAKER_SELF_EDITABLE_FIELDS, KNOWN_SOCIAL_NAMES, KNOWN_SOCIAL_ICON_BY_NAME } from '../../../types'
 
 const MAX_STRING_LENGTH = 10000
 
@@ -147,11 +146,20 @@ export const submitSelfEditRouteHandler = (fastify: FastifyInstance) => {
         }
 
         if (body.socials && filteredPatch.socials) {
-            filteredPatch.socials = body.socials.map((social) => ({
-                name: social.name,
-                icon: social.icon || social.name.toLowerCase().trim().replace(' ', '-'),
-                link: social.link,
-            }))
+            // Constrain `name` to a known list and re-derive the icon
+            // server-side so attacker-controlled icon strings cannot end
+            // up on the public page. Also enforce http(s) URLs only — the
+            // schema `format: uri` accepts e.g. `javascript:` which we
+            // never want as a social link target.
+            const knownSet = new Set(KNOWN_SOCIAL_NAMES)
+            filteredPatch.socials = body.socials
+                .filter((s) => knownSet.has(s.name))
+                .filter((s) => /^https?:\/\//i.test(s.link))
+                .map((social) => ({
+                    name: social.name,
+                    icon: KNOWN_SOCIAL_ICON_BY_NAME[social.name] || social.name.toLowerCase(),
+                    link: social.link,
+                }))
         }
 
         if (body.customFields && editableCustomFieldIds.size > 0) {
@@ -182,15 +190,17 @@ export const submitSelfEditRouteHandler = (fastify: FastifyInstance) => {
 
         const ip = (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || request.ip
 
-        const requestId = await SpeakerPendingEditDao.create(fastify.firebase, eventId, {
+        // Atomic batch: write the pending edit AND mark the token used in
+        // one round-trip. Previously these were two sequential writes; if
+        // the second one failed (network blip, function timeout, etc.) the
+        // token stayed valid and the speaker could submit duplicates.
+        const requestId = await SpeakerPendingEditDao.createAndConsumeToken(fastify.firebase, eventId, {
             speakerId,
             tokenId: ctx.tokenId,
             ip,
             patch: filteredPatch,
             baseSnapshot,
         })
-
-        await SpeakerEditTokenDao.markTokenUsed(fastify.firebase, eventId, ctx.tokenId)
 
         reply.status(200).send({ success: true, requestId })
     }

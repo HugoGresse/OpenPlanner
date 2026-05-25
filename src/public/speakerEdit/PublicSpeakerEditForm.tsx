@@ -1,8 +1,20 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { Alert, Box, Button, Container, Paper, Stack, Switch, TextField, Typography } from '@mui/material'
+import {
+    Alert,
+    Box,
+    Button,
+    Container,
+    MenuItem,
+    Paper,
+    Select,
+    Stack,
+    Switch,
+    TextField,
+    Typography,
+} from '@mui/material'
 import { API_URL } from '../../env'
-import { Speaker, Social } from '../../types'
+import { KNOWN_SOCIALS, Speaker, Social } from '../../types'
 
 export type PublicSpeakerEditFormProps = {
     eventId: string
@@ -123,6 +135,15 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                 return
             }
         }
+        // Filter empty social rows the speaker added but never filled in.
+        // Anything with a name AND link survives. Backend strips unknown
+        // names + non-http(s) links again as defense in depth.
+        const cleanedSocials = socials.filter((s) => s.name && /^https?:\/\//i.test(s.link))
+        if (isEditable('socials') && cleanedSocials.length !== socials.length) {
+            const incomplete = socials.length - cleanedSocials.length
+            setError(`${incomplete} social row(s) are missing a network or a valid https URL. Fix or remove them.`)
+            return
+        }
         setSubmitting(true)
         setError(null)
         try {
@@ -139,7 +160,7 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                 }
             }
             if (isEditable('bio')) body.bio = form.bio === '' ? null : form.bio
-            if (isEditable('socials')) body.socials = socials
+            if (isEditable('socials')) body.socials = cleanedSocials
             if (data.editableCustomFieldIds.length > 0) {
                 const filtered: { [k: string]: string | boolean } = {}
                 for (const id of data.editableCustomFieldIds) {
@@ -252,23 +273,45 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
                     )}
                     {isEditable('socials') && (
                         <Box mt={2}>
-                            <Typography variant="subtitle2">Socials</Typography>
+                            <Typography variant="subtitle2" mb={1}>
+                                Socials
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                                Pick a network from the list and paste the full link (https://…). The icon is derived
+                                automatically.
+                            </Typography>
                             {socials.map((s, i) => (
-                                <Stack key={i} direction="row" spacing={1} mb={1}>
-                                    <TextField
+                                <Stack key={i} direction="row" spacing={1} mb={1} alignItems="center">
+                                    <Select
                                         size="small"
-                                        label="Name"
-                                        value={s.name}
+                                        value={s.name || ''}
+                                        displayEmpty
                                         onChange={(e) => {
+                                            const nextName = e.target.value as string
+                                            const known = KNOWN_SOCIALS.find((k) => k.name === nextName)
                                             const next = [...socials]
-                                            next[i] = { ...next[i], name: e.target.value }
+                                            next[i] = {
+                                                ...next[i],
+                                                name: nextName,
+                                                icon: known?.icon || '',
+                                            }
                                             setSocials(next)
                                         }}
-                                    />
+                                        sx={{ minWidth: 140 }}>
+                                        <MenuItem value="" disabled>
+                                            Select…
+                                        </MenuItem>
+                                        {KNOWN_SOCIALS.map((known) => (
+                                            <MenuItem key={known.name} value={known.name}>
+                                                {known.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
                                     <TextField
                                         size="small"
                                         fullWidth
-                                        label="Link"
+                                        placeholder="https://..."
+                                        label="URL"
                                         value={s.link}
                                         onChange={(e) => {
                                             const next = [...socials]

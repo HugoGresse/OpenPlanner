@@ -1,7 +1,12 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SpeakerPendingEditDao } from '../../dao/speakerPendingEditDao'
+import { SpeakerDao } from '../../dao/speakerDao'
+import { EventDao } from '../../dao/eventDao'
 import { deletePendingPhotoFromUrl } from '../../other/deletePendingPhoto'
+import { sendTriggerEmail } from '../../other/sendTriggerEmail'
+import { renderRejectedEmail } from '../../other/renderPendingEditDecisionEmail'
+import { Speaker } from '../../../types'
 
 const TypeBoxRejectBody = Type.Object(
     {
@@ -80,6 +85,29 @@ export const rejectPendingEditRouteHandler = (fastify: FastifyInstance) => {
         // not roll back the reject we already persisted above.
         if (pending.patch?.photoUrl) {
             await deletePendingPhotoFromUrl(fastify.firebase, pending.patch.photoUrl)
+        }
+
+        // Fire-and-forget rejection notification so the speaker knows their
+        // changes did not land and can decide whether to retry.
+        try {
+            const speakerSnap = await SpeakerDao.doesSpeakerExist(fastify.firebase, eventId, pending.speakerId)
+            const speakerBefore = speakerSnap && speakerSnap !== true ? (speakerSnap as Speaker) : null
+            if (speakerBefore?.email) {
+                const event = await EventDao.getEvent(fastify.firebase, eventId).catch(() => null)
+                const email = renderRejectedEmail(
+                    speakerBefore.name || 'there',
+                    event?.name || 'the event',
+                    pending.patch,
+                    request.body.reviewNote
+                )
+                await sendTriggerEmail(
+                    fastify.firebase,
+                    { to: speakerBefore.email, subject: email.subject, text: email.text },
+                    { eventId, speakerId: pending.speakerId, type: 'speaker-edit-rejected', requestId }
+                )
+            }
+        } catch (err) {
+            console.error('Failed to queue rejection notification', err)
         }
 
         reply.status(200).send({ success: true })

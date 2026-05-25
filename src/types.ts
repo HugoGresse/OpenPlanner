@@ -43,6 +43,32 @@ export interface Social {
     link: string
 }
 
+// Known social networks supported by the public speaker self-edit form.
+// Backend validates against this same list when accepting submissions so
+// the speaker cannot smuggle arbitrary `name` strings through the API.
+// `icon` matches the Material Design Icon name used by the public site
+// to render the link badge.
+export interface KnownSocial {
+    name: string
+    icon: string
+}
+
+export const KNOWN_SOCIALS: readonly KnownSocial[] = [
+    { name: 'Twitter', icon: 'twitter' },
+    { name: 'X', icon: 'x' },
+    { name: 'LinkedIn', icon: 'linkedin' },
+    { name: 'GitHub', icon: 'github' },
+    { name: 'Bluesky', icon: 'bluesky' },
+    { name: 'Mastodon', icon: 'mastodon' },
+    { name: 'Instagram', icon: 'instagram' },
+    { name: 'Facebook', icon: 'facebook' },
+    { name: 'YouTube', icon: 'youtube' },
+    { name: 'Twitch', icon: 'twitch' },
+    { name: 'Website', icon: 'web' },
+]
+
+export const KNOWN_SOCIAL_NAMES: readonly string[] = KNOWN_SOCIALS.map((s) => s.name)
+
 export interface Speaker {
     id: string
     email: string | null

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
     Box,
     Button,
@@ -16,6 +16,7 @@ import {
 import { Event, Speaker } from '../../../../types'
 import { fetchOpenPlannerApi } from '../../../../services/hooks/useOpenPlannerApi'
 import { useNotification } from '../../../../hooks/notificationHook'
+import { useSpeakers } from '../../../../services/hooks/useSpeakersMap'
 
 type PendingEdit = {
     id: string
@@ -77,6 +78,18 @@ export const PendingEditsDialog = ({ event, isOpen, onClose }: PendingEditsDialo
     const [selected, setSelected] = useState<PendingEdit | null>(null)
     const [rejectNote, setRejectNote] = useState('')
     const [processing, setProcessing] = useState(false)
+
+    // Resolve speakerId → human-readable name. Admin reviewers should not
+    // have to map UUIDs in their head when deciding whether to approve.
+    const speakersQuery = useSpeakers(event.id)
+    const speakerNameById = useMemo(() => {
+        const map = new Map<string, string>()
+        for (const s of speakersQuery.data || []) {
+            map.set(s.id, s.name)
+        }
+        return map
+    }, [speakersQuery.data])
+    const displayName = (speakerId: string): string => speakerNameById.get(speakerId) || speakerId
 
     const load = async () => {
         setLoading(true)
@@ -159,7 +172,10 @@ export const PendingEditsDialog = ({ event, isOpen, onClose }: PendingEditsDialo
                             }}
                             onClick={() => setSelected(item)}>
                             <Stack direction="row" spacing={2} alignItems="center">
-                                <Typography fontWeight={600}>{item.speakerId}</Typography>
+                                <Typography fontWeight={600}>{displayName(item.speakerId)}</Typography>
+                                <Typography variant="caption" color="text.disabled">
+                                    {item.speakerId}
+                                </Typography>
                                 <Chip label={item.status} size="small" />
                                 <Typography variant="body2" color="text.secondary">
                                     {Object.keys(item.patch).join(', ')}
@@ -171,7 +187,10 @@ export const PendingEditsDialog = ({ event, isOpen, onClose }: PendingEditsDialo
                     <Box>
                         <Stack direction="row" spacing={2} alignItems="center" mb={2}>
                             <Button onClick={() => setSelected(null)}>← Back to list</Button>
-                            <Typography fontWeight={600}>Speaker: {selected.speakerId}</Typography>
+                            <Typography fontWeight={600}>Speaker: {displayName(selected.speakerId)}</Typography>
+                            <Typography variant="caption" color="text.disabled">
+                                {selected.speakerId}
+                            </Typography>
                         </Stack>
                         <Divider sx={{ mb: 2 }} />
                         <DiffView before={selected.baseSnapshot} after={selected.patch} />

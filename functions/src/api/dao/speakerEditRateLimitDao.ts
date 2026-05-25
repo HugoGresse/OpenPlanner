@@ -1,7 +1,16 @@
 import firebase from 'firebase-admin'
 import crypto from 'crypto'
 
-const { FieldValue } = firebase.firestore
+const { FieldValue, Timestamp } = firebase.firestore
+
+// Rate-limit docs live for the active counter day plus a small grace window
+// then get garbage-collected by Firestore TTL (configured via the
+// `expiresAt` field on the `speakerEditRateLimits` collection group in
+// firestore.indexes.json). Two-day window keeps records around long enough
+// to survive timezone math + late-night requests without accumulating
+// forever.
+const TTL_MS = 2 * 24 * 60 * 60 * 1000
+const ttlFromNow = (): firebase.firestore.Timestamp => Timestamp.fromDate(new Date(Date.now() + TTL_MS))
 
 const MAX_PER_EMAIL_PER_DAY = 5
 const MAX_PER_IP_PER_DAY = 20
@@ -46,6 +55,7 @@ export class SpeakerEditRateLimitDao {
                 {
                     count: current + 1,
                     lastSentAt: FieldValue.serverTimestamp(),
+                    expiresAt: ttlFromNow(),
                     type: 'email',
                 },
                 { merge: true }
@@ -74,6 +84,7 @@ export class SpeakerEditRateLimitDao {
                 {
                     count: current + 1,
                     lastSentAt: FieldValue.serverTimestamp(),
+                    expiresAt: ttlFromNow(),
                     type: 'photo',
                 },
                 { merge: true }
@@ -102,6 +113,7 @@ export class SpeakerEditRateLimitDao {
                 {
                     count: current + 1,
                     lastSentAt: FieldValue.serverTimestamp(),
+                    expiresAt: ttlFromNow(),
                     type: 'ip',
                 },
                 { merge: true }

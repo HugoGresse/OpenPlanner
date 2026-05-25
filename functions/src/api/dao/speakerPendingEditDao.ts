@@ -50,6 +50,45 @@ export class SpeakerPendingEditDao {
         return id
     }
 
+    /**
+     * Atomically create a pending edit and mark the originating magic-link
+     * token as used in a single Firestore batch. Either both writes land or
+     * neither does — closes the gap where a network blip between the two
+     * sequential writes could leave a usable token after a successful
+     * submit, letting a speaker file duplicate pending edits.
+     */
+    public static async createAndConsumeToken(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        params: {
+            speakerId: string
+            tokenId: string
+            ip?: string | null
+            patch: Partial<Speaker>
+            baseSnapshot: Partial<Speaker>
+        }
+    ): Promise<string> {
+        const db = firebaseApp.firestore()
+        const id = uuidv4()
+        const pendingRef = db.collection(`events/${eventId}/speakerPendingEdits`).doc(id)
+        const tokenRef = db.collection(`events/${eventId}/speakerEditTokens`).doc(params.tokenId)
+        const batch = db.batch()
+        batch.set(pendingRef, {
+            id,
+            speakerId: params.speakerId,
+            eventId,
+            tokenId: params.tokenId,
+            ip: params.ip || null,
+            status: 'pending',
+            submittedAt: FieldValue.serverTimestamp(),
+            patch: params.patch,
+            baseSnapshot: params.baseSnapshot,
+        })
+        batch.set(tokenRef, { usedAt: FieldValue.serverTimestamp() }, { merge: true })
+        await batch.commit()
+        return id
+    }
+
     public static async get(
         firebaseApp: firebase.app.App,
         eventId: string,

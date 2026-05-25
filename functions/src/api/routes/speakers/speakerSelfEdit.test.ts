@@ -80,11 +80,15 @@ type Stores = {
     addSpy: ReturnType<typeof vi.fn>
     txSetSpy: ReturnType<typeof vi.fn>
     speakersList?: Speaker[]
+    // Captures every mail-queue write (`db.collection('mail').add(...)`),
+    // exposed on the returned Firestore mock as `__mailAdd` so tests can
+    // assert on approval/rejection notification content.
+    mailAddSpy?: ReturnType<typeof vi.fn>
 }
 
 const makeFirestore = (stores: Stores) => {
     const speakersListData = stores.speakersList ?? [stores.speakerData]
-    const mailCollectionAdd = vi.fn(() => Promise.resolve())
+    const mailCollectionAdd = stores.mailAddSpy ?? vi.fn(() => Promise.resolve())
     return () =>
         ({
             collection: vi.fn((path: string) => {
@@ -219,6 +223,14 @@ const makeFirestore = (stores: Stores) => {
                 await fn(tx)
                 return { allowed: true, count: current + 1 }
             }),
+            // Submit handler now writes pending edit + token-used in one
+            // atomic batch. Forward every batch.set(ref, data, opts) call
+            // to the shared setSpy so existing assertions continue to find
+            // the pending-edit row and any other batched write.
+            batch: vi.fn(() => ({
+                set: (_ref: unknown, data: unknown, opts?: unknown) => stores.setSpy(data, opts),
+                commit: () => Promise.resolve(),
+            })),
             __mailAdd: mailCollectionAdd,
         } as unknown as FirebaseFirestore.Firestore)
 }
@@ -817,6 +829,195 @@ describe('Speaker self-edit endpoints', () => {
         expect(res.statusCode).toBe(200)
         expect(deleteSpy).not.toHaveBeenCalled()
         expect(storageSpy).not.toHaveBeenCalled()
+    })
+
+    test('POST self/submit batches pending-edit write and token mark-used atomically', async () => {
+        const setSpy = vi.fn(() => Promise.resolve({}))
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy,
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/submit?t=${RAW_TOKEN}`,
+            payload: { name: 'Atomic' },
+        })
+        expect(res.statusCode).toBe(200)
+        // Batch.set forwards every call to setSpy — we expect at least the
+        // pending-edit row and a token row with usedAt set.
+        const pendingWrite = setSpy.mock.calls.find(
+            (c) => c[0] && (c[0] as Record<string, unknown>).status === 'pending'
+        )
+        const tokenWrite = setSpy.mock.calls.find(
+            (c) =>
+                c[0] &&
+                (c[0] as Record<string, unknown>).usedAt !== undefined &&
+                (c[0] as Record<string, unknown>).status === undefined
+        )
+        expect(pendingWrite).toBeDefined()
+        expect(tokenWrite).toBeDefined()
+    })
+
+    test('POST approve queues an approval email to the speaker mentioning the changes', async () => {
+        const mailAddSpy = vi.fn(() => Promise.resolve())
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker({ email: 'jane@example.com', name: 'Jane' }),
+            pendingEditDoc: {
+                id: 'req-1',
+                speakerId,
+                status: 'pending',
+                patch: { name: 'New Name', jobTitle: 'Lead Engineer' },
+                baseSnapshot: { name: 'Jane', jobTitle: null },
+            },
+            setSpy: vi.fn(() => Promise.resolve({})),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+            mailAddSpy,
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speaker-pending-edits/req-1/approve?apiKey=${apiKey}`,
+            payload: { reviewerUid: 'admin-1' },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(mailAddSpy).toHaveBeenCalledOnce()
+        const mailDoc = mailAddSpy.mock.calls[0][0] as {
+            to: string
+            message: { subject: string; text: string }
+            type?: string
+        }
+        expect(mailDoc.to).toBe('jane@example.com')
+        expect(mailDoc.message.subject).toMatch(/approved/i)
+        // Body must mention the specific fields changed so the speaker
+        // recognises what was applied without revisiting the form.
+        expect(mailDoc.message.text).toMatch(/Name/)
+        expect(mailDoc.message.text).toMatch(/Job title/)
+        expect(mailDoc.message.text).toMatch(/Lead Engineer/)
+        expect(mailDoc.type).toBe('speaker-edit-approved')
+    })
+
+    test('POST reject queues a rejection email including the reviewer note', async () => {
+        const mailAddSpy = vi.fn(() => Promise.resolve())
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker({ email: 'jane@example.com', name: 'Jane' }),
+            pendingEditDoc: {
+                id: 'req-1',
+                speakerId,
+                status: 'pending',
+                patch: { bio: 'lorem ipsum' },
+                baseSnapshot: { bio: null },
+            },
+            setSpy: vi.fn(() => Promise.resolve({})),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+            mailAddSpy,
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speaker-pending-edits/req-1/reject?apiKey=${apiKey}`,
+            payload: { reviewerUid: 'admin-1', reviewNote: 'Bio too long' },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(mailAddSpy).toHaveBeenCalledOnce()
+        const mailDoc = mailAddSpy.mock.calls[0][0] as {
+            to: string
+            message: { subject: string; text: string }
+            type?: string
+        }
+        expect(mailDoc.to).toBe('jane@example.com')
+        expect(mailDoc.message.subject).toMatch(/not applied|rejected/i)
+        expect(mailDoc.message.text).toMatch(/Bio/)
+        expect(mailDoc.message.text).toMatch(/Bio too long/)
+        expect(mailDoc.type).toBe('speaker-edit-rejected')
+    })
+
+    test('POST approve does not crash when speaker has no email on file', async () => {
+        const mailAddSpy = vi.fn(() => Promise.resolve())
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker({ email: null }),
+            pendingEditDoc: {
+                id: 'req-1',
+                speakerId,
+                status: 'pending',
+                patch: { name: 'X' },
+                baseSnapshot: { name: 'Jane' },
+            },
+            setSpy: vi.fn(() => Promise.resolve({})),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+            mailAddSpy,
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speaker-pending-edits/req-1/approve?apiKey=${apiKey}`,
+            payload: { reviewerUid: 'admin-1' },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(mailAddSpy).not.toHaveBeenCalled()
+    })
+
+    test('POST self/submit rejects socials with unknown name (server-side guard)', async () => {
+        const setSpy = vi.fn(() => Promise.resolve({}))
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy,
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/submit?t=${RAW_TOKEN}`,
+            payload: {
+                socials: [
+                    { name: 'Twitter', link: 'https://twitter.com/jane' },
+                    { name: 'EvilNetwork', link: 'https://evil.example.com' },
+                    { name: 'LinkedIn', link: 'javascript:alert(1)' },
+                ],
+            },
+        })
+        expect(res.statusCode).toBe(200)
+        const pendingWrite = setSpy.mock.calls.find(
+            (c) => c[0] && (c[0] as Record<string, unknown>).status === 'pending'
+        )
+        expect(pendingWrite).toBeDefined()
+        const patch = (pendingWrite![0] as { patch: { socials?: { name: string }[] } }).patch
+        expect(patch.socials).toEqual([{ name: 'Twitter', icon: 'twitter', link: 'https://twitter.com/jane' }])
     })
 
     test('POST request-edit-link silently passes when PUBLIC_APP_URL is not set', async () => {
