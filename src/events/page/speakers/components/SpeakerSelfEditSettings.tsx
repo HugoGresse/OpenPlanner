@@ -98,8 +98,7 @@ export const SpeakerSelfEditSettings = ({ event }: SpeakerSelfEditSettingsProps)
             <AccordionDetails>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Speakers can request a magic link to edit their own profile. Each edit must be approved by an admin
-                    before being applied. Max 5 emails per speaker per day. Requires the captcha service
-                    (captcha.openplanner.fr) and the Firebase "Trigger Email" extension installed.
+                    before being applied. Max 5 emails per speaker per day.
                 </Typography>
 
                 <FormControlLabel
