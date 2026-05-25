@@ -13,6 +13,42 @@ export class SpeakerDao {
         })) as Speaker[]
     }
 
+    /**
+     * Look up a speaker by email on an event without loading the full collection.
+     *
+     * The `email` field is not normalised on write — existing speakers may have
+     * stored mixed-case addresses, so we issue up to two indexed equality
+     * queries (raw input + lowercased) and return the first hit. Net cost is
+     * 1–2 small queries instead of an O(n) scan of all speakers, which matters
+     * for events with hundreds of speakers and the daily rate-limit budget of
+     * 5 requests per email.
+     *
+     * Firestore creates the single-field index on `email` automatically.
+     */
+    public static async getSpeakerByEmail(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        email: string
+    ): Promise<Speaker | null> {
+        const db = firebaseApp.firestore()
+        const trimmed = email.trim()
+        const lower = trimmed.toLowerCase()
+        const candidates = trimmed === lower ? [lower] : [trimmed, lower]
+
+        for (const candidate of candidates) {
+            const snapshot = await db
+                .collection(`events/${eventId}/speakers`)
+                .where('email', '==', candidate)
+                .limit(1)
+                .get()
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0]
+                return { id: doc.id, ...doc.data() } as Speaker
+            }
+        }
+        return null
+    }
+
     public static async doesSpeakerExist(
         firebaseApp: firebase.app.App,
         eventId: string,

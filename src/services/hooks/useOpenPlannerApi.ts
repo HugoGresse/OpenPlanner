@@ -12,6 +12,7 @@ type ApiResponse<T> = {
 type RequestOptions = {
     method?: 'GET' | 'POST'
     body?: any
+    query?: Record<string, string | number | boolean | undefined | null>
 }
 
 export async function fetchOpenPlannerApi<T>(
@@ -26,6 +27,12 @@ export async function fetchOpenPlannerApi<T>(
     const url = new URL(API_URL as string)
     url.pathname += `v1/${event.id}/${endpoint}`
     url.searchParams.append('apiKey', event.apiKey)
+    if (options.query) {
+        for (const [k, v] of Object.entries(options.query)) {
+            if (v === undefined || v === null) continue
+            url.searchParams.append(k, String(v))
+        }
+    }
 
     const fetchOptions: RequestInit = {
         method: options.method,

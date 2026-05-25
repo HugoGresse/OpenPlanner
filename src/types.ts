@@ -43,6 +43,32 @@ export interface Social {
     link: string
 }
 
+// Known social networks supported by the public speaker self-edit form.
+// Backend validates against this same list when accepting submissions so
+// the speaker cannot smuggle arbitrary `name` strings through the API.
+// `icon` matches the Material Design Icon name used by the public site
+// to render the link badge.
+export interface KnownSocial {
+    name: string
+    icon: string
+}
+
+export const KNOWN_SOCIALS: readonly KnownSocial[] = [
+    { name: 'Twitter', icon: 'twitter' },
+    { name: 'X', icon: 'x' },
+    { name: 'LinkedIn', icon: 'linkedin' },
+    { name: 'GitHub', icon: 'github' },
+    { name: 'Bluesky', icon: 'bluesky' },
+    { name: 'Mastodon', icon: 'mastodon' },
+    { name: 'Instagram', icon: 'instagram' },
+    { name: 'Facebook', icon: 'facebook' },
+    { name: 'YouTube', icon: 'youtube' },
+    { name: 'Twitch', icon: 'twitch' },
+    { name: 'Website', icon: 'web' },
+]
+
+export const KNOWN_SOCIAL_NAMES: readonly string[] = KNOWN_SOCIALS.map((s) => s.name)
+
 export interface Speaker {
     id: string
     email: string | null
@@ -129,6 +155,50 @@ export interface SpeakerCustomField {
     name: string
     type: 'boolean' | 'text'
     privacy: 'public' | 'private'
+    editableBySpeaker?: boolean
+}
+
+export interface SpeakerSelfEditSettings {
+    enabled: boolean
+    editableFields?: string[]
+}
+
+export type SpeakerSelfEditableField =
+    | 'name'
+    | 'pronouns'
+    | 'jobTitle'
+    | 'bio'
+    | 'company'
+    | 'companyLogoUrl'
+    | 'geolocation'
+    | 'photoUrl'
+    | 'socials'
+
+export const SPEAKER_SELF_EDITABLE_FIELDS: SpeakerSelfEditableField[] = [
+    'name',
+    'pronouns',
+    'jobTitle',
+    'bio',
+    'company',
+    'companyLogoUrl',
+    'geolocation',
+    'photoUrl',
+    'socials',
+]
+
+export interface SpeakerPendingEdit {
+    id: string
+    speakerId: string
+    eventId: string
+    submittedAt: Timestamp
+    tokenId: string
+    ip?: string | null
+    status: 'pending' | 'approved' | 'rejected'
+    reviewedBy?: string | null
+    reviewedAt?: Timestamp | null
+    reviewNote?: string | null
+    patch: Partial<Speaker>
+    baseSnapshot: Partial<Speaker>
 }
 
 export interface EventShortVidSettings {
@@ -182,6 +252,7 @@ export interface Event {
     colorBackground: string | null
     sponsorCustomFields: SponsorCustomField[]
     speakerCustomFields: SpeakerCustomField[]
+    speakerSelfEdit?: SpeakerSelfEditSettings | null
     bupherSession?: string | null
     bupherOrganizationId?: string | null
     timezone: string | null

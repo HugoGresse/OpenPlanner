@@ -33,6 +33,38 @@ export interface Social {
     link: string
 }
 
+// Mirror of the same constant in src/types.ts. The list is kept in sync
+// across frontend and functions so backend can reject any submission
+// whose `socials[*].name` is not on the known list. Frontend uses the
+// `icon` value to render badges; backend stores it verbatim.
+export const KNOWN_SOCIAL_NAMES: readonly string[] = [
+    'Twitter',
+    'X',
+    'LinkedIn',
+    'GitHub',
+    'Bluesky',
+    'Mastodon',
+    'Instagram',
+    'Facebook',
+    'YouTube',
+    'Twitch',
+    'Website',
+]
+
+export const KNOWN_SOCIAL_ICON_BY_NAME: Record<string, string> = {
+    Twitter: 'twitter',
+    X: 'x',
+    LinkedIn: 'linkedin',
+    GitHub: 'github',
+    Bluesky: 'bluesky',
+    Mastodon: 'mastodon',
+    Instagram: 'instagram',
+    Facebook: 'facebook',
+    YouTube: 'youtube',
+    Twitch: 'twitch',
+    Website: 'web',
+}
+
 export interface Speaker {
     id: string
     email: string | null
@@ -50,6 +82,29 @@ export interface Speaker {
     note: string | null
     customFields?: { [key: string]: string | boolean }
 }
+
+export type SpeakerSelfEditableField =
+    | 'name'
+    | 'pronouns'
+    | 'jobTitle'
+    | 'bio'
+    | 'company'
+    | 'companyLogoUrl'
+    | 'geolocation'
+    | 'photoUrl'
+    | 'socials'
+
+export const SPEAKER_SELF_EDITABLE_FIELDS: SpeakerSelfEditableField[] = [
+    'name',
+    'pronouns',
+    'jobTitle',
+    'bio',
+    'company',
+    'companyLogoUrl',
+    'geolocation',
+    'photoUrl',
+    'socials',
+]
 
 export interface Session {
     id: string
