@@ -9,6 +9,13 @@ export interface EmailMessage {
     subject: string
     text: string
     html?: string
+    /**
+     * Optional Reply-To header. Callers that want replies routed to a
+     * different mailbox than MAIL_FROM (e.g. the OpenPlanner contact inbox
+     * for speaker-facing mail while keeping a per-event MAIL_FROM) should
+     * pass the address here. Persisted on the audit row.
+     */
+    replyTo?: string
 }
 
 // Convert a plain-text email body into safe HTML. Escapes every character
@@ -122,6 +129,7 @@ export const sendEmail = async (
     const docRef = await db.collection(collection).add({
         to: message.to,
         from,
+        replyTo: message.replyTo ?? null,
         message: { subject, text: message.text, html },
         createdAt: FieldValue.serverTimestamp(),
         delivery: { state: 'PENDING' },
@@ -148,6 +156,12 @@ export const sendEmail = async (
         const info = await transporter.sendMail({
             from,
             to: message.to,
+            // nodemailer accepts `replyTo` and emits a real Reply-To
+            // header so a recipient hitting Reply lands in the inbox we
+            // specify instead of MAIL_FROM. Falls back to undefined when
+            // the caller did not set one, matching nodemailer's
+            // "no header" default.
+            replyTo: message.replyTo,
             subject,
             text: message.text,
             html,

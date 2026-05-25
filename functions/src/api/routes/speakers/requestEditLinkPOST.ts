@@ -6,6 +6,7 @@ import { SpeakerEditTokenDao } from '../../dao/speakerEditTokenDao'
 import { SpeakerEditRateLimitDao } from '../../dao/speakerEditRateLimitDao'
 import { verifyCaptchaToken } from '../../other/captchaVerify'
 import { sendEmail } from '../../other/sendEmail'
+import { OPENPLANNER_CONTACT_EMAIL, buildSpeakerEmailFooter } from '../../other/speakerEmailFooter'
 
 const TypeBoxRequestEditLink = Type.Object(
     {
@@ -41,13 +42,14 @@ export const requestEditLinkPOSTSchema = {
     },
 }
 
-// Identifying the OpenPlanner platform in the email body is important
-// because the From address can vary per deploy (each event organiser may
-// configure their own MAIL_FROM domain). Without an explicit "sent by
-// OpenPlanner" line, speakers receiving the link from an unfamiliar
-// domain are likely to flag it as phishing. The contact address is a
-// real inbox so speakers can reply if they have questions.
-const OPENPLANNER_CONTACT = 'contact@email.openplanner.fr'
+// Localised footer for the FR magic-link mail. Mirrors the EN footer
+// from speakerEmailFooter.ts in shape, but keeping the wording on the
+// route file lets us drop the per-language branch entirely if we ever
+// merge templates. The shared OPENPLANNER_CONTACT_EMAIL constant is
+// imported so the address only lives in one place.
+const buildFrenchFooter = (eventName: string): string =>
+    `--\nCet email est envoyé par OpenPlanner pour le compte de "${eventName}". ` +
+    `Pour toute question, contactez ${OPENPLANNER_CONTACT_EMAIL}.`
 
 const renderEmail = (speakerName: string, eventName: string, link: string, lang: 'fr' | 'en') => {
     if (lang === 'fr') {
@@ -59,8 +61,7 @@ const renderEmail = (speakerName: string, eventName: string, link: string, lang:
                 `Cliquez ici (valable 7 jours) :\n${link}\n\n` +
                 `Vos modifications seront vérifiées par un administrateur avant d'être publiées.\n\n` +
                 `Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n` +
-                `--\nCet email est envoyé par OpenPlanner pour le compte de "${eventName}". ` +
-                `Pour toute question, contactez ${OPENPLANNER_CONTACT}.`,
+                buildFrenchFooter(eventName),
         }
     }
     return {
@@ -71,8 +72,7 @@ const renderEmail = (speakerName: string, eventName: string, link: string, lang:
             `Click here (valid 7 days):\n${link}\n\n` +
             `Your changes will be reviewed by an administrator before going live.\n\n` +
             `If you did not request this, ignore this email.\n\n` +
-            `--\nThis email was sent by OpenPlanner on behalf of "${eventName}". ` +
-            `For questions, contact ${OPENPLANNER_CONTACT}.`,
+            buildSpeakerEmailFooter(eventName),
     }
 }
 
@@ -152,7 +152,16 @@ export const requestEditLinkRouteHandler = (fastify: FastifyInstance) => {
         try {
             await sendEmail(
                 fastify.firebase,
-                { to: matching.email as string, subject: email_.subject, text: email_.text },
+                {
+                    to: matching.email as string,
+                    subject: email_.subject,
+                    text: email_.text,
+                    // Set the SMTP Reply-To header so a speaker hitting
+                    // Reply lands in the OpenPlanner contact inbox rather
+                    // than the per-event MAIL_FROM (which is often a
+                    // no-reply alias).
+                    replyTo: OPENPLANNER_CONTACT_EMAIL,
+                },
                 { eventId, speakerId: matching.id, type: 'speaker-edit-link' }
             )
         } catch (err) {

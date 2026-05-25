@@ -132,6 +132,40 @@ describe('sendEmail', () => {
         })
     })
 
+    test('forwards replyTo to nodemailer and persists it on the audit row', async () => {
+        const setSpy = vi.fn(() => Promise.resolve())
+        const addSpy = vi.fn()
+        nodemailerMocks.sendMail.mockResolvedValueOnce({ messageId: 'mid-rt', response: '250 OK' })
+
+        await sendEmail(makeFirebaseApp(setSpy, addSpy), {
+            to: 'jane@example.com',
+            subject: 'Hello',
+            text: 'body',
+            replyTo: 'contact@email.openplanner.fr',
+        })
+        const sendArg = nodemailerMocks.sendMail.mock.calls[0][0]
+        expect(sendArg.replyTo).toBe('contact@email.openplanner.fr')
+
+        const pendingDoc = addSpy.mock.calls[0][0]
+        expect(pendingDoc.replyTo).toBe('contact@email.openplanner.fr')
+    })
+
+    test('omits replyTo header when caller did not pass one and stamps null on the audit row', async () => {
+        const setSpy = vi.fn(() => Promise.resolve())
+        const addSpy = vi.fn()
+        nodemailerMocks.sendMail.mockResolvedValueOnce({ messageId: 'mid-no-rt', response: '250 OK' })
+
+        await sendEmail(makeFirebaseApp(setSpy, addSpy), {
+            to: 'jane@example.com',
+            subject: 'Hello',
+            text: 'body',
+        })
+        const sendArg = nodemailerMocks.sendMail.mock.calls[0][0]
+        expect(sendArg.replyTo).toBeUndefined()
+        const pendingDoc = addSpy.mock.calls[0][0]
+        expect(pendingDoc.replyTo).toBeNull()
+    })
+
     test('uses STARTTLS (secure=false) with requireTLS on port 587', async () => {
         __resetEmailTransporterForTests()
         process.env.MAILGUN_SMTP_PORT = '587'
