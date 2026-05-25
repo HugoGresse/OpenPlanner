@@ -32,12 +32,18 @@ describe('sendEmail', () => {
         nodemailerMocks.sendMail.mockReset()
         nodemailerMocks.createTransport.mockReset()
         nodemailerMocks.createTransport.mockReturnValue({ sendMail: nodemailerMocks.sendMail })
-        process.env.MAILGUN_SMTP_URI = 'smtps://u:p@smtp.example.com:465'
+        process.env.MAILGUN_SMTP_HOST = 'smtp.example.com'
+        process.env.MAILGUN_SMTP_PORT = '465'
+        process.env.MAILGUN_SMTP_USER = 'postmaster@mg.example.com'
+        process.env.MAILGUN_SMTP_PASSWORD = 'secret'
         process.env.MAIL_FROM = 'OpenPlanner <noreply@mg.example.com>'
     })
 
     afterEach(() => {
-        delete process.env.MAILGUN_SMTP_URI
+        delete process.env.MAILGUN_SMTP_HOST
+        delete process.env.MAILGUN_SMTP_PORT
+        delete process.env.MAILGUN_SMTP_USER
+        delete process.env.MAILGUN_SMTP_PASSWORD
         delete process.env.MAIL_FROM
     })
 
@@ -92,8 +98,8 @@ describe('sendEmail', () => {
         expect(delivery.error).toMatch(/ECONNREFUSED/)
     })
 
-    test('throws if MAILGUN_SMTP_URI is missing', async () => {
-        delete process.env.MAILGUN_SMTP_URI
+    test('throws if Mailgun SMTP env vars are missing', async () => {
+        delete process.env.MAILGUN_SMTP_HOST
         const setSpy = vi.fn(() => Promise.resolve())
         const addSpy = vi.fn()
         await expect(
@@ -102,7 +108,44 @@ describe('sendEmail', () => {
                 subject: 'X',
                 text: 'X',
             })
-        ).rejects.toThrow(/MAILGUN_SMTP_URI/)
+        ).rejects.toThrow(/MAILGUN_SMTP_HOST/)
+    })
+
+    test('builds the nodemailer transport with discrete host/port/user/pass options', async () => {
+        const setSpy = vi.fn(() => Promise.resolve())
+        const addSpy = vi.fn()
+        nodemailerMocks.sendMail.mockResolvedValueOnce({ messageId: 'mid-3', response: '250 OK' })
+
+        await sendEmail(makeFirebaseApp(setSpy, addSpy), {
+            to: 'jane@example.com',
+            subject: 'Hello',
+            text: 'body',
+        })
+        expect(nodemailerMocks.createTransport).toHaveBeenCalledOnce()
+        const opts = nodemailerMocks.createTransport.mock.calls[0][0]
+        expect(opts).toMatchObject({
+            host: 'smtp.example.com',
+            port: 465,
+            secure: true,
+            auth: { user: 'postmaster@mg.example.com', pass: 'secret' },
+            pool: true,
+        })
+    })
+
+    test('uses STARTTLS (secure=false) on port 587', async () => {
+        __resetEmailTransporterForTests()
+        process.env.MAILGUN_SMTP_PORT = '587'
+        const setSpy = vi.fn(() => Promise.resolve())
+        const addSpy = vi.fn()
+        nodemailerMocks.sendMail.mockResolvedValueOnce({ messageId: 'mid-4', response: '250 OK' })
+
+        await sendEmail(makeFirebaseApp(setSpy, addSpy), {
+            to: 'jane@example.com',
+            subject: 'Hi',
+            text: 'body',
+        })
+        const opts = nodemailerMocks.createTransport.mock.calls[0][0]
+        expect(opts).toMatchObject({ port: 587, secure: false })
     })
 
     test('writes ERROR delivery when MAIL_FROM is missing', async () => {

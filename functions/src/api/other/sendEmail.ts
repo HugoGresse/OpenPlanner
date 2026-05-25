@@ -25,26 +25,39 @@ let cachedTransporter: Transporter | null = null
 
 const getTransporter = (): Transporter => {
     if (cachedTransporter) return cachedTransporter
-    // SMTP credentials come from a plain env var, matching the existing
+    // SMTP credentials come from plain env vars, matching the existing
     // pattern used by CAP_SECRET, SERVICE_API_KEY, etc. (see functions/.env
-    // and the captchaVerify helper). Set the value locally via
+    // and the captchaVerify helper). Set the values locally via
     // functions/.env and on Cloud Functions via deploy-time env vars or
     // --set-env-vars.
-    const uri = process.env.MAILGUN_SMTP_URI
-    if (!uri) {
-        throw new Error('MAILGUN_SMTP_URI env var is not configured')
+    //
+    // We take each SMTP component as its own variable rather than a single
+    // composed URI so neither the user nor the password ever needs URL
+    // encoding (`@` in the Mailgun username was a recurring foot-gun on
+    // the previous single-URI shape).
+    const host = process.env.MAILGUN_SMTP_HOST
+    const user = process.env.MAILGUN_SMTP_USER
+    const password = process.env.MAILGUN_SMTP_PASSWORD
+    if (!host || !user || !password) {
+        throw new Error(
+            'Mailgun SMTP env vars are not configured (need MAILGUN_SMTP_HOST, MAILGUN_SMTP_USER, MAILGUN_SMTP_PASSWORD)'
+        )
     }
-    // nodemailer accepts the SMTP URI directly as createTransport's first
-    // arg at runtime (see nodemailer docs), but its TS types do not
-    // expose that overload — hence the cast. The URI's scheme
-    // (`smtps://` vs `smtp://`) controls TLS mode; pool: true keeps the
-    // connection alive across messages within the same warm container.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cachedTransporter = (nodemailer.createTransport as any)(uri, {
+    // Port defaults to 465 (implicit TLS) — the most common Mailgun setup.
+    // 587 + STARTTLS is also supported by passing MAILGUN_SMTP_PORT=587.
+    const port = Number(process.env.MAILGUN_SMTP_PORT || 465)
+    // `secure: true` = implicit TLS from byte zero (port 465). For 587 we
+    // want STARTTLS, which nodemailer negotiates when `secure: false`.
+    const secure = port === 465
+    cachedTransporter = nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: { user, pass: password },
         pool: true,
         maxConnections: 3,
         maxMessages: 50,
-    }) as Transporter
+    })
     return cachedTransporter
 }
 
