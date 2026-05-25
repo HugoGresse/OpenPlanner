@@ -25,9 +25,14 @@ let cachedTransporter: Transporter | null = null
 
 const getTransporter = (): Transporter => {
     if (cachedTransporter) return cachedTransporter
+    // SMTP credentials come from a plain env var, matching the existing
+    // pattern used by CAP_SECRET, SERVICE_API_KEY, etc. (see functions/.env
+    // and the captchaVerify helper). Set the value locally via
+    // functions/.env and on Cloud Functions via deploy-time env vars or
+    // --set-env-vars.
     const uri = process.env.MAILGUN_SMTP_URI
     if (!uri) {
-        throw new Error('MAILGUN_SMTP_URI secret is not configured')
+        throw new Error('MAILGUN_SMTP_URI env var is not configured')
     }
     // nodemailer accepts the SMTP URI directly as createTransport's first
     // arg at runtime (see nodemailer docs), but its TS types do not
@@ -95,14 +100,14 @@ export const sendEmail = async (
             {
                 delivery: {
                     state: 'ERROR',
-                    error: 'MAIL_FROM secret not configured',
+                    error: 'MAIL_FROM env var not configured',
                     leaseExpireTime: null,
                     endTime: FieldValue.serverTimestamp(),
                 },
             },
             { merge: true }
         )
-        throw new Error('MAIL_FROM secret is not configured')
+        throw new Error('MAIL_FROM env var is not configured')
     }
 
     try {
