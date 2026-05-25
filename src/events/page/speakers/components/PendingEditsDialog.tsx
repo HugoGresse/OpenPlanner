@@ -81,10 +81,10 @@ export const PendingEditsDialog = ({ event, isOpen, onClose }: PendingEditsDialo
     const load = async () => {
         setLoading(true)
         try {
-            const data = await fetchOpenPlannerApi<{ items: PendingEdit[] }>(
-                event,
-                'speaker-pending-edits?status=pending'
-            )
+            const data = await fetchOpenPlannerApi<{ items: PendingEdit[] }>(event, 'speaker-pending-edits', {
+                method: 'GET',
+                query: { status: 'pending' },
+            })
             setItems(data.items || [])
         } catch (err) {
             console.error(err)

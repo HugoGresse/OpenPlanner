@@ -11,7 +11,6 @@ const TypeBoxRequestEditLink = Type.Object(
     {
         email: Type.String({ format: 'email', maxLength: 320 }),
         captchaToken: Type.String({ maxLength: 4000 }),
-        publicBaseUrl: Type.Optional(Type.String({ format: 'uri', maxLength: 500 })),
     },
     { additionalProperties: false }
 )
@@ -64,7 +63,7 @@ export const requestEditLinkRouteHandler = (fastify: FastifyInstance) => {
         reply: FastifyReply
     ) => {
         const { eventId } = request.params
-        const { email, captchaToken, publicBaseUrl } = request.body
+        const { email, captchaToken } = request.body
 
         const captchaOk = await verifyCaptchaToken(captchaToken)
         if (!captchaOk) {
@@ -111,8 +110,17 @@ export const requestEditLinkRouteHandler = (fastify: FastifyInstance) => {
 
         const { rawToken } = await SpeakerEditTokenDao.createToken(fastify.firebase, eventId, matching.id, ip)
 
-        const baseUrl = publicBaseUrl || process.env.PUBLIC_APP_URL || ''
-        const link = `${baseUrl.replace(/\/$/, '')}/public/event/${eventId}/speaker-edit/${matching.id}?t=${rawToken}`
+        // Magic-link base URL must come from server-side configuration ONLY.
+        // Never trust a client-supplied origin for the email body — that would
+        // let an attacker route a real speaker's edit token to an
+        // attacker-controlled domain.
+        const baseUrl = (process.env.PUBLIC_APP_URL || '').replace(/\/$/, '')
+        if (!baseUrl) {
+            console.error('PUBLIC_APP_URL env var not configured — cannot build speaker edit link')
+            reply.status(200).send({ success: true })
+            return
+        }
+        const link = `${baseUrl}/public/event/${eventId}/speaker-edit/${matching.id}?t=${rawToken}`
 
         const lang: 'fr' | 'en' = 'en'
         const email_ = renderEmail(matching.name, event.name, link, lang)

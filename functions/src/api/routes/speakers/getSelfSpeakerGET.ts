@@ -40,6 +40,11 @@ export const getSelfSpeakerGETSchema = {
     },
 }
 
+// Top-level public fields a speaker may see about themselves via the
+// magic-link endpoint. `customFields` is intentionally NOT in this list —
+// it is filtered separately below so that we only expose values for fields
+// flagged `editableBySpeaker`, avoiding any leak of private / admin-only
+// custom field data.
 const PUBLIC_FIELDS: (keyof Speaker)[] = [
     'id',
     'name',
@@ -51,7 +56,6 @@ const PUBLIC_FIELDS: (keyof Speaker)[] = [
     'geolocation',
     'photoUrl',
     'socials',
-    'customFields',
 ]
 
 export const getSelfSpeakerRouteHandler = (fastify: FastifyInstance) => {
@@ -91,6 +95,17 @@ export const getSelfSpeakerRouteHandler = (fastify: FastifyInstance) => {
         const editableCustomFieldIds = (event.speakerCustomFields || [])
             .filter((f) => f.editableBySpeaker)
             .map((f) => f.id)
+
+        // Only expose custom field values whose IDs are flagged
+        // `editableBySpeaker`. Private/admin-only custom fields stay hidden.
+        const speakerCustomFields = (fullSpeaker.customFields || {}) as Record<string, string | boolean>
+        const filteredCustomFields: Record<string, string | boolean> = {}
+        for (const id of editableCustomFieldIds) {
+            if (speakerCustomFields[id] !== undefined) {
+                filteredCustomFields[id] = speakerCustomFields[id]
+            }
+        }
+        publicRecord.customFields = filteredCustomFields
 
         reply.status(200).send({
             speaker: publicSpeaker,

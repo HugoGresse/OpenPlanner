@@ -113,6 +113,16 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!token || !data) return
+        // `name` must stay a non-empty string. The backend rejects empty/null
+        // name. Pre-validate here so the user gets a clear local error
+        // instead of a generic 400 from schema validation.
+        if (isEditable('name')) {
+            const trimmed = (form.name || '').trim()
+            if (trimmed.length === 0) {
+                setError('Name cannot be empty')
+                return
+            }
+        }
         setSubmitting(true)
         setError(null)
         try {
@@ -120,7 +130,12 @@ export const PublicSpeakerEditForm = ({ eventId, speakerId }: PublicSpeakerEditF
             for (const field of TEXT_FIELDS) {
                 if (isEditable(field)) {
                     const value = (form as Record<string, unknown>)[field]
-                    body[field] = value === '' ? null : value
+                    if (field === 'name') {
+                        // Always send as string (never null) — backend requires non-empty string.
+                        body[field] = typeof value === 'string' ? value.trim() : value
+                    } else {
+                        body[field] = value === '' ? null : value
+                    }
                 }
             }
             if (isEditable('bio')) body.bio = form.bio === '' ? null : form.bio

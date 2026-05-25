@@ -13,7 +13,11 @@ const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
 
 export const TypeBoxSubmitSelfEdit = Type.Object(
     {
-        name: Type.Optional(Type.String({ maxLength: MAX_STRING_LENGTH })),
+        // `name` is required to be a non-empty string when provided. Speakers
+        // cannot clear their own name to null/empty via self-edit — the
+        // public form pre-validates this. Other text fields accept null
+        // (treated as "clear the value").
+        name: Type.Optional(Type.String({ minLength: 1, maxLength: MAX_STRING_LENGTH })),
         pronouns: Type.Optional(NullableString),
         jobTitle: Type.Optional(NullableString),
         bio: Type.Optional(NullableString),

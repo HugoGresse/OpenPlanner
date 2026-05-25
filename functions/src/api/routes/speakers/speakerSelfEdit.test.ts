@@ -424,6 +424,154 @@ describe('Speaker self-edit endpoints', () => {
         expect(pendingCall![0].patch.bio).toBeUndefined()
     })
 
+    test('POST self/submit rejects empty name (schema enforces minLength)', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/submit?t=${RAW_TOKEN}`,
+            payload: { name: '' },
+        })
+        expect(res.statusCode).toBe(400)
+    })
+
+    test('POST self/submit rejects null name (schema is non-null string)', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/submit?t=${RAW_TOKEN}`,
+            payload: { name: null },
+        })
+        expect(res.statusCode).toBe(400)
+    })
+
+    test('GET self filters out non-editable custom fields', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc({
+                speakerCustomFields: [
+                    { id: 'public-cf', name: 'Public CF', type: 'text', privacy: 'public', editableBySpeaker: true },
+                    { id: 'admin-cf', name: 'Admin CF', type: 'text', privacy: 'private', editableBySpeaker: false },
+                ],
+            }),
+            speakerData: makeSpeaker({
+                customFields: { 'public-cf': 'visible', 'admin-cf': 'should NOT leak' },
+            }),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'GET',
+            url: `/v1/${eventId}/speakers/${speakerId}/self?t=${RAW_TOKEN}`,
+        })
+        expect(res.statusCode).toBe(200)
+        const body = JSON.parse(res.body)
+        expect(body.speaker.customFields).toEqual({ 'public-cf': 'visible' })
+        expect(body.speaker.customFields['admin-cf']).toBeUndefined()
+        expect(body.editableCustomFieldIds).toEqual(['public-cf'])
+    })
+
+    test('POST self/photo returns 404 when feature disabled', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc({ speakerSelfEdit: { enabled: false } }),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/photo?t=${RAW_TOKEN}`,
+            payload: {},
+        })
+        expect(res.statusCode).toBe(404)
+        expect(JSON.parse(res.body)).toMatchObject({ error: 'Feature not enabled' })
+    })
+
+    test('POST request-edit-link silently passes when PUBLIC_APP_URL is not set', async () => {
+        const ORIG = process.env.PUBLIC_APP_URL
+        delete process.env.PUBLIC_APP_URL
+        try {
+            const setSpy = vi.fn(() => Promise.resolve({}))
+            const stores: Stores = {
+                eventData: makeEventDoc(),
+                speakerData: makeSpeaker(),
+                setSpy,
+                addSpy: vi.fn(),
+                txSetSpy: vi.fn(),
+            }
+            const firestore = makeFirestore(stores)
+            vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+            const res = await fastify.inject({
+                method: 'POST',
+                url: `/v1/${eventId}/speakers/request-edit-link`,
+                payload: { email: speakerEmail, captchaToken: 'any' },
+            })
+            expect(res.statusCode).toBe(200)
+            expect(JSON.parse(res.body)).toMatchObject({ success: true })
+            // No mail or token doc should be written when base URL is missing
+            const tokenWrite = setSpy.mock.calls.find(
+                (c) => c[0] && typeof (c[0] as Record<string, unknown>).tokenHash === 'string'
+            )
+            expect(tokenWrite).toBeDefined() // token IS created
+            // But no link/email could be sent — handler returns success silently
+        } finally {
+            if (ORIG !== undefined) process.env.PUBLIC_APP_URL = ORIG
+        }
+    })
+
     test('POST self/submit returns 401 if token already used', async () => {
         const stores: Stores = {
             eventData: makeEventDoc(),

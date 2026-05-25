@@ -33,7 +33,6 @@ export const PublicSpeakerEditRequest = ({ eventId }: PublicSpeakerEditRequestPr
                 body: JSON.stringify({
                     email,
                     captchaToken,
-                    publicBaseUrl: window.location.origin,
                 }),
             })
             if (!response.ok) {

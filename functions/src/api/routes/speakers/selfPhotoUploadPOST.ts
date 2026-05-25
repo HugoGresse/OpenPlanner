@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type from 'typebox'
 import { extractMultipartFormData } from '../file/utils/parseMultipartFiles'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
+import { EventDao } from '../../dao/eventDao'
 
 export type SelfPhotoUploadPOSTTypes = {
     Params: { eventId: string; speakerId: string }
@@ -39,6 +40,7 @@ export const selfPhotoUploadPOSTSchema = {
         200: Type.Object({ success: Type.Boolean(), publicFileUrl: Type.String() }),
         400: Type.Object({ success: Type.Boolean(), error: Type.String() }),
         401: Type.Object({ success: Type.Boolean(), error: Type.String() }),
+        404: Type.Object({ success: Type.Boolean(), error: Type.String() }),
     },
 }
 
@@ -60,6 +62,16 @@ export const selfPhotoUploadRouteHandler = (fastify: FastifyInstance) => {
         }
 
         const { eventId, speakerId } = request.params
+
+        // Re-check the feature flag even though we already have a valid token.
+        // Disabling self-edit on the event should immediately prevent further
+        // storage writes — without this check a previously-issued token could
+        // be reused to keep uploading photos and cost storage indefinitely.
+        const event = await EventDao.getEvent(fastify.firebase, eventId).catch(() => null)
+        if (!event || !event.speakerSelfEdit?.enabled) {
+            reply.status(404).send({ success: false, error: 'Feature not enabled' })
+            return
+        }
 
         const result = await extractMultipartFormData(request.raw)
         if (!result || !result.uploads || Object.keys(result.uploads).length === 0) {
