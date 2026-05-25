@@ -41,16 +41,38 @@ export const requestEditLinkPOSTSchema = {
     },
 }
 
+// Identifying the OpenPlanner platform in the email body is important
+// because the From address can vary per deploy (each event organiser may
+// configure their own MAIL_FROM domain). Without an explicit "sent by
+// OpenPlanner" line, speakers receiving the link from an unfamiliar
+// domain are likely to flag it as phishing. The contact address is a
+// real inbox so speakers can reply if they have questions.
+const OPENPLANNER_CONTACT = 'contact@email.openplanner.fr'
+
 const renderEmail = (speakerName: string, eventName: string, link: string, lang: 'fr' | 'en') => {
     if (lang === 'fr') {
         return {
             subject: `Modifier votre profil — ${eventName}`,
-            text: `Bonjour ${speakerName},\n\nVous avez demandé un lien pour modifier votre profil public pour l'événement "${eventName}".\n\nCliquez ici (valable 7 jours) :\n${link}\n\nVos modifications seront vérifiées par un administrateur avant d'être publiées.\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.`,
+            text:
+                `Bonjour ${speakerName},\n\n` +
+                `Vous avez demandé un lien pour modifier votre profil public pour l'événement "${eventName}".\n\n` +
+                `Cliquez ici (valable 7 jours) :\n${link}\n\n` +
+                `Vos modifications seront vérifiées par un administrateur avant d'être publiées.\n\n` +
+                `Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n` +
+                `--\nCet email est envoyé par OpenPlanner pour le compte de "${eventName}". ` +
+                `Pour toute question, contactez ${OPENPLANNER_CONTACT}.`,
         }
     }
     return {
         subject: `Edit your profile — ${eventName}`,
-        text: `Hello ${speakerName},\n\nYou requested a link to edit your public profile for "${eventName}".\n\nClick here (valid 7 days):\n${link}\n\nYour changes will be reviewed by an administrator before going live.\n\nIf you did not request this, ignore this email.`,
+        text:
+            `Hello ${speakerName},\n\n` +
+            `You requested a link to edit your public profile for "${eventName}".\n\n` +
+            `Click here (valid 7 days):\n${link}\n\n` +
+            `Your changes will be reviewed by an administrator before going live.\n\n` +
+            `If you did not request this, ignore this email.\n\n` +
+            `--\nThis email was sent by OpenPlanner on behalf of "${eventName}". ` +
+            `For questions, contact ${OPENPLANNER_CONTACT}.`,
     }
 }
 

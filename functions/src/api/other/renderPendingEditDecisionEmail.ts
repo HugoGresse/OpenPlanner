@@ -43,6 +43,16 @@ const renderChangedFieldsList = (patch: Partial<Speaker>): string => {
     return lines.join('\n')
 }
 
+// Same OpenPlanner-attribution footer used by the request-edit-link mail.
+// Per-deploy MAIL_FROM domains make the From header alone unreliable for
+// the speaker to identify who is writing, so every speaker self-edit
+// email carries an explicit "sent by OpenPlanner" line + a real reply-to
+// address.
+const OPENPLANNER_CONTACT = 'contact@email.openplanner.fr'
+const buildFooter = (eventName: string): string =>
+    `--\nThis email was sent by OpenPlanner on behalf of "${eventName}". ` +
+    `For questions, contact ${OPENPLANNER_CONTACT}.`
+
 export const renderApprovedEmail = (
     speakerName: string,
     eventName: string,
@@ -55,7 +65,8 @@ export const renderApprovedEmail = (
             `Hello ${speakerName},\n\n` +
             `Your profile changes for "${eventName}" have been approved by an administrator and will be public soon.\n\n` +
             `Changes applied:\n${changes}\n\n` +
-            `If you did not request these changes, please contact the event organisers.`,
+            `If you did not request these changes, please contact the event organisers.\n\n` +
+            buildFooter(eventName),
     }
 }
 
@@ -73,6 +84,7 @@ export const renderRejectedEmail = (
             `Hello ${speakerName},\n\n` +
             `Your recent profile changes for "${eventName}" were not applied by the administrators.\n\n` +
             `Changes you proposed:\n${changes}${noteSection}\n\n` +
-            `You can request a fresh edit link from the speaker self-edit page if you want to retry.`,
+            `You can request a fresh edit link from the speaker self-edit page if you want to retry.\n\n` +
+            buildFooter(eventName),
     }
 }
