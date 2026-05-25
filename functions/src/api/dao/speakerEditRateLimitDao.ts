@@ -5,6 +5,13 @@ const { FieldValue } = firebase.firestore
 
 const MAX_PER_EMAIL_PER_DAY = 5
 const MAX_PER_IP_PER_DAY = 20
+// Caps how many photo uploads a speaker may stage per day across the whole
+// 7-day token window. Photo upload bypasses the magic-link single-use rule
+// (the token is only consumed on `/submit`), so without a separate counter
+// a leaked token could be replayed to fill the storage bucket. 10/day per
+// speaker is generous for legitimate users iterating on a profile picture
+// while still capping abuse at the ~70 file ceiling per token lifetime.
+const MAX_PHOTO_UPLOADS_PER_SPEAKER_PER_DAY = 10
 
 const todayKey = (): string => {
     const d = new Date()
@@ -40,6 +47,34 @@ export class SpeakerEditRateLimitDao {
                     count: current + 1,
                     lastSentAt: FieldValue.serverTimestamp(),
                     type: 'email',
+                },
+                { merge: true }
+            )
+            return { allowed: true, count: current + 1 }
+        })
+    }
+
+    public static async incrementAndCheckPhotoUpload(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        speakerId: string
+    ): Promise<{ allowed: boolean; count: number }> {
+        const db = firebaseApp.firestore()
+        const docId = `photo_${hashKey(speakerId)}_${todayKey()}`
+        const ref = db.collection(`events/${eventId}/speakerEditRateLimits`).doc(docId)
+
+        return db.runTransaction(async (tx) => {
+            const snap = await tx.get(ref)
+            const current = snap.exists ? (snap.data()?.count as number) || 0 : 0
+            if (current >= MAX_PHOTO_UPLOADS_PER_SPEAKER_PER_DAY) {
+                return { allowed: false, count: current }
+            }
+            tx.set(
+                ref,
+                {
+                    count: current + 1,
+                    lastSentAt: FieldValue.serverTimestamp(),
+                    type: 'photo',
                 },
                 { merge: true }
             )

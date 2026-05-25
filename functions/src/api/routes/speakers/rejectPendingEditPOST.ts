@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SpeakerPendingEditDao } from '../../dao/speakerPendingEditDao'
+import { deletePendingPhotoFromUrl } from '../../other/deletePendingPhoto'
 
 const TypeBoxRejectBody = Type.Object(
     {
@@ -71,6 +72,15 @@ export const rejectPendingEditRouteHandler = (fastify: FastifyInstance) => {
             request.body.reviewerUid || 'unknown',
             request.body.reviewNote
         )
+
+        // Best-effort cleanup of the pending-edit photo file. Only deletes
+        // files this flow itself uploaded (matched by the `pending-edit-`
+        // marker), so external/admin-managed photos are never touched.
+        // Errors are swallowed inside the helper so a storage hiccup does
+        // not roll back the reject we already persisted above.
+        if (pending.patch?.photoUrl) {
+            await deletePendingPhotoFromUrl(fastify.firebase, pending.patch.photoUrl)
+        }
 
         reply.status(200).send({ success: true })
     }

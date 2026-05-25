@@ -108,6 +108,25 @@ const makeFirestore = (stores: Stores) => {
                                 })),
                             })
                         ),
+                        // SpeakerDao.getSpeakerByEmail issues an indexed
+                        // equality query: .where('email', '==', X).limit(1).get()
+                        where: vi.fn((field: string, _op: string, value: unknown) => ({
+                            limit: vi.fn(() => ({
+                                get: vi.fn(() => {
+                                    const match = speakersListData.find(
+                                        (s) => (s as Record<string, unknown>)[field] === value
+                                    )
+                                    return Promise.resolve(
+                                        match
+                                            ? {
+                                                  empty: false,
+                                                  docs: [{ id: match.id, data: () => match }],
+                                              }
+                                            : { empty: true, docs: [] }
+                                    )
+                                }),
+                            })),
+                        })),
                         doc: vi.fn(() => ({
                             get: vi.fn(() =>
                                 Promise.resolve({
@@ -687,6 +706,117 @@ describe('Speaker self-edit endpoints', () => {
         expect(uploadMock.uploadBufferToStorage).toHaveBeenCalledOnce()
         const callArgs = uploadMock.uploadBufferToStorage.mock.calls[0]
         expect(callArgs[3]).toMatch(/^pending-edit-spk-1-/)
+    })
+
+    test('POST self/photo returns 429 when per-speaker daily upload cap reached', async () => {
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            tokenDoc: {
+                id: 'tok-1',
+                speakerId,
+                tokenHash: TOKEN_HASH,
+                expiresAt: { toDate: () => new Date(Date.now() + 100000) },
+                usedAt: null,
+            },
+            setSpy: vi.fn(),
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+            // The DAO caps photo uploads at 10/day. Saturate the counter so
+            // the next call short-circuits with 429 before reading the body.
+            rateLimitCount: 10,
+            rateLimitMax: 10,
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speakers/${speakerId}/self/photo?t=${RAW_TOKEN}`,
+            payload: {},
+        })
+        expect(res.statusCode).toBe(429)
+        expect(JSON.parse(res.body).error).toMatch(/upload limit/i)
+        expect(multipartMock.extractMultipartFormData).not.toHaveBeenCalled()
+        expect(uploadMock.uploadBufferToStorage).not.toHaveBeenCalled()
+    })
+
+    test('POST reject deletes the pending-edit photo from storage', async () => {
+        const setSpy = vi.fn(() => Promise.resolve({}))
+        const deleteSpy = vi.fn(() => Promise.resolve())
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            pendingEditDoc: {
+                id: 'req-1',
+                speakerId,
+                status: 'pending',
+                patch: {
+                    photoUrl: 'https://test-bucket.storage.googleapis.com/events/evt-1/abc_pending-edit-spk-1-9.png',
+                },
+                baseSnapshot: { photoUrl: null },
+            },
+            setSpy,
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+        vi.spyOn(fastify.firebase, 'storage').mockImplementation(
+            () =>
+                ({
+                    bucket: (_name: string) => ({
+                        file: (_path: string) => ({
+                            delete: (_opts: unknown) => deleteSpy(_path),
+                        }),
+                    }),
+                } as unknown as ReturnType<typeof fastify.firebase.storage>)
+        )
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speaker-pending-edits/req-1/reject?apiKey=${apiKey}`,
+            payload: { reviewerUid: 'admin-1' },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(deleteSpy).toHaveBeenCalledOnce()
+        expect(deleteSpy.mock.calls[0][0]).toBe('events/evt-1/abc_pending-edit-spk-1-9.png')
+    })
+
+    test('POST reject does NOT call storage delete when patch has no photoUrl', async () => {
+        const setSpy = vi.fn(() => Promise.resolve({}))
+        const deleteSpy = vi.fn(() => Promise.resolve())
+        const stores: Stores = {
+            eventData: makeEventDoc(),
+            speakerData: makeSpeaker(),
+            pendingEditDoc: {
+                id: 'req-1',
+                speakerId,
+                status: 'pending',
+                patch: { name: 'New name' },
+                baseSnapshot: { name: 'Jane' },
+            },
+            setSpy,
+            addSpy: vi.fn(),
+            txSetSpy: vi.fn(),
+        }
+        const firestore = makeFirestore(stores)
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore as any)
+        const storageSpy = vi.spyOn(fastify.firebase, 'storage').mockImplementation(
+            () =>
+                ({
+                    bucket: () => ({ file: () => ({ delete: deleteSpy }) }),
+                } as unknown as ReturnType<typeof fastify.firebase.storage>)
+        )
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: `/v1/${eventId}/speaker-pending-edits/req-1/reject?apiKey=${apiKey}`,
+            payload: {},
+        })
+        expect(res.statusCode).toBe(200)
+        expect(deleteSpy).not.toHaveBeenCalled()
+        expect(storageSpy).not.toHaveBeenCalled()
     })
 
     test('POST request-edit-link silently passes when PUBLIC_APP_URL is not set', async () => {

@@ -99,9 +99,11 @@ export const requestEditLinkRouteHandler = (fastify: FastifyInstance) => {
             return
         }
 
-        const speakers = await SpeakerDao.getSpeakers(fastify.firebase, eventId)
-        const normalized = email.toLowerCase().trim()
-        const matching = speakers.find((s) => s.email && s.email.toLowerCase().trim() === normalized)
+        // Indexed lookup by email — avoids loading the full speaker collection
+        // every time a speaker requests an edit link. The helper tries both
+        // the raw input and the lowercased form so we cover legacy speakers
+        // stored with mixed-case addresses.
+        const matching = await SpeakerDao.getSpeakerByEmail(fastify.firebase, eventId, email)
 
         if (!matching) {
             reply.status(200).send({ success: true })

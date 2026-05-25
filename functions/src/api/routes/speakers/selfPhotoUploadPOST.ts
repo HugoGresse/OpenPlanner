@@ -4,6 +4,7 @@ import { extractMultipartFormData } from '../file/utils/parseMultipartFiles'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
 import { checkFileTypes } from '../../other/checkFileTypes'
 import { EventDao } from '../../dao/eventDao'
+import { SpeakerEditRateLimitDao } from '../../dao/speakerEditRateLimitDao'
 
 // Hard whitelist of MIME types speakers may upload as their profile photo.
 // SVG is intentionally excluded — it can carry inline <script> and is
@@ -49,6 +50,7 @@ export const selfPhotoUploadPOSTSchema = {
         400: Type.Object({ success: Type.Boolean(), error: Type.String() }),
         401: Type.Object({ success: Type.Boolean(), error: Type.String() }),
         404: Type.Object({ success: Type.Boolean(), error: Type.String() }),
+        429: Type.Object({ success: Type.Boolean(), error: Type.String() }),
     },
 }
 
@@ -78,6 +80,21 @@ export const selfPhotoUploadRouteHandler = (fastify: FastifyInstance) => {
         const event = await EventDao.getEvent(fastify.firebase, eventId).catch(() => null)
         if (!event || !event.speakerSelfEdit?.enabled) {
             reply.status(404).send({ success: false, error: 'Feature not enabled' })
+            return
+        }
+
+        // Per-speaker daily upload cap. The submit token is single-use, but
+        // the photo endpoint accepts repeated calls during the 7-day token
+        // lifetime — without this check a leaked or shared token could be
+        // replayed to fill the storage bucket. Counter is keyed on speakerId
+        // so it survives the speaker requesting a fresh magic link.
+        const photoLimit = await SpeakerEditRateLimitDao.incrementAndCheckPhotoUpload(
+            fastify.firebase,
+            eventId,
+            speakerId
+        )
+        if (!photoLimit.allowed) {
+            reply.status(429).send({ success: false, error: 'Daily upload limit reached' })
             return
         }
 
