@@ -65,7 +65,7 @@ Firebase + Cloud Functions for server-side logic. The API uses **Fastify**, Type
 
 ### Type sharing
 
-Common data types live in [src/types.ts](src/types.ts) and are used throughout the application. The backend type file at `functions/src/types.ts` imports from there so types are not duplicated. The API uses Fastify + TypeBox for schema validation.
+Common data types live in [src/types.ts](src/types.ts) and are used throughout the application. The backend type file at `functions/src/types.ts` imports a few large interfaces (currently `Event`) from there so the canonical shapes are not duplicated, but most other backend types (e.g. `Track`, `Webhooks`, `Speaker`, `Session`, `Social`, `Category`, `Format`, `TeasingPosts`, `EventFiles`, `SponsorResponse`, `SponsorCategory`, `TeamMember`) are redeclared on the backend side today. When adding a new shared type, prefer importing from the frontend file rather than re-declaring. The API uses Fastify + TypeBox for runtime schema validation on top of these TypeScript types.
 
 ## Events and sessions
 
