@@ -21,7 +21,9 @@ export const uploadBufferToStorage = async (
     const { mime, extension } = fileType
 
     const bucket = firebase.storage().bucket(storageBucket)
-    const fileName50char = fileName.slice(0, 50)
+    const cleanFileName = fileName.trim()
+    const fileNameWithoutExtension = cleanFileName.replace(/\.[^/.]+$/, '')
+    const fileName50char = (fileNameWithoutExtension || cleanFileName || 'file').slice(0, 50)
     const path = `events/${eventId}/${addUuid ? uuidv4() + '_' : ''}${fileName50char}.${extension}`
     const bucketFile = bucket.file(path)
 
