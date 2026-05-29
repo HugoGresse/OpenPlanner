@@ -53,9 +53,8 @@ export const getFilesNames = async (firebaseApp: firebase.app.App, event: Event)
 }
 
 export const addPdfFileToEvent = async (firebaseApp: firebase.app.App, event: Event) => {
-    const db = firebaseApp.firestore()
-
     if (!event.files?.pdf) {
+        const db = firebaseApp.firestore()
         const pdfFileName = `events/${event.id}/schedule-${uuidv4()}.pdf`
         await db
             .collection('events')
@@ -68,21 +67,6 @@ export const addPdfFileToEvent = async (firebaseApp: firebase.app.App, event: Ev
             })
         return pdfFileName
     }
-
-    if (!event.files.pdf.endsWith('.pdf')) {
-        const normalizedPdfFileName = `${event.files.pdf}.pdf`
-        await db
-            .collection('events')
-            .doc(event.id)
-            .update({
-                files: {
-                    ...event.files,
-                    pdf: normalizedPdfFileName,
-                },
-            })
-        return normalizedPdfFileName
-    }
-
     return event.files.pdf
 }
 
