@@ -34,6 +34,22 @@ export const isStorageUrl = (url: string | null | undefined): boolean => {
     return url.startsWith(baseStorageUrl) || url.startsWith(alternativeStorageUrl)
 }
 
+// Strip a full public storage URL down to its bucket-relative path. Firebase's
+// ref(storage, ...) only understands gs:// or firebasestorage URLs, so a public
+// googleapis.com URL must be reduced to a plain path first.
+export const storageUrlToPath = (urlOrPath: string): string => {
+    if (urlOrPath.startsWith(alternativeStorageUrl)) {
+        return urlOrPath.slice(alternativeStorageUrl.length)
+    }
+    if (urlOrPath.startsWith(`${baseStorageUrl}/`)) {
+        return urlOrPath.slice(baseStorageUrl.length + 1)
+    }
+    return urlOrPath
+}
+
+// Build the public URL for a bucket-relative storage path.
+export const pathToStorageUrl = (path: string): string => `${alternativeStorageUrl}${path}`
+
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)
 export const storage = getStorage()
