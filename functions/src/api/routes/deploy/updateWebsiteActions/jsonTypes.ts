@@ -52,6 +52,22 @@ export interface JsonSpeaker {
     customFields?: { [key: string]: string | boolean }
 }
 
+export interface JsonTicket {
+    id: string
+    name: string
+    price: number
+    currency: string
+    url: string
+    ticketsCount: number
+    available: boolean
+    soldOut: boolean
+    highlighted: boolean
+    displayNewsletterRegistration: boolean
+    startDate: string | null
+    endDate: string | null
+    message: string
+}
+
 export interface JsonEvent {
     id: string
     name: string
@@ -82,6 +98,7 @@ export interface JsonPublicOutput {
     team: TeamMember[]
     teams: { id: string; members: TeamMember[]; order: number }[]
     faq: FaqCategory[]
+    tickets: JsonTicket[]
     timezone: string | null | undefined
     generatedAt: string
 }
