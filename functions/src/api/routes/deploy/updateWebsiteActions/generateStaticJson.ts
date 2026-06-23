@@ -1,28 +1,53 @@
 import firebase from 'firebase-admin'
-import { Event } from '../../../../../../src/types'
+import { Event, TicketCurrency } from '../../../../../../src/types'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
 import { generateVoxxrinJson } from './generateVoxxrinJson'
-import { JsonOutput, JsonSession, JsonSessionPrivate, JsonPublicOutput, JsonPrivateOutput } from './jsonTypes'
+import {
+    JsonOutput,
+    JsonSession,
+    JsonSessionPrivate,
+    JsonPublicOutput,
+    JsonPrivateOutput,
+    JsonTicket,
+} from './jsonTypes'
 import { SessionDao } from '../../../dao/sessionDao'
 import { SpeakerDao } from '../../../dao/speakerDao'
 import { SponsorDao } from '../../../dao/sponsorDao'
 import { TeamDao } from '../../../dao/teamDao'
 import { FaqDao } from '../../../dao/faqDao'
 import { JobPostDao } from '../../../dao/jobPostDao'
+import { TicketDao } from '../../../dao/ticketDao'
 import { JobStatus } from '../../../../../../src/constants/jobStatus'
-import { dateToString } from '../../../other/dateConverter'
+import { dateToString, unknownToDateTime } from '../../../other/dateConverter'
 
 export const generateStaticJson = async (firebaseApp: firebase.app.App, event: Event): Promise<JsonOutput> => {
-    const [sessions, speakers, sponsors, { team, teams }, faq, jobPosts] = await Promise.all([
+    const [sessions, speakers, sponsors, { team, teams }, faq, jobPosts, tickets] = await Promise.all([
         SessionDao.getSessions(firebaseApp, event.id),
         SpeakerDao.getSpeakers(firebaseApp, event.id),
         SponsorDao.getSponsors(firebaseApp, event.id),
         TeamDao.getTeams(firebaseApp, event.id),
         FaqDao.getFullFaqs(firebaseApp, event.id),
         JobPostDao.getAllJobPosts(firebaseApp, event.id, JobStatus.APPROVED),
+        TicketDao.getTickets(firebaseApp, event.id),
     ])
 
     const faqPublic = faq.filter((f) => !f.private)
+
+    const outputTickets: JsonTicket[] = tickets.map((t) => ({
+        id: t.id,
+        name: t.name,
+        price: t.price,
+        currency: t.currency as TicketCurrency,
+        url: t.url,
+        ticketsCount: t.ticketsCount,
+        available: t.available,
+        soldOut: t.soldOut,
+        highlighted: t.highlighted,
+        displayNewsletterRegistration: t.displayNewsletterRegistration,
+        startDate: t.startDate ? unknownToDateTime(t.startDate as any).toISO() : null,
+        endDate: t.endDate ? unknownToDateTime(t.endDate as any).toISO() : null,
+        message: t.message,
+    }))
 
     const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
     const voxxrinJson = event.enableVoxxrin ? generateVoxxrinJson(event, sessions, speakers, sponsors) : null
@@ -173,6 +198,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         team,
         teams,
         faq: faqPublic,
+        tickets: outputTickets,
         timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
@@ -184,6 +210,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         team,
         teams,
         faq,
+        tickets: outputTickets,
         timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
