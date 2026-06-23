@@ -8,6 +8,7 @@ import {
     Social,
     SponsorCustomField,
     SpeakerCustomField,
+    TicketCurrency,
 } from '../../../../../../src/types'
 
 export interface JsonSession {
@@ -56,7 +57,7 @@ export interface JsonTicket {
     id: string
     name: string
     price: number
-    currency: string
+    currency: TicketCurrency
     url: string
     ticketsCount: number
     available: boolean

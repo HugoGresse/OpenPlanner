@@ -12,8 +12,8 @@ export interface TicketData {
     soldOut: boolean
     highlighted: boolean
     displayNewsletterRegistration: boolean
-    startDate: Timestamp | null
-    endDate: Timestamp | null
+    startDate: Timestamp | string | null
+    endDate: Timestamp | string | null
     message: string
 }
 

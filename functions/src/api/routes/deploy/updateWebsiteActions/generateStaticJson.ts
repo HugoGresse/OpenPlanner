@@ -1,5 +1,5 @@
 import firebase from 'firebase-admin'
-import { Event } from '../../../../../../src/types'
+import { Event, TicketCurrency } from '../../../../../../src/types'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
 import { generateVoxxrinJson } from './generateVoxxrinJson'
 import {
@@ -37,15 +37,15 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         id: t.id,
         name: t.name,
         price: t.price,
-        currency: t.currency,
+        currency: t.currency as TicketCurrency,
         url: t.url,
         ticketsCount: t.ticketsCount,
         available: t.available,
         soldOut: t.soldOut,
         highlighted: t.highlighted,
         displayNewsletterRegistration: t.displayNewsletterRegistration,
-        startDate: t.startDate ? dateToString(unknownToDateTime(t.startDate as any)) : null,
-        endDate: t.endDate ? dateToString(unknownToDateTime(t.endDate as any)) : null,
+        startDate: t.startDate ? unknownToDateTime(t.startDate as any).toISO() : null,
+        endDate: t.endDate ? unknownToDateTime(t.endDate as any).toISO() : null,
         message: t.message,
     }))
 
