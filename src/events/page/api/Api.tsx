@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreMutationHooks'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
-import { FormContainer, useForm, SwitchElement } from 'react-hook-form-mui'
-import { Card, Container, Grid, Typography, Box, Button, IconButton, Collapse } from '@mui/material'
+import { FormContainer, useForm } from 'react-hook-form-mui'
+import { Card, Container, Grid, Typography, Box, IconButton, Collapse } from '@mui/material'
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { mapEventDevSettingsFormToMutateObject } from '../settings/mapEventSettingsFormToMutateObject'
@@ -15,13 +15,7 @@ import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFi
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { TextFieldElementWithGenerateApiKeyButton } from '../../../components/form/TextFieldElementWithGenerateApiKeyButton'
-import { getFaqBaseLinkLink } from '../faq/faqLink'
-import { useFaqs } from '../../../services/hooks/useFaqs'
-import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { TypographyCopyable } from '../../../components/TypographyCopyable'
-import { Link } from 'wouter'
 import { TextFieldElementPrivate } from '../../../components/form/TextFieldElementPrivate'
-import { PdfScheduleSection } from '../../../components/PdfScheduleSection'
 
 const schema = yup
     .object({
@@ -57,31 +51,17 @@ export type APIProps = {
 }
 export const API = ({ event }: APIProps) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
-    const faqQuery = useFaqs(event)
     const [expandedAPI, setExpandedAPI] = useState(true)
-    const [expandedWebsite, setExpandedWebsite] = useState(true)
-    const [expandedFAQ, setExpandedFAQ] = useState(true)
     const [expandedDeploy, setExpandedDeploy] = useState(true)
 
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
     })
-    const { control, formState, reset, watch } = formContext
-    const publicEnabled = watch('publicEnabled')
+    const { control, formState, reset } = formContext
 
     useEffect(() => {
         reset(convertInputEvent(event))
     }, [event])
-
-    const eventPublicUrl = `${window.location.protocol}//${window.location.host}/public/event/${event.id}`
-    const faqBaseUrl = getFaqBaseLinkLink(event)
-
-    if (faqQuery.isLoading) {
-        return <FirestoreQueryLoaderAndErrorDisplay hookResult={faqQuery} />
-    }
-
-    const faqCategories = faqQuery.data || []
-    const privateFaqCount = faqCategories.filter((f) => f.private).length || 0
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -93,7 +73,7 @@ export const API = ({ event }: APIProps) => {
                     return mutation.mutate(mapEventDevSettingsFormToMutateObject(event, data))
                 }}>
                 <Typography component="h1" variant="h5">
-                    API & Deploys
+                    Integration & API
                 </Typography>
 
                 <Card sx={{ paddingX: 2, mt: 2 }}>
@@ -140,81 +120,6 @@ export const API = ({ event }: APIProps) => {
                             helperText="use as params ?apiKey=xxx"
                             buttonText="Generate new API Key"
                         />
-                    </Collapse>
-                </Card>
-
-                <Card sx={{ paddingX: 2, mt: 4 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
-                        <Typography fontSize="large" sx={{ mt: 2 }}>
-                            Website
-                        </Typography>
-                        <IconButton
-                            size="small"
-                            onClick={() => setExpandedWebsite(!expandedWebsite)}
-                            sx={{
-                                transform: expandedWebsite ? 'rotate(0deg)' : 'rotate(-90deg)',
-                                transition: '0.3s',
-                            }}>
-                            <ExpandMoreIcon />
-                        </IconButton>
-                    </Box>
-                    <Collapse in={expandedWebsite}>
-                        <Box mb={2}>
-                            <SwitchElement label="Enable public website" name="publicEnabled" />
-                            {publicEnabled && (
-                                <Box mt={1}>
-                                    <TypographyCopyable>{eventPublicUrl}</TypographyCopyable>
-                                </Box>
-                            )}
-                        </Box>
-
-                        <PdfScheduleSection event={event} />
-                    </Collapse>
-                </Card>
-
-                <Card sx={{ paddingX: 2, mt: 4 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
-                        <Typography fontSize="large" sx={{ mt: 2 }}>
-                            FAQ
-                        </Typography>
-                        <IconButton
-                            size="small"
-                            onClick={() => setExpandedFAQ(!expandedFAQ)}
-                            sx={{
-                                transform: expandedFAQ ? 'rotate(0deg)' : 'rotate(-90deg)',
-                                transition: '0.3s',
-                            }}>
-                            <ExpandMoreIcon />
-                        </IconButton>
-                    </Box>
-                    <Collapse in={expandedFAQ}>
-                        <Box>
-                            <Typography variant="body1" gutterBottom>
-                                Public FAQ:{' '}
-                                <Button component={Link} to={`/faq`}>
-                                    Edit FAQ
-                                </Button>
-                            </Typography>
-                            <TypographyCopyable>{faqBaseUrl}</TypographyCopyable>
-
-                            <Typography variant="body1" mt={2} gutterBottom>
-                                Private FAQ pages: {privateFaqCount}
-                            </Typography>
-
-                            {faqCategories.map(
-                                (category) =>
-                                    category.private && (
-                                        <Box key={category.id}>
-                                            <Typography variant="subtitle1" gutterBottom>
-                                                {category.name}
-                                            </Typography>
-                                            <TypographyCopyable singleLine={true}>
-                                                {`${faqBaseUrl}${category.privateId}`}
-                                            </TypographyCopyable>
-                                        </Box>
-                                    )
-                            )}
-                        </Box>
                     </Collapse>
                 </Card>
 

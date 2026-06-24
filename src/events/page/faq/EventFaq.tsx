@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Button, Card, Container, IconButton } from '@mui/material'
+import { Box, Button, Card, Container, Typography } from '@mui/material'
 import { Event, FaqCategory } from '../../../types'
 import { useFaqs } from '../../../services/hooks/useFaqs'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
@@ -8,6 +8,7 @@ import { NewFaqCategoryDialog } from './NewFaqCategoryDialog'
 import { getFaqBaseLinkLink } from './faqLink'
 import { ContentCopy, ImportExport, OpenInNew } from '@mui/icons-material'
 import { FaqCategoryImportDialog } from './components/FaqCategoryImportDialog'
+import { TypographyCopyable } from '../../../components/TypographyCopyable'
 
 export const EventFAQ = ({ event }: { event: Event }) => {
     const queryResult = useFaqs(event)
@@ -20,6 +21,7 @@ export const EventFAQ = ({ event }: { event: Event }) => {
     const categoryData = queryResult.data || []
 
     const faqLink = getFaqBaseLinkLink(event)
+    const privateCategories = categoryData.filter((c) => c.private)
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -46,6 +48,26 @@ export const EventFAQ = ({ event }: { event: Event }) => {
                     Import FAQ from another event
                 </Button>
             </Box>
+
+            <Card sx={{ padding: 2, marginY: 2 }}>
+                <Typography variant="body1" gutterBottom>
+                    Public FAQ link
+                </Typography>
+                <TypographyCopyable>{faqLink}</TypographyCopyable>
+
+                <Typography variant="body1" mt={2} gutterBottom>
+                    Private FAQ pages: {privateCategories.length}
+                </Typography>
+                {privateCategories.map((category) => (
+                    <Box key={category.id}>
+                        <Typography variant="subtitle1" gutterBottom>
+                            {category.name}
+                        </Typography>
+                        <TypographyCopyable singleLine={true}>{`${faqLink}${category.privateId}`}</TypographyCopyable>
+                    </Box>
+                ))}
+            </Card>
+
             {categoryData.map((faqCategory: FaqCategory) => (
                 <Card
                     key={faqCategory.id}
