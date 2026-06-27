@@ -12,6 +12,7 @@ import {
     mdiFrequentlyAskedQuestions,
     mdiTwitter,
     mdiTicket,
+    mdiEarth,
 } from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
@@ -80,9 +81,14 @@ export const Menu = [
         name: 'Settings',
     },
     {
+        href: '/public',
+        icon: mdiEarth,
+        name: 'Public',
+    },
+    {
         href: '/api',
         icon: mdiApi,
-        name: 'API & Deploys',
+        name: 'Integration & API',
     },
 ]
 

@@ -19,6 +19,9 @@ const EventSettings = lazyWithRetry(() =>
     import('./settings/EventSettings').then((module) => ({ default: module.EventSettings }))
 )
 const EventAPI = lazyWithRetry(() => import('./api/Api').then((module) => ({ default: module.API })))
+const EventPublic = lazyWithRetry(() =>
+    import('./public/EventPublic').then((module) => ({ default: module.EventPublic }))
+)
 const EventSchedule = lazyWithRetry(() =>
     import('./schedule/EventSchedule').then((module) => ({ default: module.EventSchedule }))
 )
@@ -160,6 +163,11 @@ export const EventApp = ({ eventId }: { eventId?: string }) => {
                 <Route path="/api">
                     <Suspense fallback={<SuspenseLoader />}>
                         <EventAPI event={eventData} />
+                    </Suspense>
+                </Route>
+                <Route path="/public">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventPublic event={eventData} />
                     </Suspense>
                 </Route>
                 <Route path="/social">

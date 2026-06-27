@@ -2,6 +2,7 @@ import { Route, Switch, useRoute } from 'wouter'
 import { NestedRoutes } from '../components/NestedRoutes'
 import { Typography } from '@mui/material'
 import { TranscriptionApp } from './transcription/TranscriptionApp'
+import { IntermissionApp } from './intermission/IntermissionApp'
 import { PublicEventFaqApp } from './faq/PublicEventFaqApp'
 import { PublicEventContainer } from './event/PublicEventContainer'
 import { PublicEventJobAdd } from './jobs/PublicEventJobAdd'
@@ -30,6 +31,9 @@ export const PublicApp = (props: PublicAppProps) => {
                 </Route>
                 <Route path="/transcription">
                     <TranscriptionApp eventId={eventId} />
+                </Route>
+                <Route path="/intermission">
+                    <IntermissionApp eventId={eventId} />
                 </Route>
                 <Route path="/jobs/add">
                     <PublicEventJobAdd eventId={eventId} />

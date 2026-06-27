@@ -1,0 +1,12 @@
+{
+    "version": "0.0.1",
+    "configurations": [
+        {
+            "name": "openplanner-dev",
+            "runtimeExecutable": "npx",
+            "runtimeArgs": ["vite", "--port", "3007", "--strictPort"],
+            "autoPort": false,
+            "port": 3007
+        }
+    ]
+}

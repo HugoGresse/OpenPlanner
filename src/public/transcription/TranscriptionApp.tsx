@@ -1,7 +1,7 @@
 import { useLocalStorage } from '@uidotdev/usehooks'
 import { Box, Button, Checkbox, Container, FormControlLabel, TextField, Typography } from '@mui/material'
 import React, { useState } from 'react'
-import { useTranscription } from '../hooks/useTranscription'
+import { usePasswordProtectedEvent } from '../hooks/usePasswordProtectedEvent'
 import { useTalkSelection } from './useTalkSelection'
 import { DateTime } from 'luxon'
 
@@ -23,7 +23,8 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
         fontSize: 40,
     })
 
-    const [gladiaAPIKey, eventData, isLoading, error] = useTranscription(eventId, pagePassword)
+    const { reply, eventData, isLoading, error } = usePasswordProtectedEvent(eventId, pagePassword)
+    const gladiaAPIKey = reply?.gladiaAPIKey
 
     const [selectedTalk, upcomingTalks, resetSelectedTalk, setSelectedTalk] = useTalkSelection(selectedTrack, eventData)
 

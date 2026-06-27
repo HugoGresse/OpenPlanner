@@ -8,15 +8,15 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v7
             - name: Install bun
-              uses: oven-sh/setup-bun@v1
+              uses: oven-sh/setup-bun@v2
             - run: bun install --frozen-lockfile
             - run: bun run build
             - run: bun run tscheck
 
             - name: Setup Node.js environment
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version-file: ./functions/.nvmrc
 

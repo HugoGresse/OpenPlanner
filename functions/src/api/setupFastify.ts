@@ -12,6 +12,7 @@ import { sponsorsRoutes } from './routes/sponsors/sponsors'
 import { sessionsRoutes } from './routes/sessions/sessions'
 import { faqRoutes } from './routes/faq/faq'
 import { transcriptionRoutes } from './routes/transcription/transcription'
+import { intermissionRoutes } from './routes/intermission/intermission'
 import { filesRoutes } from './routes/file/files'
 import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
 import { speakersRoutes } from './routes/speakers/speakers'
@@ -66,6 +67,7 @@ export const setupFastify = () => {
     fastify.register(speakersRoutes)
     fastify.register(faqRoutes)
     fastify.register(transcriptionRoutes)
+    fastify.register(intermissionRoutes)
     fastify.register(filesRoutes)
     fastify.register(deployRoutes)
     fastify.register(deployFilesRoutes)

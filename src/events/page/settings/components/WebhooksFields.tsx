@@ -53,7 +53,11 @@ export const WebhooksFields = ({ control, isSubmitting, event }: WebhooksFieldsP
                                     size="small"
                                     margin="dense"
                                     fullWidth
-                                    disabled={isSubmitting}
+                                    // NB: do not pass `disabled` here. With useFieldArray + react-hook-form
+                                    // 7.54, a boolean `disabled` on a field-array Controller triggers
+                                    // `_updateDisabledField` before the field is registered and crashes
+                                    // ("Cannot read properties of undefined (reading '_f')").
+                                    InputProps={{ readOnly: isSubmitting }}
                                 />
                                 <TextFieldElement
                                     id={webhook.id}
@@ -65,7 +69,7 @@ export const WebhooksFields = ({ control, isSubmitting, event }: WebhooksFieldsP
                                     margin="dense"
                                     type="password"
                                     fullWidth
-                                    disabled={isSubmitting}
+                                    InputProps={{ readOnly: isSubmitting }}
                                 />
 
                                 <IconButton
