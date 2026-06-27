@@ -56,6 +56,11 @@ const isVideo = (url: string) => /\.(mp4|webm|ogg|ogv|mov|m4v)(\?.*)?$/i.test(ur
 // Default accent (the same hot pink as the shine border) when an event has no category colour.
 const DEFAULT_ACCENT = '#ff4d6d'
 
+// Two text sizes only: a label size (tag row) and a value size (time row). Emphasis comes from
+// weight/colour, not extra sizes, so each row baseline-aligns cleanly.
+const SIZE_LABEL = 'clamp(14px, 1.3vw, 21px)'
+const SIZE_VALUE = 'clamp(22px, 2.2vw, 34px)'
+
 // Pick black or white text for a coloured background so the broadcast tag stays legible
 // whatever category colour the organiser chose.
 const readableOn = (hex: string): string => {
@@ -474,7 +479,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     tagRow: {
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'baseline',
         gap: 'clamp(10px, 1vw, 16px)',
         marginBottom: 'clamp(10px, 1.4vh, 18px)',
     },
@@ -484,7 +489,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         gap: 8,
         padding: '5px 12px',
         borderRadius: 4,
-        fontSize: 'clamp(12px, 1vw, 17px)',
+        fontSize: SIZE_LABEL,
         fontWeight: 800,
         letterSpacing: 1.5,
         textTransform: 'uppercase',
@@ -496,7 +501,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         background: 'currentColor',
     },
     track: {
-        fontSize: 'clamp(13px, 1.1vw, 19px)',
+        fontSize: SIZE_LABEL,
         fontWeight: 600,
         letterSpacing: 1,
         textTransform: 'uppercase',
@@ -507,7 +512,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         alignItems: 'center',
         padding: '5px 12px',
         borderRadius: 4,
-        fontSize: 'clamp(12px, 1vw, 17px)',
+        fontSize: SIZE_LABEL,
         fontWeight: 700,
         letterSpacing: 0.5,
     },
@@ -526,13 +531,13 @@ const styles: { [key: string]: React.CSSProperties } = {
         flexWrap: 'wrap',
     },
     time: {
-        fontSize: 'clamp(22px, 2.4vw, 40px)',
+        fontSize: SIZE_VALUE,
         fontWeight: 800,
         letterSpacing: -0.5,
         fontVariantNumeric: 'tabular-nums',
     },
     relative: {
-        fontSize: 'clamp(15px, 1.4vw, 23px)',
+        fontSize: SIZE_LABEL,
         fontWeight: 600,
         color: 'rgba(255,255,255,0.78)',
     },
@@ -544,7 +549,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         alignSelf: 'center',
     },
     speakers: {
-        fontSize: 'clamp(15px, 1.5vw, 26px)',
+        fontSize: SIZE_VALUE,
         fontWeight: 500,
         color: 'rgba(255,255,255,0.92)',
     },
