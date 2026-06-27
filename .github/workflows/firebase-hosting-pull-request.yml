@@ -26,6 +26,10 @@ jobs:
                   VITE_FIREBASE_OPEN_PLANNER_API_URL: https://api.openplanner.fr
                   VITE_FIREBASE_OPEN_PLANNER_FUNCTION_URL: https://europe-west1-conferencecenterr.cloudfunctions.net/api
                   VITE_CAP_API_ENDPOINT: ${{ vars.VITE_CAP_API_ENDPOINT }}
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v6
+              with:
+                  node-version-file: ./.nvmrc
             - uses: FirebaseExtended/action-hosting-deploy@v0
               with:
                   repoToken: '${{ secrets.GITHUB_TOKEN }}'
