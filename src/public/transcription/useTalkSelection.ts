@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react'
 
 export const useTalkSelection = (
     selectedTrack: string,
-    eventData: PublicJSON | null
+    eventData: PublicJSON | null,
+    // The transcription/caption screen only cares about feedback-enabled talks. The intermission
+    // screen wants the next scheduled session regardless, so it can opt out of this filter.
+    requireShowInFeedback: boolean = true
 ): [
     PublicJSON['sessions'][0] | null,
     PublicJSON['sessions'],
@@ -35,9 +38,7 @@ export const useTalkSelection = (
                     return false
                 }
 
-                const showInFeedback = s.showInFeedback
-
-                if (!showInFeedback) {
+                if (requireShowInFeedback && !s.showInFeedback) {
                     return false
                 }
 
@@ -71,7 +72,7 @@ export const useTalkSelection = (
         if (!selectedTalk) {
             setSelectedTalk(eventForSelectedTrack[0])
         }
-    }, [selectedTrack, eventData])
+    }, [selectedTrack, eventData, requireShowInFeedback])
 
     return [selectedTalk, upComingOnOngoingSessionsForThisTrack, reset, setSelectedTalk]
 }

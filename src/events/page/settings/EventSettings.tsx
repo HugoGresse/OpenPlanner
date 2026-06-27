@@ -303,16 +303,6 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                     <TextFieldElementPrivate
                                         margin="normal"
                                         fullWidth
-                                        id="gladiaAPIKey"
-                                        label="Gladia.io API key or token"
-                                        name="gladiaAPIKey"
-                                        variant="filled"
-                                        helperText="Used for the transcription pages. Don't forget to set the password below or the Gladia.io API Key could be accessed freely"
-                                        disabled={formState.isSubmitting}
-                                    />
-                                    <TextFieldElementPrivate
-                                        margin="normal"
-                                        fullWidth
                                         id="openRouterAPIKey"
                                         label="OpenRouter API key"
                                         name="openRouterAPIKey"
@@ -328,28 +318,6 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                         margin="normal"
                                         models={modelList}
                                     />
-                                    <TextFieldElement
-                                        margin="normal"
-                                        fullWidth
-                                        id="transcriptionPassword"
-                                        label="Password to access transcription"
-                                        name="transcriptionPassword"
-                                        variant="filled"
-                                        disabled={formState.isSubmitting}
-                                    />
-                                    {event.transcriptionPassword && event.transcriptionPassword.length > 0 ? (
-                                        <p>
-                                            <a
-                                                target="_blank"
-                                                href={`${
-                                                    window.location.hostname === 'localhost'
-                                                        ? 'http://localhost:3000'
-                                                        : 'https://openplanner.fr'
-                                                }/public/event/${event.id}/transcription`}>
-                                                Transcription page url
-                                            </a>
-                                        </p>
-                                    ) : null}
                                 </Grid>
                             </Grid>
                             <Grid item xs={12}>

@@ -259,6 +259,8 @@ export interface Event {
     language?: string | null
     repoUrl?: string | null
     repoToken?: string | null
+    intermissionMediaUrl?: string | null
+    intermissionPassword?: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -274,6 +276,10 @@ export type EventSettingForForm = {
     publicEnabled?: boolean
     repoUrl?: string | null
     repoToken?: string | null
+    intermissionMediaUrl?: string | null
+    intermissionPassword?: string | null
+    gladiaAPIKey?: string | null
+    transcriptionPassword?: string | null
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {

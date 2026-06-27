@@ -87,6 +87,8 @@ export interface JsonEvent {
     logoUrl: string | null | undefined
     logoUrl2: string | null | undefined
     backgroundUrl: string | null | undefined
+    intermissionMediaUrl: string | null | undefined
+    language: string | null | undefined
     sponsorCustomFields: SponsorCustomField[]
     speakerCustomFields: SpeakerCustomField[]
 }
