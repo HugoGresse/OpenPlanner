@@ -58,8 +58,9 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
         }
     }
 
-    const readyCount = status?.tracks.filter((t) => t.ready).length ?? 0
-    const total = status?.tracks.length ?? 0
+    const trackList = status?.tracks ?? []
+    const readyCount = trackList.filter((t) => t.ready).length
+    const total = trackList.length
 
     return (
         <Card sx={{ paddingX: 2, mt: 4, mb: 2 }}>
@@ -92,14 +93,14 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                 </LoadingButton>
             </Grid>
 
-            {status && total > 0 && (
+            {total > 0 && (
                 <Box mb={2}>
                     <Typography variant="subtitle2" gutterBottom>
                         Readiness {readyCount}/{total}
-                        {status.goSent ? ' — GO sent 🟢' : ''}
+                        {status?.goSent ? ' — GO sent 🟢' : ''}
                     </Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                        {status.tracks.map((t) => (
+                        {trackList.map((t) => (
                             <Chip
                                 key={t.id}
                                 label={t.name}
