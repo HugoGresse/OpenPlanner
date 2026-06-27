@@ -286,7 +286,7 @@ export const IntermissionScreen = ({
                     style={{
                         ...styles.content,
                         transform: `scale(${layoutScale / 100})`,
-                        transformOrigin: 'bottom left',
+                        transformOrigin: 'bottom center',
                         opacity: cardShown ? 1 : 0,
                         transition: 'opacity 0.6s ease',
                     }}>
@@ -452,11 +452,11 @@ const styles: { [key: string]: React.CSSProperties } = {
         position: 'absolute',
         left: 0,
         right: 0,
-        bottom: 'clamp(28px, 6vh, 72px)',
+        bottom: 'clamp(12px, 2.5vh, 28px)',
         display: 'flex',
-        justifyContent: 'flex-start',
-        paddingLeft: 'clamp(28px, 5vw, 96px)',
-        paddingRight: 'clamp(28px, 5vw, 96px)',
+        justifyContent: 'center',
+        paddingLeft: 'clamp(20px, 4vw, 64px)',
+        paddingRight: 'clamp(20px, 4vw, 64px)',
         pointerEvents: 'none',
     },
     content: {
