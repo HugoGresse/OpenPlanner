@@ -297,15 +297,15 @@ export const IntermissionScreen = ({
                                             {isOngoing && <span className="op-live" style={styles.liveDot} />}
                                             {isOngoing ? t.now : t.upNext}
                                         </span>
+                                        {relativeStart && <span style={styles.relative}>{relativeStart}</span>}
                                         {trackName && <span style={styles.track}>{trackName}</span>}
                                         {categoryName && (
-                                            <span style={styles.categoryWrap}>
-                                                <span
-                                                    style={{
-                                                        ...styles.catSwatch,
-                                                        background: categoryColor || accent,
-                                                    }}
-                                                />
+                                            <span
+                                                style={{
+                                                    ...styles.categoryTag,
+                                                    background: categoryColor || accent,
+                                                    color: readableOn(categoryColor || accent),
+                                                }}>
                                                 {categoryName}
                                             </span>
                                         )}
@@ -315,10 +315,9 @@ export const IntermissionScreen = ({
                                         {startTime && (
                                             <span style={{ ...styles.time, color: accent }}>{startTime}</span>
                                         )}
-                                        {relativeStart && <span style={styles.relative}>{relativeStart}</span>}
                                         {speakerNames && (
                                             <>
-                                                {(startTime || relativeStart) && <span style={styles.sep} />}
+                                                {startTime && <span style={styles.sep} />}
                                                 <span style={styles.speakers}>{speakerNames}</span>
                                             </>
                                         )}
@@ -503,19 +502,14 @@ const styles: { [key: string]: React.CSSProperties } = {
         textTransform: 'uppercase',
         color: 'rgba(255,255,255,0.7)',
     },
-    categoryWrap: {
+    categoryTag: {
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 7,
+        padding: '5px 12px',
+        borderRadius: 4,
         fontSize: 'clamp(12px, 1vw, 17px)',
-        fontWeight: 600,
+        fontWeight: 700,
         letterSpacing: 0.5,
-        color: 'rgba(255,255,255,0.7)',
-    },
-    catSwatch: {
-        width: 12,
-        height: 12,
-        borderRadius: 3,
     },
     title: {
         fontSize: 'clamp(30px, 4vw, 68px)',
