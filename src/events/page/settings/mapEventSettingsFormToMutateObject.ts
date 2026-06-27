@@ -102,5 +102,8 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
             data.transcriptionPassword !== undefined
                 ? data.transcriptionPassword || ''
                 : event.transcriptionPassword ?? '',
+        greenApiInstanceId:
+            data.greenApiInstanceId !== undefined ? data.greenApiInstanceId || null : event.greenApiInstanceId ?? null,
+        greenApiToken: data.greenApiToken !== undefined ? data.greenApiToken || null : event.greenApiToken ?? null,
     }
 }

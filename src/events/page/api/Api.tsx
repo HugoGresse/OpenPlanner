@@ -5,8 +5,9 @@ import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreM
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
 import { FormContainer, useForm } from 'react-hook-form-mui'
-import { Card, Container, Grid, Typography, Box, IconButton, Collapse } from '@mui/material'
+import { Card, Container, Grid, Typography, Box, IconButton, Collapse, Button } from '@mui/material'
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material'
+import { Link } from 'wouter'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { mapEventDevSettingsFormToMutateObject } from '../settings/mapEventSettingsFormToMutateObject'
 import { WebhooksFields } from '../settings/components/WebhooksFields'
@@ -121,6 +122,20 @@ export const API = ({ event }: APIProps) => {
                             buttonText="Generate new API Key"
                         />
                     </Collapse>
+                </Card>
+
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
+                        <Box>
+                            <Typography fontSize="large">WhatsApp (track management)</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Set up GreenAPI and send track-management messages.
+                            </Typography>
+                        </Box>
+                        <Button component={Link} to="/whatsapp" variant="outlined">
+                            Open
+                        </Button>
+                    </Box>
                 </Card>
 
                 <Card sx={{ paddingX: 2, mt: 4 }}>

@@ -261,6 +261,9 @@ export interface Event {
     repoToken?: string | null
     intermissionMediaUrl?: string | null
     intermissionPassword?: string | null
+    // GreenAPI (WhatsApp) credentials, used for track-management messaging
+    greenApiInstanceId?: string | null
+    greenApiToken?: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -280,6 +283,8 @@ export type EventSettingForForm = {
     intermissionPassword?: string | null
     gladiaAPIKey?: string | null
     transcriptionPassword?: string | null
+    greenApiInstanceId?: string | null
+    greenApiToken?: string | null
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {
