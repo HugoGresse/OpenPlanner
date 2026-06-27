@@ -29,6 +29,11 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                 method: 'GET',
             })
             setStatus(s)
+            // Prefill the input from the last stored chat so the operator doesn't retype it (without
+            // clobbering anything they're currently typing).
+            if (s?.chatId) {
+                setChatId((prev) => prev || s.chatId || '')
+            }
         } catch {
             // status polling is best-effort
         }
@@ -118,6 +123,13 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                     GreenAPI webhook URL (set it in your instance settings so button taps are received)
                 </Typography>
                 <TypographyCopyable singleLine={true}>{webhookUrl}</TypographyCopyable>
+
+                <Typography variant="body2" gutterBottom mt={2}>
+                    Webhook Authorization header (set the same value in GreenAPI so taps are trusted)
+                </Typography>
+                <TypographyCopyable singleLine={true}>
+                    {event.apiKey || '— generate an API key first'}
+                </TypographyCopyable>
             </Box>
         </Card>
     )

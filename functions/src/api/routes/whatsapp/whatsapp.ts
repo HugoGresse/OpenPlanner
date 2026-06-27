@@ -132,12 +132,13 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
         }
     )
 
-    // --- GreenAPI incoming webhook (global, no eventId; mapped via instance id). No apiKey: GreenAPI
-    //     calls it. It only acts on a button reply that matches a known event + session. ---
+    // --- GreenAPI incoming webhook (global, no eventId; mapped via instance id). GreenAPI must be
+    //     configured to send an Authorization header equal to the event apiKey (raw or "Bearer <key>")
+    //     so forged button presses are rejected. ---
     fastify.post('/v1/whatsapp/webhook', async (request, reply) => {
         const body = (request.body || {}) as any
+        const authHeader = (request.headers['authorization'] as string | undefined) || ''
 
-        // Always 200 quickly so GreenAPI does not retry; do the work but never surface internals.
         try {
             const instanceId = body?.instanceData?.idInstance
             const selectedButtonId =
@@ -148,8 +149,16 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
 
             if (instanceId && selectedButtonId) {
                 const found = await WhatsappSessionDao.findEventByInstanceId(fastify.firebase, String(instanceId))
-                const creds = found && credsFromEvent(found.event)
-                if (found && creds) {
+                const expected = found?.event.apiKey || ''
+
+                // Reject anything that doesn't carry the event's secret in the Authorization header.
+                if (!found || !expected || (authHeader !== expected && authHeader !== `Bearer ${expected}`)) {
+                    reply.status(401).send({ error: 'Unauthorized webhook' })
+                    return
+                }
+
+                const creds = credsFromEvent(found.event)
+                if (creds) {
                     const session = await WhatsappSessionDao.getSession(fastify.firebase, found.id)
                     if (session) {
                         const updated = await handleTrackReady(session, String(selectedButtonId), sendersFor(creds))
@@ -161,6 +170,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             request.log?.error({ err }, 'whatsapp webhook failed')
         }
 
+        // 200 for non-button events (status updates, plain messages) so GreenAPI does not retry them.
         reply.status(200).send({ received: true })
     })
 
