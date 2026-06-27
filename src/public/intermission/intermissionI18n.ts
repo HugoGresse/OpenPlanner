@@ -58,10 +58,13 @@ const pick = (raw?: string | null): Lang | null => {
 }
 
 /**
- * Resolve the display language: browser preference first (navigator.languages),
- * then the event's configured language, then English.
+ * Resolve the display language: the event's configured language first (the intermission screen runs
+ * on a venue machine, so the event is authoritative), then the browser preference, then English.
  */
 export const resolveLang = (eventLanguage?: string | null): Lang => {
+    const fromEvent = pick(eventLanguage)
+    if (fromEvent) return fromEvent
+
     if (typeof navigator !== 'undefined') {
         const candidates =
             navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language]
@@ -70,7 +73,7 @@ export const resolveLang = (eventLanguage?: string | null): Lang => {
             if (matched) return matched
         }
     }
-    return pick(eventLanguage) || 'EN'
+    return 'EN'
 }
 
 export const intermissionStrings = (eventLanguage?: string | null) => STRINGS[resolveLang(eventLanguage)]

@@ -97,8 +97,10 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
             data.intermissionPassword !== undefined
                 ? data.intermissionPassword || null
                 : event.intermissionPassword ?? null,
-        gladiaAPIKey: data.gladiaAPIKey !== undefined ? data.gladiaAPIKey || '' : event.gladiaAPIKey,
+        gladiaAPIKey: data.gladiaAPIKey !== undefined ? data.gladiaAPIKey || '' : event.gladiaAPIKey ?? '',
         transcriptionPassword:
-            data.transcriptionPassword !== undefined ? data.transcriptionPassword || '' : event.transcriptionPassword,
+            data.transcriptionPassword !== undefined
+                ? data.transcriptionPassword || ''
+                : event.transcriptionPassword ?? '',
     }
 }
