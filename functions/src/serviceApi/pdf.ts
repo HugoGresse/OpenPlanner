@@ -199,6 +199,42 @@ const pdfSettingsSchema = Type.Optional(
     })
 )
 
+// Map a thrown error to an actionable hint so the 400 body tells the caller what actually went wrong
+// (the raw puppeteer message alone is cryptic, e.g. "Could not find Chrome (ver. ...)").
+const pdfErrorHint = (message: string): string | undefined => {
+    if (/Could not find Chrome|Could not find Chromium|\.puppeteer_cache|browsers install/i.test(message)) {
+        return 'Chrome is not installed in the function runtime. The deploy must run the "gcp-build" step (puppeteer browsers install chrome) so the browser is cached in node_modules/.puppeteer_cache.'
+    }
+    if (/Navigation timeout|TimeoutError|waitUntil/i.test(message)) {
+        return 'The page took too long to load. Check the URL is reachable and finishes network activity, or relax the navigation wait.'
+    }
+    if (/net::ERR|ERR_|ECONNREFUSED|ENOTFOUND|getaddrinfo|DNS/i.test(message)) {
+        return 'The URL could not be fetched (network/DNS error). Verify the URL is publicly reachable from the server.'
+    }
+    if (/Target closed|Protocol error|Session closed|browser has disconnected/i.test(message)) {
+        return 'The headless browser crashed mid-render, often due to memory limits. Reduce the page size/number of URLs or increase the function memory.'
+    }
+    return undefined
+}
+
+// Build a richer 400 body: summary, the underlying message, the error class, an actionable hint,
+// and the failing context (which URL/index) when available.
+const pdfErrorResponse = (
+    error: Error,
+    summary: string,
+    context?: { url?: string; index?: number; total?: number }
+): string => {
+    const hint = pdfErrorHint(error.message || '')
+    return JSON.stringify({
+        error: summary,
+        details: error.message,
+        name: error.name,
+        ...(hint ? { hint } : {}),
+        ...(context?.url ? { failedUrl: context.url } : {}),
+        ...(context && context.index !== undefined ? { failedAt: `${context.index + 1}/${context.total}` } : {}),
+    })
+}
+
 export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any) => {
     // Convert URLs to PDF
     fastify.post<{ Body: { urls: string[]; settings?: PDFSettings } }>(
@@ -230,12 +266,16 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
             }
 
             let browser: Browser | null = null
+            let currentIndex = 0
+            let currentUrl: string | undefined
             try {
                 const mergedSettings = mergeSettings(settings)
                 browser = await launchBrowser(mergedSettings.language)
                 const merger = new PDFMerger()
 
-                for (const url of urls) {
+                for (const [index, url] of urls.entries()) {
+                    currentIndex = index
+                    currentUrl = url
                     const page = await setupPage(browser, mergedSettings)
                     await page.goto(url, { waitUntil: 'networkidle0' })
                     const pdfBuffer = await generatePdfFromPage(page, mergedSettings)
@@ -251,9 +291,11 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
             } catch (err) {
                 const error = err as Error
                 reply.status(400).send(
-                    JSON.stringify({
-                        error: 'Failed to convert URLs to PDF',
-                        details: error.message,
+                    pdfErrorResponse(error, 'Failed to convert URLs to PDF', {
+                        // browser launch fails before any URL is processed; only attach URL context if we got there
+                        url: browser ? currentUrl : undefined,
+                        index: browser ? currentIndex : undefined,
+                        total: urls.length,
                     })
                 )
             } finally {
@@ -301,7 +343,11 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
 
                 for (const html of htmlContents) {
                     const page = await setupPage(browser, mergedSettings)
-                    await page.setContent(html, { waitUntil: 'networkidle0' })
+                    // puppeteer 25 dropped 'networkidle0' from setContent's waitUntil; wait for the
+                    // load event, then for the network to settle to keep the prior behaviour (remote
+                    // images/fonts referenced in the HTML finish loading before we render the PDF).
+                    await page.setContent(html, { waitUntil: 'load' })
+                    await page.waitForNetworkIdle()
                     const pdfBuffer = await generatePdfFromPage(page, mergedSettings)
                     await merger.add(pdfBuffer as Uint8Array)
                     await page.close()
@@ -314,12 +360,7 @@ export const pdfRoute = (fastify: FastifyInstance, options: any, done: () => any
                 reply.send(mergedPdf)
             } catch (err) {
                 const error = err as Error
-                reply.status(400).send(
-                    JSON.stringify({
-                        error: 'Failed to convert HTML to PDF',
-                        details: error.message,
-                    })
-                )
+                reply.status(400).send(pdfErrorResponse(error, 'Failed to convert HTML to PDF'))
             } finally {
                 if (browser) {
                     await browser.close()
