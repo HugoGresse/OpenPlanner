@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, Card, Chip, Grid, Stack, TextField, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
+import { doc, updateDoc } from 'firebase/firestore'
 import { Event } from '../../../types'
 import { fetchOpenPlannerApi } from '../../../services/hooks/useOpenPlannerApi'
 import { useNotification } from '../../../hooks/notificationHook'
 import { TypographyCopyable } from '../../../components/TypographyCopyable'
+import { collections } from '../../../services/firebase'
 import { API_URL } from '../../../env'
 
 type TrackStatus = { id: string; name: string; ready: boolean }
@@ -19,9 +21,25 @@ const webhookUrl = `${String(API_URL ?? '').replace(/\/+$/, '')}/v1/whatsapp/web
 
 export const TrackManagementSection = ({ event }: { event: Event }) => {
     const { createNotification } = useNotification()
-    const [chatId, setChatId] = useState('')
+    // Seed from the saved event setting so the operator doesn't retype it.
+    const [chatId, setChatId] = useState(event.whatsappSharedChatId || '')
     const [starting, setStarting] = useState(false)
+    const [savingChat, setSavingChat] = useState(false)
     const [status, setStatus] = useState<SessionStatus | null>(null)
+
+    const saveSharedChat = async () => {
+        setSavingChat(true)
+        try {
+            await updateDoc(doc(collections.events, event.id), { whatsappSharedChatId: chatId.trim() || null })
+            createNotification('Shared chat saved', { type: 'success' })
+        } catch (error) {
+            createNotification('Failed to save chat: ' + (error instanceof Error ? error.message : 'Unknown error'), {
+                type: 'error',
+            })
+        } finally {
+            setSavingChat(false)
+        }
+    }
 
     const refresh = useCallback(async () => {
         try {
@@ -74,6 +92,8 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                 method: 'POST',
                 body: { chatId },
             })
+            // Remember the chat for next time.
+            await updateDoc(doc(collections.events, event.id), { whatsappSharedChatId: chatId.trim() || null })
             createNotification('Track buttons sent', { type: 'success' })
             await refresh()
         } catch (error) {
@@ -109,16 +129,18 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                 placeholder="120363xxxxxxxxxx@g.us"
                 helperText="A group chatId ends with @g.us, a single contact with @c.us. A raw phone number (international format) is sent to @c.us automatically."
             />
-            <Grid item xs={12}>
+            <Stack direction="row" spacing={1} sx={{ mt: 1, mb: 2 }}>
+                <LoadingButton onClick={saveSharedChat} disabled={savingChat} loading={savingChat} variant="outlined">
+                    Save chat
+                </LoadingButton>
                 <LoadingButton
                     onClick={start}
                     disabled={starting || chatId.trim().length === 0}
                     loading={starting}
-                    variant="contained"
-                    sx={{ mt: 1, mb: 2 }}>
+                    variant="contained">
                     Send track buttons
                 </LoadingButton>
-            </Grid>
+            </Stack>
 
             {total > 0 && (
                 <Box mb={2}>
