@@ -14,7 +14,8 @@ type SessionStatus = {
     goSent: boolean
 }
 
-const webhookUrl = `${API_URL}v1/whatsapp/webhook`
+// API_URL may or may not carry a trailing slash; normalise so the URL is always well-formed.
+const webhookUrl = `${String(API_URL ?? '').replace(/\/+$/, '')}/v1/whatsapp/webhook`
 
 export const TrackManagementSection = ({ event }: { event: Event }) => {
     const { createNotification } = useNotification()
@@ -76,11 +77,11 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
             <TextField
                 margin="normal"
                 fullWidth
-                label="Shared chat (phone number or group chatId)"
+                label="Shared chat (chatId ending with @c.us or @g.us)"
                 value={chatId}
                 onChange={(e) => setChatId(e.target.value)}
-                placeholder="+33612345678 or 1203630xxxxx@g.us"
-                helperText="Group of track managers, or a single ops number. International format for a phone."
+                placeholder="120363xxxxxxxxxx@g.us"
+                helperText="A group chatId ends with @g.us, a single contact with @c.us. A raw phone number (international format) is sent to @c.us automatically."
             />
             <Grid item xs={12}>
                 <LoadingButton
