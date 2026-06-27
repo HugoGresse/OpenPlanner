@@ -7,11 +7,6 @@ export type GreenApiCreds = {
     token: string
 }
 
-export type InteractiveButton = {
-    buttonId: string
-    buttonText: string
-}
-
 const call = async (creds: GreenApiCreds, method: string, payload: unknown): Promise<any> => {
     const url = `${GREEN_API_BASE}/waInstance${creds.instanceId}/${method}/${creds.token}`
     const res = await fetch(url, {
@@ -33,9 +28,32 @@ export const toChatId = (raw: string): string => {
     return `${raw.replace(/[^0-9]/g, '')}@c.us`
 }
 
-// Configure the instance to call our webhook for incoming messages. GreenAPI sends webhookUrlToken
-// back as the "Authorization: Bearer <token>" header. NB: changing settings reboots the instance
-// (it can be unavailable for a few minutes afterwards).
+export const sendMessage = async (creds: GreenApiCreds, chatId: string, message: string): Promise<string> => {
+    const data = await call(creds, 'sendMessage', { chatId, message })
+    return data.idMessage
+}
+
+// https://green-api.com/en/docs/api/sending/SendPoll/ — WhatsApp polls allow up to 12 options.
+// Unlike interactive buttons, poll votes DO produce incoming (pollUpdateMessage) webhooks.
+export const sendPoll = async (
+    creds: GreenApiCreds,
+    chatId: string,
+    question: string,
+    options: string[],
+    multipleAnswers = true
+): Promise<string> => {
+    const data = await call(creds, 'sendPoll', {
+        chatId,
+        message: question,
+        options: options.slice(0, 12).map((name) => ({ optionName: name })),
+        multipleAnswers,
+    })
+    return data.idMessage
+}
+
+// Configure the instance to call our webhook for incoming messages (poll votes included). GreenAPI
+// sends webhookUrlToken back as the "Authorization: Bearer <token>" header. NB: changing settings
+// reboots the instance (it can be unavailable for a few minutes afterwards).
 export const setSettings = async (
     creds: GreenApiCreds,
     settings: { webhookUrl: string; webhookUrlToken: string }
@@ -44,37 +62,6 @@ export const setSettings = async (
         webhookUrl: settings.webhookUrl,
         webhookUrlToken: settings.webhookUrlToken,
         incomingWebhook: 'yes',
+        pollMessageWebhook: 'yes',
     })
-}
-
-export const sendMessage = async (creds: GreenApiCreds, chatId: string, message: string): Promise<string> => {
-    const data = await call(creds, 'sendMessage', { chatId, message })
-    return data.idMessage
-}
-
-// https://green-api.com/en/docs/api/sending/SendInteractiveButtonsReply/ — max 3 buttons per message.
-export const sendInteractiveButtons = async (
-    creds: GreenApiCreds,
-    chatId: string,
-    body: string,
-    buttons: InteractiveButton[],
-    header?: string
-): Promise<string> => {
-    const data = await call(creds, 'sendInteractiveButtonsReply', {
-        chatId,
-        ...(header ? { header } : {}),
-        body,
-        buttons: buttons.slice(0, 3).map((b) => ({ buttonId: b.buttonId, buttonText: b.buttonText })),
-    })
-    return data.idMessage
-}
-
-// https://green-api.com/en/docs/api/sending/EditMessage/ — replaces the message text (buttons drop off).
-export const editMessage = async (
-    creds: GreenApiCreds,
-    chatId: string,
-    idMessage: string,
-    message: string
-): Promise<void> => {
-    await call(creds, 'editMessage', { chatId, idMessage, message })
 }

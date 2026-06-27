@@ -1,70 +1,44 @@
-import { InteractiveButton } from './greenApi'
-import {
-    allReady,
-    BUTTONS_PER_MESSAGE,
-    buttonsForTracks,
-    ButtonMessage,
-    chunk,
-    goMessage,
-    pendingBody,
-    recapBody,
-    TrackSession,
-    TrackState,
-} from './trackSession'
+import { allReady, chunk, goMessage, OPTIONS_PER_POLL, POLL_QUESTION, TrackSession, TrackState } from './trackSession'
 
 // Side effects are injected so the flow is unit-testable without Firebase or the network.
 export type WhatsappSenders = {
-    sendInteractiveButtons: (chatId: string, body: string, buttons: InteractiveButton[]) => Promise<string>
-    editMessage: (chatId: string, idMessage: string, message: string) => Promise<void>
+    sendPoll: (chatId: string, question: string, options: string[]) => Promise<string>
     sendMessage: (chatId: string, message: string) => Promise<string>
 }
 
-// Start a track-management session: send one interactive message per group of <=3 tracks.
+// Start a track-management session: send one poll per group of up to 12 tracks.
 export const startTrackSession = async (
     tracks: { id: string; name: string }[],
     chatId: string,
     senders: WhatsappSenders
 ): Promise<TrackSession> => {
     const trackStates: TrackState[] = tracks.map((t) => ({ id: t.id, name: t.name, ready: false }))
-    const messages: ButtonMessage[] = []
+    const pollMessageIds: string[] = []
 
-    for (const group of chunk(trackStates, BUTTONS_PER_MESSAGE)) {
-        const idMessage = await senders.sendInteractiveButtons(chatId, pendingBody(group), buttonsForTracks(group))
-        messages.push({ idMessage, trackIds: group.map((t) => t.id) })
+    for (const group of chunk(trackStates, OPTIONS_PER_POLL)) {
+        const idMessage = await senders.sendPoll(
+            chatId,
+            POLL_QUESTION,
+            group.map((t) => t.name)
+        )
+        pollMessageIds.push(idMessage)
     }
 
-    return { chatId, tracks: trackStates, messages, goSent: false }
+    return { chatId, tracks: trackStates, pollMessageIds, goSent: false }
 }
 
-// Handle one track confirming ready: mark it, update its (now button-less) message, re-offer buttons for
-// the tracks still pending in that group, and send GO once every track is ready.
-export const handleTrackReady = async (
+// Apply a poll vote update: tracks whose option got at least one vote become ready (sticky — a track
+// stays ready even if a voter later removes their vote). Sends GO once every track is ready.
+export const applyPollVotes = async (
     session: TrackSession,
-    pressedTrackId: string,
+    votedOptionNames: string[],
     senders: WhatsappSenders
 ): Promise<TrackSession> => {
-    const track = session.tracks.find((t) => t.id === pressedTrackId)
-    if (!track || track.ready) {
-        return session
-    }
-    track.ready = true
+    const voted = new Set(votedOptionNames)
 
-    const byId = (id: string) => session.tracks.find((t) => t.id === id)!
-    const message = session.messages.find((m) => m.trackIds.includes(pressedTrackId))
-
-    if (message) {
-        const groupTracks = message.trackIds.map(byId)
-        await senders.editMessage(session.chatId, message.idMessage, recapBody(groupTracks))
-        session.messages = session.messages.filter((m) => m !== message)
-
-        const stillPending = groupTracks.filter((t) => !t.ready)
-        if (stillPending.length > 0) {
-            const idMessage = await senders.sendInteractiveButtons(
-                session.chatId,
-                pendingBody(stillPending),
-                buttonsForTracks(stillPending)
-            )
-            session.messages.push({ idMessage, trackIds: stillPending.map((t) => t.id) })
+    for (const track of session.tracks) {
+        if (!track.ready && voted.has(track.name)) {
+            track.ready = true
         }
     }
 

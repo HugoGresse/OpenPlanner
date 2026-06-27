@@ -17,9 +17,11 @@ type SessionStatus = {
 }
 
 // API_URL may or may not carry a trailing slash; normalise so the URL is always well-formed.
-const webhookUrl = `${String(API_URL ?? '').replace(/\/+$/, '')}/v1/whatsapp/webhook`
+const apiBase = String(API_URL ?? '').replace(/\/+$/, '')
 
 export const TrackManagementSection = ({ event }: { event: Event }) => {
+    // Event-scoped webhook so GreenAPI posts straight to this event's endpoint.
+    const webhookUrl = `${apiBase}/v1/${event.id}/whatsapp/webhook`
     const { createNotification } = useNotification()
     // Seed from the saved event setting so the operator doesn't retype it.
     const [chatId, setChatId] = useState(event.whatsappSharedChatId || '')
@@ -115,9 +117,8 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                 Track management
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
-                Send each track a "ready?" button (max 3 per WhatsApp message, split across messages). When a track
-                manager taps their button it is marked ready; once every track is ready, a GO message is sent to the
-                same chat.
+                Send a WhatsApp poll listing the tracks (up to 12 options per poll). When a track manager taps their
+                track in the poll it is marked ready; once every track is ready, a GO message is sent to the same chat.
             </Typography>
 
             <TextField
@@ -138,7 +139,7 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                     disabled={starting || chatId.trim().length === 0}
                     loading={starting}
                     variant="contained">
-                    Send track buttons
+                    Send track poll
                 </LoadingButton>
             </Stack>
 
@@ -163,7 +164,7 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
 
             <Box mt={2}>
                 <Typography variant="subtitle2" gutterBottom>
-                    Webhook (required to receive button taps)
+                    Webhook (required to receive poll votes)
                 </Typography>
                 <Typography variant="body2" color="text.secondary" mb={1}>
                     Click to point your GreenAPI instance at this app automatically (sets the URL, the auth token and
