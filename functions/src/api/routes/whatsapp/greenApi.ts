@@ -33,6 +33,20 @@ export const toChatId = (raw: string): string => {
     return `${raw.replace(/[^0-9]/g, '')}@c.us`
 }
 
+// Configure the instance to call our webhook for incoming messages. GreenAPI sends webhookUrlToken
+// back as the "Authorization: Bearer <token>" header. NB: changing settings reboots the instance
+// (it can be unavailable for a few minutes afterwards).
+export const setSettings = async (
+    creds: GreenApiCreds,
+    settings: { webhookUrl: string; webhookUrlToken: string }
+): Promise<void> => {
+    await call(creds, 'setSettings', {
+        webhookUrl: settings.webhookUrl,
+        webhookUrlToken: settings.webhookUrlToken,
+        incomingWebhook: 'yes',
+    })
+}
+
 export const sendMessage = async (creds: GreenApiCreds, chatId: string, message: string): Promise<string> => {
     const data = await call(creds, 'sendMessage', { chatId, message })
     return data.idMessage

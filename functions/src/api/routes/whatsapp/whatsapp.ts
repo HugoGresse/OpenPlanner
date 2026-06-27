@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import Type, { Static } from 'typebox'
 import { EventDao } from '../../dao/eventDao'
-import { GreenApiCreds, editMessage, sendInteractiveButtons, sendMessage, toChatId } from './greenApi'
+import { GreenApiCreds, editMessage, sendInteractiveButtons, sendMessage, setSettings, toChatId } from './greenApi'
 import { WhatsappSenders, handleTrackReady, startTrackSession } from './trackFlow'
 import { WhatsappSessionDao } from './whatsappSessionDao'
 
@@ -113,6 +113,45 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
         }
     )
 
+    // --- Configure the GreenAPI instance to call our webhook (URL + auth token + incoming on) ---
+    fastify.post<{ Params: { eventId: string }; Body: { webhookUrl: string } }>(
+        '/v1/:eventId/whatsapp/configure-webhook',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'Point the GreenAPI instance at our webhook so button taps are received (reboots instance).',
+                params: Type.Object({ eventId: Type.String() }),
+                body: Type.Object({ webhookUrl: Type.String() }),
+                response: { 200: Type.Object({ configured: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            const event = await EventDao.getEvent(fastify.firebase, request.params.eventId)
+            const creds = credsFromEvent(event)
+            if (!creds) {
+                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                return
+            }
+            if (!event.apiKey) {
+                reply
+                    .status(400)
+                    .send(JSON.stringify({ error: 'Generate an event API key first (used as the webhook token).' }))
+                return
+            }
+            try {
+                // webhookUrlToken = apiKey, so GreenAPI sends "Authorization: Bearer <apiKey>" we verify below.
+                await setSettings(creds, { webhookUrl: request.body.webhookUrl, webhookUrlToken: event.apiKey })
+                reply.status(200).send({ configured: true })
+            } catch (err) {
+                reply
+                    .status(400)
+                    .send(JSON.stringify({ error: 'Failed to configure webhook', details: (err as Error).message }))
+            }
+        }
+    )
+
     // --- Status: current readiness, polled by the admin page ---
     fastify.get<{ Params: { eventId: string } }>(
         '/v1/:eventId/whatsapp/track-management/status',
@@ -146,6 +185,19 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 body?.messageData?.interactiveButtonsReply?.selectedButtonId ||
                 body?.messageData?.buttonsResponseMessage?.selectedButtonId ||
                 body?.messageData?.templateButtonReplyMessage?.selectedId
+
+            // Log every call so a "press did nothing" can be traced: did GreenAPI call us, with what
+            // type, did we extract a button id, was the auth header present.
+            request.log?.info(
+                {
+                    typeWebhook: body?.typeWebhook,
+                    typeMessage: body?.messageData?.typeMessage,
+                    instanceId,
+                    selectedButtonId,
+                    hasAuth: Boolean(authHeader),
+                },
+                'whatsapp webhook received'
+            )
 
             if (instanceId && selectedButtonId) {
                 const found = await WhatsappSessionDao.findEventByInstanceId(fastify.firebase, String(instanceId))

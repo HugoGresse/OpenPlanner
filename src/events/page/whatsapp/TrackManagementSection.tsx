@@ -46,6 +46,27 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
         return () => clearInterval(id)
     }, [refresh])
 
+    const [configuring, setConfiguring] = useState(false)
+    const configureWebhook = async () => {
+        setConfiguring(true)
+        try {
+            await fetchOpenPlannerApi(event, 'whatsapp/configure-webhook', {
+                method: 'POST',
+                body: { webhookUrl },
+            })
+            createNotification('GreenAPI webhook configured (the instance may reboot for a few minutes)', {
+                type: 'success',
+            })
+        } catch (error) {
+            createNotification(
+                'Failed to configure webhook: ' + (error instanceof Error ? error.message : 'Unknown error'),
+                { type: 'error' }
+            )
+        } finally {
+            setConfiguring(false)
+        }
+    }
+
     const start = async () => {
         setStarting(true)
         try {
@@ -119,13 +140,28 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
             )}
 
             <Box mt={2}>
+                <Typography variant="subtitle2" gutterBottom>
+                    Webhook (required to receive button taps)
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mb={1}>
+                    Click to point your GreenAPI instance at this app automatically (sets the URL, the auth token and
+                    enables incoming notifications). The instance may reboot for a few minutes afterwards.
+                </Typography>
+                <LoadingButton
+                    onClick={configureWebhook}
+                    disabled={configuring || !event.apiKey}
+                    loading={configuring}
+                    variant="outlined"
+                    sx={{ mb: 2 }}>
+                    Configure GreenAPI webhook
+                </LoadingButton>
+
                 <Typography variant="body2" gutterBottom>
-                    GreenAPI webhook URL (set it in your instance settings so button taps are received)
+                    Or set these manually in GreenAPI — webhook URL:
                 </Typography>
                 <TypographyCopyable singleLine={true}>{webhookUrl}</TypographyCopyable>
-
                 <Typography variant="body2" gutterBottom mt={2}>
-                    Webhook Authorization header (set the same value in GreenAPI so taps are trusted)
+                    and Authorization token (webhookUrlToken):
                 </Typography>
                 <TypographyCopyable singleLine={true}>
                     {event.apiKey || '— generate an API key first'}
