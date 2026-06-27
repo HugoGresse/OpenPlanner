@@ -31,6 +31,14 @@ const StartBody = Type.Object({
 })
 type StartBodyType = Static<typeof StartBody>
 
+// Explicit reply schema: a bare Type.Any() makes fast-json-stringify drop every field (returns {}).
+const StatusReply = Type.Object({
+    chatId: Type.Union([Type.String(), Type.Null()]),
+    tracks: Type.Array(Type.Object({ id: Type.String(), name: Type.String(), ready: Type.Boolean() })),
+    messages: Type.Array(Type.Object({ idMessage: Type.String(), trackIds: Type.Array(Type.String()) })),
+    goSent: Type.Boolean(),
+})
+
 export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
     // --- Test send: a single plain message to validate the GreenAPI setup ---
     fastify.post<{ Params: { eventId: string }; Body: SendBodyType }>(
@@ -160,7 +168,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 tags: ['whatsapp'],
                 summary: 'Current track-management readiness for the event.',
                 params: Type.Object({ eventId: Type.String() }),
-                response: { 200: Type.Any(), 401: Type.String() },
+                response: { 200: StatusReply, 401: Type.String() },
                 security: [{ apiKey: [] }],
             },
             preHandler: fastify.auth([fastify.verifyApiKey]),
