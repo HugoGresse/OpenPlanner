@@ -31,7 +31,7 @@
         "luxon": "^3.4.4",
         "nodemailer": "^8.0.8",
         "pdf-lib": "^1.17.1",
-        "puppeteer": "^24.10.1",
+        "puppeteer": "^25.2.1",
         "ts-custom-error": "^3.3.1",
         "typebox": "^1.1.6",
         "uuid": "^9.0.1"
