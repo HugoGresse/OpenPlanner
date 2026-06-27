@@ -1,31 +1,39 @@
 import { FastifyInstance } from 'fastify'
 import Type, { Static } from 'typebox'
 import { EventDao } from '../../dao/eventDao'
+import { GreenApiCreds, editMessage, sendInteractiveButtons, sendMessage, toChatId } from './greenApi'
+import { WhatsappSenders, handleTrackReady, startTrackSession } from './trackFlow'
+import { WhatsappSessionDao } from './whatsappSessionDao'
 
-// GreenAPI universal gateway. Each instance also has its own host (e.g. https://7105.api.greenapi.com),
-// but the shared gateway routes to the right instance from the id, so no per-event URL is needed.
-const GREEN_API_BASE = 'https://api.green-api.com'
-
-// A WhatsApp chatId for a person is the phone number (digits only, country code included) + "@c.us".
-const toChatId = (raw: string): string => {
-    const digits = raw.replace(/[^0-9]/g, '')
-    return `${digits}@c.us`
+const credsFromEvent = (event: {
+    greenApiInstanceId?: string | null
+    greenApiToken?: string | null
+}): GreenApiCreds | null => {
+    if (!event.greenApiInstanceId || !event.greenApiToken) return null
+    return { instanceId: event.greenApiInstanceId, token: event.greenApiToken }
 }
 
+// Bind the injected senders to a chat + creds so the flow code stays free of GreenAPI details.
+const sendersFor = (creds: GreenApiCreds): WhatsappSenders => ({
+    sendInteractiveButtons: (chatId, body, buttons) => sendInteractiveButtons(creds, chatId, body, buttons),
+    editMessage: (chatId, idMessage, message) => editMessage(creds, chatId, idMessage, message),
+    sendMessage: (chatId, message) => sendMessage(creds, chatId, message),
+})
+
 const SendBody = Type.Object({
-    to: Type.String({ description: 'Recipient phone number, international format (digits, country code included)' }),
+    to: Type.String(),
     message: Type.String({ minLength: 1 }),
 })
 type SendBodyType = Static<typeof SendBody>
 
-const SendReply = Type.Object({
-    sent: Type.Boolean(),
-    idMessage: Type.Optional(Type.String()),
+const StartBody = Type.Object({
+    chatId: Type.String({ description: 'Shared chat that receives the track buttons (phone or group chatId)' }),
 })
-type SendReplyType = Static<typeof SendReply>
+type StartBodyType = Static<typeof StartBody>
 
 export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
-    fastify.post<{ Params: { eventId: string }; Body: SendBodyType; Reply: SendReplyType | string }>(
+    // --- Test send: a single plain message to validate the GreenAPI setup ---
+    fastify.post<{ Params: { eventId: string }; Body: SendBodyType }>(
         '/v1/:eventId/whatsapp/send-test',
         {
             schema: {
@@ -34,7 +42,46 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 params: Type.Object({ eventId: Type.String() }),
                 body: SendBody,
                 response: {
-                    200: SendReply,
+                    200: Type.Object({ sent: Type.Boolean(), idMessage: Type.Optional(Type.String()) }),
+                    400: Type.String(),
+                    401: Type.String(),
+                },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            const event = await EventDao.getEvent(fastify.firebase, request.params.eventId)
+            const creds = credsFromEvent(event)
+            if (!creds) {
+                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                return
+            }
+            const { to, message } = request.body
+            if (!to || to.replace(/[^0-9]/g, '').length < 6) {
+                reply.status(400).send(JSON.stringify({ error: 'A valid recipient phone number is required.' }))
+                return
+            }
+            try {
+                const idMessage = await sendMessage(creds, toChatId(to), message)
+                reply.status(200).send({ sent: true, idMessage })
+            } catch (err) {
+                reply.status(400).send(JSON.stringify({ error: 'Failed to send', details: (err as Error).message }))
+            }
+        }
+    )
+
+    // --- Start track management: send chunked interactive button messages to the shared chat ---
+    fastify.post<{ Params: { eventId: string }; Body: StartBodyType }>(
+        '/v1/:eventId/whatsapp/track-management/start',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'Send the per-track "ready?" interactive buttons (max 3 per message) to the shared chat.',
+                params: Type.Object({ eventId: Type.String() }),
+                body: StartBody,
+                response: {
+                    200: Type.Object({ started: Type.Boolean(), trackCount: Type.Number() }),
                     400: Type.String(),
                     401: Type.String(),
                 },
@@ -44,55 +91,78 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
         },
         async (request, reply) => {
             const { eventId } = request.params
-            const { to, message } = request.body
-
             const event = await EventDao.getEvent(fastify.firebase, eventId)
-
-            const instanceId = event.greenApiInstanceId
-            const token = event.greenApiToken
-            if (!instanceId || !token) {
-                reply.status(400).send(
-                    JSON.stringify({
-                        error: 'GreenAPI is not configured for this event. Set the instance id and token first.',
-                    })
-                )
+            const creds = credsFromEvent(event)
+            if (!creds) {
+                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
                 return
             }
-
-            if (!to || to.replace(/[^0-9]/g, '').length < 6) {
-                reply.status(400).send(JSON.stringify({ error: 'A valid recipient phone number is required.' }))
+            const tracks = event.tracks || []
+            if (tracks.length === 0) {
+                reply.status(400).send(JSON.stringify({ error: 'This event has no tracks.' }))
                 return
             }
-
-            const url = `${GREEN_API_BASE}/waInstance${instanceId}/sendMessage/${token}`
-
+            const chatId = toChatId(request.body.chatId)
             try {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId: toChatId(to), message }),
-                })
-
-                const text = await res.text()
-                if (!res.ok) {
-                    reply.status(400).send(
-                        JSON.stringify({
-                            error: 'GreenAPI rejected the request',
-                            status: res.status,
-                            details: text,
-                        })
-                    )
-                    return
-                }
-
-                const data = text ? (JSON.parse(text) as { idMessage?: string }) : {}
-                reply.status(200).send({ sent: true, idMessage: data.idMessage })
+                const session = await startTrackSession(tracks, chatId, sendersFor(creds))
+                await WhatsappSessionDao.saveSession(fastify.firebase, eventId, session)
+                reply.status(200).send({ started: true, trackCount: tracks.length })
             } catch (err) {
-                const error = err as Error
-                reply.status(400).send(JSON.stringify({ error: 'Failed to reach GreenAPI', details: error.message }))
+                reply.status(400).send(JSON.stringify({ error: 'Failed to start', details: (err as Error).message }))
             }
         }
     )
+
+    // --- Status: current readiness, polled by the admin page ---
+    fastify.get<{ Params: { eventId: string } }>(
+        '/v1/:eventId/whatsapp/track-management/status',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'Current track-management readiness for the event.',
+                params: Type.Object({ eventId: Type.String() }),
+                response: { 200: Type.Any(), 401: Type.String() },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            const session = await WhatsappSessionDao.getSession(fastify.firebase, request.params.eventId)
+            reply.status(200).send(session || { chatId: null, tracks: [], messages: [], goSent: false })
+        }
+    )
+
+    // --- GreenAPI incoming webhook (global, no eventId; mapped via instance id). No apiKey: GreenAPI
+    //     calls it. It only acts on a button reply that matches a known event + session. ---
+    fastify.post('/v1/whatsapp/webhook', async (request, reply) => {
+        const body = (request.body || {}) as any
+
+        // Always 200 quickly so GreenAPI does not retry; do the work but never surface internals.
+        try {
+            const instanceId = body?.instanceData?.idInstance
+            const selectedButtonId =
+                body?.messageData?.interactiveButtonsReply?.buttonId ||
+                body?.messageData?.interactiveButtonsReply?.selectedButtonId ||
+                body?.messageData?.buttonsResponseMessage?.selectedButtonId ||
+                body?.messageData?.templateButtonReplyMessage?.selectedId
+
+            if (instanceId && selectedButtonId) {
+                const found = await WhatsappSessionDao.findEventByInstanceId(fastify.firebase, String(instanceId))
+                const creds = found && credsFromEvent(found.event)
+                if (found && creds) {
+                    const session = await WhatsappSessionDao.getSession(fastify.firebase, found.id)
+                    if (session) {
+                        const updated = await handleTrackReady(session, String(selectedButtonId), sendersFor(creds))
+                        await WhatsappSessionDao.saveSession(fastify.firebase, found.id, updated)
+                    }
+                }
+            }
+        } catch (err) {
+            request.log?.error({ err }, 'whatsapp webhook failed')
+        }
+
+        reply.status(200).send({ received: true })
+    })
 
     done()
 }

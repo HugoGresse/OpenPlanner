@@ -13,6 +13,7 @@ import { TextFieldElementPrivate } from '../../../components/form/TextFieldEleme
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { fetchOpenPlannerApi } from '../../../services/hooks/useOpenPlannerApi'
 import { useNotification } from '../../../hooks/notificationHook'
+import { TrackManagementSection } from './TrackManagementSection'
 
 const schema = yup
     .object({
@@ -125,6 +126,8 @@ export const EventWhatsApp = ({ event }: EventWhatsAppProps) => {
                     <SaveShortcut />
                 </FormContainer>
             </Card>
+
+            {isConfigured && <TrackManagementSection event={event} />}
 
             <Card sx={{ paddingX: 2, mt: 4, mb: 2 }}>
                 <Typography fontSize="large" sx={{ mt: 2, mb: 1 }}>
