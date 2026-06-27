@@ -9,9 +9,9 @@ jobs:
         runs-on: ubuntu-latest
         environment: 'GitHub Action PR'
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v7
             - name: Install bun
-              uses: oven-sh/setup-bun@v1
+              uses: oven-sh/setup-bun@v2
             - name: Copy .firebaserc.example to .firebaserc
               run: cp .firebaserc.example .firebaserc
             - run: bun install --frozen-lockfile && bun run build
@@ -25,7 +25,7 @@ jobs:
                   VITE_OPEN_SPONSORS_URL: ${{ vars.VITE_OPEN_SPONSORS_URL }}
                   VITE_FIREBASE_OPEN_PLANNER_API_URL: https://api.openplanner.fr
                   VITE_FIREBASE_OPEN_PLANNER_FUNCTION_URL: https://europe-west1-conferencecenterr.cloudfunctions.net/api
-                  VITE_CAP_API_ENDPOINT:  ${{ vars.VITE_CAP_API_ENDPOINT }}
+                  VITE_CAP_API_ENDPOINT: ${{ vars.VITE_CAP_API_ENDPOINT }}
             - uses: FirebaseExtended/action-hosting-deploy@v0
               with:
                   repoToken: '${{ secrets.GITHUB_TOKEN }}'
