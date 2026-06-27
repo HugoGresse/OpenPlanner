@@ -50,7 +50,7 @@ export const sendInteractiveButtons = async (
         chatId,
         ...(header ? { header } : {}),
         body,
-        buttons: buttons.slice(0, 3).map((b) => ({ type: 'reply', buttonId: b.buttonId, buttonText: b.buttonText })),
+        buttons: buttons.slice(0, 3).map((b) => ({ buttonId: b.buttonId, buttonText: b.buttonText })),
     })
     return data.idMessage
 }
