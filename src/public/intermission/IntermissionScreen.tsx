@@ -32,8 +32,10 @@ const shineCss = `
 @keyframes op-shine-spin { to { --op-shine-ang: 360deg; } }
 .op-content-inner { animation: op-inner-up 0.45s ease both; }
 @keyframes op-inner-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes op-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.op-live { animation: op-live-pulse 1.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-    .op-shine::before, .op-content-inner { animation: none; }
+    .op-shine::before, .op-content-inner, .op-live { animation: none; }
 }
 `
 
@@ -50,6 +52,20 @@ export type IntermissionScreenProps = {
 }
 
 const isVideo = (url: string) => /\.(mp4|webm|ogg|ogv|mov|m4v)(\?.*)?$/i.test(url)
+
+// Default accent (the same hot pink as the shine border) when an event has no category colour.
+const DEFAULT_ACCENT = '#ff4d6d'
+
+// Pick black or white text for a coloured background so the broadcast tag stays legible
+// whatever category colour the organiser chose.
+const readableOn = (hex: string): string => {
+    const h = hex.replace('#', '')
+    if (h.length < 6) return '#0b0b0c'
+    const r = parseInt(h.slice(0, 2), 16)
+    const g = parseInt(h.slice(2, 4), 16)
+    const b = parseInt(h.slice(4, 6), 16)
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? '#0b0b0c' : '#fff'
+}
 
 export const IntermissionScreen = ({
     mediaUrl,
@@ -70,6 +86,7 @@ export const IntermissionScreen = ({
               .join(', ')
         : ''
     const startTime = nextTalk ? DateTime.fromISO(nextTalk.dateStart).toFormat('HH:mm') : ''
+    const accent = categoryColor || DEFAULT_ACCENT
 
     // Persisted display options (cog menu, top-right)
     const [settingsOpen, setSettingsOpen] = useState(false)
@@ -254,6 +271,9 @@ export const IntermissionScreen = ({
                 )}
             </div>
 
+            {/* Bottom scrim so the lower-third stays legible over bright media */}
+            <div style={styles.scrim} />
+
             <style>{shineCss}</style>
             <div style={styles.contentWrap}>
                 <div
@@ -261,46 +281,63 @@ export const IntermissionScreen = ({
                     style={{
                         ...styles.content,
                         transform: `scale(${layoutScale / 100})`,
-                        transformOrigin: 'bottom center',
+                        transformOrigin: 'bottom left',
                         opacity: cardShown ? 1 : 0,
                         transition: 'opacity 0.6s ease',
                     }}>
-                    <div className={cardShown ? 'op-content-inner' : undefined} key={cardShown ? 'shown' : 'hidden'}>
-                        {nextTalk ? (
-                            <>
-                                <div style={styles.eyebrow}>
-                                    <span style={styles.dot} />
-                                    {isOngoing ? t.now : t.upNext}
-                                    {trackName ? ` · ${trackName}` : ''}
-                                    {categoryName && (
-                                        <span
-                                            style={{
-                                                ...styles.categoryPill,
-                                                background: categoryColor || 'rgba(255,255,255,0.18)',
-                                            }}>
-                                            {categoryName}
+                    <div style={{ ...styles.accentBar, background: accent }} />
+                    <div style={styles.inner}>
+                        <div
+                            className={cardShown ? 'op-content-inner' : undefined}
+                            key={cardShown ? 'shown' : 'hidden'}>
+                            {nextTalk ? (
+                                <>
+                                    <div style={styles.tagRow}>
+                                        <span style={{ ...styles.tag, background: accent, color: readableOn(accent) }}>
+                                            {isOngoing && <span className="op-live" style={styles.liveDot} />}
+                                            {isOngoing ? t.now : t.upNext}
                                         </span>
-                                    )}
-                                </div>
-                                <div style={styles.title}>{nextTalk.title}</div>
-                                <div style={styles.meta}>
-                                    {startTime && <span style={styles.time}>{startTime}</span>}
-                                    {relativeStart && <span style={styles.relative}>{relativeStart}</span>}
-                                    {speakerNames && <span style={styles.speakers}>{speakerNames}</span>}
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div style={styles.eyebrow}>
-                                    <span style={styles.dot} />
-                                    {trackName || eventName || ''}
-                                </div>
-                                <div style={styles.title}>{t.wrapTitle}</div>
-                                <div style={styles.meta}>
-                                    <span style={styles.speakers}>{t.wrapSubtitle}</span>
-                                </div>
-                            </>
-                        )}
+                                        {trackName && <span style={styles.track}>{trackName}</span>}
+                                        {categoryName && (
+                                            <span style={styles.categoryWrap}>
+                                                <span
+                                                    style={{
+                                                        ...styles.catSwatch,
+                                                        background: categoryColor || accent,
+                                                    }}
+                                                />
+                                                {categoryName}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div style={styles.title}>{nextTalk.title}</div>
+                                    <div style={styles.meta}>
+                                        {startTime && (
+                                            <span style={{ ...styles.time, color: accent }}>{startTime}</span>
+                                        )}
+                                        {relativeStart && <span style={styles.relative}>{relativeStart}</span>}
+                                        {speakerNames && (
+                                            <>
+                                                {(startTime || relativeStart) && <span style={styles.sep} />}
+                                                <span style={styles.speakers}>{speakerNames}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div style={styles.tagRow}>
+                                        <span style={{ ...styles.tag, background: accent, color: readableOn(accent) }}>
+                                            {trackName || eventName || ''}
+                                        </span>
+                                    </div>
+                                    <div style={styles.title}>{t.wrapTitle}</div>
+                                    <div style={styles.meta}>
+                                        <span style={styles.speakers}>{t.wrapSubtitle}</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -398,83 +435,123 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: 14,
         cursor: 'pointer',
     },
+    scrim: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: '55vh',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0) 100%)',
+        pointerEvents: 'none',
+    },
     contentWrap: {
         position: 'absolute',
         left: 0,
         right: 0,
-        bottom: '5vh',
+        bottom: 'clamp(28px, 6vh, 72px)',
         display: 'flex',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
+        paddingLeft: 'clamp(28px, 5vw, 96px)',
+        paddingRight: 'clamp(28px, 5vw, 96px)',
         pointerEvents: 'none',
     },
     content: {
-        maxWidth: '90vw',
-        minWidth: 'min(620px, 86vw)',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'stretch',
+        maxWidth: 'min(1100px, 92vw)',
         color: '#fff',
-        background: 'rgba(10,10,14,0.55)',
-        border: '1px solid rgba(255,255,255,0.14)',
-        borderRadius: 18,
-        padding: 'clamp(16px, 2.2vh, 28px) clamp(20px, 2.6vw, 36px)',
-        backdropFilter: 'blur(14px)',
-        boxShadow: '0 8px 40px rgba(0,0,0,0.45)',
+        background: 'rgba(9,9,12,0.72)',
+        borderRadius: 12,
+        overflow: 'hidden',
+        backdropFilter: 'blur(6px)',
     },
-    eyebrow: {
+    accentBar: {
+        flexShrink: 0,
+        width: 'clamp(6px, 0.5vw, 10px)',
+    },
+    inner: {
+        padding: 'clamp(18px, 2.6vh, 34px) clamp(24px, 3vw, 48px)',
+    },
+    tagRow: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'clamp(10px, 1vw, 16px)',
+        marginBottom: 'clamp(10px, 1.4vh, 18px)',
+    },
+    tag: {
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 10,
-        fontSize: 'clamp(13px, 1.1vw, 18px)',
-        fontWeight: 600,
-        letterSpacing: 2,
+        gap: 8,
+        padding: '5px 12px',
+        borderRadius: 4,
+        fontSize: 'clamp(12px, 1vw, 17px)',
+        fontWeight: 800,
+        letterSpacing: 1.5,
         textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.85)',
-        marginBottom: 'clamp(6px, 1vh, 12px)',
     },
-    dot: {
+    liveDot: {
         width: 9,
         height: 9,
         borderRadius: '50%',
-        background: '#ff4d6d',
-        boxShadow: '0 0 12px 3px rgba(255,77,109,0.8)',
+        background: 'currentColor',
+    },
+    track: {
+        fontSize: 'clamp(13px, 1.1vw, 19px)',
+        fontWeight: 600,
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.7)',
+    },
+    categoryWrap: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 7,
+        fontSize: 'clamp(12px, 1vw, 17px)',
+        fontWeight: 600,
+        letterSpacing: 0.5,
+        color: 'rgba(255,255,255,0.7)',
+    },
+    catSwatch: {
+        width: 12,
+        height: 12,
+        borderRadius: 3,
     },
     title: {
-        fontSize: 'clamp(26px, 3.2vw, 52px)',
-        fontWeight: 700,
-        lineHeight: 1.08,
-        letterSpacing: -0.5,
-    },
+        fontSize: 'clamp(30px, 4vw, 68px)',
+        fontWeight: 800,
+        lineHeight: 1.02,
+        letterSpacing: -1,
+        textWrap: 'balance',
+    } as React.CSSProperties,
     meta: {
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'baseline',
         gap: 'clamp(12px, 1.4vw, 22px)',
-        marginTop: 'clamp(10px, 1.4vh, 18px)',
+        marginTop: 'clamp(12px, 1.8vh, 24px)',
         flexWrap: 'wrap',
     },
     time: {
-        fontSize: 'clamp(16px, 1.6vw, 26px)',
-        fontWeight: 700,
-        padding: '4px 14px',
-        borderRadius: 10,
-        background: 'rgba(255,255,255,0.14)',
-        border: '1px solid rgba(255,255,255,0.2)',
+        fontSize: 'clamp(22px, 2.4vw, 40px)',
+        fontWeight: 800,
+        letterSpacing: -0.5,
+        fontVariantNumeric: 'tabular-nums',
     },
     relative: {
         fontSize: 'clamp(15px, 1.4vw, 23px)',
         fontWeight: 600,
-        color: '#ff7591',
+        color: 'rgba(255,255,255,0.78)',
+    },
+    sep: {
+        width: 5,
+        height: 5,
+        borderRadius: '50%',
+        background: 'rgba(255,255,255,0.4)',
+        alignSelf: 'center',
     },
     speakers: {
-        fontSize: 'clamp(15px, 1.5vw, 24px)',
+        fontSize: 'clamp(15px, 1.5vw, 26px)',
         fontWeight: 500,
         color: 'rgba(255,255,255,0.92)',
-    },
-    categoryPill: {
-        marginLeft: 6,
-        padding: '2px 10px',
-        borderRadius: 999,
-        fontSize: 'clamp(11px, 0.9vw, 15px)',
-        fontWeight: 600,
-        letterSpacing: 1,
-        color: '#fff',
-        textShadow: '0 1px 4px rgba(0,0,0,0.5)',
     },
 }
