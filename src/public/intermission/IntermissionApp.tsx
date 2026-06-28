@@ -6,6 +6,7 @@ import { useIntermissionEvent } from '../hooks/useIntermissionEvent'
 import { useTalkSelection } from '../transcription/useTalkSelection'
 import { PublicJSON } from '../publicTypes'
 import { IntermissionScreen } from './IntermissionScreen'
+import { useQueryParam } from './useQueryParam'
 
 export type IntermissionAppProps = {
     eventId: string
@@ -13,8 +14,10 @@ export type IntermissionAppProps = {
 
 export const IntermissionApp = ({ eventId }: IntermissionAppProps) => {
     // Dedicated password, separate from the transcription page. Optional: only used when the event sets one.
+    // Kept in localStorage (never put a password in the URL).
     const [intermissionPassword, savePassword] = useLocalStorage<string>('intermissionPassword', '')
-    const [selectedTrack, setSelectedTrack] = useLocalStorage<string>('intermissionTrack', '')
+    // Picked track persists in the URL so a room screen's config is shareable/bookmarkable.
+    const [selectedTrack, setSelectedTrack] = useQueryParam('track', '')
     const [tempPassword, setTempPassword] = useState<string>('')
 
     const { eventData, isLoading, error, unauthorized } = useIntermissionEvent(eventId, intermissionPassword)

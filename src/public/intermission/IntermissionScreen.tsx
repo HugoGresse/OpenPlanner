@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon'
 import { useEffect, useRef, useState } from 'react'
-import { useLocalStorage } from '@uidotdev/usehooks'
 import { PublicJSON } from '../publicTypes'
 import { formatRelativeStart, intermissionStrings } from './intermissionI18n'
+import { useQueryParam } from './useQueryParam'
 
 const IDLE_MS = 5000
 
@@ -93,11 +93,18 @@ export const IntermissionScreen = ({
     const startTime = nextTalk ? DateTime.fromISO(nextTalk.dateStart).toFormat('HH:mm') : ''
     const accent = categoryColor || DEFAULT_ACCENT
 
-    // Persisted display options (cog menu, top-right)
+    // Display options persisted in the URL (cog menu, top-right) so a screen's config is shareable
     const [settingsOpen, setSettingsOpen] = useState(false)
-    const [layoutScale, setLayoutScale] = useLocalStorage<number>('intermissionLayoutScale', 100)
-    const [intermittent, setIntermittent] = useLocalStorage<boolean>('intermissionIntermittent', false)
-    const [intervalSec, setIntervalSec] = useLocalStorage<number>('intermissionIntervalSec', 5)
+    const [sizeParam, setSizeParam] = useQueryParam('size', '100')
+    const [blinkParam, setBlinkParam] = useQueryParam('blink', '0')
+    const [intervalParam, setIntervalParam] = useQueryParam('interval', '5')
+
+    const layoutScale = Number(sizeParam) || 100
+    const intermittent = blinkParam === '1'
+    const intervalSec = Number(intervalParam) || 5
+    const setLayoutScale = (v: number) => setSizeParam(String(v))
+    const setIntermittent = (v: boolean) => setBlinkParam(v ? '1' : '0')
+    const setIntervalSec = (v: number) => setIntervalParam(String(v))
 
     // Intermittent display: cycle the card on for `intervalSec`, then off for the same duration
     const [cardShown, setCardShown] = useState(true)
