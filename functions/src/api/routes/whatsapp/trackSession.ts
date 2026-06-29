@@ -29,3 +29,11 @@ export const allReady = (tracks: TrackState[]): boolean => tracks.length > 0 && 
 
 export const goMessage = (tracks: TrackState[]): string =>
     `🟢 GO — all ${tracks.length} tracks are ready. You can start.`
+
+// Timing reminders auto-scheduled when GO is sent, on a 50min session clock: 15/10/5 min left, then end.
+export const PANEL_SCHEDULE: { delaySeconds: number; message: string }[] = [
+    { delaySeconds: 35 * 60, message: 'Panneau 15 min' },
+    { delaySeconds: 40 * 60, message: 'Panneau 10 min' },
+    { delaySeconds: 45 * 60, message: 'Panneau 5 min' },
+    { delaySeconds: 50 * 60, message: 'Fin de session' },
+]

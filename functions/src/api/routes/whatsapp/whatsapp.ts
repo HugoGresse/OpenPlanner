@@ -1,17 +1,12 @@
 import { FastifyInstance } from 'fastify'
 import Type, { Static } from 'typebox'
+import { getFunctions } from 'firebase-admin/functions'
 import { EventDao } from '../../dao/eventDao'
-import { GreenApiCreds, sendMessage, sendPoll, setSettings, toChatId } from './greenApi'
-import { WhatsappSenders, applyPollVotes, startTrackSession } from './trackFlow'
+import { GreenApiCreds, credsFromEvent, sendMessage, sendPoll, setSettings, toChatId } from './greenApi'
+import { WhatsappSenders, applyPollVotes, sendGoMessage, startTrackSession } from './trackFlow'
+import { allReady, PANEL_SCHEDULE } from './trackSession'
 import { WhatsappSessionDao } from './whatsappSessionDao'
-
-const credsFromEvent = (event: {
-    greenApiInstanceId?: string | null
-    greenApiToken?: string | null
-}): GreenApiCreds | null => {
-    if (!event.greenApiInstanceId || !event.greenApiToken) return null
-    return { instanceId: event.greenApiInstanceId, token: event.greenApiToken }
-}
+import { PanelTaskPayload, sendWhatsappPanelTaskName } from './whatsappPanelTask'
 
 // Bind the injected senders to creds so the flow code stays free of GreenAPI details.
 const sendersFor = (creds: GreenApiCreds): WhatsappSenders => ({
@@ -26,6 +21,9 @@ const StartBody = Type.Object({
     chatId: Type.String({ description: 'Shared chat that receives the track poll (phone or group chatId)' }),
 })
 type StartBodyType = Static<typeof StartBody>
+
+const PanelMessageBody = Type.Object({ message: Type.String({ minLength: 1 }) })
+type PanelMessageBodyType = Static<typeof PanelMessageBody>
 
 // Explicit reply schema: a bare Type.Any() makes fast-json-stringify drop every field (returns {}).
 const StatusReply = Type.Object({
@@ -176,6 +174,100 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
         }
     )
 
+    // --- Manually broadcast the GO message once every track is ready ---
+    fastify.post<{ Params: { eventId: string } }>(
+        '/v1/:eventId/whatsapp/track-management/go',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'Send the GO message to the shared chat (only once every track is ready).',
+                params: Type.Object({ eventId: Type.String() }),
+                response: { 200: Type.Object({ sent: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            const { eventId } = request.params
+            const event = await EventDao.getEvent(fastify.firebase, eventId)
+            const creds = credsFromEvent(event)
+            if (!creds) {
+                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                return
+            }
+            const session = await WhatsappSessionDao.getSession(fastify.firebase, eventId)
+            if (!session) {
+                reply.status(400).send(JSON.stringify({ error: 'No track-management session in progress.' }))
+                return
+            }
+            if (session.goSent) {
+                reply.status(400).send(JSON.stringify({ error: 'GO message was already sent.' }))
+                return
+            }
+            if (!allReady(session.tracks)) {
+                reply.status(400).send(JSON.stringify({ error: 'Not every track is ready yet.' }))
+                return
+            }
+            try {
+                const updated = await sendGoMessage(session, sendersFor(creds))
+                await WhatsappSessionDao.saveSession(fastify.firebase, eventId, updated)
+                reply.status(200).send({ sent: true })
+            } catch (err) {
+                reply.status(400).send(JSON.stringify({ error: 'Failed to send GO', details: (err as Error).message }))
+                return
+            }
+
+            // Best-effort: schedule the timing reminders. GO was already broadcast, so a scheduling
+            // failure here shouldn't turn into an error response — just log it.
+            try {
+                const taskQueue = getFunctions(fastify.firebase).taskQueue<PanelTaskPayload>(sendWhatsappPanelTaskName)
+                await Promise.all(
+                    PANEL_SCHEDULE.map(({ delaySeconds, message }) =>
+                        taskQueue.enqueue({ eventId, message }, { scheduleDelaySeconds: delaySeconds })
+                    )
+                )
+            } catch (err) {
+                request.log?.error({ err }, 'failed to schedule whatsapp panel reminders')
+            }
+        }
+    )
+
+    // --- Send a free-form message to the shared chat (e.g. timing panels) ---
+    fastify.post<{ Params: { eventId: string }; Body: PanelMessageBodyType }>(
+        '/v1/:eventId/whatsapp/track-management/message',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'Send a free-form message (e.g. a timing panel) to the shared chat.',
+                params: Type.Object({ eventId: Type.String() }),
+                body: PanelMessageBody,
+                response: { 200: Type.Object({ sent: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            const { eventId } = request.params
+            const event = await EventDao.getEvent(fastify.firebase, eventId)
+            const creds = credsFromEvent(event)
+            if (!creds) {
+                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                return
+            }
+            const session = await WhatsappSessionDao.getSession(fastify.firebase, eventId)
+            if (!session?.chatId) {
+                reply.status(400).send(JSON.stringify({ error: 'No track-management session in progress.' }))
+                return
+            }
+            try {
+                await sendMessage(creds, session.chatId, request.body.message)
+                reply.status(200).send({ sent: true })
+            } catch (err) {
+                reply.status(400).send(JSON.stringify({ error: 'Failed to send', details: (err as Error).message }))
+            }
+        }
+    )
+
     // --- GreenAPI incoming webhook, event-scoped. GreenAPI must be configured to send an
     //     Authorization header equal to the event apiKey (raw or "Bearer <key>"). Poll votes arrive
     //     as messageData.typeMessage === "pollUpdateMessage". ---
@@ -209,10 +301,9 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                     reply.status(401).send({ error: 'Unauthorized webhook' })
                     return
                 }
-                const creds = credsFromEvent(event)
                 const session = await WhatsappSessionDao.getSession(fastify.firebase, eventId)
-                if (creds && session && votedOptionNames.length > 0) {
-                    const updated = await applyPollVotes(session, votedOptionNames, sendersFor(creds))
+                if (session && votedOptionNames.length > 0) {
+                    const updated = applyPollVotes(session, votedOptionNames)
                     await WhatsappSessionDao.saveSession(fastify.firebase, eventId, updated)
                 }
             }

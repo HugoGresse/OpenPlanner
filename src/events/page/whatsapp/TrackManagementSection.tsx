@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Box, Card, Chip, Grid, Stack, TextField, Typography } from '@mui/material'
+import { useState } from 'react'
+import { Box, Card, Stack, TextField, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { doc, updateDoc } from 'firebase/firestore'
 import { Event } from '../../../types'
@@ -8,13 +8,7 @@ import { useNotification } from '../../../hooks/notificationHook'
 import { TypographyCopyable } from '../../../components/TypographyCopyable'
 import { collections } from '../../../services/firebase'
 import { API_URL } from '../../../env'
-
-type TrackStatus = { id: string; name: string; ready: boolean }
-type SessionStatus = {
-    chatId: string | null
-    tracks: TrackStatus[]
-    goSent: boolean
-}
+import { TrackPollPanel } from './TrackPollPanel'
 
 // API_URL may or may not carry a trailing slash; normalise so the URL is always well-formed.
 const apiBase = String(API_URL ?? '').replace(/\/+$/, '')
@@ -25,9 +19,7 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
     const { createNotification } = useNotification()
     // Seed from the saved event setting so the operator doesn't retype it.
     const [chatId, setChatId] = useState(event.whatsappSharedChatId || '')
-    const [starting, setStarting] = useState(false)
     const [savingChat, setSavingChat] = useState(false)
-    const [status, setStatus] = useState<SessionStatus | null>(null)
 
     const saveSharedChat = async () => {
         setSavingChat(true)
@@ -42,29 +34,6 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
             setSavingChat(false)
         }
     }
-
-    const refresh = useCallback(async () => {
-        try {
-            const s = await fetchOpenPlannerApi<SessionStatus>(event, 'whatsapp/track-management/status', {
-                method: 'GET',
-            })
-            setStatus(s)
-            // Prefill the input from the last stored chat so the operator doesn't retype it (without
-            // clobbering anything they're currently typing).
-            if (s?.chatId) {
-                setChatId((prev) => prev || s.chatId || '')
-            }
-        } catch {
-            // status polling is best-effort
-        }
-    }, [event])
-
-    // Poll so button presses (handled via the GreenAPI webhook) show up without a manual reload.
-    useEffect(() => {
-        refresh()
-        const id = setInterval(refresh, 5000)
-        return () => clearInterval(id)
-    }, [refresh])
 
     const [configuring, setConfiguring] = useState(false)
     const configureWebhook = async () => {
@@ -87,30 +56,6 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
         }
     }
 
-    const start = async () => {
-        setStarting(true)
-        try {
-            await fetchOpenPlannerApi(event, 'whatsapp/track-management/start', {
-                method: 'POST',
-                body: { chatId },
-            })
-            // Remember the chat for next time.
-            await updateDoc(doc(collections.events, event.id), { whatsappSharedChatId: chatId.trim() || null })
-            createNotification('Track buttons sent', { type: 'success' })
-            await refresh()
-        } catch (error) {
-            createNotification('Failed to start: ' + (error instanceof Error ? error.message : 'Unknown error'), {
-                type: 'error',
-            })
-        } finally {
-            setStarting(false)
-        }
-    }
-
-    const trackList = status?.tracks ?? []
-    const readyCount = trackList.filter((t) => t.ready).length
-    const total = trackList.length
-
     return (
         <Card sx={{ paddingX: 2, mt: 4, mb: 2 }}>
             <Typography fontSize="large" sx={{ mt: 2, mb: 1 }}>
@@ -118,7 +63,9 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
                 Send a WhatsApp poll listing the tracks (up to 12 options per poll). When a track manager taps their
-                track in the poll it is marked ready; once every track is ready, a GO message is sent to the same chat.
+                track in the poll it is marked ready; once every track is ready, you can send the GO message to the same
+                chat. Sending GO also auto-schedules the 15/10/5 min and end-of-session reminders on a 50min clock — use
+                the buttons below to send any of them manually if timing needs to change.
             </Typography>
 
             <TextField
@@ -134,33 +81,9 @@ export const TrackManagementSection = ({ event }: { event: Event }) => {
                 <LoadingButton onClick={saveSharedChat} disabled={savingChat} loading={savingChat} variant="outlined">
                     Save chat
                 </LoadingButton>
-                <LoadingButton
-                    onClick={start}
-                    disabled={starting || chatId.trim().length === 0}
-                    loading={starting}
-                    variant="contained">
-                    Send track poll
-                </LoadingButton>
             </Stack>
 
-            {total > 0 && (
-                <Box mb={2}>
-                    <Typography variant="subtitle2" gutterBottom>
-                        Readiness {readyCount}/{total}
-                        {status?.goSent ? ' — GO sent 🟢' : ''}
-                    </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                        {trackList.map((t) => (
-                            <Chip
-                                key={t.id}
-                                label={t.name}
-                                color={t.ready ? 'success' : 'default'}
-                                variant={t.ready ? 'filled' : 'outlined'}
-                            />
-                        ))}
-                    </Stack>
-                </Box>
-            )}
+            <TrackPollPanel event={event} chatId={chatId} />
 
             <Box mt={2}>
                 <Typography variant="subtitle2" gutterBottom>

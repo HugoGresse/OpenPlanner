@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { applyPollVotes, startTrackSession, WhatsappSenders } from './trackFlow'
+import { applyPollVotes, sendGoMessage, startTrackSession, WhatsappSenders } from './trackFlow'
 
 const makeSenders = () => {
     let n = 0
@@ -36,27 +36,37 @@ describe('applyPollVotes', () => {
         const { senders } = makeSenders()
         const session = await startTrackSession(tracks(3), 'c@c.us', senders)
 
-        await applyPollVotes(session, ['Track 1'], senders)
+        applyPollVotes(session, ['Track 1'])
 
         expect(session.tracks.find((t) => t.id === 't1')!.ready).toBe(true)
         expect(session.tracks.find((t) => t.id === 't2')!.ready).toBe(false)
     })
 
-    test('readiness is sticky and GO is sent once when all are ready', async () => {
+    test('readiness is sticky and never sends GO on its own', async () => {
         const { senders, sendMessage } = makeSenders()
         const session = await startTrackSession(tracks(2), 'c@c.us', senders)
 
-        await applyPollVotes(session, ['Track 1'], senders)
+        applyPollVotes(session, ['Track 1'])
         expect(sendMessage).not.toHaveBeenCalled()
 
         // A later update without Track 1's voter must not un-ready it.
-        await applyPollVotes(session, ['Track 2'], senders)
+        applyPollVotes(session, ['Track 2'])
         expect(session.tracks.every((t) => t.ready)).toBe(true)
-        expect(sendMessage).toHaveBeenCalledTimes(1)
-        expect(session.goSent).toBe(true)
+        expect(sendMessage).not.toHaveBeenCalled()
+        expect(session.goSent).toBe(false)
+    })
+})
 
-        // Further updates don't resend GO.
-        await applyPollVotes(session, ['Track 1', 'Track 2'], senders)
+describe('sendGoMessage', () => {
+    test('sends the GO message and flags the session as sent', async () => {
+        const { senders, sendMessage } = makeSenders()
+        const session = await startTrackSession(tracks(2), 'c@c.us', senders)
+        applyPollVotes(session, ['Track 1', 'Track 2'])
+
+        const updated = await sendGoMessage(session, senders)
+
         expect(sendMessage).toHaveBeenCalledTimes(1)
+        expect(sendMessage).toHaveBeenCalledWith('c@c.us', expect.stringContaining('GO'))
+        expect(updated.goSent).toBe(true)
     })
 })

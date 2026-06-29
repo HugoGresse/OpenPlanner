@@ -7,6 +7,14 @@ export type GreenApiCreds = {
     token: string
 }
 
+export const credsFromEvent = (event: {
+    greenApiInstanceId?: string | null
+    greenApiToken?: string | null
+}): GreenApiCreds | null => {
+    if (!event.greenApiInstanceId || !event.greenApiToken) return null
+    return { instanceId: event.greenApiInstanceId, token: event.greenApiToken }
+}
+
 const call = async (creds: GreenApiCreds, method: string, payload: unknown): Promise<any> => {
     const url = `${GREEN_API_BASE}/waInstance${creds.instanceId}/${method}/${creds.token}`
     const res = await fetch(url, {
