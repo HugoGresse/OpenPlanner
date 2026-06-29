@@ -12,6 +12,7 @@ type SessionStatus = {
     chatId: string | null
     tracks: TrackStatus[]
     goSent: boolean
+    panelsSent: string[]
 }
 
 export type TrackPollPanelProps = {
@@ -19,7 +20,8 @@ export type TrackPollPanelProps = {
     chatId: string
 }
 
-// Preset timing announcements sent verbatim to the shared chat.
+// Timing reminders auto-scheduled by the backend when GO is sent — kept here only to render their
+// status (sent/pending), matched against SessionStatus.panelsSent.
 const PANEL_MESSAGES = ['Panneau 15 min', 'Panneau 10 min', 'Panneau 5 min', 'Fin de session']
 
 // Sends the track poll, polls for the resulting readiness, and lets the operator broadcast GO once
@@ -28,7 +30,6 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
     const { createNotification } = useNotification()
     const [starting, setStarting] = useState(false)
     const [sendingGo, setSendingGo] = useState(false)
-    const [sendingPanel, setSendingPanel] = useState<string | null>(null)
     const [status, setStatus] = useState<SessionStatus | null>(null)
 
     const refresh = useCallback(async () => {
@@ -42,7 +43,8 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
         }
     }, [event])
 
-    // Poll so button presses (handled via the GreenAPI webhook) show up without a manual reload.
+    // Poll so button presses (handled via the GreenAPI webhook) and scheduled reminders show up
+    // without a manual reload.
     useEffect(() => {
         refresh()
         const id = setInterval(refresh, 5000)
@@ -84,27 +86,11 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
         }
     }
 
-    const sendPanelMessage = async (message: string) => {
-        setSendingPanel(message)
-        try {
-            await fetchOpenPlannerApi(event, 'whatsapp/track-management/message', {
-                method: 'POST',
-                body: { message },
-            })
-            createNotification(`"${message}" sent`, { type: 'success' })
-        } catch (error) {
-            createNotification('Failed to send: ' + (error instanceof Error ? error.message : 'Unknown error'), {
-                type: 'error',
-            })
-        } finally {
-            setSendingPanel(null)
-        }
-    }
-
     const trackList = status?.tracks ?? []
     const readyCount = trackList.filter((t) => t.ready).length
     const total = trackList.length
     const allTracksReady = total > 0 && readyCount === total
+    const panelsSent = status?.panelsSent ?? []
 
     return (
         <Box>
@@ -133,27 +119,34 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
                             />
                         ))}
                     </Stack>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
-                        {allTracksReady && !status?.goSent && (
-                            <LoadingButton
-                                onClick={sendGo}
-                                disabled={sendingGo}
-                                loading={sendingGo}
-                                variant="contained"
-                                color="success">
-                                Send GO message
-                            </LoadingButton>
-                        )}
-                        {PANEL_MESSAGES.map((message) => (
-                            <LoadingButton
-                                key={message}
-                                onClick={() => sendPanelMessage(message)}
-                                disabled={sendingPanel !== null}
-                                loading={sendingPanel === message}
-                                variant="outlined">
-                                {message}
-                            </LoadingButton>
-                        ))}
+
+                    {allTracksReady && !status?.goSent && (
+                        <LoadingButton
+                            onClick={sendGo}
+                            disabled={sendingGo}
+                            loading={sendingGo}
+                            variant="contained"
+                            color="success"
+                            sx={{ mt: 2 }}>
+                            Send GO message
+                        </LoadingButton>
+                    )}
+
+                    <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                        Reminders
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                        {PANEL_MESSAGES.map((message) => {
+                            const sent = panelsSent.includes(message)
+                            return (
+                                <Chip
+                                    key={message}
+                                    label={message}
+                                    color={sent ? 'success' : 'default'}
+                                    variant={sent ? 'filled' : 'outlined'}
+                                />
+                            )
+                        })}
                     </Stack>
                 </Box>
             )}

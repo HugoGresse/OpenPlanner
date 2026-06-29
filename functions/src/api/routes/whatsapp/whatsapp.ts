@@ -22,14 +22,12 @@ const StartBody = Type.Object({
 })
 type StartBodyType = Static<typeof StartBody>
 
-const PanelMessageBody = Type.Object({ message: Type.String({ minLength: 1 }) })
-type PanelMessageBodyType = Static<typeof PanelMessageBody>
-
 // Explicit reply schema: a bare Type.Any() makes fast-json-stringify drop every field (returns {}).
 const StatusReply = Type.Object({
     chatId: Type.Union([Type.String(), Type.Null()]),
     tracks: Type.Array(Type.Object({ id: Type.String(), name: Type.String(), ready: Type.Boolean() })),
     goSent: Type.Boolean(),
+    panelsSent: Type.Array(Type.String()),
 })
 
 const authMatches = (header: string, expected: string): boolean =>
@@ -170,7 +168,14 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
         },
         async (request, reply) => {
             const session = await WhatsappSessionDao.getSession(fastify.firebase, request.params.eventId)
-            reply.status(200).send(session || { chatId: null, tracks: [], goSent: false })
+            // panelsSent defaults to [] for sessions created before that field existed.
+            reply
+                .status(200)
+                .send(
+                    session
+                        ? { ...session, panelsSent: session.panelsSent || [] }
+                        : { chatId: null, tracks: [], goSent: false, panelsSent: [] }
+                )
         }
     )
 
@@ -228,42 +233,6 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 )
             } catch (err) {
                 request.log?.error({ err }, 'failed to schedule whatsapp panel reminders')
-            }
-        }
-    )
-
-    // --- Send a free-form message to the shared chat (e.g. timing panels) ---
-    fastify.post<{ Params: { eventId: string }; Body: PanelMessageBodyType }>(
-        '/v1/:eventId/whatsapp/track-management/message',
-        {
-            schema: {
-                tags: ['whatsapp'],
-                summary: 'Send a free-form message (e.g. a timing panel) to the shared chat.',
-                params: Type.Object({ eventId: Type.String() }),
-                body: PanelMessageBody,
-                response: { 200: Type.Object({ sent: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
-                security: [{ apiKey: [] }],
-            },
-            preHandler: fastify.auth([fastify.verifyApiKey]),
-        },
-        async (request, reply) => {
-            const { eventId } = request.params
-            const event = await EventDao.getEvent(fastify.firebase, eventId)
-            const creds = credsFromEvent(event)
-            if (!creds) {
-                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
-                return
-            }
-            const session = await WhatsappSessionDao.getSession(fastify.firebase, eventId)
-            if (!session?.chatId) {
-                reply.status(400).send(JSON.stringify({ error: 'No track-management session in progress.' }))
-                return
-            }
-            try {
-                await sendMessage(creds, session.chatId, request.body.message)
-                reply.status(200).send({ sent: true })
-            } catch (err) {
-                reply.status(400).send(JSON.stringify({ error: 'Failed to send', details: (err as Error).message }))
             }
         }
     )

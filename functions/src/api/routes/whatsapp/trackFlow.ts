@@ -24,7 +24,7 @@ export const startTrackSession = async (
         pollMessageIds.push(idMessage)
     }
 
-    return { chatId, tracks: trackStates, pollMessageIds, goSent: false }
+    return { chatId, tracks: trackStates, pollMessageIds, goSent: false, panelsSent: [] }
 }
 
 // Apply a poll vote update: tracks whose option got at least one vote become ready (sticky — a track

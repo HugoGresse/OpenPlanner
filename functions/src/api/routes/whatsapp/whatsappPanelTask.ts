@@ -37,5 +37,6 @@ export const sendWhatsappPanel = onTaskDispatched<PanelTaskPayload>(
         if (!session?.chatId) return
 
         await sendMessage(creds, session.chatId, message)
+        await WhatsappSessionDao.addPanelSent(app, eventId, message)
     }
 )

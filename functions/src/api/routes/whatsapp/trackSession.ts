@@ -10,6 +10,8 @@ export type TrackSession = {
     // Poll message ids we sent (for reference; votes are matched back by option name).
     pollMessageIds: string[]
     goSent: boolean
+    // Messages from PANEL_SCHEDULE that the scheduled task has already sent for this session.
+    panelsSent: string[]
 }
 
 // WhatsApp polls allow at most 12 options; split tracks across polls if there are more.
