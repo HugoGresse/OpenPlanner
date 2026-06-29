@@ -29,8 +29,16 @@ export const chunk = <T>(items: T[], size: number): T[][] => {
 
 export const allReady = (tracks: TrackState[]): boolean => tracks.length > 0 && tracks.every((t) => t.ready)
 
-export const goMessage = (tracks: TrackState[]): string =>
-    `🟢 GO — all ${tracks.length} tracks are ready. You can start.`
+export const goMessage = (tracks: TrackState[]): string => {
+    const notReady = tracks.filter((t) => !t.ready)
+    if (notReady.length === 0) {
+        return     `🟢 GO — all ${tracks.length} tracks are ready. You can start.`
+}
+    // Forced GO: some tracks never confirmed ready. Be explicit about which ones.
+    const readyCount = tracks.length - notReady.length
+    const names = notReady.map((t) => t.name).join(', ')
+    return `🟢 GO — ${readyCount}/${tracks.length} tracks ready, starting anyway. Not ready: ${names}.`
+}
 
 // Timing reminders auto-scheduled when GO is sent, on a 50min session clock: 15/10/5 min left, then end.
 export const PANEL_SCHEDULE: { delaySeconds: number; message: string }[] = [
