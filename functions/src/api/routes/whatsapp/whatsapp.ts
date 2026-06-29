@@ -2,9 +2,10 @@ import { FastifyInstance } from 'fastify'
 import Type, { Static } from 'typebox'
 import { getFunctions } from 'firebase-admin/functions'
 import { EventDao } from '../../dao/eventDao'
-import { GreenApiCreds, credsFromEvent, sendMessage, sendPoll, setSettings, toChatId } from './greenApi'
+import { GreenApiCreds, credsFromEvent, getChats, sendMessage, sendPoll, setSettings, toChatId } from './greenApi'
 import { WhatsappSenders, applyPollVotes, sendGoMessage, startTrackSession } from './trackFlow'
 import { allReady, PANEL_SCHEDULE } from './trackSession'
+import { deleteScheduledPanel, listScheduledPanels } from './cloudTasks'
 import { WhatsappSessionDao } from './whatsappSessionDao'
 import { PanelTaskPayload, sendWhatsappPanelTaskName } from './whatsappPanelTask'
 
@@ -115,6 +116,49 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
         }
     )
 
+    // --- List the GreenAPI chats/groups so the operator can pick a chat instead of pasting an id ---
+    fastify.get<{ Params: { eventId: string } }>(
+        '/v1/:eventId/whatsapp/contacts',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'List the WhatsApp chats and groups visible to the event GreenAPI instance.',
+                params: Type.Object({ eventId: Type.String() }),
+                response: {
+                    200: Type.Object({
+                        contacts: Type.Array(
+                            Type.Object({
+                                id: Type.String(),
+                                name: Type.String(),
+                                type: Type.Union([Type.Literal('group'), Type.Literal('user')]),
+                            })
+                        ),
+                    }),
+                    400: Type.String(),
+                    401: Type.String(),
+                },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            const event = await EventDao.getEvent(fastify.firebase, request.params.eventId)
+            const creds = credsFromEvent(event)
+            if (!creds) {
+                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                return
+            }
+            try {
+                const contacts = await getChats(creds)
+                reply.status(200).send({ contacts })
+            } catch (err) {
+                reply
+                    .status(400)
+                    .send(JSON.stringify({ error: 'Failed to fetch contacts', details: (err as Error).message }))
+            }
+        }
+    )
+
     // --- Configure the GreenAPI instance to call our (event-scoped) webhook ---
     fastify.post<{ Params: { eventId: string }; Body: { webhookUrl: string } }>(
         '/v1/:eventId/whatsapp/configure-webhook',
@@ -180,13 +224,23 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
     )
 
     // --- Manually broadcast the GO message once every track is ready ---
-    fastify.post<{ Params: { eventId: string } }>(
+    fastify.post<{ Params: { eventId: string }; Body: { panels?: string[]; force?: boolean } }>(
         '/v1/:eventId/whatsapp/track-management/go',
         {
             schema: {
                 tags: ['whatsapp'],
                 summary: 'Send the GO message to the shared chat (only once every track is ready).',
                 params: Type.Object({ eventId: Type.String() }),
+                body: Type.Object({
+                    panels: Type.Optional(
+                        Type.Array(Type.String(), {
+                            description: 'Reminder messages to auto-schedule. Omit to schedule all of them.',
+                        })
+                    ),
+                    force: Type.Optional(
+                        Type.Boolean({ description: 'Send GO even if not every track is ready yet.' })
+                    ),
+                }),
                 response: { 200: Type.Object({ sent: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
                 security: [{ apiKey: [] }],
             },
@@ -209,7 +263,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 reply.status(400).send(JSON.stringify({ error: 'GO message was already sent.' }))
                 return
             }
-            if (!allReady(session.tracks)) {
+            if (!request.body?.force && !allReady(session.tracks)) {
                 reply.status(400).send(JSON.stringify({ error: 'Not every track is ready yet.' }))
                 return
             }
@@ -225,14 +279,86 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             // Best-effort: schedule the timing reminders. GO was already broadcast, so a scheduling
             // failure here shouldn't turn into an error response — just log it.
             try {
+                // Default to all reminders; when the client sends an explicit list, schedule only those.
+                const requested = request.body?.panels
+                const schedule = Array.isArray(requested)
+                    ? PANEL_SCHEDULE.filter((p) => requested.includes(p.message))
+                    : PANEL_SCHEDULE
                 const taskQueue = getFunctions(fastify.firebase).taskQueue<PanelTaskPayload>(sendWhatsappPanelTaskName)
                 await Promise.all(
-                    PANEL_SCHEDULE.map(({ delaySeconds, message }) =>
+                    schedule.map(({ delaySeconds, message }) =>
                         taskQueue.enqueue({ eventId, message }, { scheduleDelaySeconds: delaySeconds })
                     )
                 )
             } catch (err) {
                 request.log?.error({ err }, 'failed to schedule whatsapp panel reminders')
+            }
+        }
+    )
+
+    // --- List the scheduled reminder tasks (Cloud Tasks) still pending for this event ---
+    fastify.get<{ Params: { eventId: string } }>(
+        '/v1/:eventId/whatsapp/scheduled-tasks',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'List the pending scheduled WhatsApp reminder tasks for the event.',
+                params: Type.Object({ eventId: Type.String() }),
+                response: {
+                    200: Type.Object({
+                        tasks: Type.Array(
+                            Type.Object({
+                                name: Type.String(),
+                                scheduleTime: Type.Union([Type.String(), Type.Null()]),
+                                message: Type.String(),
+                            })
+                        ),
+                    }),
+                    400: Type.String(),
+                    401: Type.String(),
+                },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            try {
+                const tasks = await listScheduledPanels(fastify.firebase, request.params.eventId)
+                reply.status(200).send({ tasks })
+            } catch (err) {
+                reply
+                    .status(400)
+                    .send(JSON.stringify({ error: 'Failed to list scheduled tasks', details: (err as Error).message }))
+            }
+        }
+    )
+
+    // --- Delete one pending scheduled reminder task ---
+    fastify.delete<{ Params: { eventId: string }; Body: { name: string } }>(
+        '/v1/:eventId/whatsapp/scheduled-tasks',
+        {
+            schema: {
+                tags: ['whatsapp'],
+                summary: 'Cancel a pending scheduled WhatsApp reminder task by its Cloud Tasks name.',
+                params: Type.Object({ eventId: Type.String() }),
+                body: Type.Object({ name: Type.String() }),
+                response: { 200: Type.Object({ deleted: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
+                security: [{ apiKey: [] }],
+            },
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        async (request, reply) => {
+            try {
+                const deleted = await deleteScheduledPanel(fastify.firebase, request.params.eventId, request.body.name)
+                if (!deleted) {
+                    reply.status(400).send(JSON.stringify({ error: 'Task not found for this event.' }))
+                    return
+                }
+                reply.status(200).send({ deleted: true })
+            } catch (err) {
+                reply
+                    .status(400)
+                    .send(JSON.stringify({ error: 'Failed to delete task', details: (err as Error).message }))
             }
         }
     )

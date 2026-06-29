@@ -29,11 +29,39 @@ const call = async (creds: GreenApiCreds, method: string, payload: unknown): Pro
     return text ? JSON.parse(text) : {}
 }
 
+const callGet = async (creds: GreenApiCreds, method: string): Promise<any> => {
+    const url = `${GREEN_API_BASE}/waInstance${creds.instanceId}/${method}/${creds.token}`
+    const res = await fetch(url)
+    const text = await res.text()
+    if (!res.ok) {
+        throw new Error(`GreenAPI ${method} failed (${res.status}): ${text}`)
+    }
+    return text ? JSON.parse(text) : {}
+}
+
 // A WhatsApp chatId for a person is the phone number (digits only, country code included) + "@c.us".
 // A value that already looks like a chatId (contains "@") is passed through untouched.
 export const toChatId = (raw: string): string => {
     if (raw.includes('@')) return raw
     return `${raw.replace(/[^0-9]/g, '')}@c.us`
+}
+
+// A WhatsApp chat as exposed to the admin UI. `type` is 'group' for group chats (id ends @g.us)
+// and 'user' for single contacts (id ends @c.us).
+export type GreenApiContact = { id: string; name: string; type: 'group' | 'user' }
+
+// https://green-api.com/en/docs/api/chats/GetChats/ — lists every chat and group the instance has.
+// Used so the operator can pick the shared chat / test recipient instead of pasting a raw chatId.
+export const getChats = async (creds: GreenApiCreds): Promise<GreenApiContact[]> => {
+    const data = await callGet(creds, 'getChats')
+    if (!Array.isArray(data)) return []
+    return data
+        .map((c: any) => {
+            const id = String(c?.id ?? '')
+            const type: 'group' | 'user' = id.endsWith('@g.us') ? 'group' : 'user'
+            return { id, name: String(c?.name || c?.contactName || id), type }
+        })
+        .filter((c) => c.id.length > 0)
 }
 
 export const sendMessage = async (creds: GreenApiCreds, chatId: string, message: string): Promise<string> => {

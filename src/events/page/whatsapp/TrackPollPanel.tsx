@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Box, Checkbox, Chip, FormControlLabel, FormGroup, Stack, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { doc, updateDoc } from 'firebase/firestore'
+import { useLocalStorage } from '@uidotdev/usehooks'
+import { DateTime } from 'luxon'
 import { Event } from '../../../types'
 import { fetchOpenPlannerApi } from '../../../services/hooks/useOpenPlannerApi'
 import { useNotification } from '../../../hooks/notificationHook'
+import { useSessions } from '../../../services/hooks/useSessions'
 import { collections } from '../../../services/firebase'
+import { ScheduledRemindersList } from './ScheduledRemindersList'
 
 type TrackStatus = { id: string; name: string; ready: boolean }
 type SessionStatus = {
@@ -28,9 +32,16 @@ const PANEL_MESSAGES = ['Panneau 15 min', 'Panneau 10 min', 'Panneau 5 min', 'Fi
 // every track has voted ready.
 export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
     const { createNotification } = useNotification()
+    const { data: sessions } = useSessions(event)
     const [starting, setStarting] = useState(false)
     const [sendingGo, setSendingGo] = useState(false)
     const [status, setStatus] = useState<SessionStatus | null>(null)
+    // Which reminders to auto-schedule when GO is sent. All by default, persisted per event.
+    const [autoPanels, setAutoPanels] = useLocalStorage<string[]>(`whatsapp-auto-panels-${event.id}`, PANEL_MESSAGES)
+
+    const togglePanel = (message: string) => {
+        setAutoPanels(autoPanels.includes(message) ? autoPanels.filter((m) => m !== message) : [...autoPanels, message])
+    }
 
     const refresh = useCallback(async () => {
         try {
@@ -71,10 +82,13 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
         }
     }
 
-    const sendGo = async () => {
+    const sendGo = async (force = false) => {
         setSendingGo(true)
         try {
-            await fetchOpenPlannerApi(event, 'whatsapp/track-management/go', { method: 'POST' })
+            await fetchOpenPlannerApi(event, 'whatsapp/track-management/go', {
+                method: 'POST',
+                body: { panels: autoPanels, force },
+            })
             createNotification('GO message sent', { type: 'success' })
             await refresh()
         } catch (error) {
@@ -86,14 +100,49 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
         }
     }
 
+    // The next upcoming conference slot: soonest session start in the future, with the slot's end.
+    const nextSlot = useMemo(() => {
+        const now = DateTime.now()
+        const upcoming = (sessions ?? []).filter((s) => s.dates?.start && s.dates.start > now)
+        if (upcoming.length === 0) return null
+        const start = upcoming.reduce(
+            (min, s) => (s.dates!.start! < min ? s.dates!.start! : min),
+            upcoming[0].dates!.start!
+        )
+        const end = upcoming
+            .filter((s) => +s.dates!.start! === +start)
+            .reduce((max, s) => (s.dates?.end && s.dates.end > max ? s.dates.end : max), start)
+        return { start, end }
+    }, [sessions])
+
     const trackList = status?.tracks ?? []
     const readyCount = trackList.filter((t) => t.ready).length
     const total = trackList.length
     const allTracksReady = total > 0 && readyCount === total
     const panelsSent = status?.panelsSent ?? []
 
+    // Buzz the device when the readiness count changes (a track manager just voted), so the operator
+    // notices without watching the screen. Skip the first render (ref starts null).
+    const prevReadyCount = useRef<number | null>(null)
+    useEffect(() => {
+        if (prevReadyCount.current !== null && readyCount !== prevReadyCount.current) {
+            navigator.vibrate?.(200)
+        }
+        prevReadyCount.current = readyCount
+    }, [readyCount])
+
     return (
         <Box>
+            {nextSlot && (
+                <Typography variant="subtitle2" gutterBottom>
+                    Next conference:{' '}
+                    {nextSlot.start.toFormat(
+                        nextSlot.start.hasSame(DateTime.now(), 'day') ? 'HH:mm' : 'ccc dd LLL HH:mm'
+                    )}
+                    {' – '}
+                    {nextSlot.end.toFormat('HH:mm')}
+                </Typography>
+            )}
             <LoadingButton
                 onClick={start}
                 disabled={starting || chatId.trim().length === 0}
@@ -122,7 +171,7 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
 
                     {allTracksReady && !status?.goSent && (
                         <LoadingButton
-                            onClick={sendGo}
+                            onClick={() => sendGo(false)}
                             disabled={sendingGo}
                             loading={sendingGo}
                             variant="contained"
@@ -132,22 +181,53 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
                         </LoadingButton>
                     )}
 
+                    {!allTracksReady && readyCount > 0 && !status?.goSent && (
+                        <LoadingButton
+                            onClick={() => sendGo(true)}
+                            disabled={sendingGo}
+                            loading={sendingGo}
+                            variant="outlined"
+                            color="warning"
+                            sx={{ mt: 2 }}>
+                            Force GO ({readyCount}/{total} ready)
+                        </LoadingButton>
+                    )}
+
                     <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                        Reminders
+                        Auto reminders {status?.goSent ? '' : '(scheduled on GO)'}
                     </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                        {PANEL_MESSAGES.map((message) => {
-                            const sent = panelsSent.includes(message)
-                            return (
-                                <Chip
+                    {status?.goSent ? (
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {PANEL_MESSAGES.map((message) => {
+                                const sent = panelsSent.includes(message)
+                                return (
+                                    <Chip
+                                        key={message}
+                                        label={message}
+                                        color={sent ? 'success' : 'default'}
+                                        variant={sent ? 'filled' : 'outlined'}
+                                    />
+                                )
+                            })}
+                        </Stack>
+                    ) : (
+                        <FormGroup row>
+                            {PANEL_MESSAGES.map((message) => (
+                                <FormControlLabel
                                     key={message}
+                                    control={
+                                        <Checkbox
+                                            checked={autoPanels.includes(message)}
+                                            onChange={() => togglePanel(message)}
+                                        />
+                                    }
                                     label={message}
-                                    color={sent ? 'success' : 'default'}
-                                    variant={sent ? 'filled' : 'outlined'}
                                 />
-                            )
-                        })}
-                    </Stack>
+                            ))}
+                        </FormGroup>
+                    )}
+
+                    {status?.goSent && <ScheduledRemindersList event={event} refreshSignal={panelsSent.length} />}
                 </Box>
             )}
         </Box>
