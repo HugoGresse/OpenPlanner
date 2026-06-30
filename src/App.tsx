@@ -10,11 +10,12 @@ import { LinkProps } from '@mui/material/Link'
 import { EventRouter } from './events/page/EventRouter'
 import { NotificationProvider } from './context/SnackBarProvider'
 import { SuspenseLoader } from './components/SuspenseLoader'
-import { PublicApp } from './public/PublicApp'
 import { ForgotPasswordScreen } from './auth/ForgotPasswordScreen'
 import { AdminScreen } from './events/admin/AdminScreen'
 import { EventApp } from './events/page/EventApp'
 import { lazyWithRetry } from './components/lazyWithRetry'
+
+const PublicApp = lazyWithRetry(() => import('./public/PublicApp').then((module) => ({ default: module.PublicApp })))
 
 const EventsScreen = lazyWithRetry(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
@@ -65,7 +66,9 @@ export const App = ({}) => {
                 <NotificationProvider>
                     <Switch>
                         <Route path="/public/event/:eventId/*?">
-                            <PublicApp />
+                            <Suspense fallback={<SuspenseLoader />}>
+                                <PublicApp />
+                            </Suspense>
                         </Route>
                         <Route path="/auth/reset">
                             <ForgotPasswordScreen />
