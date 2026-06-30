@@ -31,6 +31,10 @@ const StatusReply = Type.Object({
     panelsSent: Type.Array(Type.String()),
 })
 
+// Shared error reply shape. Declaring it (instead of Type.String()) keeps the serializer from
+// double-encoding the JSON body the handlers send via reply.send({ error, details }).
+const ErrorReply = Type.Object({ error: Type.String(), details: Type.Optional(Type.String()) })
+
 const authMatches = (header: string, expected: string): boolean =>
     Boolean(expected) && (header === expected || header === `Bearer ${expected}`)
 
@@ -46,8 +50,8 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 body: SendBody,
                 response: {
                     200: Type.Object({ sent: Type.Boolean(), idMessage: Type.Optional(Type.String()) }),
-                    400: Type.String(),
-                    401: Type.String(),
+                    400: ErrorReply,
+                    401: ErrorReply,
                 },
                 security: [{ apiKey: [] }],
             },
@@ -57,19 +61,19 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             const event = await EventDao.getEvent(fastify.firebase, request.params.eventId)
             const creds = credsFromEvent(event)
             if (!creds) {
-                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                reply.status(400).send({ error: 'GreenAPI is not configured for this event.' })
                 return
             }
             const { to, message } = request.body
             if (!to || to.replace(/[^0-9]/g, '').length < 6) {
-                reply.status(400).send(JSON.stringify({ error: 'A valid recipient phone number is required.' }))
+                reply.status(400).send({ error: 'A valid recipient phone number is required.' })
                 return
             }
             try {
                 const idMessage = await sendMessage(creds, toChatId(to), message)
                 reply.status(200).send({ sent: true, idMessage })
             } catch (err) {
-                reply.status(400).send(JSON.stringify({ error: 'Failed to send', details: (err as Error).message }))
+                reply.status(400).send({ error: 'Failed to send', details: (err as Error).message })
             }
         }
     )
@@ -85,8 +89,8 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 body: StartBody,
                 response: {
                     200: Type.Object({ started: Type.Boolean(), trackCount: Type.Number() }),
-                    400: Type.String(),
-                    401: Type.String(),
+                    400: ErrorReply,
+                    401: ErrorReply,
                 },
                 security: [{ apiKey: [] }],
             },
@@ -97,12 +101,12 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             const event = await EventDao.getEvent(fastify.firebase, eventId)
             const creds = credsFromEvent(event)
             if (!creds) {
-                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                reply.status(400).send({ error: 'GreenAPI is not configured for this event.' })
                 return
             }
             const tracks = event.tracks || []
             if (tracks.length === 0) {
-                reply.status(400).send(JSON.stringify({ error: 'This event has no tracks.' }))
+                reply.status(400).send({ error: 'This event has no tracks.' })
                 return
             }
             const chatId = toChatId(request.body.chatId)
@@ -111,7 +115,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 await WhatsappSessionDao.saveSession(fastify.firebase, eventId, session)
                 reply.status(200).send({ started: true, trackCount: tracks.length })
             } catch (err) {
-                reply.status(400).send(JSON.stringify({ error: 'Failed to start', details: (err as Error).message }))
+                reply.status(400).send({ error: 'Failed to start', details: (err as Error).message })
             }
         }
     )
@@ -134,8 +138,8 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                             })
                         ),
                     }),
-                    400: Type.String(),
-                    401: Type.String(),
+                    400: ErrorReply,
+                    401: ErrorReply,
                 },
                 security: [{ apiKey: [] }],
             },
@@ -145,16 +149,14 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             const event = await EventDao.getEvent(fastify.firebase, request.params.eventId)
             const creds = credsFromEvent(event)
             if (!creds) {
-                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                reply.status(400).send({ error: 'GreenAPI is not configured for this event.' })
                 return
             }
             try {
                 const contacts = await getChats(creds)
                 reply.status(200).send({ contacts })
             } catch (err) {
-                reply
-                    .status(400)
-                    .send(JSON.stringify({ error: 'Failed to fetch contacts', details: (err as Error).message }))
+                reply.status(400).send({ error: 'Failed to fetch contacts', details: (err as Error).message })
             }
         }
     )
@@ -168,7 +170,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 summary: 'Point the GreenAPI instance at our webhook so poll votes are received (reboots instance).',
                 params: Type.Object({ eventId: Type.String() }),
                 body: Type.Object({ webhookUrl: Type.String() }),
-                response: { 200: Type.Object({ configured: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
+                response: { 200: Type.Object({ configured: Type.Boolean() }), 400: ErrorReply, 401: ErrorReply },
                 security: [{ apiKey: [] }],
             },
             preHandler: fastify.auth([fastify.verifyApiKey]),
@@ -177,22 +179,18 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             const event = await EventDao.getEvent(fastify.firebase, request.params.eventId)
             const creds = credsFromEvent(event)
             if (!creds) {
-                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                reply.status(400).send({ error: 'GreenAPI is not configured for this event.' })
                 return
             }
             if (!event.apiKey) {
-                reply
-                    .status(400)
-                    .send(JSON.stringify({ error: 'Generate an event API key first (used as the webhook token).' }))
+                reply.status(400).send({ error: 'Generate an event API key first (used as the webhook token).' })
                 return
             }
             try {
                 await setSettings(creds, { webhookUrl: request.body.webhookUrl, webhookUrlToken: event.apiKey })
                 reply.status(200).send({ configured: true })
             } catch (err) {
-                reply
-                    .status(400)
-                    .send(JSON.stringify({ error: 'Failed to configure webhook', details: (err as Error).message }))
+                reply.status(400).send({ error: 'Failed to configure webhook', details: (err as Error).message })
             }
         }
     )
@@ -205,7 +203,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 tags: ['whatsapp'],
                 summary: 'Current track-management readiness for the event.',
                 params: Type.Object({ eventId: Type.String() }),
-                response: { 200: StatusReply, 401: Type.String() },
+                response: { 200: StatusReply, 401: ErrorReply },
                 security: [{ apiKey: [] }],
             },
             preHandler: fastify.auth([fastify.verifyApiKey]),
@@ -244,7 +242,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                         Type.Boolean({ description: 'Send GO even if not every track is ready yet.' })
                     ),
                 }),
-                response: { 200: Type.Object({ sent: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
+                response: { 200: Type.Object({ sent: Type.Boolean() }), 400: ErrorReply, 401: ErrorReply },
                 security: [{ apiKey: [] }],
             },
             preHandler: fastify.auth([fastify.verifyApiKey]),
@@ -254,33 +252,33 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             const event = await EventDao.getEvent(fastify.firebase, eventId)
             const creds = credsFromEvent(event)
             if (!creds) {
-                reply.status(400).send(JSON.stringify({ error: 'GreenAPI is not configured for this event.' }))
+                reply.status(400).send({ error: 'GreenAPI is not configured for this event.' })
                 return
             }
             const session = await WhatsappSessionDao.getSession(fastify.firebase, eventId)
             if (!session) {
-                reply.status(400).send(JSON.stringify({ error: 'No track-management session in progress.' }))
+                reply.status(400).send({ error: 'No track-management session in progress.' })
                 return
             }
             if (session.goSent) {
-                reply.status(400).send(JSON.stringify({ error: 'GO message was already sent.' }))
+                reply.status(400).send({ error: 'GO message was already sent.' })
                 return
             }
             if (!request.body?.force && !allReady(session.tracks)) {
-                reply.status(400).send(JSON.stringify({ error: 'Not every track is ready yet.' }))
+                reply.status(400).send({ error: 'Not every track is ready yet.' })
                 return
             }
             try {
                 const updated = await sendGoMessage(session, sendersFor(creds))
                 await WhatsappSessionDao.saveSession(fastify.firebase, eventId, updated)
-                reply.status(200).send({ sent: true })
             } catch (err) {
-                reply.status(400).send(JSON.stringify({ error: 'Failed to send GO', details: (err as Error).message }))
+                reply.status(400).send({ error: 'Failed to send GO', details: (err as Error).message })
                 return
             }
 
-            // Best-effort: schedule the timing reminders. GO was already broadcast, so a scheduling
-            // failure here shouldn't turn into an error response — just log it.
+            // Schedule the timing reminders before responding: post-response async work is not
+            // guaranteed to run in a serverless environment (CPU throttled after the body flushes).
+            // GO is already broadcast, so a scheduling failure shouldn't become an error response — log it.
             try {
                 // Default to all reminders; when the client sends an explicit list (with delays), use
                 // those directly so the frontend-configured timing is authoritative.
@@ -294,6 +292,8 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             } catch (err) {
                 request.log?.error({ err }, 'failed to schedule whatsapp panel reminders')
             }
+
+            reply.status(200).send({ sent: true })
         }
     )
 
@@ -315,8 +315,8 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                             })
                         ),
                     }),
-                    400: Type.String(),
-                    401: Type.String(),
+                    400: ErrorReply,
+                    401: ErrorReply,
                 },
                 security: [{ apiKey: [] }],
             },
@@ -327,9 +327,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 const tasks = await listScheduledPanels(fastify.firebase, request.params.eventId)
                 reply.status(200).send({ tasks })
             } catch (err) {
-                reply
-                    .status(400)
-                    .send(JSON.stringify({ error: 'Failed to list scheduled tasks', details: (err as Error).message }))
+                reply.status(400).send({ error: 'Failed to list scheduled tasks', details: (err as Error).message })
             }
         }
     )
@@ -343,7 +341,7 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 summary: 'Cancel a pending scheduled WhatsApp reminder task by its Cloud Tasks name.',
                 params: Type.Object({ eventId: Type.String() }),
                 body: Type.Object({ name: Type.String() }),
-                response: { 200: Type.Object({ deleted: Type.Boolean() }), 400: Type.String(), 401: Type.String() },
+                response: { 200: Type.Object({ deleted: Type.Boolean() }), 400: ErrorReply, 401: ErrorReply },
                 security: [{ apiKey: [] }],
             },
             preHandler: fastify.auth([fastify.verifyApiKey]),
@@ -352,14 +350,12 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             try {
                 const deleted = await deleteScheduledPanel(fastify.firebase, request.params.eventId, request.body.name)
                 if (!deleted) {
-                    reply.status(400).send(JSON.stringify({ error: 'Task not found for this event.' }))
+                    reply.status(400).send({ error: 'Task not found for this event.' })
                     return
                 }
                 reply.status(200).send({ deleted: true })
             } catch (err) {
-                reply
-                    .status(400)
-                    .send(JSON.stringify({ error: 'Failed to delete task', details: (err as Error).message }))
+                reply.status(400).send({ error: 'Failed to delete task', details: (err as Error).message })
             }
         }
     )

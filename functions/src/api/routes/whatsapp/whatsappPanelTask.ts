@@ -36,6 +36,10 @@ export const sendWhatsappPanel = onTaskDispatched<PanelTaskPayload>(
         const session = await WhatsappSessionDao.getSession(app, eventId)
         if (!session?.chatId) return
 
+        // Idempotency: retries (maxAttempts: 3) must not re-send a reminder that already went out
+        // (e.g. send succeeded but the addPanelSent write failed on the previous attempt).
+        if (session.panelsSent?.includes(message)) return
+
         await sendMessage(creds, session.chatId, message)
         await WhatsappSessionDao.addPanelSent(app, eventId, message)
     }
