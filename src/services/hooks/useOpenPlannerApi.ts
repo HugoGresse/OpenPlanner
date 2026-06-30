@@ -47,7 +47,13 @@ export async function fetchOpenPlannerApi<T>(
 
     const response = await fetch(url.href, fetchOptions)
     if (!response.ok) {
-        throw new Error(`Failed to fetch from ${endpoint}`)
+        // Surface the API's error message ({ error, details }) instead of a generic failure.
+        const detail = await response
+            .clone()
+            .json()
+            .then((body) => (body && typeof body.error === 'string' ? body.error : null))
+            .catch(() => null)
+        throw new Error(detail || `Failed to fetch from ${endpoint}`)
     }
     return await response.json()
 }
