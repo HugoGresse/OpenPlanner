@@ -1,8 +1,10 @@
 import { useLocalStorage } from '@uidotdev/usehooks'
-import { Box, Button, Checkbox, Container, FormControlLabel, TextField, Typography } from '@mui/material'
-import React, { useState } from 'react'
+import { Box, Button, Container, TextField, Typography } from '@mui/material'
+import { useState } from 'react'
 import { usePasswordProtectedEvent } from '../hooks/usePasswordProtectedEvent'
 import { useTalkSelection } from './useTalkSelection'
+import { useAutoReloadAfterTalk } from './useAutoReloadAfterTalk'
+import { LiveTranscriptionView } from './LiveTranscriptionView'
 import { DateTime } from 'luxon'
 
 export type PublicEventTranscriptionProps = {
@@ -13,20 +15,14 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
     const [pagePassword, savePagePassword] = useLocalStorage<string>('pagePassword', '')
     const [selectedTrack, setSelectedTrack] = useLocalStorage<string>('selectedTrack', '')
     const [tempPagePassword, saveTempPagePassword] = useState<string>('')
-    const [options, setOptions] = useState<{
-        backgroundColor: string
-        textColor: string
-        fontSize: number
-    }>({
-        backgroundColor: '00ff00',
-        textColor: 'ffffff',
-        fontSize: 40,
-    })
 
     const { reply, eventData, isLoading, error } = usePasswordProtectedEvent(eventId, pagePassword)
     const gladiaAPIKey = reply?.gladiaAPIKey
 
     const [selectedTalk, upcomingTalks, resetSelectedTalk, setSelectedTalk] = useTalkSelection(selectedTrack, eventData)
+
+    // Roll the screen over automatically 5 min after the current talk ends.
+    useAutoReloadAfterTalk(selectedTalk?.dateEnd)
 
     const saveStuffInLocalStorage = (pagePassword: string, selectedTrack: string) => {
         setSelectedTrack(selectedTrack)
@@ -138,49 +134,23 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
         )
     }
 
-    const startTime = DateTime.fromISO(selectedTalk?.dateStart).toFormat('HH:mm')
-    const endTime = DateTime.fromISO(selectedTalk?.dateEnd).toFormat('HH:mm')
     const currentTalkIndex = upcomingTalks.findIndex((t) => t.id === selectedTalk?.id)
-    const windowHeight = window.innerHeight
-    const iframeHeight = windowHeight - 200
+    const nextTalk = upcomingTalks[currentTalkIndex + 1]
+    const trackName = eventData.event.tracks.find((t) => t.id === selectedTrack)?.name ?? selectedTrack
 
     return (
         <Box>
-            <iframe
-                key={`${selectedTalk?.id}-${options.backgroundColor}-${options.textColor}`}
-                src={`${
-                    window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://openplanner.fr'
-                }/gladia.html?token=${gladiaAPIKey}&font_size=43&background_color=000&text_color=ffffff&line_height=1&alignment=left&hide_settings=true&font_name=Arial`}
-                width="100%"
-                height={`${iframeHeight}px`}
-                allow="camera; microphone"
-                style={{ border: 'none' }}
+            <LiveTranscriptionView
+                apiKey={gladiaAPIKey}
+                sessionKey={selectedTalk?.id ?? ''}
+                trackName={trackName}
+                talkTitle={selectedTalk.title}
+                dateStart={selectedTalk.dateStart}
+                dateEnd={selectedTalk.dateEnd}
+                nextTalkTitle={nextTalk?.title}
+                onNext={() => nextTalk && setSelectedTalk(nextTalk)}
+                onClear={() => saveStuffInLocalStorage('', '')}
             />
-
-            <Box
-                position={'absolute'}
-                right={0}
-                bottom={0}
-                left={0}
-                display={'flex'}
-                alignItems={'center'}
-                justifyContent={'center'}>
-                <p>
-                    TRACK: {selectedTrack} Talk: {selectedTalk?.title} Start: {startTime} End: {endTime}
-                </p>
-                <p> Next talk: {upcomingTalks[currentTalkIndex + 1]?.title}</p>
-                <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => {
-                        setSelectedTalk(upcomingTalks[currentTalkIndex + 1])
-                    }}>
-                    Go to next talk
-                </Button>
-                <Button size="small" variant="contained" onClick={() => saveStuffInLocalStorage('', '')}>
-                    Clear password
-                </Button>
-            </Box>
         </Box>
     )
 }
