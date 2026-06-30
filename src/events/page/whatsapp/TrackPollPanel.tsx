@@ -74,12 +74,66 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
         }
     }, [event])
 
-    // Poll so button presses (handled via the GreenAPI webhook) and scheduled reminders show up
-    // without a manual reload.
+    // Poll every 3s so poll votes (via the GreenAPI webhook) and scheduled reminders show up without a
+    // manual reload — but only while the window is focused. Polling pauses on blur/tab-hide and resumes
+    // (with an immediate refresh) on focus, and hard-stops after 2h with no focus activity so a
+    // forgotten tab doesn't poll forever.
     useEffect(() => {
-        refresh()
-        const id = setInterval(refresh, 5000)
-        return () => clearInterval(id)
+        const INACTIVITY_MS = 2 * 60 * 60 * 1000
+        let timer: ReturnType<typeof setInterval> | null = null
+        let deadline = Date.now() + INACTIVITY_MS
+        // Track focus via blur/focus events (document.hasFocus() is unreliable in embedded contexts);
+        // assume focused on mount.
+        let blurred = false
+
+        const stop = () => {
+            if (timer) {
+                clearInterval(timer)
+                timer = null
+            }
+        }
+        const startPolling = () => {
+            if (timer) return
+            refresh()
+            timer = setInterval(() => {
+                if (Date.now() > deadline) {
+                    stop()
+                    return
+                }
+                refresh()
+            }, 3000)
+        }
+
+        const sync = () => {
+            if (!document.hidden && !blurred) {
+                // Focus/visibility regained counts as activity: push the inactivity deadline back.
+                deadline = Date.now() + INACTIVITY_MS
+                startPolling()
+            } else {
+                stop()
+            }
+        }
+
+        const onFocus = () => {
+            blurred = false
+            sync()
+        }
+        const onBlur = () => {
+            blurred = true
+            sync()
+        }
+
+        window.addEventListener('focus', onFocus)
+        window.addEventListener('blur', onBlur)
+        document.addEventListener('visibilitychange', sync)
+        sync()
+
+        return () => {
+            window.removeEventListener('focus', onFocus)
+            window.removeEventListener('blur', onBlur)
+            document.removeEventListener('visibilitychange', sync)
+            stop()
+        }
     }, [refresh])
 
     const start = async () => {
@@ -120,6 +174,24 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
         }
     }
 
+    // The conference slot currently running: sessions whose window spans now; takes the latest such
+    // start (the slot in progress) and that slot's end.
+    const currentSlot = useMemo(() => {
+        const now = DateTime.now()
+        const running = (sessions ?? []).filter(
+            (s) => s.dates?.start && s.dates?.end && s.dates.start <= now && s.dates.end > now
+        )
+        if (running.length === 0) return null
+        const start = running.reduce(
+            (max, s) => (s.dates!.start! > max ? s.dates!.start! : max),
+            running[0].dates!.start!
+        )
+        const end = running
+            .filter((s) => +s.dates!.start! === +start)
+            .reduce((max, s) => (s.dates?.end && s.dates.end > max ? s.dates.end : max), start)
+        return { start, end }
+    }, [sessions])
+
     // The next upcoming conference slot: soonest session start in the future, with the slot's end.
     const nextSlot = useMemo(() => {
         const now = DateTime.now()
@@ -134,6 +206,11 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
             .reduce((max, s) => (s.dates?.end && s.dates.end > max ? s.dates.end : max), start)
         return { start, end }
     }, [sessions])
+
+    const formatSlot = (slot: { start: DateTime; end: DateTime }): string => {
+        const fmt = slot.start.hasSame(DateTime.now(), 'day') ? 'HH:mm' : 'ccc dd LLL HH:mm'
+        return `${slot.start.toFormat(fmt)} – ${slot.end.toFormat('HH:mm')}`
+    }
 
     const trackList = status?.tracks ?? []
     const readyCount = trackList.filter((t) => t.ready).length
@@ -153,14 +230,10 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
 
     return (
         <Box>
+            {currentSlot && <Typography variant="subtitle2">Current conference: {formatSlot(currentSlot)}</Typography>}
             {nextSlot && (
                 <Typography variant="subtitle2" gutterBottom>
-                    Next conference:{' '}
-                    {nextSlot.start.toFormat(
-                        nextSlot.start.hasSame(DateTime.now(), 'day') ? 'HH:mm' : 'ccc dd LLL HH:mm'
-                    )}
-                    {' – '}
-                    {nextSlot.end.toFormat('HH:mm')}
+                    Next conference: {formatSlot(nextSlot)}
                 </Typography>
             )}
             <FormControlLabel
