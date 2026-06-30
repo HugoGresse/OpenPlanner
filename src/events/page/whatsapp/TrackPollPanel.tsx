@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Checkbox, Chip, FormControlLabel, FormGroup, Stack, Typography } from '@mui/material'
+import { Box, Checkbox, Chip, FormControlLabel, FormGroup, Stack, Switch, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { doc, updateDoc } from 'firebase/firestore'
 import { useLocalStorage } from '@uidotdev/usehooks'
@@ -24,9 +24,20 @@ export type TrackPollPanelProps = {
     chatId: string
 }
 
-// Timing reminders auto-scheduled by the backend when GO is sent — kept here only to render their
-// status (sent/pending), matched against SessionStatus.panelsSent.
-const PANEL_MESSAGES = ['Panneau 15 min', 'Panneau 10 min', 'Panneau 5 min', 'Fin de session']
+type PanelMessage = { message: string; delaySeconds: number }
+
+const TALK_PANEL_CONFIGURATION: PanelMessage[] = [
+    { message: 'Panneau 15 min', delaySeconds: 1 * 60 },
+    { message: 'Panneau 10 min', delaySeconds: 2 * 60 },
+    { message: 'Panneau 5 min', delaySeconds: 3 * 60 },
+    { message: 'Fin de session', delaySeconds: 4 * 60 },
+]
+
+const QUICKY_PANEL_CONFIGURATION: PanelMessage[] = [
+    { message: 'Panneau 10 min', delaySeconds: 1 * 60 },
+    { message: 'Panneau 5 min', delaySeconds: 2 * 60 },
+    { message: 'Fin de session', delaySeconds: 3 * 60 },
+]
 
 // Sends the track poll, polls for the resulting readiness, and lets the operator broadcast GO once
 // every track has voted ready.
@@ -36,11 +47,20 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
     const [starting, setStarting] = useState(false)
     const [sendingGo, setSendingGo] = useState(false)
     const [status, setStatus] = useState<SessionStatus | null>(null)
+    // false = Talk (default), true = Quicky. Persisted per event.
+    const [isQuicky, setIsQuicky] = useLocalStorage<boolean>(`whatsapp-quicky-mode-${event.id}`, false)
+    const panelConfig = isQuicky ? QUICKY_PANEL_CONFIGURATION : TALK_PANEL_CONFIGURATION
     // Which reminders to auto-schedule when GO is sent. All by default, persisted per event.
-    const [autoPanels, setAutoPanels] = useLocalStorage<string[]>(`whatsapp-auto-panels-${event.id}`, PANEL_MESSAGES)
+    const [autoPanels, setAutoPanels] = useLocalStorage<PanelMessage[]>(`whatsapp-auto-panels-${event.id}`, panelConfig)
 
-    const togglePanel = (message: string) => {
-        setAutoPanels(autoPanels.includes(message) ? autoPanels.filter((m) => m !== message) : [...autoPanels, message])
+    const switchConfig = (quicky: boolean) => {
+        setIsQuicky(quicky)
+        setAutoPanels(quicky ? QUICKY_PANEL_CONFIGURATION : TALK_PANEL_CONFIGURATION)
+    }
+
+    const togglePanel = (entry: PanelMessage) => {
+        const included = autoPanels.some((p) => p.message === entry.message)
+        setAutoPanels(included ? autoPanels.filter((p) => p.message !== entry.message) : [...autoPanels, entry])
     }
 
     const refresh = useCallback(async () => {
@@ -143,6 +163,12 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
                     {nextSlot.end.toFormat('HH:mm')}
                 </Typography>
             )}
+            <FormControlLabel
+                control={<Switch checked={!!isQuicky} onChange={(e) => switchConfig(e.target.checked)} />}
+                label={isQuicky ? 'Quicky' : 'Talk'}
+                sx={{ mb: 1 }}
+            />
+
             <LoadingButton
                 onClick={start}
                 disabled={starting || chatId.trim().length === 0}
@@ -198,12 +224,12 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
                     </Typography>
                     {status?.goSent ? (
                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                            {PANEL_MESSAGES.map((message) => {
-                                const sent = panelsSent.includes(message)
+                            {panelConfig.map((entry) => {
+                                const sent = panelsSent.includes(entry.message)
                                 return (
                                     <Chip
-                                        key={message}
-                                        label={message}
+                                        key={entry.message}
+                                        label={entry.message}
                                         color={sent ? 'success' : 'default'}
                                         variant={sent ? 'filled' : 'outlined'}
                                     />
@@ -212,16 +238,16 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
                         </Stack>
                     ) : (
                         <FormGroup row>
-                            {PANEL_MESSAGES.map((message) => (
+                            {panelConfig.map((entry) => (
                                 <FormControlLabel
-                                    key={message}
+                                    key={entry.message}
                                     control={
                                         <Checkbox
-                                            checked={autoPanels.includes(message)}
-                                            onChange={() => togglePanel(message)}
+                                            checked={autoPanels.some((p: PanelMessage) => p.message === entry.message)}
+                                            onChange={() => togglePanel(entry)}
                                         />
                                     }
-                                    label={message}
+                                    label={entry.message}
                                 />
                             ))}
                         </FormGroup>

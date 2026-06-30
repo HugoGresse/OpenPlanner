@@ -224,7 +224,10 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
     )
 
     // --- Manually broadcast the GO message once every track is ready ---
-    fastify.post<{ Params: { eventId: string }; Body: { panels?: string[]; force?: boolean } }>(
+    fastify.post<{
+        Params: { eventId: string }
+        Body: { panels?: { message: string; delaySeconds: number }[]; force?: boolean }
+    }>(
         '/v1/:eventId/whatsapp/track-management/go',
         {
             schema: {
@@ -233,8 +236,8 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 params: Type.Object({ eventId: Type.String() }),
                 body: Type.Object({
                     panels: Type.Optional(
-                        Type.Array(Type.String(), {
-                            description: 'Reminder messages to auto-schedule. Omit to schedule all of them.',
+                        Type.Array(Type.Object({ message: Type.String(), delaySeconds: Type.Number() }), {
+                            description: 'Reminder messages to auto-schedule with their delays. Omit to schedule all.',
                         })
                     ),
                     force: Type.Optional(
@@ -279,11 +282,9 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
             // Best-effort: schedule the timing reminders. GO was already broadcast, so a scheduling
             // failure here shouldn't turn into an error response — just log it.
             try {
-                // Default to all reminders; when the client sends an explicit list, schedule only those.
-                const requested = request.body?.panels
-                const schedule = Array.isArray(requested)
-                    ? PANEL_SCHEDULE.filter((p) => requested.includes(p.message))
-                    : PANEL_SCHEDULE
+                // Default to all reminders; when the client sends an explicit list (with delays), use
+                // those directly so the frontend-configured timing is authoritative.
+                const schedule = Array.isArray(request.body?.panels) ? request.body.panels : PANEL_SCHEDULE
                 const taskQueue = getFunctions(fastify.firebase).taskQueue<PanelTaskPayload>(sendWhatsappPanelTaskName)
                 await Promise.all(
                     schedule.map(({ delaySeconds, message }) =>
