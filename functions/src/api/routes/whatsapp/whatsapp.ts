@@ -375,10 +375,11 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
         try {
             const md = body?.messageData
             const votes: any[] = md?.pollMessageData?.votes || []
-            const votedOptionNames = votes
-                .filter((v) => (v?.optionVoters?.length || 0) > 0)
-                .map((v) => v?.optionName)
-                .filter(Boolean)
+            // Full snapshot of this poll's options: ready iff it currently has at least one voter.
+            const optionStates = votes
+                .map((v) => ({ name: v?.optionName as string, ready: (v?.optionVoters?.length || 0) > 0 }))
+                .filter((o) => o.name)
+            const votedOptionNames = optionStates.filter((o) => o.ready).map((o) => o.name)
 
             request.log?.info(
                 {
@@ -398,8 +399,10 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                     return
                 }
                 const session = await WhatsappSessionDao.getSession(fastify.firebase, eventId)
-                if (session && votedOptionNames.length > 0) {
-                    const updated = applyPollVotes(session, votedOptionNames)
+                // Apply whenever the poll carries options (even with zero voters) so cancelling the last
+                // vote un-readies the track.
+                if (session && optionStates.length > 0) {
+                    const updated = applyPollVotes(session, optionStates)
                     await WhatsappSessionDao.saveSession(fastify.firebase, eventId, updated)
                 }
             }

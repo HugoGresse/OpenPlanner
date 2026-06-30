@@ -27,15 +27,21 @@ export const startTrackSession = async (
     return { chatId, tracks: trackStates, pollMessageIds, goSent: false, panelsSent: [] }
 }
 
-// Apply a poll vote update: tracks whose option got at least one vote become ready (sticky — a track
-// stays ready even if a voter later removes their vote). The GO message is no longer sent
-// automatically — see sendGoMessage, triggered manually from the admin UI.
-export const applyPollVotes = (session: TrackSession, votedOptionNames: string[]): TrackSession => {
-    const voted = new Set(votedOptionNames)
+// Apply a poll vote snapshot for one poll message. GreenAPI sends the full current vote state, so each
+// track that is an option in this poll is set ready iff it currently has at least one voter — meaning
+// cancelling a vote un-readies the track. Tracks that aren't options in this poll (when >12 tracks were
+// split across several poll messages) are left untouched. GO is never sent automatically — see
+// sendGoMessage, triggered manually from the admin UI.
+export const applyPollVotes = (
+    session: TrackSession,
+    optionStates: { name: string; ready: boolean }[]
+): TrackSession => {
+    const readyByName = new Map(optionStates.map((o) => [o.name, o.ready]))
 
     for (const track of session.tracks) {
-        if (!track.ready && voted.has(track.name)) {
-            track.ready = true
+        const ready = readyByName.get(track.name)
+        if (ready !== undefined) {
+            track.ready = ready
         }
     }
 

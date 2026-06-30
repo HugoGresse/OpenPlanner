@@ -36,24 +36,49 @@ describe('applyPollVotes', () => {
         const { senders } = makeSenders()
         const session = await startTrackSession(tracks(3), 'c@c.us', senders)
 
-        applyPollVotes(session, ['Track 1'])
+        applyPollVotes(session, [
+            { name: 'Track 1', ready: true },
+            { name: 'Track 2', ready: false },
+            { name: 'Track 3', ready: false },
+        ])
 
         expect(session.tracks.find((t) => t.id === 't1')!.ready).toBe(true)
         expect(session.tracks.find((t) => t.id === 't2')!.ready).toBe(false)
     })
 
-    test('readiness is sticky and never sends GO on its own', async () => {
+    test('cancelling a vote un-readies the track and never sends GO on its own', async () => {
         const { senders, sendMessage } = makeSenders()
         const session = await startTrackSession(tracks(2), 'c@c.us', senders)
 
-        applyPollVotes(session, ['Track 1'])
-        expect(sendMessage).not.toHaveBeenCalled()
+        applyPollVotes(session, [
+            { name: 'Track 1', ready: true },
+            { name: 'Track 2', ready: false },
+        ])
+        expect(session.tracks.find((t) => t.id === 't1')!.ready).toBe(true)
 
-        // A later update without Track 1's voter must not un-ready it.
-        applyPollVotes(session, ['Track 2'])
-        expect(session.tracks.every((t) => t.ready)).toBe(true)
+        // The voter removes their vote: the same poll now reports Track 1 with no voters.
+        applyPollVotes(session, [
+            { name: 'Track 1', ready: false },
+            { name: 'Track 2', ready: false },
+        ])
+        expect(session.tracks.find((t) => t.id === 't1')!.ready).toBe(false)
         expect(sendMessage).not.toHaveBeenCalled()
         expect(session.goSent).toBe(false)
+    })
+
+    test('only updates tracks that are options in this poll (multi-poll split)', async () => {
+        const { senders } = makeSenders()
+        const session = await startTrackSession(tracks(2), 'c@c.us', senders)
+
+        // Each track voted ready via its own poll message.
+        applyPollVotes(session, [{ name: 'Track 1', ready: true }])
+        applyPollVotes(session, [{ name: 'Track 2', ready: true }])
+        expect(session.tracks.every((t) => t.ready)).toBe(true)
+
+        // An update for the first poll must not touch Track 2 (a different poll message).
+        applyPollVotes(session, [{ name: 'Track 1', ready: false }])
+        expect(session.tracks.find((t) => t.id === 't1')!.ready).toBe(false)
+        expect(session.tracks.find((t) => t.id === 't2')!.ready).toBe(true)
     })
 })
 
@@ -61,7 +86,10 @@ describe('sendGoMessage', () => {
     test('sends the GO message and flags the session as sent', async () => {
         const { senders, sendMessage } = makeSenders()
         const session = await startTrackSession(tracks(2), 'c@c.us', senders)
-        applyPollVotes(session, ['Track 1', 'Track 2'])
+        applyPollVotes(session, [
+            { name: 'Track 1', ready: true },
+            { name: 'Track 2', ready: true },
+        ])
 
         const updated = await sendGoMessage(session, senders)
 
