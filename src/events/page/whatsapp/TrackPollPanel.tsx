@@ -27,16 +27,16 @@ export type TrackPollPanelProps = {
 type PanelMessage = { message: string; delaySeconds: number }
 
 const TALK_PANEL_CONFIGURATION: PanelMessage[] = [
-    { message: 'Panneau 15 min', delaySeconds: 1 * 60 },
-    { message: 'Panneau 10 min', delaySeconds: 2 * 60 },
-    { message: 'Panneau 5 min', delaySeconds: 3 * 60 },
-    { message: 'Fin de session', delaySeconds: 4 * 60 },
+    { message: 'Panneau 15 min', delaySeconds: 35 * 60 },
+    { message: 'Panneau 10 min', delaySeconds: 40 * 60 },
+    { message: 'Panneau 5 min', delaySeconds: 45 * 60 },
+    { message: 'Fin de session', delaySeconds: 50 * 60 },
 ]
 
 const QUICKY_PANEL_CONFIGURATION: PanelMessage[] = [
-    { message: 'Panneau 10 min', delaySeconds: 1 * 60 },
-    { message: 'Panneau 5 min', delaySeconds: 2 * 60 },
-    { message: 'Fin de session', delaySeconds: 3 * 60 },
+    { message: 'Panneau 10 min', delaySeconds: 10 * 60 },
+    { message: 'Panneau 5 min', delaySeconds: 15 * 60 },
+    { message: 'Fin de session', delaySeconds: 20 * 60 },
 ]
 
 // Sends the track poll, polls for the resulting readiness, and lets the operator broadcast GO once
