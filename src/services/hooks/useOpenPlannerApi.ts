@@ -10,7 +10,7 @@ type ApiResponse<T> = {
 }
 
 type RequestOptions = {
-    method?: 'GET' | 'POST'
+    method?: 'GET' | 'POST' | 'DELETE'
     body?: any
     query?: Record<string, string | number | boolean | undefined | null>
 }
@@ -41,7 +41,7 @@ export async function fetchOpenPlannerApi<T>(
         },
     }
 
-    if (options.body && options.method === 'POST') {
+    if (options.body && options.method !== 'GET') {
         fetchOptions.body = JSON.stringify(options.body)
     }
 

@@ -134,7 +134,8 @@ export const EventLayout = ({ children, event, customTitle }: EventLayoutProps) 
         return `/${firstParams?.routeName}`.startsWith(item.href) || `/${subParams?.routeName}`.startsWith(item.href)
     })
     const routeName = menuItem ? menuItem.name : 'Loading...'
-    const hideAppBar = menuItem?.href === '/schedule'
+    // WhatsApp isn't in the sidebar Menu, so match its route param directly (it has its own header).
+    const hideAppBar = menuItem?.href === '/schedule' || firstParams?.routeName === 'whatsapp'
 
     return (
         <PortalContext.Provider value={{ rightToolbarElement, titleElement }}>
