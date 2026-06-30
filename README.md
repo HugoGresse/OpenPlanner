@@ -1,6 +1,8 @@
 # OpenPlanner
 
-A website to
+An all-in-one platform to plan a conference and run the live show: talks, speakers, sponsors, schedule, and day-of tooling.
+
+### Talks, speakers & schedule
 
 -   schedule accepted talks from [ConferenceHall](https://conference-hall.io/): pick date & time
 -   talks and speakers:
@@ -12,9 +14,25 @@ A website to
     -   categories and formats for sessions
     -   private notes for speaker, email, phone
     -   tracks / rooms
+-   speaker self-edit via a magic link, with admin approval
+
+### Sponsors, team & content
+
 -   manage sponsors & categories
 -   manage team members
 -   FAQ with admin and public or hidden pages
+-   AI-assisted content generation for sessions and social posts
+-   schedule social media posts
+-   public job board: collect and manage job offers from sponsors
+
+### Day-of / live show
+
+-   WhatsApp track management ([GreenAPI](https://green-api.com/)): poll each track "ready?", broadcast the GO, and auto-schedule timing reminders
+-   live transcription & on-screen subtitles for talks (powered by [Gladia](https://www.gladia.io/) live v2)
+-   intermission / between-talks screen
+
+### Public & integrations
+
 -   public schedule website builtin (and optin)
 -   [API](https://api.openplanner.fr/) & webhooks
 
@@ -24,8 +42,10 @@ Project use:
 
 -   TypeScript everywhere
 -   Google Firestore (native) database
--   React
+-   React (frontend) + Material UI
 -   Firebase Hosting & functions
+-   API: [Fastify](https://fastify.dev/) + [TypeBox](https://github.com/sinclairzx81/typebox) (runtime + compile-time schemas)
+-   Integrations: ConferenceHall, [Gladia](https://www.gladia.io/) (live transcription), [GreenAPI](https://green-api.com/) (WhatsApp), Bupher (social posts)
 
 Core concepts:
 
