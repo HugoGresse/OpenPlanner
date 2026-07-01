@@ -268,27 +268,15 @@ export const TrackPollPanel = ({ event, chatId }: TrackPollPanelProps) => {
                         ))}
                     </Stack>
 
-                    {allTracksReady && !status?.goSent && (
+                    {!status?.goSent && (
                         <LoadingButton
-                            onClick={() => sendGo(false)}
+                            onClick={() => sendGo(!allTracksReady)}
                             disabled={sendingGo}
                             loading={sendingGo}
-                            variant="contained"
-                            color="success"
+                            variant={allTracksReady ? 'contained' : 'outlined'}
+                            color={allTracksReady ? 'success' : 'warning'}
                             sx={{ mt: 2 }}>
-                            Send GO message
-                        </LoadingButton>
-                    )}
-
-                    {!allTracksReady && readyCount > 0 && !status?.goSent && (
-                        <LoadingButton
-                            onClick={() => sendGo(true)}
-                            disabled={sendingGo}
-                            loading={sendingGo}
-                            variant="outlined"
-                            color="warning"
-                            sx={{ mt: 2 }}>
-                            Force GO ({readyCount}/{total} ready)
+                            {allTracksReady ? 'Send GO message' : `Force GO (${readyCount}/${total} ready)`}
                         </LoadingButton>
                     )}
 
