@@ -377,20 +377,20 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 .filter((o) => o.name)
             const votedOptionNames = optionStates.filter((o) => o.ready).map((o) => o.name)
 
-            request.log?.info(
-                {
-                    eventId,
-                    typeWebhook: body?.typeWebhook,
-                    typeMessage: md?.typeMessage,
-                    votedOptionNames,
-                    hasAuth: Boolean(authHeader),
-                },
-                'whatsapp webhook received'
-            )
+            // Use console.* (not request.log): the Fastify logger is disabled in production, so
+            // request.log is a no-op there and nothing reaches Cloud Logging. console.* is captured.
+            console.info('[whatsapp webhook] received', {
+                eventId,
+                typeWebhook: body?.typeWebhook,
+                typeMessage: md?.typeMessage,
+                votedOptionNames,
+                hasAuth: Boolean(authHeader),
+            })
 
             if (md?.typeMessage === 'pollUpdateMessage') {
                 const event = await EventDao.getEvent(fastify.firebase, eventId)
                 if (!event.apiKey || !authMatches(authHeader, event.apiKey)) {
+                    console.warn('[whatsapp webhook] unauthorized', { eventId, hasAuth: Boolean(authHeader) })
                     reply.status(401).send({ error: 'Unauthorized webhook' })
                     return
                 }
@@ -400,10 +400,26 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                 if (session && optionStates.length > 0) {
                     const updated = applyPollVotes(session, optionStates)
                     await WhatsappSessionDao.saveSession(fastify.firebase, eventId, updated)
+                    console.info('[whatsapp webhook] poll votes applied and session saved', {
+                        eventId,
+                        optionCount: optionStates.length,
+                        readyTracks: updated.tracks.filter((t) => t.ready).map((t) => t.name),
+                        readyCount: updated.tracks.filter((t) => t.ready).length,
+                        totalTracks: updated.tracks.length,
+                        goSent: updated.goSent,
+                    })
+                } else {
+                    // Reached the pollUpdate branch but nothing was persisted — helps distinguish "no
+                    // track session started yet" from "poll carried no options".
+                    console.warn('[whatsapp webhook] poll update not applied (no session or no options)', {
+                        eventId,
+                        hasSession: Boolean(session),
+                        optionCount: optionStates.length,
+                    })
                 }
             }
         } catch (err) {
-            request.log?.error({ err }, 'whatsapp webhook failed')
+            console.error('[whatsapp webhook] failed', err)
         }
 
         // 200 for everything else (status pings, plain messages) so GreenAPI does not retry.
