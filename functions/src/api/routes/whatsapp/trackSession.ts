@@ -32,10 +32,15 @@ export const allReady = (tracks: TrackState[]): boolean => tracks.length > 0 && 
 export const goMessage = (tracks: TrackState[]): string => {
     const notReady = tracks.filter((t) => !t.ready)
     if (notReady.length === 0) {
-        return     `🟢 GO — all ${tracks.length} tracks are ready. You can start.`
-}
-    // Forced GO: some tracks never confirmed ready. Be explicit about which ones.
+        return `🟢 GO — all ${tracks.length} tracks are ready. You can start.`
+    }
+
     const readyCount = tracks.length - notReady.length
+    if (readyCount === 0) {
+        return `🟢 GO — 0/${tracks.length} tracks prêts. Le sondage ? Personne ne l'a vu. On y va quand même, c'est la magie du live 🦩`
+    }
+
+    // Forced GO: some tracks never confirmed ready. Be explicit about which ones.
     const names = notReady.map((t) => t.name).join(', ')
     return `🟢 GO — ${readyCount}/${tracks.length} tracks ready, starting anyway. Not ready: ${names}.`
 }
