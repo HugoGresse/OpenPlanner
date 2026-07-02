@@ -44,9 +44,12 @@ export const toHexColor = (value: string): string => (value.startsWith('#') ? va
 // Read settings from a URL query string, falling back to defaults for anything missing/invalid.
 export const settingsFromQuery = (search: string): TranscriptionSettings => {
     const q = new URLSearchParams(search)
-    const num = (key: string, fallback: number) => {
-        const parsed = Number(q.get(key))
-        return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+    const num = (key: string, fallback: number, allowZero = false) => {
+        const raw = q.get(key)
+        if (raw === null) return fallback
+        const parsed = Number(raw)
+        if (!Number.isFinite(parsed)) return fallback
+        return parsed > 0 || (allowZero && parsed === 0) ? parsed : fallback
     }
     const csv = (raw: string | null): string[] | null =>
         raw
@@ -69,7 +72,7 @@ export const settingsFromQuery = (search: string): TranscriptionSettings => {
         alignment: alignment === 'left' || alignment === 'right' ? alignment : DEFAULT_SETTINGS.alignment,
         languages: languages?.length ? languages : DEFAULT_SETTINGS.languages,
         customVocabulary: csv(q.get('custom_vocabulary')) ?? DEFAULT_SETTINGS.customVocabulary,
-        endpointing: num('endpointing', DEFAULT_SETTINGS.endpointing),
+        endpointing: num('endpointing', DEFAULT_SETTINGS.endpointing, true),
         hideSettings: q.has('hide_settings') ? q.get('hide_settings') === 'true' : DEFAULT_SETTINGS.hideSettings,
     }
 }
