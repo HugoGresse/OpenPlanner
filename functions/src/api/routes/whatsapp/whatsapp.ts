@@ -290,7 +290,9 @@ export const whatsappRoutes = (fastify: FastifyInstance, options: any, done: () 
                     )
                 )
             } catch (err) {
-                request.log?.error({ err }, 'failed to schedule whatsapp panel reminders')
+                // console.* (not request.log) so this reaches Cloud Logging in production, where the
+                // Fastify logger is disabled.
+                console.error('[whatsapp go] failed to schedule panel reminders', err)
             }
 
             reply.status(200).send({ sent: true })

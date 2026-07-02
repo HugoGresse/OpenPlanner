@@ -1,9 +1,9 @@
 import { useLocalStorage } from '@uidotdev/usehooks'
 import { Box, Button, Container, TextField, Typography } from '@mui/material'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { usePasswordProtectedEvent } from '../hooks/usePasswordProtectedEvent'
 import { useTalkSelection } from './useTalkSelection'
-import { useAutoReloadAfterTalk } from './useAutoReloadAfterTalk'
+import { useAutoAdvanceAfterTalk } from './useAutoAdvanceAfterTalk'
 import { LiveTranscriptionView } from './LiveTranscriptionView'
 import { DateTime } from 'luxon'
 
@@ -21,8 +21,15 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
 
     const [selectedTalk, upcomingTalks, resetSelectedTalk, setSelectedTalk] = useTalkSelection(selectedTrack, eventData)
 
-    // Roll the screen over automatically 5 min after the current talk ends.
-    useAutoReloadAfterTalk(selectedTalk?.dateEnd)
+    const advanceToNextTalk = useCallback(() => {
+        if (!selectedTalk) return
+        const currentIndex = upcomingTalks.findIndex((t) => t.id === selectedTalk.id)
+        const next = upcomingTalks[currentIndex + 1]
+        if (next) setSelectedTalk(next)
+    }, [selectedTalk, upcomingTalks, setSelectedTalk])
+
+    // Roll over to the next talk automatically 5 min after the current one ends.
+    useAutoAdvanceAfterTalk(selectedTalk?.dateEnd, advanceToNextTalk)
 
     const saveStuffInLocalStorage = (pagePassword: string, selectedTrack: string) => {
         setSelectedTrack(selectedTrack)

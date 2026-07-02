@@ -126,7 +126,14 @@ export const TranscriptionSettingsPanel = ({ settings, onChange }: Transcription
                 label="Endpointing (s)"
                 inputProps={{ step: 0.05, min: 0 }}
                 value={settings.endpointing}
-                onChange={(e) => set('endpointing', Number(e.target.value) || settings.endpointing)}
+                onChange={(e) => {
+                    const parsed = Number(e.target.value)
+                    // Keep 0 (valid = disable endpointing); only fall back on empty/invalid input.
+                    set(
+                        'endpointing',
+                        e.target.value === '' || Number.isNaN(parsed) || parsed < 0 ? settings.endpointing : parsed
+                    )
+                }}
                 sx={fieldSx}
             />
             <Button variant="contained" size="small" onClick={() => set('hideSettings', true)} sx={{ ml: 'auto' }}>
