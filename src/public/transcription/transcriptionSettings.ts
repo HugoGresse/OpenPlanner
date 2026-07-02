@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: TranscriptionSettings = {
     languages: ['fr', 'en'],
     customVocabulary: DEFAULT_VOCABULARY,
     endpointing: 0.2,
-    hideSettings: false,
+    hideSettings: true,
 }
 
 // A bare "#rrggbb" or "rrggbb" both work; normalise to a CSS-usable "#rrggbb".
@@ -70,6 +70,6 @@ export const settingsFromQuery = (search: string): TranscriptionSettings => {
         languages: languages?.length ? languages : DEFAULT_SETTINGS.languages,
         customVocabulary: csv(q.get('custom_vocabulary')) ?? DEFAULT_SETTINGS.customVocabulary,
         endpointing: num('endpointing', DEFAULT_SETTINGS.endpointing),
-        hideSettings: q.get('hide_settings') === 'true',
+        hideSettings: q.has('hide_settings') ? q.get('hide_settings') === 'true' : DEFAULT_SETTINGS.hideSettings,
     }
 }
