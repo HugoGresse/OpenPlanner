@@ -97,4 +97,14 @@ describe('sendGoMessage', () => {
         expect(sendMessage).toHaveBeenCalledWith('c@c.us', expect.stringContaining('GO'))
         expect(updated.goSent).toBe(true)
     })
+
+    test('sends a funny GO message when nobody is ready', async () => {
+        const { senders, sendMessage } = makeSenders()
+        const session = await startTrackSession(tracks(3), 'c@c.us', senders)
+
+        await sendGoMessage(session, senders)
+
+        expect(sendMessage).toHaveBeenCalledWith('c@c.us', expect.stringContaining('0/3'))
+        expect(sendMessage).toHaveBeenCalledWith('c@c.us', expect.stringContaining('magie du live'))
+    })
 })
