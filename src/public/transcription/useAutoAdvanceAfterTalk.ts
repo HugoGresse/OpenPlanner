@@ -16,12 +16,10 @@ export const useAutoAdvanceAfterTalk = (talkEndIso: string | undefined, onAdvanc
         const delay = end.toMillis() + ADVANCE_DELAY_MS - DateTime.now().toMillis()
         if (delay > MAX_TIMEOUT_MS) return
 
-        if (delay <= 0) {
-            onAdvance()
-            return
-        }
-
-        const timer = setTimeout(onAdvance, delay)
+        // Always go through setTimeout (clamped to 0 for already-ended talks) rather than calling
+        // onAdvance synchronously: the returned cleanup lets React 18 StrictMode's dev remount cancel
+        // the first run, so we don't advance twice / skip a talk.
+        const timer = setTimeout(onAdvance, Math.max(0, delay))
         return () => clearTimeout(timer)
     }, [talkEndIso, onAdvance])
 }
