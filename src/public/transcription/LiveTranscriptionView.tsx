@@ -46,60 +46,57 @@ export const LiveTranscriptionView = ({
             {status === 'connecting' && <Typography sx={{ color: 'white', p: 2 }}>Connecting to Gladia…</Typography>}
             {status === 'error' && <Typography sx={{ color: 'red', p: 2 }}>Error: {error}</Typography>}
 
-            {!settings.hideSettings && <TranscriptionSettingsPanel settings={settings} onChange={updateSettings} />}
-
             <LiveCaptions lines={lines} partial={partial} settings={settings} />
 
-            {/* Single bottom bar: talk info + all controls. Wraps to multiple lines on narrow screens. */}
-            <Box
-                sx={{
-                    position: 'fixed',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 999,
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    px: 2,
-                    py: 1,
-                    bgcolor: 'rgba(0,0,0,0.82)',
-                    color: '#fff',
-                    borderTop: '1px solid rgba(255,255,255,0.12)',
-                    backdropFilter: 'blur(4px)',
-                }}>
-                <TalkInfo
-                    trackName={trackName}
-                    talkTitle={talkTitle}
-                    dateStart={dateStart}
-                    dateEnd={dateEnd}
-                    nextTalkTitle={nextTalkTitle}
-                />
+            {/* Footer: settings strip (optional) stacked above the talk/control bar. */}
+            <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 999 }}>
+                {!settings.hideSettings && <TranscriptionSettingsPanel settings={settings} onChange={updateSettings} />}
 
-                <Stack direction="row" spacing={1} sx={{ ml: 'auto', flexShrink: 0 }}>
-                    <Button variant="contained" size="small" onClick={onNext} disabled={!nextTalkTitle}>
-                        Next talk ▸
-                    </Button>
-                    <Button variant="outlined" size="small" color="inherit" onClick={onClear}>
-                        Clear
-                    </Button>
-                    <Button
-                        variant="contained"
-                        size="small"
-                        color="warning"
-                        onClick={() => setRestartNonce((n) => n + 1)}>
-                        Restart
-                    </Button>
-                    {settings.hideSettings && (
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        px: 2,
+                        py: 1,
+                        bgcolor: 'rgba(0,0,0,0.82)',
+                        color: '#fff',
+                        borderTop: settings.hideSettings ? '1px solid rgba(255,255,255,0.12)' : 'none',
+                        backdropFilter: 'blur(4px)',
+                    }}>
+                    <TalkInfo
+                        trackName={trackName}
+                        talkTitle={talkTitle}
+                        dateStart={dateStart}
+                        dateEnd={dateEnd}
+                        nextTalkTitle={nextTalkTitle}
+                    />
+
+                    <Stack direction="row" spacing={1} sx={{ ml: 'auto', flexShrink: 0 }}>
+                        <Button variant="contained" size="small" onClick={onNext} disabled={!nextTalkTitle}>
+                            Next talk ▸
+                        </Button>
+                        <Button variant="outlined" size="small" color="inherit" onClick={onClear}>
+                            Clear
+                        </Button>
                         <Button
                             variant="contained"
                             size="small"
-                            onClick={() => updateSettings({ ...settings, hideSettings: false })}>
-                            Show settings
+                            color="warning"
+                            onClick={() => setRestartNonce((n) => n + 1)}>
+                            Restart
                         </Button>
-                    )}
-                </Stack>
+                        {settings.hideSettings && (
+                            <Button
+                                variant="contained"
+                                size="small"
+                                onClick={() => updateSettings({ ...settings, hideSettings: false })}>
+                                Show settings
+                            </Button>
+                        )}
+                    </Stack>
+                </Box>
             </Box>
         </Box>
     )
