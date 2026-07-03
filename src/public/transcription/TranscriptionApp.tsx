@@ -5,6 +5,7 @@ import { usePasswordProtectedEvent } from '../hooks/usePasswordProtectedEvent'
 import { useTalkSelection } from './useTalkSelection'
 import { useAutoAdvanceAfterTalk } from './useAutoAdvanceAfterTalk'
 import { LiveTranscriptionView } from './LiveTranscriptionView'
+import { useWakeLock } from './useWakeLock'
 import { DateTime } from 'luxon'
 
 export type PublicEventTranscriptionProps = {
@@ -15,6 +16,8 @@ export const TranscriptionApp = ({ eventId }: PublicEventTranscriptionProps) => 
     const [pagePassword, savePagePassword] = useLocalStorage<string>('pagePassword', '')
     const [selectedTrack, setSelectedTrack] = useLocalStorage<string>('selectedTrack', '')
     const [tempPagePassword, saveTempPagePassword] = useState<string>('')
+
+    useWakeLock()
 
     const { reply, eventData, isLoading, error } = usePasswordProtectedEvent(eventId, pagePassword)
     const gladiaAPIKey = reply?.gladiaAPIKey
