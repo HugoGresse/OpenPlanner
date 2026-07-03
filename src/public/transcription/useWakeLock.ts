@@ -9,7 +9,10 @@ export const useWakeLock = () => {
     const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
     useEffect(() => {
-        if (!('wakeLock' in navigator)) return
+        if (!('wakeLock' in navigator)) {
+            console.log('useWakeLock: Screen Wake Lock API is not supported in this browser.')
+            return
+        }
 
         const acquire = async () => {
             try {
