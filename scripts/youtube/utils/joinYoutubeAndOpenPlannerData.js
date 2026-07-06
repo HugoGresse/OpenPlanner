@@ -3,11 +3,13 @@ export const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) =>
     const videosWithOpenPlannerData = youtubeVideos.map((video) => {
         const videoTitle = video.snippet.title
 
-        // find session details in openplanner.json
-        const session = openPlannerData.sessions.find(
-            (session) =>
-                videoTitle.includes(session.title) || session.title.includes(videoTitle) || videoTitle === session.id
-        )
+        // find session details in openplanner.json. Match on the session id first (videos are now
+        // often uploaded with the session id as their title), then fall back to title matching.
+        const session =
+            openPlannerData.sessions.find((session) => videoTitle === session.id) ||
+            openPlannerData.sessions.find(
+                (session) => session.title && (videoTitle.includes(session.title) || session.title.includes(videoTitle))
+            )
 
         return {
             ...video,

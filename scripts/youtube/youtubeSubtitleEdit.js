@@ -17,7 +17,9 @@ const CONCURRENT_JOBS = 5
 // Configuration:
 //  - Fill the .env file with the following variables:
 //    - GLADIA_API_KEY
+//    - GLADIA_MODEL (optional, defaults to solaria-3; use solaria-1 for 100+ languages)
 //    - OPENAI_API_KEY
+//    - OPENAI_MODEL (optional, defaults to gpt-4o-mini)
 //    - YOUTUBE_PLAYLIST_ID
 //    - OPENPLANNER_EVENT_ID
 //  - Ensure you have youtube credentials for API in ~/.credentials/youtube.credentials.json
@@ -35,7 +37,12 @@ if (!GLADIA_API_KEY || !OPENAI_API_KEY) {
     throw new Error('GLADIA_API_KEY and OPENAI_API_KEY must be set')
 }
 
-const GLADIA_TRANSCRIPTION_ENDPOINT = 'https://api.gladia.io/v2/transcription'
+const GLADIA_TRANSCRIPTION_ENDPOINT = 'https://api.gladia.io/v2/pre-recorded'
+// Gladia speech-to-text model. Defaults to solaria-3 (newest, tuned for European languages
+// incl. French). Override with GLADIA_MODEL, e.g. solaria-1 for 100+ languages / code-switching.
+const GLADIA_MODEL = process.env.GLADIA_MODEL || 'solaria-3'
+// OpenAI model used to extract keywords. Override with OPENAI_MODEL.
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
 
 async function getTranscriptionIdFromGladia(audioUrl, customVocabulary) {
     const headers = {
@@ -45,11 +52,16 @@ async function getTranscriptionIdFromGladia(audioUrl, customVocabulary) {
 
     const payload = {
         audio_url: audioUrl,
+        model: GLADIA_MODEL,
         subtitles: true,
         subtitles_config: {
             formats: ['srt'],
         },
-        custom_vocabulary: customVocabulary,
+    }
+
+    if (customVocabulary && customVocabulary.length > 0) {
+        payload.custom_vocabulary = true
+        payload.custom_vocabulary_config = { vocabulary: customVocabulary }
     }
 
     let response = {}
@@ -94,7 +106,11 @@ async function getFullTranscriptionFromGladia(transcriptionId) {
 
         if (response.data.status === 'done') {
             isCompleted = true
-            subtitles = response.data.result.transcription.subtitles[0].subtitles
+            const allSubtitles = response.data.result.transcription.subtitles
+            const srt = allSubtitles.find((sub) => sub.format === 'srt') || allSubtitles[0]
+            subtitles = srt.subtitles
+        } else if (response.data.status === 'error') {
+            throw new Error(`Transcription failed: ${JSON.stringify(response.data.error || response.data)}`)
         } else {
             await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
         }
@@ -114,7 +130,7 @@ async function generateKeywords(session) {
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
-                model: 'gpt-3.5-turbo',
+                model: OPENAI_MODEL,
                 messages: [
                     { role: 'system', content: 'You are a helpful assistant.' },
                     { role: 'user', content: prompt },
