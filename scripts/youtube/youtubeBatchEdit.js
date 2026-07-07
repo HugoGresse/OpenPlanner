@@ -72,7 +72,12 @@ const formatYoutubeDescription = (video, openPlannerContent) => {
 
     const desc = session.abstract + '\n\n' + openPlannerContent.event.name
 
-    return `${speakersText.join('\n')}\n${desc.replace(/<[^>]*>?/gm, '')}`
+    const cleaned = `${speakersText.join('\n')}\n${desc}`
+        .replace(/<[^>]*>/g, '') // strip HTML tags
+        .replace(/[<>]/g, '') // YouTube rejects any remaining angle brackets
+
+    // YouTube caps descriptions at 5000 characters
+    return cleaned.length > 5000 ? cleaned.slice(0, 4997) + '...' : cleaned
 }
 
 const main = async () => {
@@ -116,9 +121,10 @@ const main = async () => {
         }
 
         const videoId = video.snippet.resourceId.videoId
-        const videoTitle =
-            video.session.title.length > 100 ? video.session.title.slice(0, 95) + '...' : video.session.title
-        if (video.session.title.length > 100) {
+        // YouTube rejects titles containing < or >, and caps them at 100 characters.
+        const cleanTitle = video.session.title.replace(/[<>]/g, '')
+        const videoTitle = cleanTitle.length > 100 ? cleanTitle.slice(0, 97) + '...' : cleanTitle
+        if (cleanTitle.length > 100) {
             console.log(
                 ' ⚠️ Video title is too long and has been sliced: ' +
                     video.session.title +
@@ -142,9 +148,13 @@ const main = async () => {
 
         console.log('Updating video thumbnail for ' + video.session.title + ' (YT video id: ' + videoId + ')')
 
-        const result = await updateVideoThumbnail(auth, videoId, thumbnailPath)
-        if (result) {
-            console.log('Updated video thumbnail: ' + video.snippet.title)
+        try {
+            const result = await updateVideoThumbnail(auth, videoId, thumbnailPath)
+            if (result) {
+                console.log('Updated video thumbnail: ' + video.snippet.title)
+            }
+        } catch (error) {
+            console.error(`❌ Failed to set thumbnail for ${videoId} (${video.session.title}): ${error.message}`)
         }
     }
 }

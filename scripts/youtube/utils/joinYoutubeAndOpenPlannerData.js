@@ -16,10 +16,9 @@ export const joinYoutubeAndOpenPlannerData = (youtubeVideos, openPlannerData) =>
             session,
             speakers:
                 session && session.speakerIds
-                    ? session.speakerIds.map((speakerId) => {
-                          const speaker = openPlannerData.speakers.find((speaker) => speaker.id === speakerId)
-                          return speaker
-                      })
+                    ? session.speakerIds
+                          .map((speakerId) => openPlannerData.speakers.find((speaker) => speaker.id === speakerId))
+                          .filter(Boolean)
                     : [],
         }
     })
