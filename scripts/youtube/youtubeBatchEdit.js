@@ -95,7 +95,12 @@ const main = async () => {
 
     const videosWithValidSession = joinYoutubeAndOpenPlannerData(videos, openPlannerContent)
 
+    // Optional: restrict the run to specific session titles passed as CLI args
+    // e.g. node youtube/youtubeBatchEdit.js "Title one" "Title two"
+    const titleFilter = process.argv.slice(2)
+
     const videosWithValidSessionAndDescription = videosWithValidSession
+        .filter((video) => titleFilter.length === 0 || titleFilter.some((title) => video.session.title === title))
         .map((video) => {
             return {
                 ...video,
@@ -103,6 +108,12 @@ const main = async () => {
             }
         })
         .filter((video) => !!video)
+
+    if (titleFilter.length > 0) {
+        console.log(
+            `Filtering to ${titleFilter.length} title(s): matched ${videosWithValidSessionAndDescription.length} video(s)`
+        )
+    }
 
     // Update video metadata
     for (const video of videosWithValidSessionAndDescription) {

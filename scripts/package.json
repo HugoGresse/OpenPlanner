@@ -8,7 +8,9 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "typecheck": "tsc --noEmit",
         "generate:thumbnails": "tsx youtube-thumbnails/generateThumbnails.ts",
-        "youtube:batch-edit": "tsx youtube/youtubeBatchEdit.js"
+        "youtube:batch-edit": "tsx youtube/youtubeBatchEdit.js",
+        "youtube:subtitle-edit": "tsx youtube/youtubeSubtitleEdit.js",
+        "youtube:subtitle-upload": "tsx youtube/youtubeSubtitleUpload.js"
     },
     "author": "",
     "license": "ISC",

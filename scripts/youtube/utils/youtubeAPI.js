@@ -158,15 +158,22 @@ const getChannel = async (auth) => {
 export const getVideosFromPlaylist = async (auth, channelId, playlistId) => {
     var service = google.youtube('v3')
 
-    // get all videos in playlist
-    const playlistItems = await service.playlistItems.list({
-        auth: auth,
-        part: 'snippet,contentDetails',
-        playlistId: playlistId,
-        maxResults: 50,
-    })
+    // get all videos in playlist, paging through 50-item batches (API max per page)
+    const items = []
+    let pageToken = undefined
+    do {
+        const playlistItems = await service.playlistItems.list({
+            auth: auth,
+            part: 'snippet,contentDetails',
+            playlistId: playlistId,
+            maxResults: 50,
+            pageToken: pageToken,
+        })
+        items.push(...playlistItems.data.items)
+        pageToken = playlistItems.data.nextPageToken
+    } while (pageToken)
 
-    return playlistItems.data.items
+    return items
 }
 
 export const listVideoCategories = async (auth) => {
