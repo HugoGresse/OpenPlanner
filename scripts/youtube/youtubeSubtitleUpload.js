@@ -16,6 +16,13 @@ const main = async () => {
     const openPlannerEventId = process.env.OPENPLANNER_EVENT_ID
     const outSrtDir = './out_srt'
 
+    // Video IDs to skip (e.g. already uploaded), passed as CLI args:
+    // node youtube/youtubeSubtitleUpload.js <videoId1> <videoId2> ...
+    const excludeIds = new Set(process.argv.slice(2))
+    if (excludeIds.size > 0) {
+        console.log(`ℹ️ Excluding ${excludeIds.size} already-uploaded video(s)`)
+    }
+
     const openPlannerContent = await getOpenPlannerContent(openPlannerEventId)
 
     const videos = await getVideosFromPlaylist(auth, channelId, playlistId)
@@ -26,6 +33,11 @@ const main = async () => {
     for (const video of videosWithValidSession) {
         const videoId = video.contentDetails.videoId
         const srtFilename = path.join(outSrtDir, `${videoId}.srt`)
+
+        if (excludeIds.has(videoId)) {
+            console.log(`⏭️ Skipping excluded video ID: ${videoId}`)
+            continue
+        }
 
         const srtExists = fs.existsSync(srtFilename)
         if (!srtExists) {
