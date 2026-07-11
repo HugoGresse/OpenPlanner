@@ -1,0 +1,17 @@
+{
+    "backgroundUrl": "./youtube-thumbnails/assets/background-magic.png",
+    "logoUrl": "https://conferencecenterr.appspot.com.storage.googleapis.com/events/YFlN9koUK0qPuYkvbqQg/64a771bf-bf98-4f31-aa1c-010f65ad03e4.svg",
+    "dateText": "2-3 juillet 2026",
+    "locale": "fr-FR",
+    "colors": {
+        "title": "#ffffff",
+        "text": "#ffffff",
+        "accent": "#e8b04f",
+        "background": "#1a1330"
+    },
+    "overlayOpacity": 0.55,
+    "titleFontSize": 64,
+    "magicBorder": true,
+    "sparkles": true,
+    "outputDir": "./youtube-thumbnails/output/SunnyTech2026"
+}

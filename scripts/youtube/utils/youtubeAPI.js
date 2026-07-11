@@ -1,5 +1,7 @@
 import fs from 'fs'
 import readline from 'readline'
+import { Readable } from 'node:stream'
+import sharp from 'sharp'
 import { google } from 'googleapis'
 
 var OAuth2 = google.auth.OAuth2
@@ -41,12 +43,25 @@ function authorize(credentials, callback) {
     var oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl)
 
     // Check if we have previously stored a token.
-    fs.readFile(TOKEN_PATH, function (err, token) {
+    fs.readFile(TOKEN_PATH, async function (err, token) {
         if (err) {
             getNewToken(oauth2Client, callback)
-        } else {
-            oauth2Client.credentials = JSON.parse(token)
+            return
+        }
+        oauth2Client.credentials = JSON.parse(token)
+        try {
+            // Force a refresh now so an expired/revoked token (invalid_grant) fails here
+            // instead of crashing mid-run, and re-authenticate cleanly.
+            await oauth2Client.getAccessToken()
             callback(oauth2Client)
+        } catch (refreshErr) {
+            console.log(`⚠️ Stored YouTube token is invalid (${refreshErr?.message || refreshErr}). Re-authenticating…`)
+            try {
+                fs.unlinkSync(TOKEN_PATH)
+            } catch {
+                // token already gone, ignore
+            }
+            getNewToken(oauth2Client, callback)
         }
     })
 }
@@ -62,6 +77,7 @@ function authorize(credentials, callback) {
 function getNewToken(oauth2Client, callback) {
     var authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
+        prompt: 'consent', // force a fresh refresh_token on every re-auth
         scope: SCOPES,
     })
     console.log('Authorize this app by visiting this url: ', authUrl)
@@ -142,15 +158,22 @@ const getChannel = async (auth) => {
 export const getVideosFromPlaylist = async (auth, channelId, playlistId) => {
     var service = google.youtube('v3')
 
-    // get all videos in playlist
-    const playlistItems = await service.playlistItems.list({
-        auth: auth,
-        part: 'snippet,contentDetails',
-        playlistId: playlistId,
-        maxResults: 50,
-    })
+    // get all videos in playlist, paging through 50-item batches (API max per page)
+    const items = []
+    let pageToken = undefined
+    do {
+        const playlistItems = await service.playlistItems.list({
+            auth: auth,
+            part: 'snippet,contentDetails',
+            playlistId: playlistId,
+            maxResults: 50,
+            pageToken: pageToken,
+        })
+        items.push(...(playlistItems.data.items || []))
+        pageToken = playlistItems.data.nextPageToken
+    } while (pageToken)
 
-    return playlistItems.data.items
+    return items
 }
 
 export const listVideoCategories = async (auth) => {
@@ -190,17 +213,36 @@ export const updateVideo = async (auth, videoId, videoTitle, snippetData) => {
     return response.data
 }
 
-export const updateVideoThumbnail = async (auth, videoId, thumbnailPath) => {
+export const updateVideoThumbnail = async (auth, videoId, thumbnailPath, maxRetries = 3) => {
     const service = google.youtube('v3')
-    const response = await service.thumbnails.set({
-        auth: auth,
-        videoId: videoId,
-        media: {
-            mimeType: 'image/png',
-            body: fs.createReadStream(thumbnailPath),
-        },
-    })
-    return response.data
+    // Convert to PNG in memory so we always upload PNG regardless of the source format
+    const pngBuffer = await sharp(thumbnailPath).png().toBuffer()
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await service.thumbnails.set({
+                auth: auth,
+                videoId: videoId,
+                media: {
+                    mimeType: 'image/png',
+                    // recreate the stream on every attempt: a consumed/aborted stream cannot be reused
+                    body: Readable.from(pngBuffer),
+                },
+            })
+            return response.data
+        } catch (error) {
+            if (attempt === maxRetries) {
+                throw error
+            }
+            const delayMs = 2000 * attempt
+            console.log(
+                `⚠️ Thumbnail upload failed for ${videoId} (attempt ${attempt}/${maxRetries}): ${
+                    error.message
+                }. Retrying in ${delayMs / 1000}s…`
+            )
+            await new Promise((resolve) => setTimeout(resolve, delayMs))
+        }
+    }
 }
 
 // Upload SRT subtitles as captions to a YouTube video

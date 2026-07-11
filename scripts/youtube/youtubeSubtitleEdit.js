@@ -8,7 +8,7 @@ import { joinYoutubeAndOpenPlannerData } from './utils/joinYoutubeAndOpenPlanner
 import 'dotenv/config'
 
 const POLLING_INTERVAL = 5000 // 5 seconds
-const CONCURRENT_JOBS = 5
+const CONCURRENT_JOBS = 1
 
 // This whole is here to generate subtitles for a youtube video
 // using Gladia & ChatGPT. It won't upload subtitles to youtube
@@ -17,7 +17,9 @@ const CONCURRENT_JOBS = 5
 // Configuration:
 //  - Fill the .env file with the following variables:
 //    - GLADIA_API_KEY
-//    - OPENAI_API_KEY
+//    - GLADIA_MODEL (optional, defaults to solaria-3; use solaria-1 for 100+ languages)
+//    - OPENROUTER_API_KEY
+//    - OPENROUTER_MODEL (optional, defaults to z-ai/glm-5.2)
 //    - YOUTUBE_PLAYLIST_ID
 //    - OPENPLANNER_EVENT_ID
 //  - Ensure you have youtube credentials for API in ~/.credentials/youtube.credentials.json
@@ -29,13 +31,21 @@ const CONCURRENT_JOBS = 5
 //  - If any SRT or keywords are already generated, they won't be recreated.
 
 const GLADIA_API_KEY = process.env.GLADIA_API_KEY
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
 
-if (!GLADIA_API_KEY || !OPENAI_API_KEY) {
-    throw new Error('GLADIA_API_KEY and OPENAI_API_KEY must be set')
+if (!GLADIA_API_KEY || !OPENROUTER_API_KEY) {
+    throw new Error('GLADIA_API_KEY and OPENROUTER_API_KEY must be set')
 }
 
-const GLADIA_TRANSCRIPTION_ENDPOINT = 'https://api.gladia.io/v2/transcription'
+const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions'
+
+const GLADIA_TRANSCRIPTION_ENDPOINT = 'https://api.gladia.io/v2/pre-recorded'
+// Gladia speech-to-text model. Defaults to solaria-3 (newest, tuned for European languages
+// incl. French). Override with GLADIA_MODEL, e.g. solaria-1 for 100+ languages / code-switching.
+const GLADIA_MODEL = process.env.GLADIA_MODEL || 'solaria-3'
+// OpenRouter model used to extract keywords. Override with OPENROUTER_MODEL
+// (any OpenRouter model slug, e.g. openai/gpt-4o-mini, anthropic/claude-3.5-haiku).
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'z-ai/glm-5.2'
 
 async function getTranscriptionIdFromGladia(audioUrl, customVocabulary) {
     const headers = {
@@ -45,11 +55,16 @@ async function getTranscriptionIdFromGladia(audioUrl, customVocabulary) {
 
     const payload = {
         audio_url: audioUrl,
+        model: GLADIA_MODEL,
         subtitles: true,
         subtitles_config: {
             formats: ['srt'],
         },
-        custom_vocabulary: customVocabulary,
+    }
+
+    if (customVocabulary && customVocabulary.length > 0) {
+        payload.custom_vocabulary = true
+        payload.custom_vocabulary_config = { vocabulary: customVocabulary }
     }
 
     let response = {}
@@ -94,7 +109,11 @@ async function getFullTranscriptionFromGladia(transcriptionId) {
 
         if (response.data.status === 'done') {
             isCompleted = true
-            subtitles = response.data.result.transcription.subtitles[0].subtitles
+            const allSubtitles = response.data.result.transcription.subtitles
+            const srt = allSubtitles.find((sub) => sub.format === 'srt') || allSubtitles[0]
+            subtitles = srt.subtitles
+        } else if (response.data.status === 'error') {
+            throw new Error(`Transcription failed: ${JSON.stringify(response.data.error || response.data)}`)
         } else {
             await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
         }
@@ -112,31 +131,33 @@ async function generateKeywords(session) {
     let keywords = []
     try {
         const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
+            OPENROUTER_ENDPOINT,
             {
-                model: 'gpt-3.5-turbo',
+                model: OPENROUTER_MODEL,
                 messages: [
                     { role: 'system', content: 'You are a helpful assistant.' },
                     { role: 'user', content: prompt },
                 ],
-                max_tokens: 500,
+                max_tokens: 2000,
                 temperature: 0,
             },
             {
                 headers: {
-                    Authorization: `Bearer ${OPENAI_API_KEY}`,
+                    Authorization: `Bearer ${OPENROUTER_API_KEY}`,
                     'Content-Type': 'application/json',
                 },
             }
         )
 
-        if (response.data && response.data.choices && response.data.choices.length > 0) {
-            const rawKeywords = response.data.choices[0].message.content
-            keywords = rawKeywords.replaceAll('`', '').replace('json', '')
-            return JSON.parse(keywords)
+        const rawKeywords = response.data?.choices?.[0]?.message?.content
+        if (!rawKeywords) {
+            throw new Error('Empty content in model response')
         }
 
-        throw new Error('No keywords found in response')
+        // Extract the JSON array from the response (models may wrap it in ```json fences or prose)
+        const match = rawKeywords.match(/\[[\s\S]*\]/)
+        keywords = JSON.parse(match ? match[0] : rawKeywords.replaceAll('`', '').replace('json', ''))
+        return keywords
     } catch (error) {
         console.error(`❌ Error generating keywords for session: ${session.title}`, error.message, keywords)
         return keywords
