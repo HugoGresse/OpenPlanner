@@ -13,7 +13,7 @@ Each thumbnail contains:
 -   a magic theme: glowing gold frame, corner sparkles and scattered sparkle stars (deterministic per
     session, kept clear of the title). Toggle with `magicBorder` / `sparkles` in the config.
 
-A default magic bokeh background ships in [assets/background-magic.jpg](assets/background-magic.jpg). Drop
+A default magic bokeh background ships in [assets/background-magic.png](assets/background-magic.png). Drop
 your own image there (same file name) to replace it, or point `backgroundUrl` at any url / local path.
 
 ## Usage

@@ -19,7 +19,7 @@ const CONCURRENT_JOBS = 1
 //    - GLADIA_API_KEY
 //    - GLADIA_MODEL (optional, defaults to solaria-3; use solaria-1 for 100+ languages)
 //    - OPENROUTER_API_KEY
-//    - OPENROUTER_MODEL (optional, defaults to openai/gpt-4o-mini)
+//    - OPENROUTER_MODEL (optional, defaults to z-ai/glm-5.2)
 //    - YOUTUBE_PLAYLIST_ID
 //    - OPENPLANNER_EVENT_ID
 //  - Ensure you have youtube credentials for API in ~/.credentials/youtube.credentials.json

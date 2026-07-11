@@ -169,7 +169,7 @@ export const getVideosFromPlaylist = async (auth, channelId, playlistId) => {
             maxResults: 50,
             pageToken: pageToken,
         })
-        items.push(...playlistItems.data.items)
+        items.push(...(playlistItems.data.items || []))
         pageToken = playlistItems.data.nextPageToken
     } while (pageToken)
 

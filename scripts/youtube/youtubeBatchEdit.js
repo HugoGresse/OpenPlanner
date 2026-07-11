@@ -121,11 +121,15 @@ const main = async () => {
             return category.id === video.session.categoryId
         })?.name
 
+        // Derive the year from the session recording date, not the current date, so re-running
+        // for a past event in a later year still tags the correct year.
+        const eventYear = (video.session.dateStart ? new Date(video.session.dateStart) : new Date()).getFullYear()
+
         const updateModel = {
             description: video.description,
             categoryId: videoCategoryId,
             defaultLanguage: 'fr',
-            tags: ['sunnytech', tagBasedOnOpenPlannerCategory, 'sunnytech-' + new Date().getFullYear()].filter(Boolean),
+            tags: ['sunnytech', tagBasedOnOpenPlannerCategory, 'sunnytech-' + eventYear].filter(Boolean),
             recordingDetails: {
                 recordingDate: video.session.dateStart,
             },
