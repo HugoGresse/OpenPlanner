@@ -20,11 +20,11 @@ export const generateVoxxrinJson = (
     }
 
     if (!event.logoUrl) {
-        alert('Voxxrin: no logoUrl set in the event settings')
+        console.warn('Voxxrin: no logoUrl set in the event settings')
         return null
     }
     if (!event.backgroundUrl) {
-        alert('Voxxrin: no backgroundUrl set in the event settings')
+        console.warn('Voxxrin: no backgroundUrl set in the event settings')
         return null
     }
 
