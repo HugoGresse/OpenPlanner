@@ -54,16 +54,16 @@ const CategoryItem = ({ category, currentEventId, onImportComplete }: CategoryIt
         setStatusText('Importing category...')
 
         try {
-            // Step 1: Import the category itself (without the faqs array)
+            // Step 1: Import the category itself (without the hydrated items array)
             const newCategory: FaqCategory = {
                 ...category,
-                faqs: [],
+                items: [],
             }
             await categoryMutation.mutate(newCategory, newCategory.id)
             setProgress(20)
 
             // Step 2: Import all FAQ items to the destination event
-            const faqItems = category.faqs
+            const faqItems = category.items || []
             setStatusText(`Importing ${faqItems.length} FAQ items...`)
 
             if (faqItems.length > 0) {
@@ -96,7 +96,7 @@ const CategoryItem = ({ category, currentEventId, onImportComplete }: CategoryIt
                 <Box>
                     <Typography variant="subtitle1">{category.name}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Questions: {category.faqs.length}
+                        Questions: {category.items?.length || 0}
                     </Typography>
                 </Box>
                 <LoadingButton

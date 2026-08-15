@@ -365,7 +365,9 @@ export interface FaqCategory {
     privateId: string | null
     unifiedPage?: boolean
     collectionList: string[]
-    faqs: Faq[]
+    // Hydrated questions, only present on hydrated/exported categories (getFaq, FaqDao.getFullFaqs,
+    // public/private static JSON), never persisted on the Firestore category doc
+    items?: Faq[]
 }
 
 export interface Faq {
