@@ -8,8 +8,8 @@ export const updateWebsiteTriggerWebhooksActionInternal = async (
     event: Event,
     firebaseApp: firebase.app.App,
     enableWebhooks: boolean
-) => {
-    const { outputPrivate, outputPublic, outputOpenFeedback, outputVoxxrin } = await generateStaticJson(
+): Promise<string[]> => {
+    const { outputPrivate, outputPublic, outputOpenFeedback, outputVoxxrin, warnings } = await generateStaticJson(
         firebaseApp,
         event
     )
@@ -27,4 +27,6 @@ export const updateWebsiteTriggerWebhooksActionInternal = async (
         await triggerWebhooks(firebaseApp, event, fileNames)
     }
     await firebaseApp.firestore().collection('events').doc(event.id).update({ updatedAt: new Date() })
+
+    return warnings
 }

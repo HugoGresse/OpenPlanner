@@ -18,26 +18,29 @@ beforeEach(() => {
 })
 
 describe('generateVoxxrinJson missing assets', () => {
-    test('returns null instead of throwing when logoUrl is missing', () => {
+    test('returns a null output and a warning instead of throwing when logoUrl is missing', () => {
         const event = { ...baseEvent, logoUrl: undefined } as unknown as Event
 
         expect(() => generateVoxxrinJson(event, [], [], [])).not.toThrow()
-        expect(generateVoxxrinJson(event, [], [], [])).toBeNull()
-        expect(console.warn).toHaveBeenCalledWith('Voxxrin: no logoUrl set in the event settings')
+        const { outputVoxxrin, warnings } = generateVoxxrinJson(event, [], [], [])
+        expect(outputVoxxrin).toBeNull()
+        expect(warnings).toEqual(['Voxxrin: no logoUrl set in the event settings'])
     })
 
-    test('returns null instead of throwing when backgroundUrl is missing', () => {
+    test('returns a null output and a warning instead of throwing when backgroundUrl is missing', () => {
         const event = { ...baseEvent, backgroundUrl: undefined } as unknown as Event
 
-        expect(generateVoxxrinJson(event, [], [], [])).toBeNull()
-        expect(console.warn).toHaveBeenCalledWith('Voxxrin: no backgroundUrl set in the event settings')
+        const { outputVoxxrin, warnings } = generateVoxxrinJson(event, [], [], [])
+        expect(outputVoxxrin).toBeNull()
+        expect(warnings).toEqual(['Voxxrin: no backgroundUrl set in the event settings'])
     })
 
-    test('returns a json output when logoUrl and backgroundUrl are set', () => {
-        const output = generateVoxxrinJson(baseEvent, [], [], [])
+    test('returns a json output and no warnings when logoUrl and backgroundUrl are set', () => {
+        const { outputVoxxrin, warnings } = generateVoxxrinJson(baseEvent, [], [], [])
 
-        expect(output).not.toBeNull()
-        expect(output?.logoUrl).toBe('https://example.com/logo.png')
-        expect(output?.backgroundUrl).toBe('https://example.com/background.png')
+        expect(outputVoxxrin).not.toBeNull()
+        expect(outputVoxxrin?.logoUrl).toBe('https://example.com/logo.png')
+        expect(outputVoxxrin?.backgroundUrl).toBe('https://example.com/background.png')
+        expect(warnings).toEqual([])
     })
 })

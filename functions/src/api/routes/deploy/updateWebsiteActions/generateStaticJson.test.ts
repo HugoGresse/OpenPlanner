@@ -97,3 +97,25 @@ describe('generateStaticJson tickets node', () => {
         expect(outputPrivate.tickets).toEqual([])
     })
 })
+
+describe('generateStaticJson voxxrin warnings', () => {
+    test('surfaces the voxxrin warnings when voxxrin is enabled and logoUrl is missing', async () => {
+        vi.spyOn(TicketDao, 'getTickets').mockResolvedValue([])
+        vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+        const voxxrinEvent = { ...event, enableVoxxrin: true } as unknown as Event
+        const { outputVoxxrin, warnings } = await generateStaticJson(firebaseApp, voxxrinEvent)
+
+        expect(outputVoxxrin).toBeNull()
+        expect(warnings).toEqual(['Voxxrin: no logoUrl set in the event settings'])
+    })
+
+    test('returns no warnings when voxxrin is disabled', async () => {
+        vi.spyOn(TicketDao, 'getTickets').mockResolvedValue([])
+
+        const { outputVoxxrin, warnings } = await generateStaticJson(firebaseApp, event)
+
+        expect(outputVoxxrin).toBeNull()
+        expect(warnings).toEqual([])
+    })
+})

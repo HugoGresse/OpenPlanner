@@ -10,6 +10,7 @@ interface IQuerystring {
 const DeployReply = Type.Object({
     success: Type.Boolean(),
     message: Type.String(),
+    warnings: Type.Optional(Type.Array(Type.String())),
 })
 
 type DeployReplyType = Static<typeof DeployReply>
@@ -57,11 +58,17 @@ export const deployRoutes = (fastify: FastifyInstance, options: any, done: () =>
                 console.log(`Starting deployment for event ${eventId}`)
 
                 const event = await EventDao.getEvent(fastify.firebase, eventId)
-                await updateWebsiteTriggerWebhooksActionInternal(event, fastify.firebase, triggerWebhooks)
+                const warnings = await updateWebsiteTriggerWebhooksActionInternal(
+                    event,
+                    fastify.firebase,
+                    triggerWebhooks
+                )
 
+                const message = `Deployment completed successfully${triggerWebhooks ? ' with webhooks' : ''}`
                 reply.status(200).send({
                     success: true,
-                    message: `Deployment completed successfully${triggerWebhooks ? ' with webhooks' : ''}`,
+                    message: warnings.length > 0 ? `${message}. Warnings: ${warnings.join(', ')}` : message,
+                    warnings: warnings.length > 0 ? warnings : undefined,
                 })
             } catch (error) {
                 console.error('Deployment failed:', error)

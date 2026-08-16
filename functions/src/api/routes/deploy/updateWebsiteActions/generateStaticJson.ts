@@ -50,7 +50,9 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
     }))
 
     const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
-    const voxxrinJson = event.enableVoxxrin ? generateVoxxrinJson(event, sessions, speakers, sponsors) : null
+    const { outputVoxxrin, warnings } = event.enableVoxxrin
+        ? generateVoxxrinJson(event, sessions, speakers, sponsors)
+        : { outputVoxxrin: null, warnings: [] as string[] }
 
     const outputSessions: JsonSession[] = sessions.map((s) => ({
         id: s.id,
@@ -221,6 +223,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         outputPublic,
         outputPrivate,
         outputOpenFeedback: openFeedbackOutput,
-        outputVoxxrin: voxxrinJson,
+        outputVoxxrin,
+        warnings,
     }
 }
