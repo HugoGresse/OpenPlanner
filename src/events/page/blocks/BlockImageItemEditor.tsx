@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Box, IconButton, InputAdornment, TextField } from '@mui/material'
-import { ImageRounded } from '@mui/icons-material'
+import { Box, Button, InputAdornment, TextField } from '@mui/material'
+import { FileUploadRounded } from '@mui/icons-material'
 import { Event, BuildingBlockImageValue } from '../../../types'
 import { SidePanelImageUploadControlled } from '../../../components/sidepanel/SidePanelImageUploadControlled'
 
@@ -13,7 +13,15 @@ export const BlockImageItemEditor = ({ event, value, onChange }: BlockImageItemE
     const [uploadOpen, setUploadOpen] = useState(false)
 
     return (
-        <Box display="flex" gap={1} flexGrow={1} alignItems="center">
+        <Box display="flex" gap={2} flexGrow={1} alignItems="center">
+            <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<FileUploadRounded />}
+                onClick={() => setUploadOpen(true)}
+                sx={{ flexShrink: 0 }}>
+                Image
+            </Button>
             <TextField
                 label="Image URL"
                 variant="standard"
@@ -21,21 +29,17 @@ export const BlockImageItemEditor = ({ event, value, onChange }: BlockImageItemE
                 value={value.url}
                 onChange={(e) => onChange({ ...value, url: e.target.value })}
                 InputProps={{
-                    endAdornment: (
+                    endAdornment: value.url ? (
                         <InputAdornment position="end">
-                            {value.url && (
-                                <Box
-                                    component="img"
-                                    src={value.url}
-                                    alt=""
-                                    sx={{ maxHeight: 30, maxWidth: 60, marginRight: 1 }}
-                                />
-                            )}
-                            <IconButton aria-label="Upload image" onClick={() => setUploadOpen(true)} edge="end">
-                                <ImageRounded />
-                            </IconButton>
+                            <Box
+                                component="img"
+                                src={value.url}
+                                alt=""
+                                sx={{ maxHeight: 30, maxWidth: 60, cursor: 'pointer' }}
+                                onClick={() => setUploadOpen(true)}
+                            />
                         </InputAdornment>
-                    ),
+                    ) : undefined,
                 }}
             />
             <TextField

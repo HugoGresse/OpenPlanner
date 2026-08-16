@@ -40,7 +40,6 @@ export const EventBlocks = ({ event }: { event: Event }) => {
                     event={event}
                     page={page}
                     blocks={pageBlocks}
-                    allBlocks={blocks}
                     onAddBlock={(targetPage) => setAddDialog({ open: true, page: targetPage })}
                 />
             ))}

@@ -19,9 +19,8 @@ type BlockSegmentProps = {
     event: Event
     group: string | null
     blocks: BuildingBlock[]
-    allBlocks: BuildingBlock[]
 }
-const BlockSegment = ({ event, group, blocks, allBlocks }: BlockSegmentProps) => {
+const BlockSegment = ({ event, group, blocks }: BlockSegmentProps) => {
     const mutation = useFirestoreCollectionMutation(collections.buildingBlocks(event.id))
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -53,7 +52,7 @@ const BlockSegment = ({ event, group, blocks, allBlocks }: BlockSegmentProps) =>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={blocks.map((block) => block.id)} strategy={verticalListSortingStrategy}>
                     {blocks.map((block) => (
-                        <BlockCard key={block.id} event={event} block={block} allBlocks={allBlocks} />
+                        <BlockCard key={block.id} event={event} block={block} />
                     ))}
                 </SortableContext>
             </DndContext>
@@ -65,10 +64,9 @@ export type BlockPageCardProps = {
     event: Event
     page: string
     blocks: BuildingBlock[]
-    allBlocks: BuildingBlock[]
     onAddBlock: (page: string) => void
 }
-export const BlockPageCard = ({ event, page, blocks, allBlocks, onAddBlock }: BlockPageCardProps) => {
+export const BlockPageCard = ({ event, page, blocks, onAddBlock }: BlockPageCardProps) => {
     const segments = segmentBlocksByGroup(blocks)
 
     return (
@@ -78,13 +76,7 @@ export const BlockPageCard = ({ event, page, blocks, allBlocks, onAddBlock }: Bl
                 <Button onClick={() => onAddBlock(page)}>Add block to {page}</Button>
             </Box>
             {segments.map((segment) => (
-                <BlockSegment
-                    key={segment.group || ''}
-                    event={event}
-                    group={segment.group}
-                    blocks={segment.blocks}
-                    allBlocks={allBlocks}
-                />
+                <BlockSegment key={segment.group || ''} event={event} group={segment.group} blocks={segment.blocks} />
             ))}
         </Card>
     )

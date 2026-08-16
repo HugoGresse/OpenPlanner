@@ -56,6 +56,7 @@ const EventFaq = lazyWithRetry(() => import('./faq/EventFaq').then((module) => (
 const EventBlocks = lazyWithRetry(() =>
     import('./blocks/EventBlocks').then((module) => ({ default: module.EventBlocks }))
 )
+const EventBlock = lazyWithRetry(() => import('./blocks/EventBlock').then((module) => ({ default: module.EventBlock })))
 const EventTickets = lazyWithRetry(() =>
     import('./tickets/EventTickets').then((module) => ({ default: module.EventTickets }))
 )
@@ -125,6 +126,11 @@ export const EventApp = ({ eventId }: { eventId?: string }) => {
                 <Route path="/blocks">
                     <Suspense fallback={<SuspenseLoader />}>
                         <EventBlocks event={eventData} />
+                    </Suspense>
+                </Route>
+                <Route path="/blocks/:id">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventBlock event={eventData} />
                     </Suspense>
                 </Route>
 

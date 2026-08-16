@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'wouter'
 import { Autocomplete, Box, MenuItem, TextField, Typography } from '@mui/material'
 import { useFirestoreCollectionMutation } from '../../../services/hooks/firestoreMutationHooks'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
@@ -27,6 +28,7 @@ export type NewBlockDialogProps = {
     initialPage?: string
 }
 export const NewBlockDialog = ({ open, onClose, eventId, blocks, initialPage }: NewBlockDialogProps) => {
+    const [_, setLocation] = useLocation()
     const [page, setPage] = useState<string>(initialPage || 'home')
     const [group, setGroup] = useState<string>('')
     const [name, setName] = useState<string>('')
@@ -84,7 +86,12 @@ export const NewBlockDialog = ({ open, onClose, eventId, blocks, initialPage }: 
                         order: segmentBlocks.length,
                         items: [],
                     })
-                    .then(onClose)
+                    .then((newBlockId: string | undefined) => {
+                        onClose()
+                        if (newBlockId) {
+                            setLocation(`/blocks/${newBlockId}`)
+                        }
+                    })
             }}>
             <Box marginY={1} sx={{ minWidth: '30vw' }} display="flex" flexDirection="column" gap={2}>
                 <Autocomplete
