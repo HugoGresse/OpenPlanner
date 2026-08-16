@@ -55,6 +55,7 @@ const main = async () => {
         })
         await setDoc(doc(db, 'events', EVENT_ID, 'speakerEditRateLimits', 'rl-1'), { count: 1 })
         await setDoc(doc(db, 'mail', 'mail-1'), { to: 'x@example.com' })
+        await setDoc(doc(db, 'events', EVENT_ID, 'blocks', 'blk-1'), { page: 'home', key: 'hero' })
     })
 
     const owner = testEnv.authenticatedContext(OWNER_UID).firestore()
@@ -143,6 +144,30 @@ const main = async () => {
             () => assertFails(setDoc(doc(owner, 'mail', 'spam'), { to: 'x@example.com' })),
         ],
         ['event member cannot read mail', () => assertFails(getDoc(doc(member, 'mail', 'mail-1')))],
+
+        // blocks — building blocks follow the standard admin-only pattern
+        [
+            'event owner can write blocks',
+            () =>
+                assertSucceeds(
+                    setDoc(doc(owner, 'events', EVENT_ID, 'blocks', 'blk-x'), {
+                        page: 'home',
+                        key: 'hero',
+                    })
+                ),
+        ],
+        [
+            'event member can read blocks',
+            () => assertSucceeds(getDoc(doc(member, 'events', EVENT_ID, 'blocks', 'blk-1'))),
+        ],
+        [
+            'stranger cannot read blocks',
+            () => assertFails(getDoc(doc(stranger, 'events', EVENT_ID, 'blocks', 'blk-1'))),
+        ],
+        [
+            'guest cannot write blocks',
+            () => assertFails(setDoc(doc(guest, 'events', EVENT_ID, 'blocks', 'blk-y'), { page: 'home' })),
+        ],
 
         // baseline: speakers collection still works for admins (regression check)
         [

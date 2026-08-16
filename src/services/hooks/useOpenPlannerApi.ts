@@ -36,12 +36,12 @@ export async function fetchOpenPlannerApi<T>(
 
     const fetchOptions: RequestInit = {
         method: options.method,
-        headers: {
-            'Content-Type': 'application/json',
-        },
     }
 
     if (options.body && options.method !== 'GET') {
+        // Content-Type only when a body is actually sent: a bodyless POST with an
+        // application/json header is rejected by Fastify's default JSON parser
+        fetchOptions.headers = { 'Content-Type': 'application/json' }
         fetchOptions.body = JSON.stringify(options.body)
     }
 

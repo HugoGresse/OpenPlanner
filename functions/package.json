@@ -10,7 +10,8 @@
         "logs": "firebase functions:log",
         "apiOnly": "NODE_ENV=development nodemon src/api/index.ts",
         "test": "vitest --dir src",
-        "gcp-build": "node node_modules/puppeteer/install.mjs"
+        "gcp-build": "node node_modules/puppeteer/install.mjs",
+        "dev:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 GCLOUD_PROJECT=conferencecenterr BUCKET=conferencecenterr.appspot.com NODE_ENV=development PORT=3010 tsx watch src/api/devServer.ts"
     },
     "engines": {
         "node": "24"

@@ -93,6 +93,13 @@ export interface JsonEvent {
     speakerCustomFields: SpeakerCustomField[]
 }
 
+// blocks.{page}.{blockKey} or blocks.{page}.{group}.{blockKey}
+// Block value by variant: 'single' -> the item value; 'list' -> item values ordered by
+// item `order` (array order is significant); 'map' -> { itemKey: itemValue }.
+// Item value by block type: markdown -> string, image -> { url, alt },
+// link -> { label, href, icon, type }, json -> parsed JSON as-is.
+export type JsonBlocks = Record<string, Record<string, unknown>>
+
 export interface JsonPublicOutput {
     event: JsonEvent
     speakers: JsonSpeaker[]
@@ -102,6 +109,7 @@ export interface JsonPublicOutput {
     teams: { id: string; members: TeamMember[]; order: number }[]
     faq: FaqCategory[]
     tickets: JsonTicket[]
+    blocks: JsonBlocks
     timezone: string | null | undefined
     generatedAt: string
 }

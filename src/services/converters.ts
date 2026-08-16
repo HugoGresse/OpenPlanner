@@ -1,4 +1,5 @@
 import {
+    BuildingBlock,
     Event,
     Faq,
     FaqCategory,
@@ -147,6 +148,25 @@ export const faqItemConverter: FirestoreDataConverter<Faq> = {
     },
     toFirestore(data: Faq) {
         return data
+    },
+}
+
+export const buildingBlockConverter: FirestoreDataConverter<BuildingBlock> = {
+    fromFirestore(snapshot): BuildingBlock {
+        const data = snapshot.data()
+
+        return {
+            group: null,
+            enabled: true,
+            items: [],
+            ...data,
+            id: snapshot.id,
+        } as unknown as BuildingBlock
+    },
+    toFirestore(block) {
+        // Strip id and normalize undefined to null: Firestore rejects undefined values
+        const { id, ...rest } = block as Partial<BuildingBlock>
+        return Object.fromEntries(Object.entries(rest).map(([key, value]) => [key, value === undefined ? null : value]))
     },
 }
 

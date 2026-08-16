@@ -7,6 +7,13 @@
             "runtimeArgs": ["vite", "--port", "3007", "--strictPort"],
             "autoPort": false,
             "port": 3007
+        },
+        {
+            "name": "openplanner-dev-emulator",
+            "runtimeExecutable": "bun",
+            "runtimeArgs": ["run", "dev:emulator"],
+            "autoPort": false,
+            "port": 3008
         }
     ]
 }

@@ -98,6 +98,20 @@ Then, some features on the frontend use OpenPlanner API, which can be started wi
 3. `npm run build:watch` to start the compiler in watch mode for auto rebuild
 4. `npm run serve` to start the API itself which will use Firestore on GCP.
 
+### Local development with the Firebase Emulator Suite (recommended)
+
+⚠️ `bun start` / `bun run dev` talks to the **live Firebase project** configured in your env file. For day-to-day development and testing, use the emulator mode instead — nothing touches real data:
+
+```bash
+bun run emulators                          # 1. auth + firestore + storage emulators (needs a JDK 21+)
+cd functions && npm i && npm run dev:emulator  # 2. OpenPlanner API on http://localhost:3010, wired to the emulators
+bun run dev:emulator                       # 3. frontend on http://localhost:3008, wired to both
+```
+
+#### Default login
+
+The emulators start **empty** and their data is wiped when they stop. There is no seeded account: on first use, enter any throwaway credentials on the sign-in page — for example `hugo@example.com` / `azerty` — and click **"Sign up now"** when prompted. The account exists only inside the local auth emulator, so these are not real credentials. Then create an event and use the app normally, including the "Update website" export (files land in the storage emulator).
+
 **Enjoy 🚀**
 
 ### Scripts

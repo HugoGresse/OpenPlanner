@@ -10,6 +10,7 @@ import {
     mdiCogBox,
     mdiPresentation,
     mdiFrequentlyAskedQuestions,
+    mdiToyBrickOutline,
     mdiTwitter,
     mdiTicket,
     mdiEarth,
@@ -49,6 +50,11 @@ export const Menu = [
         href: '/faq',
         icon: mdiFrequentlyAskedQuestions,
         name: 'FAQ',
+    },
+    {
+        href: '/blocks',
+        icon: mdiToyBrickOutline,
+        name: 'Blocks',
     },
     {
         href: '/sessions',
