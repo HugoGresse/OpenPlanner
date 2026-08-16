@@ -113,12 +113,16 @@ export const BlockItemRow = ({ event, type, variant, item, duplicateKey, onChang
         }
     }
 
+    // Tall editors (markdown, json) anchor the row controls to the top; single-line
+    // rows (image, link) anchor everything to the fields' baseline instead
+    const tallEditor = type === 'markdown' || type === 'json'
+
     return (
         <Box width="100%" mt={2} ref={setNodeRef} style={style}>
-            <Box display="flex" alignItems="flex-start" gap={1}>
+            <Box display="flex" alignItems={tallEditor ? 'flex-start' : 'flex-end'} gap={1}>
                 {variant !== 'single' && (
                     <div {...attributes} {...listeners}>
-                        <DragIndicator sx={{ cursor: 'grab', marginTop: 2 }} />
+                        <DragIndicator sx={{ cursor: 'grab', marginY: tallEditor ? 2 : 1 }} />
                     </div>
                 )}
                 {variant === 'map' && (

@@ -13,7 +13,7 @@ export const BlockImageItemEditor = ({ event, value, onChange }: BlockImageItemE
     const [uploadOpen, setUploadOpen] = useState(false)
 
     return (
-        <Box display="flex" gap={2} flexGrow={1} alignItems="center">
+        <Box display="flex" gap={2} flexGrow={1} alignItems="flex-end">
             <Button
                 variant="contained"
                 color="secondary"
