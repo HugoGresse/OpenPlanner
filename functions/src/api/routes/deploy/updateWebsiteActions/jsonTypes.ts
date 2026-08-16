@@ -115,4 +115,5 @@ export interface JsonOutput {
     outputPrivate: JsonPrivateOutput
     outputOpenFeedback: { sessions: { [p: string]: any }; speakers: { [p: string]: any } }
     outputVoxxrin: any | null
+    warnings: string[]
 }
