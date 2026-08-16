@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
     Autocomplete,
     Box,
@@ -44,6 +44,8 @@ export const BlockCard = ({ event, block, allBlocks }: BlockCardProps) => {
     const [isDeleting, setDeleting] = useState(false)
     const [draft, setDraft] = useState<BlockDraft>(draftOf(block))
     const [didChange, setDidChange] = useState(false)
+    // Ref mirror so the re-seed effect can check dirtiness without re-running on every edit
+    const didChangeRef = useRef(false)
     const mutation = useFirestoreDocumentMutation(doc(collections.buildingBlocks(event.id), block.id))
     const deletion = useFirestoreDocumentDeletion(doc(collections.buildingBlocks(event.id), block.id))
 
@@ -55,26 +57,39 @@ export const BlockCard = ({ event, block, allBlocks }: BlockCardProps) => {
         opacity: isDragging ? 0.5 : 1,
     }
 
+    const setDirty = (changed: boolean) => {
+        didChangeRef.current = changed
+        setDidChange(changed)
+    }
+
     useEffect(() => {
-        setDraft(draftOf(block))
-        setDidChange(false)
+        // The subscribed snapshot rebuilds every block object on any collection write
+        // (enabled toggle, segment reorder...). Only re-seed when there are no local
+        // edits, otherwise in-progress changes would be wiped without saving.
+        if (!didChangeRef.current) {
+            setDraft(draftOf(block))
+            setDidChange(false)
+        }
     }, [block])
 
     const updateDraft = (newDraft: BlockDraft) => {
         setDraft(newDraft)
-        setDidChange(JSON.stringify(newDraft) !== JSON.stringify(draftOf(block)))
+        setDirty(JSON.stringify(newDraft) !== JSON.stringify(draftOf(block)))
     }
+
+    // Slugification happens at validate/save time, not on blur: an Autocomplete blur
+    // can fire in the same turn as its input change and would read a stale draft
+    const normalizedDraft = useMemo(
+        () => ({ ...draft, key: slugify(draft.key), group: draft.group ? slugify(draft.group) : null }),
+        [draft]
+    )
 
     const errors = useMemo(
         () =>
             didChange
-                ? validateBlockDraft(
-                      { page: block.page, type: block.type, ...draft, group: draft.group },
-                      allBlocks,
-                      block.id
-                  )
+                ? validateBlockDraft({ page: block.page, type: block.type, ...normalizedDraft }, allBlocks, block.id)
                 : [],
-        [didChange, draft, allBlocks, block]
+        [didChange, normalizedDraft, allBlocks, block]
     )
 
     const groupOptions = useMemo(
@@ -83,8 +98,9 @@ export const BlockCard = ({ event, block, allBlocks }: BlockCardProps) => {
     )
 
     const save = async () => {
-        await mutation.mutate({ ...draft, group: draft.group || null })
-        setDidChange(false)
+        setDraft(normalizedDraft)
+        await mutation.mutate(normalizedDraft)
+        setDirty(false)
     }
 
     return (
@@ -140,7 +156,6 @@ export const BlockCard = ({ event, block, allBlocks }: BlockCardProps) => {
                             options={groupOptions}
                             value={draft.group || ''}
                             onInputChange={(_, value) => updateDraft({ ...draft, group: value || null })}
-                            onBlur={() => updateDraft({ ...draft, group: draft.group ? slugify(draft.group) : null })}
                             sx={{ minWidth: 200 }}
                             renderInput={(params) => (
                                 <TextField {...params} label="Group (optional)" variant="standard" />
