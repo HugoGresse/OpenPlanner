@@ -6,7 +6,16 @@ import {
     BuildingBlockVariant,
 } from '../../../types'
 import { generateFirestoreId } from '../../../utils/generateFirestoreId'
-import { slugify } from '../../../utils/slugify'
+
+// utils/slugify is not idempotent (it strips dashes, so re-slugifying 'hero-section'
+// gives 'herosection'). Keys get their own idempotent slugifier + regex validation.
+export const slugifyBlockKey = (value: string): string =>
+    value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
 
 // The editable subset of a block held in the BlockCard local buffer
 export type BlockDraft = Pick<BuildingBlock, 'name' | 'key' | 'group' | 'items'>
@@ -64,7 +73,7 @@ export const createBlockItem = (
     value: emptyItemValue(type),
 })
 
-export const isValidSlug = (value: string): boolean => value.length > 0 && slugify(value) === value
+export const isValidSlug = (value: string): boolean => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(value)
 
 export const jsonItemError = (value: BuildingBlockItemValue): string | null => {
     try {

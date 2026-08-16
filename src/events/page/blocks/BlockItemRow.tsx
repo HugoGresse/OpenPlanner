@@ -13,7 +13,7 @@ import {
 } from '../../../types'
 import { BlockImageItemEditor } from './BlockImageItemEditor'
 import { isValidSlug, jsonItemError } from './blockUtils'
-import { slugify } from '../../../utils/slugify'
+import { slugifyBlockKey } from './blockUtils'
 
 export type BlockItemRowProps = {
     event: Event
@@ -131,7 +131,7 @@ export const BlockItemRow = ({ event, type, variant, item, duplicateKey, onChang
                         error={!!keyError}
                         helperText={keyError}
                         onChange={(e) => onChange({ ...item, key: e.target.value })}
-                        onBlur={(e) => onChange({ ...item, key: slugify(e.target.value) })}
+                        onBlur={(e) => onChange({ ...item, key: slugifyBlockKey(e.target.value) })}
                     />
                 )}
                 {editor()}

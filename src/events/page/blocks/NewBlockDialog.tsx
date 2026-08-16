@@ -3,7 +3,7 @@ import { Autocomplete, Box, MenuItem, TextField, Typography } from '@mui/materia
 import { useFirestoreCollectionMutation } from '../../../services/hooks/firestoreMutationHooks'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { collections } from '../../../services/firebase'
-import { slugify } from '../../../utils/slugify'
+import { slugifyBlockKey } from './blockUtils'
 import { BuildingBlock, BuildingBlockItemType, BuildingBlockVariant } from '../../../types'
 import { validateBlockDraft } from './blockUtils'
 
@@ -53,8 +53,8 @@ export const NewBlockDialog = ({ open, onClose, eventId, blocks, initialPage }: 
     )
 
     const draft = {
-        page: slugify(page || 'home'),
-        group: group ? slugify(group) : null,
+        page: slugifyBlockKey(page || 'home'),
+        group: group ? slugifyBlockKey(group) : null,
         key,
         type,
         items: [],
@@ -117,7 +117,7 @@ export const NewBlockDialog = ({ open, onClose, eventId, blocks, initialPage }: 
                     onChange={(e) => {
                         setName(e.target.value)
                         if (!keyEdited) {
-                            setKey(slugify(e.target.value))
+                            setKey(slugifyBlockKey(e.target.value))
                         }
                     }}
                 />
@@ -131,7 +131,7 @@ export const NewBlockDialog = ({ open, onClose, eventId, blocks, initialPage }: 
                         setKeyEdited(true)
                         setKey(e.target.value)
                     }}
-                    onBlur={(e) => setKey(slugify(e.target.value))}
+                    onBlur={(e) => setKey(slugifyBlockKey(e.target.value))}
                 />
                 <TextField
                     select

@@ -24,8 +24,7 @@ import {
 } from '../../../services/hooks/firestoreMutationHooks'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { BlockItemsEditor } from './BlockItemsEditor'
-import { BlockDraft, blockExportPath, createBlockItem, validateBlockDraft } from './blockUtils'
-import { slugify } from '../../../utils/slugify'
+import { BlockDraft, blockExportPath, createBlockItem, slugifyBlockKey, validateBlockDraft } from './blockUtils'
 
 const draftOf = (block: BuildingBlock): BlockDraft => ({
     name: block.name,
@@ -80,7 +79,7 @@ export const BlockCard = ({ event, block, allBlocks }: BlockCardProps) => {
     // Slugification happens at validate/save time, not on blur: an Autocomplete blur
     // can fire in the same turn as its input change and would read a stale draft
     const normalizedDraft = useMemo(
-        () => ({ ...draft, key: slugify(draft.key), group: draft.group ? slugify(draft.group) : null }),
+        () => ({ ...draft, key: slugifyBlockKey(draft.key), group: draft.group ? slugifyBlockKey(draft.group) : null }),
         [draft]
     )
 
@@ -149,7 +148,7 @@ export const BlockCard = ({ event, block, allBlocks }: BlockCardProps) => {
                             required
                             value={draft.key}
                             onChange={(e) => updateDraft({ ...draft, key: e.target.value })}
-                            onBlur={(e) => updateDraft({ ...draft, key: slugify(e.target.value) })}
+                            onBlur={(e) => updateDraft({ ...draft, key: slugifyBlockKey(e.target.value) })}
                         />
                         <Autocomplete
                             freeSolo
