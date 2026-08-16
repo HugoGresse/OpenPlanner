@@ -95,8 +95,12 @@ const BlockEditor = ({
 
     const save = async () => {
         setDraft(normalizedDraft)
-        await mutation.mutate(normalizedDraft)
-        setDirty(false)
+        const saveError = await mutation.mutate(normalizedDraft)
+        // Keep the draft dirty on failure: clearing it would let the next snapshot
+        // re-seed from the server and silently wipe the unsaved changes
+        if (!saveError) {
+            setDirty(false)
+        }
     }
 
     return (
@@ -185,6 +189,11 @@ const BlockEditor = ({
                         {error}
                     </Typography>
                 ))}
+                {mutation.isError && (
+                    <Typography color="error" variant="body2" mt={1}>
+                        Error while saving: {(mutation.error as { message?: string })?.message || 'unknown error'}
+                    </Typography>
+                )}
             </Card>
 
             <ConfirmDialog
