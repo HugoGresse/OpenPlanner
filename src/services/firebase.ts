@@ -1,8 +1,8 @@
 import { initializeApp } from 'firebase/app'
-import { collection, Firestore, getFirestore } from '@firebase/firestore'
+import { collection, connectFirestoreEmulator, Firestore, getFirestore } from '@firebase/firestore'
 import { FirebaseApp } from '@firebase/app'
-import { getAuth } from 'firebase/auth'
-import { getStorage } from 'firebase/storage'
+import { connectAuthEmulator, getAuth } from 'firebase/auth'
+import { connectStorageEmulator, getStorage } from 'firebase/storage'
 import { Auth } from '@firebase/auth'
 import {
     adminUserConverter,
@@ -54,6 +54,14 @@ export const pathToStorageUrl = (path: string): string => `${alternativeStorageU
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)
 export const storage = getStorage()
+
+// Emulator mode (`bun run dev:emulator`): every Firebase service targets the local
+// Emulator Suite instead of the live project, so nothing can touch production data
+if (import.meta.env.VITE_USE_EMULATOR === 'true') {
+    connectFirestoreEmulator(instanceFirestore, '127.0.0.1', 8080)
+    connectAuthEmulator(getAuth(instanceApp), 'http://127.0.0.1:9099', { disableWarnings: true })
+    connectStorageEmulator(storage, '127.0.0.1', 9199)
+}
 
 export const collections = {
     events: collection(instanceFirestore, 'events').withConverter(eventConverter),
