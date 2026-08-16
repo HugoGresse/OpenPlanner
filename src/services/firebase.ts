@@ -6,6 +6,7 @@ import { getStorage } from 'firebase/storage'
 import { Auth } from '@firebase/auth'
 import {
     adminUserConverter,
+    buildingBlockConverter,
     eventConverter,
     faqConverter,
     jobPostConverter,
@@ -68,6 +69,8 @@ export const collections = {
     tickets: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'tickets').withConverter(ticketConverter),
     faq: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'faq').withConverter(faqConverter),
+    buildingBlocks: (eventId: string) =>
+        collection(instanceFirestore, 'events', eventId, 'blocks').withConverter(buildingBlockConverter),
     jobPosts: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'jobPosts').withConverter(jobPostConverter),
 

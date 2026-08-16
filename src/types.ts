@@ -379,6 +379,49 @@ export interface Faq {
     createdAt: string
 }
 
+export type BuildingBlockVariant = 'single' | 'list' | 'map'
+export type BuildingBlockItemType = 'markdown' | 'image' | 'link' | 'json'
+
+export interface BuildingBlockImageValue {
+    url: string
+    alt: string | null
+}
+
+export interface BuildingBlockLinkValue {
+    label: string
+    href: string
+    icon: string | null
+    type: string | null
+}
+
+// Shape depends on the parent block's `type`:
+//   markdown -> string (raw markdown)
+//   image    -> BuildingBlockImageValue
+//   link     -> BuildingBlockLinkValue
+//   json     -> string (raw JSON text: Firestore rejects nested arrays, so it is
+//               stored unparsed and parsed at export time)
+export type BuildingBlockItemValue = string | BuildingBlockImageValue | BuildingBlockLinkValue
+
+export interface BuildingBlockItem {
+    id: string
+    key: string | null // 'map' variant only: slug, unique within the block
+    order: number
+    value: BuildingBlockItemValue
+}
+
+export interface BuildingBlock {
+    id: string // Firestore doc id, not the export key
+    page: string // slug, first level in the exported blocks object
+    group: string | null // optional slug, extra nesting level
+    key: string // slug, unique within (page, group)
+    name: string // admin display name, not exported
+    type: BuildingBlockItemType
+    variant: BuildingBlockVariant
+    enabled: boolean
+    order: number // position within its (page, group) segment
+    items: BuildingBlockItem[]
+}
+
 export interface ConferenceHallEvent {
     id: string
     name: string

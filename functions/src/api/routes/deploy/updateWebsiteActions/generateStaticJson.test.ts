@@ -7,7 +7,9 @@ import { TeamDao } from '../../../dao/teamDao'
 import { FaqDao } from '../../../dao/faqDao'
 import { JobPostDao } from '../../../dao/jobPostDao'
 import { TicketDao } from '../../../dao/ticketDao'
+import { BlockDao } from '../../../dao/blockDao'
 import { Event } from '../../../../types'
+import { BuildingBlock } from '../../../../../../src/types'
 
 const event = {
     id: 'evt-1',
@@ -31,6 +33,7 @@ beforeEach(() => {
     vi.spyOn(TeamDao, 'getTeams').mockResolvedValue({ team: [], teams: [] })
     vi.spyOn(FaqDao, 'getFullFaqs').mockResolvedValue([])
     vi.spyOn(JobPostDao, 'getAllJobPosts').mockResolvedValue([])
+    vi.spyOn(BlockDao, 'getBlocks').mockResolvedValue([])
 })
 
 describe('generateStaticJson tickets node', () => {
@@ -117,5 +120,49 @@ describe('generateStaticJson voxxrin warnings', () => {
 
         expect(outputVoxxrin).toBeNull()
         expect(warnings).toEqual([])
+    })
+})
+
+describe('generateStaticJson blocks node', () => {
+    test('includes serialized blocks identically in public and private outputs', async () => {
+        vi.spyOn(TicketDao, 'getTickets').mockResolvedValue([])
+        const blocks: BuildingBlock[] = [
+            {
+                id: 'b1',
+                page: 'home',
+                group: null,
+                key: 'hero',
+                name: 'Hero',
+                type: 'markdown',
+                variant: 'single',
+                enabled: true,
+                order: 0,
+                items: [{ id: 'i1', key: null, order: 0, value: '# Welcome' }],
+            },
+            {
+                id: 'b2',
+                page: 'home',
+                group: null,
+                key: 'hidden',
+                name: 'Hidden',
+                type: 'markdown',
+                variant: 'single',
+                enabled: false,
+                order: 1,
+                items: [{ id: 'i2', key: null, order: 0, value: 'nope' }],
+            },
+        ]
+        vi.spyOn(BlockDao, 'getBlocks').mockResolvedValue(blocks)
+
+        const { outputPublic, outputPrivate } = await generateStaticJson(firebaseApp, event)
+        expect(outputPublic.blocks).toEqual({ home: { hero: '# Welcome' } })
+        expect(outputPrivate.blocks).toEqual(outputPublic.blocks)
+    })
+
+    test('emits an empty blocks object when there are none', async () => {
+        vi.spyOn(TicketDao, 'getTickets').mockResolvedValue([])
+
+        const { outputPublic } = await generateStaticJson(firebaseApp, event)
+        expect(outputPublic.blocks).toEqual({})
     })
 })

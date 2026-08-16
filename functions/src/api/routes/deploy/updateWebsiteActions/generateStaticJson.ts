@@ -10,6 +10,7 @@ import {
     JsonPrivateOutput,
     JsonTicket,
 } from './jsonTypes'
+import { serializeBlocks } from './serializeBlocks'
 import { SessionDao } from '../../../dao/sessionDao'
 import { SpeakerDao } from '../../../dao/speakerDao'
 import { SponsorDao } from '../../../dao/sponsorDao'
@@ -17,11 +18,12 @@ import { TeamDao } from '../../../dao/teamDao'
 import { FaqDao } from '../../../dao/faqDao'
 import { JobPostDao } from '../../../dao/jobPostDao'
 import { TicketDao } from '../../../dao/ticketDao'
+import { BlockDao } from '../../../dao/blockDao'
 import { JobStatus } from '../../../../../../src/constants/jobStatus'
 import { dateToString, unknownToDateTime } from '../../../other/dateConverter'
 
 export const generateStaticJson = async (firebaseApp: firebase.app.App, event: Event): Promise<JsonOutput> => {
-    const [sessions, speakers, sponsors, { team, teams }, faq, jobPosts, tickets] = await Promise.all([
+    const [sessions, speakers, sponsors, { team, teams }, faq, jobPosts, tickets, blockDocs] = await Promise.all([
         SessionDao.getSessions(firebaseApp, event.id),
         SpeakerDao.getSpeakers(firebaseApp, event.id),
         SponsorDao.getSponsors(firebaseApp, event.id),
@@ -29,9 +31,11 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         FaqDao.getFullFaqs(firebaseApp, event.id),
         JobPostDao.getAllJobPosts(firebaseApp, event.id, JobStatus.APPROVED),
         TicketDao.getTickets(firebaseApp, event.id),
+        BlockDao.getBlocks(firebaseApp, event.id),
     ])
 
     const faqPublic = faq.filter((f) => !f.private)
+    const blocks = serializeBlocks(blockDocs)
 
     const outputTickets: JsonTicket[] = tickets.map((t) => ({
         id: t.id,
@@ -203,6 +207,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         teams,
         faq: faqPublic,
         tickets: outputTickets,
+        blocks,
         timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
@@ -215,6 +220,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         teams,
         faq,
         tickets: outputTickets,
+        blocks,
         timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
