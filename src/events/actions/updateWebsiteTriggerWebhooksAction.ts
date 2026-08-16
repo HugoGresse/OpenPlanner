@@ -14,7 +14,7 @@ type DeployApiReply = {
 export const updateWebsiteTriggerWebhooksAction = async (
     event: Event,
     createNotification: (message: string, options?: CreateNotificationOption) => void
-) => {
+): Promise<boolean> => {
     try {
         await ensureEventApiKey(event, doc(collections.events, event.id))
         const reply = await fetchOpenPlannerApi<DeployApiReply>(event, 'deploy', {
@@ -28,8 +28,10 @@ export const updateWebsiteTriggerWebhooksAction = async (
         } else {
             createNotification('APIs and webhooks triggered', { type: 'success' })
         }
+        return true
     } catch (error) {
         console.error(error)
-        createNotification('Failed to update... ' + String(error), { type: 'error' })
+        createNotification('Failed to update... ' + String(error), { type: 'error', dismissDelay: 10000 })
+        return false
     }
 }

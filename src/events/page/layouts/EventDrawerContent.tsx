@@ -49,8 +49,12 @@ export const EventDrawerContent = ({ event }: EventDrawerContentProps) => {
                             disabled={loading}
                             onClick={async () => {
                                 setLoading(true)
-                                await updateWebsiteTriggerWebhooksAction(event, createNotification)
+                                const success = await updateWebsiteTriggerWebhooksAction(event, createNotification)
                                 setLoading(false)
+
+                                if (!success) {
+                                    return
+                                }
 
                                 // Trigger confetti effect from button position
                                 if (buttonRef.current) {
