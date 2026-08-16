@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "dev:emulator": "VITE_USE_EMULATOR=true vite --port 3008 --strictPort",
+        "dev:emulator": "VITE_USE_EMULATOR=true VITE_FIREBASE_OPEN_PLANNER_API_URL=http://localhost:3010/ VITE_FIREBASE_OPEN_PLANNER_FUNCTION_URL=http://localhost:3010/ vite --port 3008 --strictPort",
         "emulators": "firebase emulators:start --only auth,firestore,storage",
         "start": "bun run dev",
         "build": "vite build",
