@@ -1,44 +1,82 @@
-import { useEffect } from 'react'
-import { Box, Button, Chip, Container, Grid, Link, Paper, Typography, useTheme } from '@mui/material'
-import { GitHub } from '@mui/icons-material'
-import { FEATURE_SECTIONS, FeatureSectionContent } from './featuresContent'
+import { useEffect, useState } from 'react'
+import {
+    Box,
+    Button,
+    Chip,
+    Container,
+    Dialog,
+    Grid,
+    IconButton,
+    Link,
+    Paper,
+    Typography,
+    useTheme,
+} from '@mui/material'
+import { ChevronLeft, ChevronRight, Close, GitHub } from '@mui/icons-material'
+import { FEATURE_SECTIONS, FeatureImage, FeatureSectionContent } from './featuresContent'
 
-const FeatureSection = ({ section, index }: { section: FeatureSectionContent; index: number }) => {
-    const imageFirst = index % 2 === 1
+const FeatureImages = ({ images, onZoom }: { images: FeatureImage[]; onZoom: (image: FeatureImage) => void }) => {
+    const [index, setIndex] = useState(0)
+    const image = images[index]
 
-    const text = (
-        <Grid item xs={12} md={section.image ? 6 : 12}>
-            <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
-                {section.title}
-            </Typography>
-            <Typography variant="h6" component="p" color="primary.main" gutterBottom>
-                {section.tagline}
-            </Typography>
-            <Box component="ul" sx={{ paddingLeft: 3, margin: 0, '& li': { marginY: 1 } }}>
-                {section.bullets.map((bullet) => (
-                    <Typography key={bullet} component="li" variant="body1" color="text.secondary">
-                        {bullet}
-                    </Typography>
-                ))}
-            </Box>
-        </Grid>
-    )
-
-    const image = section.image ? (
-        <Grid item xs={12} md={6}>
+    return (
+        <Box>
             <Paper
                 elevation={6}
                 sx={{ overflow: 'hidden', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
                 <Box
                     component="img"
-                    src={section.image}
-                    alt={section.imageAlt || section.title}
+                    src={image.src}
+                    alt={image.alt}
                     loading="lazy"
-                    sx={{ width: '100%', display: 'block' }}
+                    onClick={() => onZoom(image)}
+                    sx={{ width: '100%', display: 'block', cursor: 'zoom-in' }}
                 />
             </Paper>
-        </Grid>
-    ) : null
+            {images.length > 1 && (
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1} marginTop={1}>
+                    <IconButton
+                        aria-label="Previous screenshot"
+                        size="small"
+                        onClick={() => setIndex((index - 1 + images.length) % images.length)}>
+                        <ChevronLeft />
+                    </IconButton>
+                    {images.map((dot, dotIndex) => (
+                        <Box
+                            key={dot.src}
+                            onClick={() => setIndex(dotIndex)}
+                            sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                cursor: 'pointer',
+                                backgroundColor: dotIndex === index ? 'primary.main' : 'action.disabled',
+                            }}
+                        />
+                    ))}
+                    <IconButton
+                        aria-label="Next screenshot"
+                        size="small"
+                        onClick={() => setIndex((index + 1) % images.length)}>
+                        <ChevronRight />
+                    </IconButton>
+                </Box>
+            )}
+        </Box>
+    )
+}
+
+const FeatureSection = ({
+    section,
+    index,
+    onZoom,
+}: {
+    section: FeatureSectionContent
+    index: number
+    onZoom: (image: FeatureImage) => void
+}) => {
+    const imageFirst = index % 2 === 1
+    const hasImages = !!section.images?.length
 
     return (
         <Grid
@@ -47,14 +85,33 @@ const FeatureSection = ({ section, index }: { section: FeatureSectionContent; in
             alignItems="center"
             direction={{ xs: 'column-reverse', md: imageFirst ? 'row-reverse' : 'row' }}
             sx={{ marginBottom: 12 }}>
-            {text}
-            {image}
+            <Grid item xs={12} md={hasImages ? 6 : 12}>
+                <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
+                    {section.title}
+                </Typography>
+                <Typography variant="h6" component="p" color="primary.main" gutterBottom>
+                    {section.tagline}
+                </Typography>
+                <Box component="ul" sx={{ paddingLeft: 3, margin: 0, '& li': { marginY: 1 } }}>
+                    {section.bullets.map((bullet, bulletIndex) => (
+                        <Typography key={bulletIndex} component="li" variant="body1" color="text.secondary">
+                            {bullet}
+                        </Typography>
+                    ))}
+                </Box>
+            </Grid>
+            {hasImages && (
+                <Grid item xs={12} md={6}>
+                    <FeatureImages images={section.images as FeatureImage[]} onZoom={onZoom} />
+                </Grid>
+            )}
         </Grid>
     )
 }
 
 export const FeaturesPage = () => {
     const theme = useTheme()
+    const [zoomedImage, setZoomedImage] = useState<FeatureImage | null>(null)
 
     useEffect(() => {
         document.title = 'OpenPlanner | Features'
@@ -103,7 +160,7 @@ export const FeaturesPage = () => {
                 </Box>
 
                 {FEATURE_SECTIONS.map((section, index) => (
-                    <FeatureSection key={section.key} section={section} index={index} />
+                    <FeatureSection key={section.key} section={section} index={index} onZoom={setZoomedImage} />
                 ))}
 
                 <Box textAlign="center" paddingY={6}>
@@ -126,6 +183,40 @@ export const FeaturesPage = () => {
                     </Typography>
                 </Box>
             </Container>
+
+            <Dialog
+                open={!!zoomedImage}
+                onClose={() => setZoomedImage(null)}
+                maxWidth={false}
+                PaperProps={{ sx: { backgroundColor: 'transparent', boxShadow: 'none', margin: 2 } }}>
+                {zoomedImage && (
+                    <Box position="relative" onClick={() => setZoomedImage(null)} sx={{ cursor: 'zoom-out' }}>
+                        <IconButton
+                            aria-label="Close fullscreen screenshot"
+                            onClick={() => setZoomedImage(null)}
+                            sx={{
+                                position: 'absolute',
+                                top: 8,
+                                right: 8,
+                                backgroundColor: 'rgba(0,0,0,0.55)',
+                                color: '#FFF',
+                            }}>
+                            <Close />
+                        </IconButton>
+                        <Box
+                            component="img"
+                            src={zoomedImage.src}
+                            alt={zoomedImage.alt}
+                            sx={{
+                                maxWidth: 'calc(100vw - 64px)',
+                                maxHeight: 'calc(100vh - 64px)',
+                                display: 'block',
+                                borderRadius: 2,
+                            }}
+                        />
+                    </Box>
+                )}
+            </Dialog>
         </Box>
     )
 }
