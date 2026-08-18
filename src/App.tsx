@@ -16,6 +16,9 @@ import { EventApp } from './events/page/EventApp'
 import { lazyWithRetry } from './components/lazyWithRetry'
 
 const PublicApp = lazyWithRetry(() => import('./public/PublicApp').then((module) => ({ default: module.PublicApp })))
+const FeaturesPage = lazyWithRetry(() =>
+    import('./public/features/FeaturesPage').then((module) => ({ default: module.FeaturesPage }))
+)
 
 const EventsScreen = lazyWithRetry(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
@@ -72,6 +75,11 @@ export const App = ({}) => {
                         </Route>
                         <Route path="/auth/reset">
                             <ForgotPasswordScreen />
+                        </Route>
+                        <Route path="/features">
+                            <Suspense fallback={<SuspenseLoader />}>
+                                <FeaturesPage />
+                            </Suspense>
                         </Route>
                         <RequireLogin>
                             <Switch>

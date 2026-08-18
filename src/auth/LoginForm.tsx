@@ -37,6 +37,9 @@ export const LoginForm = ({}) => {
                     height="200px"
                 />
             </Container>
+            <Container maxWidth="xs" sx={{ display: 'flex', justifyContent: 'center', marginTop: 1 }}>
+                <Link href="/features">New here? Discover what OpenPlanner can do →</Link>
+            </Container>
             <Container component="main" maxWidth="xs">
                 <FormContainer
                     formContext={formContext}
