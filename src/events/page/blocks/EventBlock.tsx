@@ -16,7 +16,7 @@ import { LoadingButton } from '@mui/lab'
 import { ArrowBack, DeleteRounded } from '@mui/icons-material'
 import { useLocation, useRoute } from 'wouter'
 import { doc } from 'firebase/firestore'
-import { BuildingBlock, Event } from '../../../types'
+import { BuildingBlock, BuildingBlockItem, Event } from '../../../types'
 import { collections } from '../../../services/firebase'
 import {
     useFirestoreDocumentDeletion,
@@ -26,6 +26,7 @@ import { useBuildingBlocks } from '../../../services/hooks/useBuildingBlocks'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { BlockItemsEditor } from './BlockItemsEditor'
+import { BlockMultiImageDropzone } from './BlockMultiImageDropzone'
 import { BlockDraft, blockExportPath, createBlockItem, slugifyBlockKey, validateBlockDraft } from './blockUtils'
 
 const draftOf = (block: BuildingBlock): BlockDraft => ({
@@ -71,6 +72,16 @@ const BlockEditor = ({
     const updateDraft = (newDraft: BlockDraft) => {
         setDraft(newDraft)
         setDirty(JSON.stringify(newDraft) !== JSON.stringify(draftOf(block)))
+    }
+
+    // Functional update: uploads finish seconds after the drop, so merging against
+    // the render-time draft would overwrite edits made while they were in flight
+    const appendItems = (newItems: BuildingBlockItem[]) => {
+        setDraft((previous) => ({
+            ...previous,
+            items: [...previous.items, ...newItems].map((item, index) => ({ ...item, order: index })),
+        }))
+        setDirty(true)
     }
 
     // Slugification happens at validate/save time, not on blur: an Autocomplete blur
@@ -170,6 +181,14 @@ const BlockEditor = ({
                     items={draft.items}
                     onChange={(items) => updateDraft({ ...draft, items })}
                 />
+                {block.type === 'image' && block.variant !== 'single' && (
+                    <BlockMultiImageDropzone
+                        event={event}
+                        variant={block.variant}
+                        existingItems={draft.items}
+                        onUploaded={appendItems}
+                    />
+                )}
                 {(block.variant !== 'single' || draft.items.length === 0) && (
                     <Button
                         variant="contained"

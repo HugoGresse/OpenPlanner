@@ -67,6 +67,8 @@ export const NewBlockDialog = ({ open, onClose, eventId, blocks, initialPage }: 
         <ConfirmDialog
             open={open}
             handleClose={onClose}
+            fullWidth
+            maxWidth="sm"
             loading={mutation.isLoading}
             disabled={!key.length || errors.length > 0}
             title="Add a building block"
@@ -93,7 +95,7 @@ export const NewBlockDialog = ({ open, onClose, eventId, blocks, initialPage }: 
                         }
                     })
             }}>
-            <Box marginY={1} sx={{ minWidth: '30vw' }} display="flex" flexDirection="column" gap={2}>
+            <Box marginY={1} display="flex" flexDirection="column" gap={2}>
                 <Autocomplete
                     freeSolo
                     options={pageOptions}

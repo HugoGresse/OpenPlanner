@@ -5,6 +5,7 @@ import { Download, Crop } from '@mui/icons-material'
 import { triggerFileDownload } from '../../utils/triggerFileDownload'
 import { ImageCropDialog, CroppedImageFile } from './ImageCropDialog'
 import { getImageInfo, ImageInfo } from '../../utils/images/getImageInfo'
+import { formatBytes } from '../../utils/formatBytes'
 
 export type SidePanelImageUploadFormProps = {
     urlValue: string
@@ -37,6 +38,10 @@ export const SidePanelImageUploadForm = ({
     const [previewImage, setPreviewImage] = React.useState<string>((file && file.preview) || urlValue)
     const [cropDialogOpen, setCropDialogOpen] = React.useState(false)
     const [imageInfo, setImageInfo] = React.useState<ImageInfo | null>(null)
+
+    // Weight of the image: the picked file's size when one is staged (object URLs
+    // can't be HEAD-fetched), otherwise the content-length probed by getImageInfo
+    const imageWeight = file?.file.size ?? imageInfo?.fileSize ?? null
 
     // Update previewImage when file or urlValue changes
     React.useEffect(() => {
@@ -148,6 +153,7 @@ export const SidePanelImageUploadForm = ({
                                     {' '}
                                     ({imageInfo.width}px × {imageInfo.height}px)
                                     {imageInfo.fileType && <span> • {imageInfo.fileType}</span>}
+                                    {imageWeight !== null && <span> • {formatBytes(imageWeight)}</span>}
                                 </span>
                             )}
                         </Typography>
