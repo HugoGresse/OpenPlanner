@@ -141,6 +141,7 @@ export const FeaturesPage = () => {
                             Open the app
                         </Button>
                         <Button
+                            component="a"
                             variant="outlined"
                             size="large"
                             startIcon={<GitHub />}
@@ -177,7 +178,11 @@ export const FeaturesPage = () => {
                     </Box>
                     <Typography variant="body2" color="text.secondary" marginTop={6}>
                         Built by organizers, for organizers.{' '}
-                        <Link href="https://github.com/HugoGresse/openplanner" target="_blank" rel="noopener">
+                        <Link
+                            component="a"
+                            href="https://github.com/HugoGresse/openplanner"
+                            target="_blank"
+                            rel="noopener">
                             Contribute on GitHub
                         </Link>
                     </Typography>

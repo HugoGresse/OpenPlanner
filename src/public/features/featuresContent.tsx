@@ -15,7 +15,7 @@ export interface FeatureSectionContent {
 }
 
 const ExternalLink = ({ href, children }: { href: string; children: ReactNode }) => (
-    <Link href={href} target="_blank" rel="noopener">
+    <Link component="a" href={href} target="_blank" rel="noopener">
         {children}
     </Link>
 )
