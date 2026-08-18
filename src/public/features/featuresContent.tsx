@@ -54,7 +54,10 @@ export const FEATURE_SECTIONS: FeatureSectionContent[] = [
                 <ExternalLink href="https://shortvid.io/">ShortVid</ExternalLink>
             </>,
         ],
-        images: [{ src: '/features/sessions.png', alt: 'The sessions list with filters and quick actions' }],
+        images: [
+            { src: '/features/sessions.png', alt: 'The sessions list with filters and quick actions' },
+            { src: '/features/session-edit.png', alt: 'The session edit page with dates, speakers and media' },
+        ],
     },
     {
         key: 'speakers',
@@ -66,7 +69,13 @@ export const FEATURE_SECTIONS: FeatureSectionContent[] = [
             'Every change goes through admin approval before it is published',
             'Sessions linked automatically, visible at a glance',
         ],
-        images: [{ src: '/features/speakers.png', alt: 'The speakers list with linked sessions' }],
+        images: [
+            { src: '/features/speakers.png', alt: 'The speakers list with linked sessions' },
+            {
+                src: '/features/speaker-self-edit.png',
+                alt: 'The public speaker self-edit form opened from a magic link',
+            },
+        ],
     },
     {
         key: 'sponsors',
@@ -78,7 +87,10 @@ export const FEATURE_SECTIONS: FeatureSectionContent[] = [
             'You approve job posts before they reach the public site',
             'Everything ships in the exported JSON for your website',
         ],
-        images: [{ src: '/features/sponsors.png', alt: 'Sponsor categories with logos' }],
+        images: [
+            { src: '/features/sponsors.png', alt: 'Sponsor categories with logos' },
+            { src: '/features/jobs.png', alt: 'The job posts moderation page' },
+        ],
     },
     {
         key: 'team',
@@ -112,7 +124,10 @@ export const FEATURE_SECTIONS: FeatureSectionContent[] = [
             'Multi-image drop upload, live preview, enable/disable per block',
             'Exported as blocks.<page>.<key> in the same JSON as the rest',
         ],
-        images: [{ src: '/features/blocks.png', alt: 'The building blocks editor' }],
+        images: [
+            { src: '/features/blocks.png', alt: 'The building blocks editor' },
+            { src: '/features/blocks-gallery.png', alt: 'An image gallery block with multi-image drop upload' },
+        ],
     },
     {
         key: 'faq',
@@ -144,6 +159,10 @@ export const FEATURE_SECTIONS: FeatureSectionContent[] = [
                 alt: 'Intermission screen at Sunny Tech with the next-session lower third',
             },
             {
+                src: '/features/transcription.png',
+                alt: 'The live transcription screen with the current and next talk',
+            },
+            {
                 src: '/features/intermission-2.jpg',
                 alt: 'Intermission screen rotating through the sponsor slideshow',
             },
@@ -161,11 +180,19 @@ export const FEATURE_SECTIONS: FeatureSectionContent[] = [
                 </ExternalLink>
             </>,
             'Webhooks trigger your website build (GitHub repository_dispatch supported out of the box)',
-            'Built-in public schedule site if you do not want to build one',
+            <>
+                Built-in public schedule site if you do not want to build one —{' '}
+                <ExternalLink href="https://openplanner.fr/public/event/YFlN9koUK0qPuYkvbqQg">
+                    see Sunny Tech 2026&apos;s live
+                </ExternalLink>
+            </>,
             <>
                 OpenFeedback and Voxxrin exports, plus a full{' '}
                 <ExternalLink href="https://api.openplanner.fr/">REST API</ExternalLink> with per-event keys
             </>,
+        ],
+        images: [
+            { src: '/features/public-site.png', alt: "Sunny Tech 2026's public website built on the exported JSON" },
         ],
     },
 ]
