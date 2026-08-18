@@ -79,8 +79,8 @@ export const BlockMultiImageDropzone = ({
         multiple: true,
         disabled: !!progress || isLoading || !!error || !filesPath,
         accept: {
-            'image/jpeg': ['.png', '.jpg', '.jpeg'],
-            'image/png': ['.png', '.jpg', '.jpeg'],
+            'image/jpeg': ['.jpg', '.jpeg'],
+            'image/png': ['.png'],
             'image/webp': ['.webp'],
             'image/svg+xml': ['.svg'],
         },
