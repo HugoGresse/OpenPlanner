@@ -26,7 +26,6 @@ import { useBuildingBlocks } from '../../../services/hooks/useBuildingBlocks'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { BlockItemsEditor } from './BlockItemsEditor'
-import { BlockMultiImageDropzone } from './BlockMultiImageDropzone'
 import { BlockDraft, blockExportPath, createBlockItem, slugifyBlockKey, validateBlockDraft } from './blockUtils'
 
 const draftOf = (block: BuildingBlock): BlockDraft => ({
@@ -171,14 +170,6 @@ const BlockEditor = ({
                     items={draft.items}
                     onChange={(items) => updateDraft({ ...draft, items })}
                 />
-                {block.type === 'image' && block.variant !== 'single' && (
-                    <BlockMultiImageDropzone
-                        event={event}
-                        variant={block.variant}
-                        existingItems={draft.items}
-                        onUploaded={(newItems) => updateDraft({ ...draft, items: [...draft.items, ...newItems] })}
-                    />
-                )}
                 {(block.variant !== 'single' || draft.items.length === 0) && (
                     <Button
                         variant="contained"
