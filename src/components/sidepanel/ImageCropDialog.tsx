@@ -41,6 +41,14 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
 
+    // The dialog stays mounted between opens: reset the size choice so a previous
+    // reduction is not silently re-applied to an already-shrunk image
+    useEffect(() => {
+        if (open) {
+            setSizePercent(100)
+        }
+    }, [open, imageSrc])
+
     // Detect image type and name when imageSrc changes
     useEffect(() => {
         detectImageType(imageSrc).then((type) => {
@@ -142,7 +150,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
         : 0
     const outputWidth = Math.max(1, Math.round((selectionNaturalWidth * sizePercent) / 100))
     const outputHeight = Math.max(1, Math.round((selectionNaturalHeight * sizePercent) / 100))
-    const canResize = imageType !== 'svg' && imageType !== 'unknown'
+    // 'unknown' covers blob: previews from the dropzone/clipboard; the crop path
+    // rasterizes those as PNG, so they can be resized like any raster image
+    const canResize = imageType !== 'svg'
 
     // Mouse events for crop area manipulation
     const handleMouseDown = (e: React.MouseEvent) => {
