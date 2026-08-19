@@ -1,9 +1,10 @@
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material'
+import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Slider, Typography } from '@mui/material'
 import React, { useState, useRef, useEffect } from 'react'
 import { cropJpegImage } from '../../utils/images/imageCrop/cropJpegImage'
 import { cropPngImage } from '../../utils/images/imageCrop/cropPngImage'
 import { cropSvgImage } from '../../utils/images/imageCrop/cropSvgImage'
 import { detectImageType } from '../../utils/images/imageCrop/detectImageType'
+import { downscaleImage } from '../../utils/images/imageCrop/downscaleImage'
 import { isImageCrossOrigin } from '../../utils/images/loadImageWithCORS'
 
 // Define a more complete file type to return
@@ -33,6 +34,8 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
     const [imageName, setImageName] = useState('image') // Default name
     const [naturalAspectRatio, setNaturalAspectRatio] = useState(0) // Store image's natural aspect ratio
     const [isCrossOrigin, setIsCrossOrigin] = useState(false)
+    const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
+    const [sizePercent, setSizePercent] = useState(100)
 
     const imageRef = useRef<HTMLImageElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -123,6 +126,7 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
             const aspectRatio = naturalWidth / naturalHeight
 
             setNaturalAspectRatio(aspectRatio)
+            setNaturalSize({ width: naturalWidth, height: naturalHeight })
             setImageSize({
                 width: imageRef.current.clientWidth || imageRef.current.width,
                 height: imageRef.current.clientHeight || imageRef.current.height,
@@ -130,6 +134,15 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
             setImageLoaded(true)
         }
     }
+
+    // Dimensions of the crop selection in real (natural) pixels, before/after the size slider
+    const selectionNaturalWidth = imageSize.width ? Math.round(crop.width * (naturalSize.width / imageSize.width)) : 0
+    const selectionNaturalHeight = imageSize.height
+        ? Math.round(crop.height * (naturalSize.height / imageSize.height))
+        : 0
+    const outputWidth = Math.max(1, Math.round((selectionNaturalWidth * sizePercent) / 100))
+    const outputHeight = Math.max(1, Math.round((selectionNaturalHeight * sizePercent) / 100))
+    const canResize = imageType !== 'svg' && imageType !== 'unknown'
 
     // Mouse events for crop area manipulation
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -260,6 +273,16 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
 
             if (!croppedImageData) {
                 throw new Error('Failed to crop image. This may be due to cross-origin restrictions.')
+            }
+
+            // Shrink the result when the user picked a smaller size (raster images only)
+            if (canResize && sizePercent < 100) {
+                croppedImageData = await downscaleImage(
+                    croppedImageData,
+                    (scaledCrop.width * sizePercent) / 100,
+                    (scaledCrop.height * sizePercent) / 100,
+                    mimeType
+                )
             }
 
             if (onApplyCrop && croppedImageData) {
@@ -399,7 +422,9 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={{ zIndex: 1500 }}>
-            <DialogTitle>Crop Image {imageType !== 'unknown' ? `(${imageType.toUpperCase()})` : ''}</DialogTitle>
+            <DialogTitle>
+                Crop & resize image {imageType !== 'unknown' ? `(${imageType.toUpperCase()})` : ''}
+            </DialogTitle>
             <DialogContent>
                 <Box
                     ref={containerRef}
@@ -523,11 +548,54 @@ export const ImageCropDialog = ({ open, onClose, imageSrc, onApplyCrop }: ImageC
                     {/* Hidden canvas for cropping */}
                     <canvas ref={canvasRef} style={{ display: 'none' }} />
                 </Box>
+
+                {imageLoaded && (
+                    <Box marginTop={3}>
+                        <Typography fontWeight="bold">Image size</Typography>
+                        {canResize ? (
+                            <>
+                                <Typography variant="body2" color="text.secondary">
+                                    Slide left to make the saved image smaller. Smaller images load faster on your
+                                    website; 100% keeps the original quality.
+                                </Typography>
+                                <Box paddingX={2}>
+                                    <Slider
+                                        value={sizePercent}
+                                        min={10}
+                                        max={100}
+                                        step={5}
+                                        marks={[
+                                            { value: 25, label: '25%' },
+                                            { value: 50, label: '50%' },
+                                            { value: 75, label: '75%' },
+                                            { value: 100, label: '100%' },
+                                        ]}
+                                        valueLabelDisplay="auto"
+                                        valueLabelFormat={(value) => `${value}%`}
+                                        onChange={(_, value) => setSizePercent(value as number)}
+                                    />
+                                </Box>
+                                <Typography variant="body2">
+                                    The image will be saved at{' '}
+                                    <strong>
+                                        {outputWidth} × {outputHeight} px
+                                    </strong>
+                                    {sizePercent < 100 ? ` — ${sizePercent}% of the selected area` : ' (original size)'}
+                                </Typography>
+                            </>
+                        ) : (
+                            <Typography variant="body2" color="text.secondary">
+                                This image is an SVG (vector) file: it scales without any quality loss, so there is no
+                                size to reduce.
+                            </Typography>
+                        )}
+                    </Box>
+                )}
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
                 <Button variant="contained" onClick={handleApplyCrop} disabled={isProcessing || !imageLoaded}>
-                    {isProcessing ? 'Processing...' : 'Apply Crop'}
+                    {isProcessing ? 'Processing...' : 'Apply'}
                 </Button>
             </DialogActions>
         </Dialog>
