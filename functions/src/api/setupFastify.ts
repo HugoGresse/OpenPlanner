@@ -20,6 +20,7 @@ import { speakersRoutes } from './routes/speakers/speakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/eventRoutes'
+import { usageRoutes } from './routes/event/usage'
 import { bupherRoutes } from './routes/bupher/bupher'
 import { chatRoutes } from './routes/chat/chat'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
@@ -62,6 +63,7 @@ export const setupFastify = () => {
     registerSwagger(fastify)
 
     fastify.register(eventRoutes)
+    fastify.register(usageRoutes)
     fastify.register(sponsorsRoutes)
     fastify.register(sessionsRoutes)
     fastify.register(sessionsSpeakers)

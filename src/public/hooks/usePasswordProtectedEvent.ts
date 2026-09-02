@@ -56,7 +56,7 @@ export const usePasswordProtectedEvent = (eventId: string, password: string): Pa
 
                 setState((newState) => ({ ...newState, reply }))
 
-                const urlEventData = new URL(`${reply.dataUrl}?t=${Date.now()}`)
+                const urlEventData = new URL(reply.dataUrl)
                 const eventDataResult = await fetch(urlEventData)
 
                 if (!eventDataResult.ok) {

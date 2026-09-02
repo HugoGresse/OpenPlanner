@@ -29,6 +29,8 @@ export const uploadBufferToStorage = async (
         await bucketFile.save(buffer, {
             contentType: mime,
             predefinedAcl: 'publicRead',
+            // uuid-named files never change once written; fixed-name files can be overwritten
+            metadata: { cacheControl: addUuid ? 'public, max-age=31536000, immutable' : 'public, max-age=3600' },
         })
     } catch (error) {
         console.warn('error uploading file', error)

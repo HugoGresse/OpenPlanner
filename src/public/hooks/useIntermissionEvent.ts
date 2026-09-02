@@ -50,7 +50,7 @@ export const useIntermissionEvent = (eventId: string, password: string): Intermi
 
                 const reply = (await apiResult.json()) as { eventName: string; dataUrl: string }
 
-                const eventDataResult = await fetch(`${reply.dataUrl}?t=${Date.now()}`)
+                const eventDataResult = await fetch(reply.dataUrl)
                 if (!eventDataResult.ok) {
                     setState((s) => ({
                         ...s,

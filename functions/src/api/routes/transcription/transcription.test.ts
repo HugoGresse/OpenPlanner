@@ -94,7 +94,7 @@ describe('GET /v1/:eventId/transcription', () => {
         expect(JSON.parse(res.body)).toMatchObject({
             eventName: 'Test Event',
             gladiaAPIKey: 'secret-gladia',
-            dataUrl: 'https://storage.googleapis.com/test-bucket/public.json',
+            dataUrl: expect.stringMatching(/^https:\/\/storage\.googleapis\.com\/test-bucket\/public\.json\?v=\d+$/),
         })
     })
 })
