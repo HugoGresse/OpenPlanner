@@ -35,6 +35,39 @@ const getUsageLogBucketName = () => {
     return process.env.USAGE_LOG_BUCKET || fromParam || 'conferencecenterr-usage-logs'
 }
 
+// Minimal CSV line parser: GCS usage logs quote every field and fields like
+// cs_user_agent or cs_referer contain commas, so a plain split(',') shifts
+// columns. Handles quoted fields and escaped quotes ("" inside a field).
+export const parseCsvLine = (line: string): string[] => {
+    const values: string[] = []
+    let current = ''
+    let inQuotes = false
+    for (let index = 0; index < line.length; index++) {
+        const char = line[index]
+        if (inQuotes) {
+            if (char === '"') {
+                if (line[index + 1] === '"') {
+                    current += '"'
+                    index++
+                } else {
+                    inQuotes = false
+                }
+            } else {
+                current += char
+            }
+        } else if (char === '"') {
+            inQuotes = true
+        } else if (char === ',') {
+            values.push(current)
+            current = ''
+        } else {
+            current += char
+        }
+    }
+    values.push(current)
+    return values
+}
+
 interface LogRow {
     date: string
     eventId: string
@@ -69,13 +102,13 @@ const collectLogRows = async (firebaseApp: firebase.app.App, dayCount: number): 
             const [content] = await logFile.download()
             const lines = content.toString('utf8').split('\n').filter(Boolean)
             if (lines.length < 2) return
-            const header = lines[0].split(',').map((column) => column.replace(/"/g, ''))
+            const header = parseCsvLine(lines[0])
             const objectIndex = header.indexOf('cs_object')
             const bytesIndex = header.indexOf('sc_bytes')
             if (objectIndex === -1 || bytesIndex === -1) return
 
             for (const line of lines.slice(1)) {
-                const columns = line.split(',').map((column) => column.replace(/^"|"$/g, ''))
+                const columns = parseCsvLine(line)
                 const objectName = columns[objectIndex] || ''
                 const eventMatch = objectName.match(/^events\/([^/]+)\//)
                 if (!eventMatch) continue
