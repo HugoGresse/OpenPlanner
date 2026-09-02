@@ -5,6 +5,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { addContentTypeParserForServerless } from './other/addContentTypeParserForServerless'
 import { firebasePlugin } from './dao/firebasePlugin'
 import { apiKeyPlugin } from './apiKeyPlugin'
+import { superAdminPlugin } from './superAdminPlugin'
 import { speakerEditTokenPlugin } from './speakerEditTokenPlugin'
 import cors from '@fastify/cors'
 import { registerSwagger } from './swagger'
@@ -21,6 +22,7 @@ import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/eventRoutes'
 import { usageRoutes } from './routes/event/usage'
+import { adminUsageRoutes } from './routes/admin/adminUsage'
 import { bupherRoutes } from './routes/bupher/bupher'
 import { chatRoutes } from './routes/chat/chat'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
@@ -55,6 +57,7 @@ export const setupFastify = () => {
     fastify.register(fastifyAuth)
     fastify.register(firebasePlugin)
     fastify.register(apiKeyPlugin)
+    fastify.register(superAdminPlugin)
     fastify.register(speakerEditTokenPlugin)
     fastify.register(cors, {
         origin: '*',
@@ -64,6 +67,7 @@ export const setupFastify = () => {
 
     fastify.register(eventRoutes)
     fastify.register(usageRoutes)
+    fastify.register(adminUsageRoutes)
     fastify.register(sponsorsRoutes)
     fastify.register(sessionsRoutes)
     fastify.register(sessionsSpeakers)
