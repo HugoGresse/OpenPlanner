@@ -1,4 +1,5 @@
 import firebase from 'firebase-admin'
+import Papa from 'papaparse'
 import { defineString } from 'firebase-functions/params'
 import { getStorageBucketName } from './firebasePlugin'
 
@@ -44,6 +45,29 @@ interface LogRow {
 // Downloads and parses the hourly usage-log CSVs of the last `dayCount` days.
 // Throws when the log bucket is unreachable; callers translate that into
 // an "unavailable" reply.
+// Parses one usage-log CSV (papaparse handles the quoted fields: referers and
+// user agents contain commas) and keeps the rows about events/... objects.
+export const parseUsageLogContent = (content: string, date: string): LogRow[] => {
+    const parsed = Papa.parse<string[]>(content.trim(), { skipEmptyLines: true })
+    const lines = parsed.data
+    if (lines.length < 2) {
+        return []
+    }
+    const header = lines[0]
+    const objectIndex = header.indexOf('cs_object')
+    const bytesIndex = header.indexOf('sc_bytes')
+    if (objectIndex === -1 || bytesIndex === -1) {
+        return []
+    }
+    const rows: LogRow[] = []
+    for (const columns of lines.slice(1)) {
+        const eventMatch = (columns[objectIndex] || '').match(/^events\/([^/]+)\//)
+        if (!eventMatch) continue
+        rows.push({ date, eventId: eventMatch[1], bytes: parseInt(columns[bytesIndex] || '0', 10) || 0 })
+    }
+    return rows
+}
+
 const collectLogRows = async (firebaseApp: firebase.app.App, dayCount: number): Promise<LogRow[]> => {
     const logBucket = firebaseApp.storage().bucket(getUsageLogBucketName())
 
@@ -67,24 +91,7 @@ const collectLogRows = async (firebaseApp: firebase.app.App, dayCount: number): 
             const dateKey = (logFile.name.match(/usage_(\d{4}_\d{2}_\d{2})/) || [])[1]
             if (!dateKey) return
             const [content] = await logFile.download()
-            const lines = content.toString('utf8').split('\n').filter(Boolean)
-            if (lines.length < 2) return
-            const header = lines[0].split(',').map((column) => column.replace(/"/g, ''))
-            const objectIndex = header.indexOf('cs_object')
-            const bytesIndex = header.indexOf('sc_bytes')
-            if (objectIndex === -1 || bytesIndex === -1) return
-
-            for (const line of lines.slice(1)) {
-                const columns = line.split(',').map((column) => column.replace(/^"|"$/g, ''))
-                const objectName = columns[objectIndex] || ''
-                const eventMatch = objectName.match(/^events\/([^/]+)\//)
-                if (!eventMatch) continue
-                rows.push({
-                    date: dateKey.replace(/_/g, '-'),
-                    eventId: eventMatch[1],
-                    bytes: parseInt(columns[bytesIndex] || '0', 10) || 0,
-                })
-            }
+            rows.push(...parseUsageLogContent(content.toString('utf8'), dateKey.replace(/_/g, '-')))
         })
     )
     return rows
