@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import Type, { Static } from 'typebox'
+import { publicDataUrl } from '../../other/publicDataUrl'
 import { EventDao } from '../../dao/eventDao'
 import { getStorageBucketName } from '../../dao/firebasePlugin'
 
@@ -51,7 +52,7 @@ export const getEventRoute = (fastify: FastifyInstance, options: any, done: () =
 
             reply.status(200).send({
                 eventName: event.name,
-                dataUrl: `https://storage.googleapis.com/${bucket}/${event.files.public}`,
+                dataUrl: publicDataUrl(bucket, event),
             })
         }
     )

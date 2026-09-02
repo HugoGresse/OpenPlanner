@@ -33,7 +33,7 @@ describe('GET /v1/:eventId/intermission', () => {
         expect(res.statusCode).toBe(200)
         expect(JSON.parse(res.body)).toMatchObject({
             eventName: 'Test Event',
-            dataUrl: 'https://storage.googleapis.com/test-bucket/public.json',
+            dataUrl: expect.stringMatching(/^https:\/\/storage\.googleapis\.com\/test-bucket\/public\.json\?v=\d+$/),
         })
     })
 
@@ -70,7 +70,7 @@ describe('GET /v1/:eventId/intermission', () => {
         expect(res.statusCode).toBe(200)
         expect(JSON.parse(res.body)).toMatchObject({
             eventName: 'Test Event',
-            dataUrl: 'https://storage.googleapis.com/test-bucket/public.json',
+            dataUrl: expect.stringMatching(/^https:\/\/storage\.googleapis\.com\/test-bucket\/public\.json\?v=\d+$/),
         })
     })
 

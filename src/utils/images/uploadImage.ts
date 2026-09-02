@@ -29,6 +29,10 @@ export const uploadImage = async (imageFolder: string, image: Blob): Promise<str
     const folderPath = storageUrlToPath(imageFolder)
     const outputRef = ref(storage, `${folderPath}${fileName}`)
 
-    await uploadBytes(outputRef, image, { contentType: image.type || undefined })
+    await uploadBytes(outputRef, image, {
+        contentType: image.type || undefined,
+        // uuid file name: the object is immutable, caches can keep it forever
+        cacheControl: 'public, max-age=31536000, immutable',
+    })
     return pathToStorageUrl(outputRef.fullPath)
 }

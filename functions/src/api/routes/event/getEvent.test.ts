@@ -58,7 +58,9 @@ describe('GET /v1/:eventId/event', () => {
         expect(res.statusCode).toBe(200)
         expect(JSON.parse(res.body)).toMatchObject({
             eventName: 'Test Event',
-            dataUrl: 'https://storage.googleapis.com/test-bucket/public/openplanner.json',
+            dataUrl: expect.stringMatching(
+                /^https:\/\/storage\.googleapis\.com\/test-bucket\/public\/openplanner\.json\?v=\d+$/
+            ),
         })
     })
 })

@@ -13,6 +13,7 @@ import { mapEventDevSettingsFormToMutateObject } from '../settings/mapEventSetti
 import { WebhooksFields } from '../settings/components/WebhooksFields'
 import { RepoFields } from '../settings/components/RepoFields'
 import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFilePaths'
+import { EventUsageCard } from './components/EventUsageCard'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { TextFieldElementWithGenerateApiKeyButton } from '../../../components/form/TextFieldElementWithGenerateApiKeyButton'
@@ -123,6 +124,8 @@ export const API = ({ event }: APIProps) => {
                         />
                     </Collapse>
                 </Card>
+
+                <EventUsageCard event={event} />
 
                 <Card sx={{ paddingX: 2, mt: 4 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>

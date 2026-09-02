@@ -34,10 +34,9 @@ export const usePublicEvent = (eventId?: string): UseQueryResult<JsonPublicOutpu
                 throw new Error('No data URL available, did you forgot to "Update website" once?')
             }
 
-            const cacheBuster = new Date().getTime()
-            const dataUrl = `${eventData.dataUrl}?t=${cacheBuster}`
-
-            const dataResponse = await fetch(dataUrl)
+            // dataUrl is versioned server-side (?v=updatedAt): stable between deploys,
+            // so browsers and edges cache it instead of re-downloading per visit
+            const dataResponse = await fetch(eventData.dataUrl)
             if (!dataResponse.ok) {
                 throw new Error(`Failed to fetch event data: ${dataResponse.statusText}`)
             }
