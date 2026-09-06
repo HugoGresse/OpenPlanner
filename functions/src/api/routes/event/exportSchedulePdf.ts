@@ -1,8 +1,7 @@
 import Type from 'typebox'
 import { FastifyInstance } from 'fastify'
 import { EventDao } from '../../dao/eventDao'
-import { isDev } from '../../setupFastify'
-import { getFirebaseProjectId } from '../../../utils/getFirebaseProjectId'
+import { functionBaseUrl } from '../../../utils/functionUrls'
 import { getServiceAPIKey } from '../../../serviceApi/serviceApiKeyPreHandler'
 import { getIndividualDays } from '../../../../../src/utils/dates/diffDays'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
@@ -72,11 +71,8 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
             const language = event.language || 'FR'
 
             try {
-                const firebaseProjectId = getFirebaseProjectId()
                 const serviceApiKey = getServiceAPIKey()
-                const pdfServiceUrl = isDev()
-                    ? `http://localhost:5001/${firebaseProjectId}/europe-west1/serviceApi`
-                    : `https://serviceapi.openplanner.fr`
+                const pdfServiceUrl = functionBaseUrl('serviceApi')
                 const response = await fetch(`${pdfServiceUrl}/v1/pdf/convert?apiKey=${serviceApiKey}`, {
                     method: 'POST',
                     headers: {
