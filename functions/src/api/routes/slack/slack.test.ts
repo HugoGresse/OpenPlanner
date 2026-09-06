@@ -358,4 +358,45 @@ describe('Slack routes', () => {
         expect(auditSpy).not.toHaveBeenCalled()
         expect(fetchSpy).not.toHaveBeenCalled()
     })
+
+    test('self-dispatched work route runs the work only with a valid SERVICE_API_KEY signature', async () => {
+        process.env.SERVICE_API_KEY = 'service-key'
+        mockEventLoad()
+        const claimSpy = vi.spyOn(SlackProposalDao, 'claimProposal').mockResolvedValue(null)
+        const work = {
+            type: 'interaction',
+            source: { kind: 'event', eventId },
+            payload: {
+                type: 'block_actions',
+                user: { id: 'U1' },
+                actions: [{ action_id: SLACK_ACTION_IDS.rejectProposal, value: `${eventId}|call_1` }],
+            },
+        }
+        const raw = JSON.stringify(work)
+        const timestamp = String(Math.floor(Date.now() / 1000))
+        const headers = (secret: string) => ({
+            'content-type': 'application/json',
+            'x-openplanner-timestamp': timestamp,
+            'x-openplanner-signature': computeSlackSignature(secret, timestamp, raw),
+        })
+
+        const forged = await fastify.inject({
+            method: 'POST',
+            url: '/v1/slack/work',
+            headers: headers('wrong'),
+            payload: raw,
+        })
+        expect(forged.statusCode).toBe(401)
+        expect(claimSpy).not.toHaveBeenCalled()
+
+        const res = await fastify.inject({
+            method: 'POST',
+            url: '/v1/slack/work',
+            headers: headers('service-key'),
+            payload: raw,
+        })
+        expect(res.statusCode).toBe(200)
+        expect(claimSpy).toHaveBeenCalledWith(expect.anything(), eventId, 'call_1')
+        delete process.env.SERVICE_API_KEY
+    })
 })

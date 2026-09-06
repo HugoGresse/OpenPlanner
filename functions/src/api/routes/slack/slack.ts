@@ -17,6 +17,7 @@ import {
     slackOfficialInteractionsRouteHandler,
 } from './slackInteractionsPOST'
 import { slackOAuthRoutes } from './slackOAuth'
+import { SLACK_WORK_PATH, slackWorkRouteHandler, verifySlackWorkRequest } from './slackWorker'
 
 declare module 'fastify' {
     interface FastifyRequest {
@@ -124,6 +125,19 @@ export const slackRoutes = (fastify: FastifyInstance, _options: unknown, done: (
         '/v1/slack/interactions',
         { schema: slackOfficialInteractionsPOSTSchema, preHandler: verifyOfficialSlackRequest() },
         slackOfficialInteractionsRouteHandler(fastify)
+    )
+    fastify.post(
+        SLACK_WORK_PATH,
+        {
+            schema: {
+                tags: ['slack'],
+                summary: 'Internal: runs Slack work dispatched by the events/interactions endpoints',
+                description:
+                    'Self-dispatched by the api function so Slack gets its ack within 3s while the chat/decision work runs in a separate request. Signed with SERVICE_API_KEY; not meant to be called by clients.',
+            },
+            preHandler: verifySlackWorkRequest,
+        },
+        slackWorkRouteHandler(fastify)
     )
     slackOAuthRoutes(fastify)
     done()

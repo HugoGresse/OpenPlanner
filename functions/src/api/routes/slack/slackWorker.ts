@@ -1,14 +1,16 @@
-import { FastifyInstance } from 'fastify'
-import { onTaskDispatched } from 'firebase-functions/v2/tasks'
-import { getFunctions } from 'firebase-admin/functions'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { request as httpsRequest } from 'node:https'
 import { EventDao } from '../../dao/eventDao'
 import { SlackInstallationDao } from '../../dao/slackInstallationDao'
 import { postSlackMessage } from './slackApi'
 import { SlackChatContext, SlackInboundEvent, handleSlackChatMessage } from './slackChatHandler'
 import { SlackInteractionPayload, runSlackInteraction } from './slackInteractionsPOST'
 import { describeSlackPickFailure, pickEventForSlackChannel } from './slackRouting'
+import { computeSlackSignature, verifySlackSignature } from './slackSignature'
 
-export const slackWorkerTaskName = 'locations/europe-west1/functions/slackWorker'
+export const SLACK_WORK_PATH = '/v1/slack/work'
+const TIMESTAMP_HEADER = 'x-openplanner-timestamp'
+const SIGNATURE_HEADER = 'x-openplanner-signature'
 
 export type SlackWorkSource = { kind: 'event'; eventId: string } | { kind: 'official'; teamId: string }
 
@@ -65,35 +67,72 @@ export const runSlackWork = async (fastify: FastifyInstance, work: SlackWork): P
     await handleSlackChatMessage(fastify, context)
 }
 
+const runInline = (fastify: FastifyInstance, work: SlackWork) =>
+    runSlackWork(fastify, work).catch((error) => console.error('[slack worker] failed', error))
+
 const runsInline = () =>
     process.env.NODE_ENV === 'development' ||
     process.env.NODE_ENV === 'test' ||
     process.env.FUNCTIONS_EMULATOR === 'true'
 
-// Slack expects an ack within 3s and the Cloud Functions invocation ends when the
-// socket closes, so the real work runs in a Cloud Task. Dev/test have no task
-// queue and run the work inline instead.
+// Cloud Functions v2 exposes the api function at this URL; the path prefix is stripped before Fastify.
+const selfBaseUrl = () =>
+    (process.env.API_SELF_URL || `https://europe-west1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/api`).replace(
+        /\/+$/,
+        ''
+    )
+
+// Resolves once the request is flushed to the socket. The response is deliberately not awaited: the
+// receiving request owns its own invocation and does the work, while this one goes back to ack Slack.
+const sendSelfRequest = (url: URL, body: string, headers: Record<string, string>): Promise<void> =>
+    new Promise((resolve, reject) => {
+        const req = httpsRequest(url, {
+            method: 'POST',
+            headers: { ...headers, 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) },
+        })
+        req.on('error', reject)
+        req.on('response', (response) => response.resume())
+        req.on('finish', () => resolve())
+        req.end(body)
+    })
+
+// Slack expects an ack within 3s and the Cloud Functions invocation ends when the socket closes, so the
+// real work is handed to a second request on this same (warm) api service, signed with SERVICE_API_KEY.
 export const dispatchSlackWork = async (fastify: FastifyInstance, work: SlackWork): Promise<void> => {
-    if (runsInline()) {
-        await runSlackWork(fastify, work).catch((error) => console.error('[slack worker] failed', error))
+    const secret = process.env.SERVICE_API_KEY
+    if (runsInline() || !secret) {
+        if (!secret) console.error('[slack worker] SERVICE_API_KEY is not set, running Slack work inline')
+        await runInline(fastify, work)
         return
     }
-    await getFunctions(fastify.firebase).taskQueue<SlackWork>(slackWorkerTaskName).enqueue(work)
+    const body = JSON.stringify(work)
+    const timestamp = String(Math.floor(Date.now() / 1000))
+    const headers = {
+        [TIMESTAMP_HEADER]: timestamp,
+        [SIGNATURE_HEADER]: computeSlackSignature(secret, timestamp, body),
+    }
+    await sendSelfRequest(new URL(`${selfBaseUrl()}${SLACK_WORK_PATH}`), body, headers).catch((error) => {
+        console.error('[slack worker] self dispatch failed, running inline', error)
+        return runInline(fastify, work)
+    })
 }
 
-export const slackWorker = onTaskDispatched<SlackWork>(
-    {
-        region: 'europe-west1',
-        timeoutSeconds: 300,
-        memory: '512MiB',
-        retryConfig: { maxAttempts: 1 },
-        rateLimits: { maxConcurrentDispatches: 10 },
-    },
-    async (request) => {
-        // Imported lazily: the Fastify app registers the Slack routes, which import this module.
-        const { fastify } = await import('../../index')
-        await fastify.ready()
-        // Same instance; the TypeBox type-provider generic is irrelevant for route-less usage.
-        await runSlackWork(fastify as unknown as FastifyInstance, request.data)
+export const verifySlackWorkRequest = async (request: FastifyRequest, reply: FastifyReply) => {
+    const secret = process.env.SERVICE_API_KEY
+    const valid =
+        Boolean(secret) &&
+        verifySlackSignature({
+            signingSecret: secret as string,
+            timestamp: request.headers[TIMESTAMP_HEADER] as string | undefined,
+            signature: request.headers[SIGNATURE_HEADER] as string | undefined,
+            rawBody: request.slackRawBody ?? '',
+        })
+    if (!valid) reply.status(401).send({ error: 'Invalid work signature' })
+}
+
+export const slackWorkRouteHandler = (fastify: FastifyInstance) => {
+    return async (request: FastifyRequest, reply: FastifyReply) => {
+        await runInline(fastify, request.body as SlackWork)
+        return reply.status(200).send({ ok: true })
     }
-)
+}
