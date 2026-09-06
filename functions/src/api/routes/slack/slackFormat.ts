@@ -8,9 +8,10 @@ export type SlackThreadMessage = {
     user?: string
     bot_id?: string
     subtype?: string
+    blocks?: Array<{ type?: string }>
 }
 
-export type SlackProposalStatus = 'pending' | 'applied' | 'rejected' | 'failed'
+export type SlackProposalStatus = 'pending' | 'applying' | 'applied' | 'rejected' | 'failed'
 
 export const SLACK_ACTION_IDS = {
     applyProposal: 'op_apply_proposal',
@@ -20,9 +21,16 @@ export const SLACK_ACTION_IDS = {
 } as const
 
 const SECTION_TEXT_LIMIT = 2900
-const MESSAGE_TEXT_LIMIT = 39000
+export const MESSAGE_TEXT_LIMIT = 39000
 
-const truncate = (text: string, limit: number) => (text.length > limit ? `${text.slice(0, limit - 1)}…` : text)
+export const truncate = (text: string, limit: number) => (text.length > limit ? `${text.slice(0, limit - 1)}…` : text)
+
+// Slack mrkdwn treats & < > as control characters (entities, links, mentions).
+export const escapeMrkdwn = (text: string): string =>
+    text
+        .replace(/&(?!(amp|lt|gt);)/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
 
 export const stripMentions = (text: string): string =>
     text
@@ -32,19 +40,20 @@ export const stripMentions = (text: string): string =>
 
 export const markdownToMrkdwn = (markdown: string): string =>
     truncate(
-        markdown
+        escapeMrkdwn(markdown)
             .replace(/^#{1,6}\s+(.+)$/gm, '*$1*')
             .replace(/\*\*(.+?)\*\*/g, '*$1*')
-            .replace(/__(.+?)__/g, '_$1_')
             .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<$2|$1>')
-            .replace(/^\s*[*+]\s+/gm, '- ')
-            .replace(/&/g, '&amp;')
-            .replace(/&amp;(amp|lt|gt);/g, '&$1;'),
+            .replace(/^\s*[*+]\s+/gm, '- '),
         MESSAGE_TEXT_LIMIT
     )
 
 const isBotMessage = (message: SlackThreadMessage, botUserId: string | undefined) =>
     Boolean(message.bot_id) || (Boolean(botUserId) && message.user === botUserId)
+
+// Proposal cards and batch banners carry actions/context blocks; plain replies only get rich_text.
+const isInteractiveCard = (message: SlackThreadMessage) =>
+    Array.isArray(message.blocks) && message.blocks.some((b) => b.type === 'actions' || b.type === 'context')
 
 const mergeConsecutiveRoles = (messages: ChatAgentMessage[]): ChatAgentMessage[] =>
     messages.reduce<ChatAgentMessage[]>((acc, message) => {
@@ -63,7 +72,7 @@ export const threadToChatMessages = (
     currentText: string
 ): ChatAgentMessage[] => {
     const fromThread = replies
-        .filter((m) => !m.subtype && typeof m.text === 'string')
+        .filter((m) => !m.subtype && typeof m.text === 'string' && !isInteractiveCard(m))
         .map<ChatAgentMessage>((m) => ({
             role: isBotMessage(m, botUserId) ? 'assistant' : 'user',
             content: stripMentions(m.text ?? ''),
@@ -88,25 +97,37 @@ export const threadToChatMessages = (
 
 const formatValue = (value: unknown): string => {
     if (value === null || value === undefined || value === '') return '_(empty)_'
-    if (typeof value === 'string') return truncate(value, 300)
-    return truncate(JSON.stringify(value), 300)
+    const text = typeof value === 'string' ? value : JSON.stringify(value)
+    return escapeMrkdwn(truncate(text, 300))
 }
 
 export const formatProposalDiff = (proposal: Proposal): string => {
     if (proposal.diff.after === null) {
-        return `Delete *${proposal.target.label ?? proposal.target.id}*`
+        return `Delete *${escapeMrkdwn(proposal.target.label ?? proposal.target.id)}*`
     }
     return Object.entries(proposal.diff.after)
-        .map(([field, after]) => `• *${field}*: ${formatValue(proposal.diff.before[field])} → ${formatValue(after)}`)
+        .map(
+            ([field, after]) =>
+                `• *${escapeMrkdwn(field)}*: ${formatValue(proposal.diff.before[field])} → ${formatValue(after)}`
+        )
         .join('\n')
 }
 
 const STATUS_LABELS: Record<SlackProposalStatus, string> = {
     pending: '⏳ Pending review',
+    applying: '⏳ Applying…',
     applied: '✅ Applied',
     rejected: '🚫 Rejected',
     failed: '❌ Failed',
 }
+
+const button = (label: string, actionId: string, value: string, style?: 'primary' | 'danger') => ({
+    type: 'button',
+    ...(style ? { style } : {}),
+    text: { type: 'plain_text', text: label },
+    action_id: actionId,
+    value,
+})
 
 export type ProposalBlocksArgs = {
     eventId: string
@@ -125,33 +146,26 @@ export const buildProposalBlocks = ({
     decidedBy,
     error,
 }: ProposalBlocksArgs) => {
-    const rationale = proposal.rationale ? `\n_Reason (from assistant): ${proposal.rationale}_` : ''
-    const body = truncate(`*${proposal.summary}*${rationale}\n${formatProposalDiff(proposal)}`, SECTION_TEXT_LIMIT)
+    const rationale = proposal.rationale ? `\n_Reason (from assistant): ${escapeMrkdwn(proposal.rationale)}_` : ''
+    const body = truncate(
+        `*${escapeMrkdwn(proposal.summary)}*${rationale}\n${formatProposalDiff(proposal)}`,
+        SECTION_TEXT_LIMIT
+    )
     const blocks: object[] = [{ type: 'section', text: { type: 'mrkdwn', text: body } }]
+    const value = encodeActionValue(eventId, proposalId)
 
     if (status === 'pending') {
         blocks.push({
             type: 'actions',
             block_id: `proposal_${proposalId}`,
             elements: [
-                {
-                    type: 'button',
-                    style: 'primary',
-                    text: { type: 'plain_text', text: 'Apply' },
-                    action_id: SLACK_ACTION_IDS.applyProposal,
-                    value: encodeActionValue(eventId, proposalId),
-                },
-                {
-                    type: 'button',
-                    text: { type: 'plain_text', text: 'Reject' },
-                    action_id: SLACK_ACTION_IDS.rejectProposal,
-                    value: encodeActionValue(eventId, proposalId),
-                },
+                button('Apply', SLACK_ACTION_IDS.applyProposal, value, 'primary'),
+                button('Reject', SLACK_ACTION_IDS.rejectProposal, value),
             ],
         })
     } else {
         const who = decidedBy ? ` by <@${decidedBy}>` : ''
-        const detail = error ? ` — ${truncate(error, 500)}` : ''
+        const detail = error ? ` — ${escapeMrkdwn(truncate(error, 500))}` : ''
         blocks.push({
             type: 'context',
             elements: [{ type: 'mrkdwn', text: `${STATUS_LABELS[status]}${who}${detail}` }],
@@ -171,6 +185,7 @@ export type BatchBlocksArgs = {
 
 export const buildBatchBlocks = ({ eventId, batchId, count, status, decidedBy, summary }: BatchBlocksArgs) => {
     if (status === 'pending') {
+        const value = encodeActionValue(eventId, batchId)
         return {
             text: `${count} proposals pending review`,
             blocks: [
@@ -179,20 +194,8 @@ export const buildBatchBlocks = ({ eventId, batchId, count, status, decidedBy, s
                     type: 'actions',
                     block_id: `batch_${batchId}`,
                     elements: [
-                        {
-                            type: 'button',
-                            style: 'primary',
-                            text: { type: 'plain_text', text: 'Apply all' },
-                            action_id: SLACK_ACTION_IDS.applyBatch,
-                            value: encodeActionValue(eventId, batchId),
-                        },
-                        {
-                            type: 'button',
-                            style: 'danger',
-                            text: { type: 'plain_text', text: 'Reject all' },
-                            action_id: SLACK_ACTION_IDS.rejectBatch,
-                            value: encodeActionValue(eventId, batchId),
-                        },
+                        button('Apply all', SLACK_ACTION_IDS.applyBatch, value, 'primary'),
+                        button('Reject all', SLACK_ACTION_IDS.rejectBatch, value, 'danger'),
                     ],
                 },
             ],

@@ -14,6 +14,7 @@ import {
     slackInteractionsPOSTSchema,
     slackInteractionsRouteHandler,
     slackOfficialInteractionsPOSTSchema,
+    slackOfficialInteractionsRouteHandler,
 } from './slackInteractionsPOST'
 import { slackOAuthRoutes } from './slackOAuth'
 
@@ -112,17 +113,17 @@ export const slackRoutes = (fastify: FastifyInstance, _options: unknown, done: (
     fastify.post<{ Params: { eventId: string } }>(
         '/v1/:eventId/slack/interactions',
         { schema: slackInteractionsPOSTSchema, preHandler: verifyEventSlackRequest(fastify) },
-        slackInteractionsRouteHandler(fastify, 'event')
+        slackInteractionsRouteHandler(fastify)
     )
     fastify.post(
         '/v1/slack/events',
         { schema: slackOfficialEventsPOSTSchema, preHandler: verifyOfficialSlackRequest() },
         slackOfficialEventsRouteHandler(fastify)
     )
-    fastify.post<{ Params: { eventId?: string } }>(
+    fastify.post(
         '/v1/slack/interactions',
         { schema: slackOfficialInteractionsPOSTSchema, preHandler: verifyOfficialSlackRequest() },
-        slackInteractionsRouteHandler(fastify, 'official')
+        slackOfficialInteractionsRouteHandler(fastify)
     )
     slackOAuthRoutes(fastify)
     done()

@@ -24,8 +24,13 @@ describe('markdownToMrkdwn', () => {
         )
     })
 
-    test('escapes ampersands once', () => {
+    test('escapes & < > once and leaves generated links intact', () => {
         expect(markdownToMrkdwn('R&D &amp; more')).toBe('R&amp;D &amp; more')
+        expect(markdownToMrkdwn('durationMinutes < 30 and > 60, see <speaker name>')).toBe(
+            'durationMinutes &lt; 30 and &gt; 60, see &lt;speaker name&gt;'
+        )
+        expect(markdownToMrkdwn('[docs](https://x.io/a?b=1&c=2)')).toBe('<https://x.io/a?b=1&amp;c=2|docs>')
+        expect(markdownToMrkdwn('__init__ stays')).toBe('__init__ stays')
     })
 })
 
@@ -49,6 +54,34 @@ describe('threadToChatMessages', () => {
 
     test('appends the current message when the thread fetch failed', () => {
         expect(threadToChatMessages([], bot, '<@U0BOT> hello')).toEqual([{ role: 'user', content: 'hello' }])
+    })
+
+    test('skips proposal cards and batch banners posted by the bot', () => {
+        const messages = threadToChatMessages(
+            [
+                { ts: '1', user: 'U1', text: 'rename Alice' },
+                { ts: '2', bot_id: 'B1', text: 'Queued 1 change' },
+                {
+                    ts: '3',
+                    bot_id: 'B1',
+                    text: '⏳ Pending review: Update speaker Alice',
+                    blocks: [{ type: 'section' }, { type: 'actions' }],
+                },
+                {
+                    ts: '4',
+                    bot_id: 'B1',
+                    text: '✅ Applied: Update speaker Alice',
+                    blocks: [{ type: 'section' }, { type: 'context' }],
+                },
+            ],
+            bot,
+            'thanks'
+        )
+        expect(messages).toEqual([
+            { role: 'user', content: 'rename Alice' },
+            { role: 'assistant', content: 'Queued 1 change' },
+            { role: 'user', content: 'thanks' },
+        ])
     })
 
     test('merges consecutive same-role messages and drops leading assistant text', () => {
@@ -76,8 +109,11 @@ const proposal: Proposal = {
 }
 
 describe('proposal blocks', () => {
-    test('formats a field diff', () => {
+    test('formats a field diff and escapes values', () => {
         expect(formatProposalDiff(proposal)).toBe('• *name*: Alice → Alicia')
+        expect(
+            formatProposalDiff({ ...proposal, diff: { before: { title: 'Q&A <Live>' }, after: { title: 'Q&A' } } })
+        ).toBe('• *title*: Q&amp;A &lt;Live&gt; → Q&amp;A')
         expect(formatProposalDiff({ ...proposal, diff: { before: { name: 'Alice' }, after: null } })).toBe(
             'Delete *Alice*'
         )

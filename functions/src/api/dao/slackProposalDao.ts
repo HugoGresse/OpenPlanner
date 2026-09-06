@@ -4,11 +4,15 @@ import { SlackProposalStatus } from '../routes/slack/slackFormat'
 
 const { FieldValue } = firebase.firestore
 
+// Which bot posted the card, so decisions update it with the same token.
+export type SlackCredentialSource = 'installation' | 'event'
+
 export type SlackProposalRecord = {
     id: string
     batchId: string
     proposal: Proposal
     status: SlackProposalStatus
+    credential: SlackCredentialSource
     channel: string
     threadTs: string
     messageTs: string | null
@@ -16,6 +20,8 @@ export type SlackProposalRecord = {
     model: string
     error?: string
 }
+
+export type SlackProposalDecision = { status: SlackProposalStatus; error?: string }
 
 const collectionPath = (eventId: string) => `events/${eventId}/slackProposals`
 
@@ -38,13 +44,22 @@ export class SlackProposalDao {
         await batch.commit()
     }
 
-    public static async getProposal(
+    // Atomically moves a pending proposal to 'applying' so concurrent clicks cannot both act on it.
+    public static async claimProposal(
         firebaseApp: firebase.app.App,
         eventId: string,
         proposalId: string
     ): Promise<SlackProposalRecord | null> {
-        const snapshot = await firebaseApp.firestore().collection(collectionPath(eventId)).doc(proposalId).get()
-        return snapshot.exists ? (snapshot.data() as SlackProposalRecord) : null
+        const db = firebaseApp.firestore()
+        const ref = db.collection(collectionPath(eventId)).doc(proposalId)
+        return db.runTransaction(async (transaction) => {
+            const snapshot = await transaction.get(ref)
+            if (!snapshot.exists) return null
+            const record = snapshot.data() as SlackProposalRecord
+            if (record.status !== 'pending') return null
+            transaction.update(ref, { status: 'applying', updatedAt: FieldValue.serverTimestamp() })
+            return record
+        })
     }
 
     public static async listBatch(
@@ -64,12 +79,12 @@ export class SlackProposalDao {
         firebaseApp: firebase.app.App,
         eventId: string,
         proposalId: string,
-        update: { status: SlackProposalStatus; error?: string }
+        decision: SlackProposalDecision
     ): Promise<void> {
         await firebaseApp
             .firestore()
             .collection(collectionPath(eventId))
             .doc(proposalId)
-            .update({ ...update, updatedAt: FieldValue.serverTimestamp() })
+            .update({ ...decision, updatedAt: FieldValue.serverTimestamp() })
     }
 }

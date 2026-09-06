@@ -1,9 +1,8 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { EventDao } from '../../dao/eventDao'
 import { SlackInstallationDao } from '../../dao/slackInstallationDao'
-import { postSlackMessage } from './slackApi'
-import { SlackInboundEvent, handleSlackChatMessage } from './slackChatHandler'
-import { describeSlackPickFailure, pickEventForSlackChannel } from './slackRouting'
+import { SlackInboundEvent } from './slackChatHandler'
+import { dispatchSlackWork } from './slackWorker'
 
 type SlackEventsBody = {
     type?: string
@@ -41,51 +40,54 @@ export const shouldHandleSlackEvent = (
 }
 
 type InboundDecision =
-    | { kind: 'challenge'; challenge: string | undefined }
-    | { kind: 'ignore'; payload: Record<string, unknown> }
+    | { kind: 'reply'; body: Record<string, unknown> }
     | { kind: 'uninstalled'; teamId: string }
     | { kind: 'message'; inbound: SlackInboundEvent; botUserId: string | undefined; teamId: string | undefined }
 
 const UNINSTALL_EVENT_TYPES = new Set(['app_uninstalled', 'tokens_revoked'])
 
-// Slack redelivers when we take longer than 3s to answer; the original delivery
-// is still being processed, so retries are acknowledged and dropped.
+// Work is acked immediately, so a redelivery means the first ack was lost in transit;
+// the original delivery is still queued, so retries are acknowledged and dropped.
 export const decideInbound = (request: FastifyRequest): InboundDecision => {
     const body = (request.body ?? {}) as SlackEventsBody
-    if (body.type === 'url_verification') return { kind: 'challenge', challenge: body.challenge }
-    if (request.headers['x-slack-retry-num']) return { kind: 'ignore', payload: { ok: true, ignored: 'retry' } }
-    if (body.type !== 'event_callback' || !body.event) return { kind: 'ignore', payload: { ok: true } }
+    if (body.type === 'url_verification') return { kind: 'reply', body: { challenge: body.challenge } }
+    if (request.headers['x-slack-retry-num']) return { kind: 'reply', body: { ok: true, ignored: 'retry' } }
+    if (body.type !== 'event_callback' || !body.event) return { kind: 'reply', body: { ok: true } }
     if (UNINSTALL_EVENT_TYPES.has(body.event.type) && body.team_id) {
         return { kind: 'uninstalled', teamId: body.team_id }
     }
     const botUserId = body.authorizations?.[0]?.user_id
-    if (!shouldHandleSlackEvent(body.event, botUserId)) return { kind: 'ignore', payload: { ok: true } }
+    if (!shouldHandleSlackEvent(body.event, botUserId)) return { kind: 'reply', body: { ok: true } }
     return { kind: 'message', inbound: body.event, botUserId, teamId: body.team_id }
+}
+
+const forgetInstallation = async (fastify: FastifyInstance, teamId: string) => {
+    await SlackInstallationDao.deleteInstallation(fastify.firebase, teamId)
+    const events = await EventDao.getEventsBySlackTeamId(fastify.firebase, teamId)
+    await Promise.all(
+        events.map((event) =>
+            EventDao.patchEvent(fastify.firebase, event.id, {
+                slackTeamId: null,
+                slackTeamName: null,
+                slackChannelId: null,
+                slackChannelName: null,
+            })
+        )
+    )
 }
 
 export const slackEventsRouteHandler = (fastify: FastifyInstance) => {
     return async (request: FastifyRequest<{ Params: { eventId: string } }>, reply: FastifyReply) => {
         const decision = decideInbound(request)
-        if (decision.kind === 'challenge') return reply.status(200).send({ challenge: decision.challenge })
-        if (decision.kind === 'ignore') return reply.status(200).send(decision.payload)
+        if (decision.kind === 'reply') return reply.status(200).send(decision.body)
         if (decision.kind !== 'message') return reply.status(200).send({ ok: true })
 
-        const event = request.openPlannerEvent
-        if (!event.slackBotToken) {
-            console.warn('[slack events] bot token missing', { eventId: event.id })
-            return reply.status(200).send({ ok: true })
-        }
-        console.info('[slack events] handling', { eventId: event.id, type: decision.inbound.type })
-        try {
-            await handleSlackChatMessage(fastify, {
-                event,
-                botToken: event.slackBotToken,
-                botUserId: decision.botUserId,
-                inbound: decision.inbound,
-            })
-        } catch (error) {
-            console.error('[slack events] failed', error)
-        }
+        await dispatchSlackWork(fastify, {
+            type: 'chat',
+            source: { kind: 'event', eventId: request.openPlannerEvent.id },
+            inbound: decision.inbound,
+            botUserId: decision.botUserId,
+        })
         return reply.status(200).send({ ok: true })
     }
 }
@@ -93,42 +95,21 @@ export const slackEventsRouteHandler = (fastify: FastifyInstance) => {
 export const slackOfficialEventsRouteHandler = (fastify: FastifyInstance) => {
     return async (request: FastifyRequest, reply: FastifyReply) => {
         const decision = decideInbound(request)
-        if (decision.kind === 'challenge') return reply.status(200).send({ challenge: decision.challenge })
-        if (decision.kind === 'ignore') return reply.status(200).send(decision.payload)
+        if (decision.kind === 'reply') return reply.status(200).send(decision.body)
         if (decision.kind === 'uninstalled') {
-            await SlackInstallationDao.deleteInstallation(fastify.firebase, decision.teamId).catch((error) =>
+            await forgetInstallation(fastify, decision.teamId).catch((error) =>
                 console.error('[slack events] uninstall cleanup failed', error)
             )
             return reply.status(200).send({ ok: true })
         }
         if (!decision.teamId) return reply.status(200).send({ ok: true })
 
-        try {
-            const installation = await SlackInstallationDao.getInstallation(fastify.firebase, decision.teamId)
-            if (!installation) {
-                console.warn('[slack events] no installation for team', { teamId: decision.teamId })
-                return reply.status(200).send({ ok: true })
-            }
-            const events = await EventDao.getEventsBySlackTeamId(fastify.firebase, decision.teamId)
-            const pick = pickEventForSlackChannel(events, decision.inbound.channel)
-            if (pick.kind !== 'event') {
-                await postSlackMessage(installation.botToken, {
-                    channel: decision.inbound.channel,
-                    threadTs: decision.inbound.thread_ts ?? decision.inbound.ts,
-                    text: describeSlackPickFailure(pick),
-                })
-                return reply.status(200).send({ ok: true })
-            }
-            console.info('[slack events] handling', { eventId: pick.event.id, type: decision.inbound.type })
-            await handleSlackChatMessage(fastify, {
-                event: pick.event,
-                botToken: installation.botToken,
-                botUserId: decision.botUserId ?? installation.botUserId,
-                inbound: decision.inbound,
-            })
-        } catch (error) {
-            console.error('[slack events] failed', error)
-        }
+        await dispatchSlackWork(fastify, {
+            type: 'chat',
+            source: { kind: 'official', teamId: decision.teamId },
+            inbound: decision.inbound,
+            botUserId: decision.botUserId,
+        })
         return reply.status(200).send({ ok: true })
     }
 }

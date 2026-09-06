@@ -143,6 +143,7 @@ describe('Slack routes', () => {
         vi.spyOn(SpeakerDao, 'doesSpeakerExist').mockResolvedValue({ name: 'Alice' } as never)
 
         let postCount = 0
+        let repliesCalls = 0
         const openRouterCalls: Array<Record<string, unknown>> = []
         fetchSpy.mockImplementation(async (url: string, init: RequestInit) => {
             if (url.includes('openrouter.ai')) {
@@ -150,6 +151,7 @@ describe('Slack routes', () => {
                 openRouterCalls.push(body)
                 if (openRouterCalls.length === 1) {
                     return openRouterStream([
+                        sseChunk({ content: 'Checking.' }),
                         sseChunk({
                             tool_calls: [
                                 {
@@ -172,9 +174,22 @@ describe('Slack routes', () => {
                 return openRouterStream([sseChunk({ content: '**Queued** 1 change' }), 'data: [DONE]\n\n'])
             }
             if (url.endsWith('conversations.replies')) {
-                return slackOk({
-                    messages: [{ ts: '100.1', user: 'U1', text: '<@U0BOT> rename Alice to Alicia' }],
-                })
+                repliesCalls++
+                if (repliesCalls === 1) {
+                    return slackOk({
+                        messages: [
+                            { ts: '90.1', user: 'U1', text: 'earlier question' },
+                            {
+                                ts: '90.2',
+                                bot_id: 'B1',
+                                text: '⏳ Pending review: Update speaker Bob',
+                                blocks: [{ type: 'section' }, { type: 'actions' }],
+                            },
+                        ],
+                        response_metadata: { next_cursor: 'page2' },
+                    })
+                }
+                return slackOk({ messages: [{ ts: '100.1', user: 'U1', text: '<@U0BOT> rename Alice to Alicia' }] })
             }
             if (url.endsWith('chat.postMessage')) {
                 postCount++
@@ -196,7 +211,10 @@ describe('Slack routes', () => {
         const firstMessages = openRouterCalls[0].messages as Array<{ role: string; content: string }>
         expect(firstMessages[0].role).toBe('system')
         expect(firstMessages[0].content).toContain('Slack')
-        expect(firstMessages.slice(1)).toEqual([{ role: 'user', content: 'rename Alice to Alicia' }])
+        expect(repliesCalls).toBe(2)
+        expect(firstMessages.slice(1)).toEqual([
+            { role: 'user', content: 'earlier question\n\nrename Alice to Alicia' },
+        ])
 
         const calls = fetchSpy.mock.calls.map(([url, init]) => [
             String(url).split('/').pop(),
@@ -204,7 +222,7 @@ describe('Slack routes', () => {
         ])
         const update = calls.filter(([m]) => m === 'chat.update').pop()?.[1]
         expect(update.ts).toBe('200.1')
-        expect(update.text).toBe('*Queued* 1 change')
+        expect(update.text).toBe('Checking.\n\n*Queued* 1 change')
 
         const proposalPost = calls.filter(([m]) => m === 'chat.postMessage')[1][1]
         expect(proposalPost.thread_ts).toBe('100.1')
@@ -213,13 +231,21 @@ describe('Slack routes', () => {
         expect(saveSpy).toHaveBeenCalledTimes(1)
         const [, , records] = saveSpy.mock.calls[0]
         expect(records).toHaveLength(1)
-        expect(records[0]).toMatchObject({ id: 'call_1', batchId: '200.1', status: 'pending', messageTs: '200.2' })
+        expect(records[0]).toMatchObject({
+            id: '200-1-1',
+            batchId: '200.1',
+            status: 'pending',
+            credential: 'event',
+            messageTs: '200.2',
+        })
+        expect(JSON.stringify(proposalPost.blocks)).toContain(`${eventId}|200-1-1`)
     })
 
     const pendingRecord: SlackProposalRecord = {
         id: 'call_1',
         batchId: '200.1',
         status: 'pending',
+        credential: 'event',
         channel: 'C1',
         threadTs: '100.1',
         messageTs: '200.2',
@@ -248,7 +274,7 @@ describe('Slack routes', () => {
 
     test('Apply button replays the endpoint, records the audit row and updates the card', async () => {
         mockEventLoad()
-        vi.spyOn(SlackProposalDao, 'getProposal').mockResolvedValue(pendingRecord)
+        vi.spyOn(SlackProposalDao, 'claimProposal').mockResolvedValue(pendingRecord)
         const statusSpy = vi.spyOn(SlackProposalDao, 'updateStatus').mockResolvedValue()
         const auditSpy = vi.spyOn(AiActionDao, 'addAction').mockResolvedValue('a1')
         fetchSpy.mockResolvedValue(slackOk())
@@ -279,7 +305,17 @@ describe('Slack routes', () => {
             payload: { name: 'Alicia' },
         })
         expect(statusSpy).toHaveBeenCalledWith(expect.anything(), eventId, 'call_1', { status: 'applied' })
-        expect(auditSpy.mock.calls[0][2]).toMatchObject({ tool: 'patchSpeaker', applied: true, rejected: false })
+        expect(auditSpy.mock.calls[0][2]).toMatchObject({
+            tool: 'patchSpeaker',
+            applied: true,
+            rejected: false,
+            args: {
+                proposalId: 'call_1',
+                method: 'PATCH',
+                path: `/v1/${eventId}/speakers/s1`,
+                body: { name: 'Alicia' },
+            },
+        })
 
         const update = JSON.parse(String(fetchSpy.mock.calls[0][1].body))
         expect(update.ts).toBe('200.2')
@@ -288,7 +324,7 @@ describe('Slack routes', () => {
 
     test('Reject button never hits the API and marks the proposal rejected', async () => {
         mockEventLoad()
-        vi.spyOn(SlackProposalDao, 'getProposal').mockResolvedValue(pendingRecord)
+        vi.spyOn(SlackProposalDao, 'claimProposal').mockResolvedValue(pendingRecord)
         const statusSpy = vi.spyOn(SlackProposalDao, 'updateStatus').mockResolvedValue()
         const auditSpy = vi.spyOn(AiActionDao, 'addAction').mockResolvedValue('a1')
         fetchSpy.mockResolvedValue(slackOk())
@@ -302,5 +338,24 @@ describe('Slack routes', () => {
         })
         expect(statusSpy).toHaveBeenCalledWith(expect.anything(), eventId, 'call_1', { status: 'rejected' })
         expect(auditSpy.mock.calls[0][2]).toMatchObject({ applied: false, rejected: true })
+    })
+
+    test('a second click on an already claimed proposal does nothing', async () => {
+        mockEventLoad()
+        vi.spyOn(SlackProposalDao, 'claimProposal').mockResolvedValue(null)
+        const statusSpy = vi.spyOn(SlackProposalDao, 'updateStatus').mockResolvedValue()
+        const auditSpy = vi.spyOn(AiActionDao, 'addAction').mockResolvedValue('a1')
+
+        const raw = interaction(SLACK_ACTION_IDS.applyProposal, `${eventId}|call_1`)
+        const res = await fastify.inject({
+            method: 'POST',
+            url: interactionsUrl,
+            headers: signedHeaders(raw, 'application/x-www-form-urlencoded'),
+            payload: raw,
+        })
+        expect(res.statusCode).toBe(200)
+        expect(statusSpy).not.toHaveBeenCalled()
+        expect(auditSpy).not.toHaveBeenCalled()
+        expect(fetchSpy).not.toHaveBeenCalled()
     })
 })

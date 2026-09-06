@@ -208,8 +208,10 @@ describe('Official Slack app routes', () => {
         expect(bad.statusCode).toBe(401)
     })
 
-    test('official events: app_uninstalled drops the installation', async () => {
+    test('official events: app_uninstalled drops the installation and unlinks events', async () => {
         const deleteSpy = vi.spyOn(SlackInstallationDao, 'deleteInstallation').mockResolvedValue()
+        vi.spyOn(EventDao, 'getEventsBySlackTeamId').mockResolvedValue([makeEvent({ id: 'evt-a' })])
+        const patchSpy = vi.spyOn(EventDao, 'patchEvent').mockResolvedValue()
         const raw = JSON.stringify({ type: 'event_callback', team_id: teamId, event: { type: 'app_uninstalled' } })
         await fastify.inject({
             method: 'POST',
@@ -218,6 +220,11 @@ describe('Official Slack app routes', () => {
             payload: raw,
         })
         expect(deleteSpy).toHaveBeenCalledWith(expect.anything(), teamId)
+        expect(patchSpy).toHaveBeenCalledWith(
+            expect.anything(),
+            'evt-a',
+            expect.objectContaining({ slackTeamId: null })
+        )
     })
 
     test('official interactions: Apply resolves the event from the button value and uses the install token', async () => {
@@ -225,6 +232,7 @@ describe('Official Slack app routes', () => {
             id: 'call_1',
             batchId: '2.2',
             status: 'pending',
+            credential: 'installation',
             channel: 'C-A',
             threadTs: '1.1',
             messageTs: '3.3',
@@ -240,7 +248,7 @@ describe('Official Slack app routes', () => {
         }
         vi.spyOn(EventDao, 'getEvent').mockResolvedValue(makeEvent({ id: 'evt-a' }))
         vi.spyOn(SlackInstallationDao, 'getInstallation').mockResolvedValue(installation)
-        vi.spyOn(SlackProposalDao, 'getProposal').mockResolvedValue(record)
+        vi.spyOn(SlackProposalDao, 'claimProposal').mockResolvedValue(record)
         const statusSpy = vi.spyOn(SlackProposalDao, 'updateStatus').mockResolvedValue()
         vi.spyOn(AiActionDao, 'addAction').mockResolvedValue('a1')
         fetchSpy.mockResolvedValue(slackOk())
@@ -275,7 +283,7 @@ describe('Official Slack app routes', () => {
 
     test('official interactions: ignores actions whose event is linked to another workspace', async () => {
         vi.spyOn(EventDao, 'getEvent').mockResolvedValue(makeEvent({ id: 'evt-a', slackTeamId: 'T-OTHER' }))
-        const getProposal = vi.spyOn(SlackProposalDao, 'getProposal').mockResolvedValue(null)
+        const claimProposal = vi.spyOn(SlackProposalDao, 'claimProposal').mockResolvedValue(null)
         const raw =
             'payload=' +
             encodeURIComponent(
@@ -292,6 +300,6 @@ describe('Official Slack app routes', () => {
             headers: signed(raw, 'application/x-www-form-urlencoded'),
             payload: raw,
         })
-        expect(getProposal).not.toHaveBeenCalled()
+        expect(claimProposal).not.toHaveBeenCalled()
     })
 })

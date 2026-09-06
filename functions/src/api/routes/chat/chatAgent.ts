@@ -168,6 +168,7 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
         ...messages.map((m) => ({ role: m.role, content: m.content })),
     ]
     const result: ChatAgentResult = { text: '', proposals: [] }
+    let separatorPending = false
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
         if (isAborted()) break
@@ -197,6 +198,8 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
         const { message, finishReason } = await consumeOpenRouterStream(
             orResponse,
             (delta) => {
+                if (separatorPending && result.text.length > 0) result.text += '\n\n'
+                separatorPending = false
                 result.text += delta
                 onEvent({ type: 'content', delta })
             },
@@ -205,6 +208,7 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
         conversation.push(message)
 
         if (isAborted() || finishReason !== 'tool_calls' || !message.tool_calls?.length) break
+        separatorPending = true
 
         for (const tc of message.tool_calls) {
             const parsedArgs = parseToolArguments(tc.function.arguments)

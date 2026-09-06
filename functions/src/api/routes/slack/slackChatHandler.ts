@@ -1,17 +1,21 @@
 import { FastifyInstance } from 'fastify'
 import { Event } from '../../../types'
-import { SlackProposalDao, SlackProposalRecord } from '../../dao/slackProposalDao'
+import { SlackCredentialSource, SlackProposalDao, SlackProposalRecord } from '../../dao/slackProposalDao'
 import { DEFAULT_CHAT_MODEL, runChatAgent } from '../chat/chatAgent'
-import { fetchSlackThreadReplies, postSlackMessage, updateSlackMessage } from './slackApi'
+import { fetchSlackThreadReplies, postSlackMessage, updateSlackMessage, updateSlackMessageWithRetry } from './slackApi'
 import {
+    MESSAGE_TEXT_LIMIT,
     buildBatchBlocks,
     buildProposalBlocks,
     markdownToMrkdwn,
     stripMentions,
     threadToChatMessages,
+    truncate,
 } from './slackFormat'
 
-const STREAM_UPDATE_INTERVAL_MS = 1500
+// chat.update is Tier 3 (~50/min per workspace); leave room for concurrent threads.
+const STREAM_UPDATE_INTERVAL_MS = 3000
+const ERROR_TEXT_LIMIT = 500
 
 export type SlackInboundEvent = {
     type: string
@@ -29,6 +33,7 @@ export type SlackChatContext = {
     event: Event
     botToken: string
     botUserId: string | undefined
+    credential: SlackCredentialSource
     inbound: SlackInboundEvent
 }
 
@@ -57,17 +62,21 @@ const createThrottledUpdater = (update: (text: string) => Promise<void>, interva
     }
 }
 
+// Placeholder ts is unique per turn; tool-call ids from some providers are not.
+const proposalDocId = (batchId: string, index: number) => `${batchId.replace('.', '-')}-${index + 1}`
+
 const postProposals = async (
     fastify: FastifyInstance,
-    event: Event,
-    token: string,
+    context: SlackChatContext,
     thread: { channel: string; threadTs: string; batchId: string },
-    proposals: Array<{ id: string; proposal: SlackProposalRecord['proposal'] }>,
+    proposals: Array<{ proposal: SlackProposalRecord['proposal'] }>,
     prompt: string,
     model: string
 ) => {
+    const { event, botToken: token, credential } = context
     const records: SlackProposalRecord[] = []
-    for (const { id, proposal } of proposals) {
+    for (const [index, { proposal }] of proposals.entries()) {
+        const id = proposalDocId(thread.batchId, index)
         const message = buildProposalBlocks({ eventId: event.id, proposalId: id, proposal, status: 'pending' })
         const posted = await postSlackMessage(token, { channel: thread.channel, threadTs: thread.threadTs, ...message })
         records.push({
@@ -75,6 +84,7 @@ const postProposals = async (
             batchId: thread.batchId,
             proposal,
             status: 'pending',
+            credential,
             channel: thread.channel,
             threadTs: thread.threadTs,
             messageTs: posted.ts,
@@ -108,10 +118,12 @@ export const handleSlackChatMessage = async (fastify: FastifyInstance, context: 
         return
     }
 
-    const replies = await fetchSlackThreadReplies(token, channel, threadTs).catch(() => [])
+    const [replies, placeholder] = await Promise.all([
+        fetchSlackThreadReplies(token, channel, threadTs).catch(() => []),
+        postSlackMessage(token, { channel, threadTs, text: '_Thinking…_' }),
+    ])
     const messages = threadToChatMessages(replies, botUserId, inbound.text ?? '')
     const model = event.openRouterModel || DEFAULT_CHAT_MODEL
-    const placeholder = await postSlackMessage(token, { channel, threadTs, text: '_Thinking…_' })
 
     const updater = createThrottledUpdater(
         (text) => updateSlackMessage(token, { ...placeholder, text: `${markdownToMrkdwn(text)} …` }),
@@ -142,16 +154,17 @@ export const handleSlackChatMessage = async (fastify: FastifyInstance, context: 
     })
     await updater.stop()
 
-    const errorText = errors.length > 0 ? `\n:warning: ${errors.join('\n')}` : ''
-    const finalText = `${markdownToMrkdwn(result.text) || '_(no reply)_'}${errorText}`
-    await updateSlackMessage(token, { ...placeholder, text: finalText })
+    const errorText = errors.length > 0 ? `\n:warning: ${truncate(errors.join('\n'), ERROR_TEXT_LIMIT)}` : ''
+    const finalText = truncate(`${markdownToMrkdwn(result.text) || '_(no reply)_'}${errorText}`, MESSAGE_TEXT_LIMIT)
+    await updateSlackMessageWithRetry(token, { ...placeholder, text: finalText }).catch((error) =>
+        console.error('[slack chat] final message update failed', error)
+    )
 
     if (result.proposals.length > 0) {
         const prompt = stripMentions(inbound.text ?? '')
         await postProposals(
             fastify,
-            event,
-            token,
+            context,
             { channel, threadTs, batchId: placeholder.ts },
             result.proposals,
             prompt,
