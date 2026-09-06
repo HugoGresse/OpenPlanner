@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { setupFastify } from '../setupFastify'
+import { setupServiceFastify } from '../../serviceApi/serviceApi'
 
 vi.mock('../dao/firebasePlugin', async (importOriginal) => {
     const mod = await importOriginal<typeof import('../dao/firebasePlugin')>()
@@ -15,14 +16,18 @@ type OpenApiDocument = {
     paths: Record<string, Record<string, { security?: Array<Record<string, unknown>> }>>
 }
 
-describe('API docs', () => {
-    const fastify = setupFastify()
+describe.each([
+    ['api', setupFastify],
+    ['serviceApi', setupServiceFastify],
+])('API docs (%s)', (_name, setup) => {
+    const fastify = setup()
 
-    test('serves the Scalar reference at /', async () => {
+    test('serves the API reference at /', async () => {
         const res = await fastify.inject({ method: 'GET', url: '/' })
         expect(res.statusCode).toBe(200)
         expect(res.headers['content-type']).toContain('text/html')
         expect(res.body).toContain('openapi.json')
+        expect(res.body).toContain('cdn.jsdelivr.net/npm/@scalar/api-reference')
     })
 
     test('every security scheme referenced by a route is declared', async () => {
@@ -42,5 +47,6 @@ describe('API docs', () => {
         }
         expect(referenced.size).toBeGreaterThan(0)
         for (const label of referenced) expect(declared).toContain(label)
+        expect(document.paths['/']).toBeUndefined()
     })
 })

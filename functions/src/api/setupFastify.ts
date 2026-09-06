@@ -8,7 +8,8 @@ import { apiKeyPlugin } from './apiKeyPlugin'
 import { superAdminPlugin } from './superAdminPlugin'
 import { speakerEditTokenPlugin } from './speakerEditTokenPlugin'
 import cors from '@fastify/cors'
-import { API_KEY_SECURITY_SCHEME, registerApiDocs } from './other/registerApiDocs'
+import { registerApiDocs } from './other/registerApiDocs'
+import { isDev } from '../utils/functionUrls'
 import { sponsorsRoutes } from './routes/sponsors/sponsors'
 import { sessionsRoutes } from './routes/sessions/sessions'
 import { faqRoutes } from './routes/faq/faq'
@@ -39,9 +40,7 @@ declare module 'fastify' {
     }
 }
 
-export const isDev = () => {
-    return !!(process.env.FUNCTIONS_EMULATOR && process.env.FUNCTIONS_EMULATOR === 'true')
-}
+export { isDev }
 
 export const setupFastify = () => {
     const isNodeEnvDev = process.env.NODE_ENV === 'development'
@@ -67,9 +66,7 @@ export const setupFastify = () => {
     registerApiDocs(fastify, {
         title: 'OpenPlanner API',
         functionName: 'api',
-        productionUrl: 'https://api.openplanner.fr',
         securitySchemes: {
-            apiKey: API_KEY_SECURITY_SCHEME,
             bearerAuth: { type: 'http', scheme: 'bearer', description: 'Firebase ID token of a super admin' },
             password: { type: 'apiKey', name: 'password', in: 'header', description: 'Event transcription password' },
         },

@@ -81,7 +81,7 @@ Inside OpenPlanner's firebase project:
 2. In the Authentication parameters, "User actions", disable the "Protection against enumeration of e-mail addresses (recommended)" option
 3. Enable Storage, with rules in test or prod (whatever)
 4. Set the hosting config for the website using the firebase CLI: `firebase target:apply hosting conferencecenterr dist`
-5. Set the hosting config for the API (swagger) `firebase target:apply hosting apiopenplanner api-swagger`
+5. Set the hosting config for the API (API reference at /) `firebase target:apply hosting apiopenplanner api-swagger`
 
 ### Development
 

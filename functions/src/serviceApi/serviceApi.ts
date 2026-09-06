@@ -8,7 +8,8 @@ import cors from '@fastify/cors'
 import { noCacheHook } from '../utils/noCacheHook'
 import { serviceApiKeyPlugin } from './serviceApiKeyPreHandler'
 import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
-import { API_KEY_SECURITY_SCHEME, registerApiDocs } from '../api/other/registerApiDocs'
+import { registerApiDocs } from '../api/other/registerApiDocs'
+import { isDev } from '../utils/functionUrls'
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -16,13 +17,12 @@ declare module 'fastify' {
     }
 }
 
-const setupServiceFastify = () => {
-    const isDev = !!(process.env.FUNCTIONS_EMULATOR && process.env.FUNCTIONS_EMULATOR === 'true')
+export const setupServiceFastify = () => {
     const isNodeEnvDev = process.env.NODE_ENV === 'development'
     const isNodeEnvTest = process.env.NODE_ENV === 'test'
 
     const fastify = Fastify({
-        logger: isDev,
+        logger: isDev(),
     }).withTypeProvider<TypeBoxTypeProvider>()
 
     if (!isNodeEnvDev && !isNodeEnvTest) {
@@ -34,20 +34,15 @@ const setupServiceFastify = () => {
     fastify.register(cors, {
         origin: '*',
     })
-    registerApiDocs(fastify, {
-        title: 'OpenPlanner Service API',
-        functionName: 'serviceApi',
-        productionUrl: 'https://serviceapi.openplanner.fr',
-        securitySchemes: { apiKey: API_KEY_SECURITY_SCHEME },
-    })
+    registerApiDocs(fastify, { title: 'OpenPlanner Service API', functionName: 'serviceApi' })
     fastify.addHook('onSend', noCacheHook)
     fastify.setErrorHandler(fastifyErrorHandler)
+    fastify.register(pdfRoute)
 
     return fastify
 }
 
 const fastify = setupServiceFastify()
-fastify.register(pdfRoute)
 
 export const serviceApi = onRequest(
     { timeoutSeconds: 300, region: 'europe-west1', memory: '1GiB' },
