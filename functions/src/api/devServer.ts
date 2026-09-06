@@ -9,7 +9,7 @@ const start = async () => {
     const fastify = setupFastify()
     const port = Number(process.env.PORT || 3010)
     await fastify.listen({ port, host: '127.0.0.1' })
-    console.log(`OpenPlanner API dev server: http://localhost:${port} (swagger UI at /)`)
+    console.log(`OpenPlanner API dev server: http://localhost:${port} (API reference at /, spec at /openapi.json)`)
 }
 
 start().catch((error) => {

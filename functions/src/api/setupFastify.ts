@@ -8,7 +8,7 @@ import { apiKeyPlugin } from './apiKeyPlugin'
 import { superAdminPlugin } from './superAdminPlugin'
 import { speakerEditTokenPlugin } from './speakerEditTokenPlugin'
 import cors from '@fastify/cors'
-import { registerSwagger } from './swagger'
+import { API_KEY_SECURITY_SCHEME, registerApiDocs } from './other/registerApiDocs'
 import { sponsorsRoutes } from './routes/sponsors/sponsors'
 import { sessionsRoutes } from './routes/sessions/sessions'
 import { faqRoutes } from './routes/faq/faq'
@@ -64,7 +64,16 @@ export const setupFastify = () => {
         origin: '*',
     })
     fastify.addHook('onSend', noCacheHook)
-    registerSwagger(fastify)
+    registerApiDocs(fastify, {
+        title: 'OpenPlanner API',
+        functionName: 'api',
+        productionUrl: 'https://api.openplanner.fr',
+        securitySchemes: {
+            apiKey: API_KEY_SECURITY_SCHEME,
+            bearerAuth: { type: 'http', scheme: 'bearer', description: 'Firebase ID token of a super admin' },
+            password: { type: 'apiKey', name: 'password', in: 'header', description: 'Event transcription password' },
+        },
+    })
 
     fastify.register(eventRoutes)
     fastify.register(usageRoutes)

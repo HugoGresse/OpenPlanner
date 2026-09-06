@@ -6,11 +6,9 @@ import { pdfRoute } from './pdf'
 import { fastifyErrorHandler } from '../api/other/fastifyErrorHandler'
 import cors from '@fastify/cors'
 import { noCacheHook } from '../utils/noCacheHook'
-import FastifySwagger from '@fastify/swagger'
-import FastifySwaggerUi from '@fastify/swagger-ui'
 import { serviceApiKeyPlugin } from './serviceApiKeyPreHandler'
 import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
-import { getFirebaseProjectId } from '../utils/getFirebaseProjectId'
+import { API_KEY_SECURITY_SCHEME, registerApiDocs } from '../api/other/registerApiDocs'
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -36,34 +34,11 @@ const setupServiceFastify = () => {
     fastify.register(cors, {
         origin: '*',
     })
-    fastify.register(FastifySwagger, {
-        swagger: {
-            info: {
-                title: 'OpenPlanner Service API Documentation',
-                version: '1.0.0',
-            },
-            host: isDev
-                ? `localhost:5001/${getFirebaseProjectId()}/europe-west1/serviceApi/`
-                : 'serviceapi.openplanner.fr/',
-            schemes: isDev ? ['http'] : ['https'],
-            consumes: ['application/json'],
-            produces: ['application/json'],
-            securityDefinitions: {
-                apiKey: {
-                    type: 'apiKey',
-                    name: 'apiKey',
-                    in: 'query',
-                },
-            },
-        },
-    })
-    fastify.register(FastifySwaggerUi, {
-        routePrefix: '/',
-        uiConfig: {
-            docExpansion: 'list',
-            deepLinking: false,
-            tryItOutEnabled: true,
-        },
+    registerApiDocs(fastify, {
+        title: 'OpenPlanner Service API',
+        functionName: 'serviceApi',
+        productionUrl: 'https://serviceapi.openplanner.fr',
+        securitySchemes: { apiKey: API_KEY_SECURITY_SCHEME },
     })
     fastify.addHook('onSend', noCacheHook)
     fastify.setErrorHandler(fastifyErrorHandler)
