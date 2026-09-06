@@ -25,6 +25,7 @@ const EventPublic = lazyWithRetry(() =>
 const EventWhatsApp = lazyWithRetry(() =>
     import('./whatsapp/EventWhatsApp').then((module) => ({ default: module.EventWhatsApp }))
 )
+const EventSlack = lazyWithRetry(() => import('./slack/EventSlack').then((module) => ({ default: module.EventSlack })))
 const EventSchedule = lazyWithRetry(() =>
     import('./schedule/EventSchedule').then((module) => ({ default: module.EventSchedule }))
 )
@@ -190,6 +191,11 @@ export const EventApp = ({ eventId }: { eventId?: string }) => {
                 <Route path="/whatsapp">
                     <Suspense fallback={<SuspenseLoader />}>
                         <EventWhatsApp event={eventData} />
+                    </Suspense>
+                </Route>
+                <Route path="/slack">
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <EventSlack event={eventData} />
                     </Suspense>
                 </Route>
                 <Route path="/social">

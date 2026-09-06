@@ -14,7 +14,9 @@ import { WebhooksFields } from '../settings/components/WebhooksFields'
 import { RepoFields } from '../settings/components/RepoFields'
 import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFilePaths'
 import { EventUsageCard } from './components/EventUsageCard'
-import { SlackChatSection } from './components/SlackChatSection'
+import { useSelector } from 'react-redux'
+import { selectUserIdOpenPlanner } from '../../../auth/authReducer'
+import { useIsAdmin } from '../../../services/hooks/useIsAdmin'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { TextFieldElementWithGenerateApiKeyButton } from '../../../components/form/TextFieldElementWithGenerateApiKeyButton'
@@ -35,8 +37,6 @@ const schema = yup
         repoUrl: yup.string().nullable(),
         workflowRunId: yup.string().nullable(),
         token: yup.string().nullable(),
-        slackBotToken: yup.string().nullable(),
-        slackSigningSecret: yup.string().nullable(),
     })
     .required()
 
@@ -48,8 +48,6 @@ const convertInputEvent = (event: Event): EventSettingForForm => {
         publicEnabled: event.publicEnabled || false,
         repoUrl: event.repoUrl || null,
         repoToken: event.repoToken || null,
-        slackBotToken: event.slackBotToken || '',
-        slackSigningSecret: event.slackSigningSecret || '',
     }
 }
 
@@ -60,6 +58,9 @@ export const API = ({ event }: APIProps) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
     const [expandedAPI, setExpandedAPI] = useState(true)
     const [expandedDeploy, setExpandedDeploy] = useState(true)
+    const userId = useSelector(selectUserIdOpenPlanner)
+    const isSuperAdmin = useIsAdmin(userId)
+    const slackConnected = Boolean(event.slackTeamId || (event.slackBotToken && event.slackSigningSecret))
 
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
@@ -130,7 +131,7 @@ export const API = ({ event }: APIProps) => {
                     </Collapse>
                 </Card>
 
-                <EventUsageCard event={event} />
+                {isSuperAdmin && <EventUsageCard event={event} />}
 
                 <Card sx={{ paddingX: 2, mt: 4 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
@@ -146,7 +147,20 @@ export const API = ({ event }: APIProps) => {
                     </Box>
                 </Card>
 
-                <SlackChatSection event={event} isSubmitting={formState.isSubmitting} />
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
+                        <Box>
+                            <Typography fontSize="large">Slack chat assistant</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Ask about sessions and speakers and approve edits from Slack.
+                                {slackConnected ? ' Connected.' : ''}
+                            </Typography>
+                        </Box>
+                        <Button component={Link} to="/slack" variant={slackConnected ? 'outlined' : 'contained'}>
+                            {slackConnected ? 'Manage Slack integration' : 'Add Slack integration'}
+                        </Button>
+                    </Box>
+                </Card>
 
                 <Card sx={{ paddingX: 2, mt: 4 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
