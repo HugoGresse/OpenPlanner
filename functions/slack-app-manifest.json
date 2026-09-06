@@ -1,0 +1,46 @@
+{
+    "_comment": "Manifest for the official OpenPlanner Slack app (one app, installed by users via 'Add to Slack'). Replace FUNCTIONS_URL with the deployed Cloud Functions base URL (not the Hosting URL), create the app at https://api.slack.com/apps from this manifest, then set SLACK_CLIENT_ID / SLACK_CLIENT_SECRET / SLACK_SIGNING_SECRET in functions/.env.",
+    "display_information": {
+        "name": "OpenPlanner",
+        "description": "Chat with your OpenPlanner event: sessions, speakers, and reviewed edits",
+        "background_color": "#1b1f2a"
+    },
+    "features": {
+        "bot_user": {
+            "display_name": "OpenPlanner",
+            "always_online": true
+        },
+        "app_home": {
+            "messages_tab_enabled": true,
+            "messages_tab_read_only_enabled": false
+        }
+    },
+    "oauth_config": {
+        "redirect_urls": ["https://FUNCTIONS_URL/v1/slack/oauth/callback"],
+        "scopes": {
+            "bot": [
+                "app_mentions:read",
+                "chat:write",
+                "channels:history",
+                "channels:read",
+                "groups:history",
+                "groups:read",
+                "im:history",
+                "mpim:history"
+            ]
+        }
+    },
+    "settings": {
+        "event_subscriptions": {
+            "request_url": "https://FUNCTIONS_URL/v1/slack/events",
+            "bot_events": ["app_mention", "message.im", "app_uninstalled", "tokens_revoked"]
+        },
+        "interactivity": {
+            "is_enabled": true,
+            "request_url": "https://FUNCTIONS_URL/v1/slack/interactions"
+        },
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "token_rotation_enabled": false
+    }
+}

@@ -25,6 +25,7 @@ import { usageRoutes } from './routes/event/usage'
 import { adminUsageRoutes } from './routes/admin/adminUsage'
 import { bupherRoutes } from './routes/bupher/bupher'
 import { chatRoutes } from './routes/chat/chat'
+import { slackRoutes } from './routes/slack/slack'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
 import { deployRoutes } from './routes/deploy/deploy'
 import { noCacheHook } from '../utils/noCacheHook'
@@ -82,6 +83,7 @@ export const setupFastify = () => {
     fastify.register(helloRoute)
     fastify.register(bupherRoutes)
     fastify.register(chatRoutes)
+    fastify.register(slackRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
 

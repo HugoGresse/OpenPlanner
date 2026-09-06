@@ -35,6 +35,7 @@ An all-in-one platform to plan a conference and run the live show: talks, speake
 
 -   public schedule website builtin (and optin)
 -   [API](https://api.openplanner.fr/) & webhooks
+-   AI chat assistant (OpenRouter, bring your own key) to query and edit sessions/speakers with reviewed proposals, in the app or from Slack ("Add to Slack" on the Integration & API page)
 
 ## Dev guidelines
 
@@ -113,6 +114,15 @@ bun run dev:emulator                       # 3. frontend on http://localhost:300
 The emulators start **empty** and their data is wiped when they stop. There is no seeded account: on first use, enter any throwaway credentials on the sign-in page — for example `hugo@example.com` / `azerty` — and click **"Sign up now"** when prompted. The account exists only inside the local auth emulator, so these are not real credentials. Then create an event and use the app normally, including the "Update website" export (files land in the storage emulator).
 
 **Enjoy 🚀**
+
+### Slack app (optional)
+
+Users can chat with the assistant from Slack. Two modes:
+
+-   **Official app (one click for users)**: create one Slack app from [functions/slack-app-manifest.json](functions/slack-app-manifest.json) (replace `FUNCTIONS_URL` with your deployed Cloud Functions URL, not the Hosting one), then set `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` and `SLACK_SIGNING_SECRET` in `functions/.env`. The Integration & API page then shows an **Add to Slack** button; installs are stored in `slackInstallations/{teamId}` and messages are routed to the event linked to the workspace (and channel, when several events share one).
+-   **Self-managed app** (no env needed): each event pastes its own bot token + signing secret; the page shows a per-event manifest and request URLs.
+
+Slack must be acknowledged within 3 seconds, so the chat reply / Apply work runs in a second request the `api` function sends to itself (`POST /v1/slack/work`, signed with `SERVICE_API_KEY`). Set `API_SELF_URL` only if the function is not reachable at the default `https://europe-west1-<project>.cloudfunctions.net/api`.
 
 ### Scripts
 

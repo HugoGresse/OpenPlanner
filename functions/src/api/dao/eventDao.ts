@@ -26,6 +26,11 @@ export class EventDao {
         return baseData as Event
     }
 
+    public static async getEventsBySlackTeamId(firebaseApp: firebase.app.App, teamId: string): Promise<Event[]> {
+        const snapshot = await firebaseApp.firestore().collection('events').where('slackTeamId', '==', teamId).get()
+        return snapshot.docs.map((doc) => ({ ...(doc.data() as Event), id: doc.id }))
+    }
+
     public static async createCategory(
         firebaseApp: firebase.app.App,
         eventId: string,
