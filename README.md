@@ -119,6 +119,7 @@ The emulators start **empty** and their data is wiped when they stop. There is n
 The repo contain few scripts useful for:
 
 -   updating the YouTube metadata (title, desc, thumbnails, etc) of uploaded video: [scripts/youtubeBatchEdit.js](scripts/youtubeBatchEdit.js)
+-   deleting orphan images (in the storage bucket but referenced by no Firestore document): `cd functions && npx tsx src/scripts/cleanOrphanImages.ts` — dry run by default, `--delete` to act, `--event <id>` to scope
 
 ### Deploy
 
