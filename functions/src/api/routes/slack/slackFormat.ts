@@ -1,6 +1,4 @@
 import { ChatAgentMessage, MAX_CONTENT_LENGTH, MAX_MESSAGES } from '../chat/chatAgent'
-import { Proposal } from '../chat/proposalTools'
-import { encodeActionValue } from './slackRouting'
 
 export type SlackThreadMessage = {
     ts: string
@@ -20,7 +18,6 @@ export const SLACK_ACTION_IDS = {
     rejectBatch: 'op_reject_batch',
 } as const
 
-const SECTION_TEXT_LIMIT = 2900
 export const MESSAGE_TEXT_LIMIT = 39000
 
 export const truncate = (text: string, limit: number) => (text.length > limit ? `${text.slice(0, limit - 1)}…` : text)
@@ -93,115 +90,4 @@ export const threadToChatMessages = (
     const firstUserIndex = merged.findIndex((m) => m.role === 'user')
     const startingWithUser = firstUserIndex > 0 ? merged.slice(firstUserIndex) : merged
     return startingWithUser.slice(-MAX_MESSAGES)
-}
-
-const formatValue = (value: unknown): string => {
-    if (value === null || value === undefined || value === '') return '_(empty)_'
-    const text = typeof value === 'string' ? value : JSON.stringify(value)
-    return escapeMrkdwn(truncate(text, 300))
-}
-
-export const formatProposalDiff = (proposal: Proposal): string => {
-    if (proposal.diff.after === null) {
-        return `Delete *${escapeMrkdwn(proposal.target.label ?? proposal.target.id)}*`
-    }
-    return Object.entries(proposal.diff.after)
-        .map(
-            ([field, after]) =>
-                `• *${escapeMrkdwn(field)}*: ${formatValue(proposal.diff.before[field])} → ${formatValue(after)}`
-        )
-        .join('\n')
-}
-
-const STATUS_LABELS: Record<SlackProposalStatus, string> = {
-    pending: '⏳ Pending review',
-    applying: '⏳ Applying…',
-    applied: '✅ Applied',
-    rejected: '🚫 Rejected',
-    failed: '❌ Failed',
-}
-
-const button = (label: string, actionId: string, value: string, style?: 'primary' | 'danger') => ({
-    type: 'button',
-    ...(style ? { style } : {}),
-    text: { type: 'plain_text', text: label },
-    action_id: actionId,
-    value,
-})
-
-export type ProposalBlocksArgs = {
-    eventId: string
-    proposalId: string
-    proposal: Proposal
-    status: SlackProposalStatus
-    decidedBy?: string
-    error?: string
-}
-
-export const buildProposalBlocks = ({
-    eventId,
-    proposalId,
-    proposal,
-    status,
-    decidedBy,
-    error,
-}: ProposalBlocksArgs) => {
-    const rationale = proposal.rationale ? `\n_Reason (from assistant): ${escapeMrkdwn(proposal.rationale)}_` : ''
-    const body = truncate(
-        `*${escapeMrkdwn(proposal.summary)}*${rationale}\n${formatProposalDiff(proposal)}`,
-        SECTION_TEXT_LIMIT
-    )
-    const blocks: object[] = [{ type: 'section', text: { type: 'mrkdwn', text: body } }]
-    const value = encodeActionValue(eventId, proposalId)
-
-    if (status === 'pending') {
-        blocks.push({
-            type: 'actions',
-            block_id: `proposal_${proposalId}`,
-            elements: [
-                button('Apply', SLACK_ACTION_IDS.applyProposal, value, 'primary'),
-                button('Reject', SLACK_ACTION_IDS.rejectProposal, value),
-            ],
-        })
-    } else {
-        const who = decidedBy ? ` by <@${decidedBy}>` : ''
-        const detail = error ? ` — ${escapeMrkdwn(truncate(error, 500))}` : ''
-        blocks.push({
-            type: 'context',
-            elements: [{ type: 'mrkdwn', text: `${STATUS_LABELS[status]}${who}${detail}` }],
-        })
-    }
-    return { text: `${STATUS_LABELS[status]}: ${proposal.summary}`, blocks }
-}
-
-export type BatchBlocksArgs = {
-    eventId: string
-    batchId: string
-    count: number
-    status: SlackProposalStatus
-    decidedBy?: string
-    summary?: string
-}
-
-export const buildBatchBlocks = ({ eventId, batchId, count, status, decidedBy, summary }: BatchBlocksArgs) => {
-    if (status === 'pending') {
-        const value = encodeActionValue(eventId, batchId)
-        return {
-            text: `${count} proposals pending review`,
-            blocks: [
-                { type: 'section', text: { type: 'mrkdwn', text: `*${count} proposals* queued above.` } },
-                {
-                    type: 'actions',
-                    block_id: `batch_${batchId}`,
-                    elements: [
-                        button('Apply all', SLACK_ACTION_IDS.applyBatch, value, 'primary'),
-                        button('Reject all', SLACK_ACTION_IDS.rejectBatch, value, 'danger'),
-                    ],
-                },
-            ],
-        }
-    }
-    const who = decidedBy ? ` by <@${decidedBy}>` : ''
-    const text = `${STATUS_LABELS[status]}${who}${summary ? ` — ${summary}` : ''}`
-    return { text, blocks: [{ type: 'section', text: { type: 'mrkdwn', text } }] }
 }

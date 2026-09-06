@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { Proposal } from '../chat/proposalTools'
-import {
-    SLACK_ACTION_IDS,
-    buildProposalBlocks,
-    formatProposalDiff,
-    markdownToMrkdwn,
-    stripMentions,
-    threadToChatMessages,
-} from './slackFormat'
+import { markdownToMrkdwn, stripMentions, threadToChatMessages } from './slackFormat'
 
 const bot = 'U0BOT'
 
@@ -96,48 +88,5 @@ describe('threadToChatMessages', () => {
             'second'
         )
         expect(messages).toEqual([{ role: 'user', content: 'first\n\nsecond' }])
-    })
-})
-
-const proposal: Proposal = {
-    kind: 'patchSpeaker',
-    summary: 'Update speaker Alice',
-    rationale: 'Typo in name',
-    endpoint: { method: 'PATCH', path: '/v1/evt/speakers/s1', body: { name: 'Alicia' } },
-    target: { id: 's1', label: 'Alice' },
-    diff: { before: { name: 'Alice' }, after: { name: 'Alicia' } },
-}
-
-describe('proposal blocks', () => {
-    test('formats a field diff and escapes values', () => {
-        expect(formatProposalDiff(proposal)).toBe('• *name*: Alice → Alicia')
-        expect(
-            formatProposalDiff({ ...proposal, diff: { before: { title: 'Q&A <Live>' }, after: { title: 'Q&A' } } })
-        ).toBe('• *title*: Q&amp;A &lt;Live&gt; → Q&amp;A')
-        expect(formatProposalDiff({ ...proposal, diff: { before: { name: 'Alice' }, after: null } })).toBe(
-            'Delete *Alice*'
-        )
-    })
-
-    test('pending proposals carry Apply / Reject buttons, decided ones carry a status line', () => {
-        const pending = buildProposalBlocks({ eventId: 'evt', proposalId: 'p1', proposal, status: 'pending' })
-        const actions = pending.blocks[1] as { type: string; elements: Array<{ action_id: string; value: string }> }
-        expect(actions.type).toBe('actions')
-        expect(actions.elements.map((e) => e.action_id)).toEqual([
-            SLACK_ACTION_IDS.applyProposal,
-            SLACK_ACTION_IDS.rejectProposal,
-        ])
-        expect(actions.elements[0].value).toBe('evt|p1')
-
-        const applied = buildProposalBlocks({
-            eventId: 'evt',
-            proposalId: 'p1',
-            proposal,
-            status: 'applied',
-            decidedBy: 'U1',
-        })
-        expect(applied.blocks).toHaveLength(2)
-        expect(JSON.stringify(applied.blocks[1])).toContain('✅ Applied by <@U1>')
-        expect(applied.text).toBe('✅ Applied: Update speaker Alice')
     })
 })
