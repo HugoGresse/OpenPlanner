@@ -109,5 +109,8 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
             data.whatsappSharedChatId !== undefined
                 ? data.whatsappSharedChatId || null
                 : event.whatsappSharedChatId ?? null,
+        slackBotToken: data.slackBotToken !== undefined ? data.slackBotToken || null : event.slackBotToken ?? null,
+        slackSigningSecret:
+            data.slackSigningSecret !== undefined ? data.slackSigningSecret || null : event.slackSigningSecret ?? null,
     }
 }

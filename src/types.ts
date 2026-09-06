@@ -266,6 +266,14 @@ export interface Event {
     greenApiToken?: string | null
     // Shared chat (phone or @g.us group) that receives the track-management buttons
     whatsappSharedChatId?: string | null
+    // Slack chat assistant. Official app install (OAuth) links a workspace + optional channel;
+    // self-hosters can instead paste their own app credentials.
+    slackTeamId?: string | null
+    slackTeamName?: string | null
+    slackChannelId?: string | null
+    slackChannelName?: string | null
+    slackBotToken?: string | null
+    slackSigningSecret?: string | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -288,6 +296,8 @@ export type EventSettingForForm = {
     greenApiInstanceId?: string | null
     greenApiToken?: string | null
     whatsappSharedChatId?: string | null
+    slackBotToken?: string | null
+    slackSigningSecret?: string | null
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {

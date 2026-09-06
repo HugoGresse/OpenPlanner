@@ -81,6 +81,17 @@ service cloud.firestore {
                 allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
                 allow write: if false;
             }
+            // Pending / decided chat proposals surfaced in Slack. API-owned.
+            match /slackProposals/{proposalId} {
+                allow read: if authenticated() && (isAdmin(eventData(eventId)) || isSuperAdmin(request.auth.uid));
+                allow write: if false;
+            }
+        }
+
+        // Slack workspace installs (bot tokens). API-only.
+        match /slackInstallations/{teamId} {
+            allow read: if false;
+            allow write: if false;
         }
 
         match /admins/users/admins/{userId} {

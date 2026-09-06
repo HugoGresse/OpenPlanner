@@ -14,6 +14,7 @@ import { WebhooksFields } from '../settings/components/WebhooksFields'
 import { RepoFields } from '../settings/components/RepoFields'
 import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFilePaths'
 import { EventUsageCard } from './components/EventUsageCard'
+import { SlackChatSection } from './components/SlackChatSection'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { TextFieldElementWithGenerateApiKeyButton } from '../../../components/form/TextFieldElementWithGenerateApiKeyButton'
@@ -34,6 +35,8 @@ const schema = yup
         repoUrl: yup.string().nullable(),
         workflowRunId: yup.string().nullable(),
         token: yup.string().nullable(),
+        slackBotToken: yup.string().nullable(),
+        slackSigningSecret: yup.string().nullable(),
     })
     .required()
 
@@ -45,6 +48,8 @@ const convertInputEvent = (event: Event): EventSettingForForm => {
         publicEnabled: event.publicEnabled || false,
         repoUrl: event.repoUrl || null,
         repoToken: event.repoToken || null,
+        slackBotToken: event.slackBotToken || '',
+        slackSigningSecret: event.slackSigningSecret || '',
     }
 }
 
@@ -140,6 +145,8 @@ export const API = ({ event }: APIProps) => {
                         </Button>
                     </Box>
                 </Card>
+
+                <SlackChatSection event={event} isSubmitting={formState.isSubmitting} />
 
                 <Card sx={{ paddingX: 2, mt: 4 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
