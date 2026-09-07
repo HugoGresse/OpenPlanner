@@ -3,15 +3,8 @@ import { Event } from '../../../types'
 import { SlackCredentialSource, SlackProposalDao, SlackProposalRecord } from '../../dao/slackProposalDao'
 import { DEFAULT_CHAT_MODEL, runChatAgent } from '../chat/chatAgent'
 import { fetchSlackThreadReplies, postSlackMessage, updateSlackMessage, updateSlackMessageWithRetry } from './slackApi'
-import {
-    MESSAGE_TEXT_LIMIT,
-    buildBatchBlocks,
-    buildProposalBlocks,
-    markdownToMrkdwn,
-    stripMentions,
-    threadToChatMessages,
-    truncate,
-} from './slackFormat'
+import { buildBatchBlocks, buildProposalBlocks } from './slackCards'
+import { MESSAGE_TEXT_LIMIT, markdownToMrkdwn, stripMentions, threadToChatMessages, truncate } from './slackFormat'
 
 // chat.update is Tier 3 (~50/min per workspace); leave room for concurrent threads.
 const STREAM_UPDATE_INTERVAL_MS = 3000
