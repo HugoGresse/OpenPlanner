@@ -34,4 +34,8 @@ jobs:
               with:
                   repoToken: '${{ secrets.GITHUB_TOKEN }}'
                   firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CONFERENCECENTERR }}'
+                  # 15.34.1+ checks that the Hosting API is enabled (serviceusage.services.get), which the
+                  # github-action service account is not allowed to do. Pin until the account gets
+                  # roles/serviceusage.serviceUsageViewer.
+                  firebaseToolsVersion: 15.34.0
                   projectId: ${{ vars.VITE_FIREBASE_CONFERENCE_CENTER_PROJECT_ID }}
