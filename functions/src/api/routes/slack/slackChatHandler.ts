@@ -133,6 +133,7 @@ export const handleSlackChatMessage = async (fastify: FastifyInstance, context: 
         model,
         messages,
         surface: 'slack',
+        answerScope: event.slackAnswerAnyQuestion === true ? 'any' : 'event',
         onEvent: (agentEvent) => {
             if (agentEvent.type === 'content') {
                 streamed += agentEvent.delta

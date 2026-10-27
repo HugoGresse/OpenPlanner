@@ -274,6 +274,8 @@ export interface Event {
     slackChannelName?: string | null
     slackBotToken?: string | null
     slackSigningSecret?: string | null
+    // When true, the Slack assistant also answers questions unrelated to OpenPlanner / the event
+    slackAnswerAnyQuestion?: boolean | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -298,6 +300,7 @@ export type EventSettingForForm = {
     whatsappSharedChatId?: string | null
     slackBotToken?: string | null
     slackSigningSecret?: string | null
+    slackAnswerAnyQuestion?: boolean | null
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {

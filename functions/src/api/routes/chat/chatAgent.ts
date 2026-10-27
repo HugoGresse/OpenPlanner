@@ -10,6 +10,8 @@ export const DEFAULT_CHAT_MODEL = 'anthropic/claude-sonnet-4'
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 export type ChatSurface = 'ui' | 'slack'
+// 'event': only help with the event, decline unrelated topics. 'any': also act as a general assistant.
+export type ChatAnswerScope = 'event' | 'any'
 
 export type ChatAgentMessage = { role: 'user' | 'assistant'; content: string }
 
@@ -33,6 +35,7 @@ export type RunChatAgentOptions = {
     model: string
     messages: ChatAgentMessage[]
     surface: ChatSurface
+    answerScope?: ChatAnswerScope
     signal?: AbortSignal
     onEvent: (event: ChatAgentEvent) => void
 }
@@ -53,12 +56,25 @@ const SURFACE_NOTES: Record<ChatSurface, string> = {
 Format replies for Slack mrkdwn: *bold* with single asterisks, _italic_, bullet lists with "-", no markdown headers, no tables. Keep replies short.`,
 }
 
-export const buildSystemPrompt = (eventId: string, eventName: string, surface: ChatSurface = 'ui') =>
+const SCOPE_NOTES: Record<ChatAnswerScope, string> = {
+    event: `Scope: only help with this event and OpenPlanner. If the user asks about something unrelated, politely say you can only help with the event and do not answer the unrelated question.`,
+    any: `Scope: besides managing the event, you may answer any other question the user asks (general knowledge, writing, code, etc.) as a helpful general assistant. Use the event tools only when the question is about the event.`,
+}
+
+export const buildSystemPrompt = (
+    eventId: string,
+    eventName: string,
+    surface: ChatSurface = 'ui',
+    answerScope?: ChatAnswerScope
+) =>
     `You are an OpenPlanner assistant helping the user manage the event "${eventName}" (id: ${eventId}).
+${answerScope ? `\n${SCOPE_NOTES[answerScope]}` : ''}
 
 Read tools (listSessions, getSession, listSpeakers, getSpeaker, listSponsors, getEvent, getFaq) return data directly. listSessions/getSession/listSpeakers/getSpeaker return a lean default projection to keep token usage low; pass fields[] only when you actually need a heavier field (e.g. fields:["bio"] on listSpeakers, fields:["abstract"] on listSessions). Private fields (email, phone, note on speakers; note on sessions) are also opt-in via fields[] — request them only when the user's request actually needs them, and don't echo full email/phone lists back to the user unless they explicitly asked. Don't request fields you won't use.
 
-Write tools (proposePatchSpeaker, proposePatchSession, proposePatchEvent, proposeDeleteSpeaker) DO NOT apply changes. ${SURFACE_NOTES[surface]} The tool result tells you whether the proposal was emitted successfully — it is NOT confirmation that the change happened. Never claim a change was made.
+Write tools (proposePatchSpeaker, proposePatchSession, proposePatchEvent, proposeDeleteSpeaker) DO NOT apply changes. ${
+        SURFACE_NOTES[surface]
+    } The tool result tells you whether the proposal was emitted successfully — it is NOT confirmation that the change happened. Never claim a change was made.
 
 Batching:
 - When the user asks for several related changes (e.g. "fix typos in all session titles", "set the language for tracks A and B"), emit ONE proposal per change in the same turn — they are grouped into a batch the user can approve or reject all at once.
@@ -160,11 +176,11 @@ const PROPOSAL_QUEUED_NOTE =
     'Proposal queued. All proposals from this turn are batched and the user will approve/reject them together. Continue if more related changes are needed for this user request, but do NOT claim any change has been applied yet.'
 
 export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAgentResult> => {
-    const { eventId, eventName, openRouterApiKey, model, messages, surface, signal, onEvent } = options
+    const { eventId, eventName, openRouterApiKey, model, messages, surface, answerScope, signal, onEvent } = options
     const isAborted = () => signal?.aborted === true
 
     const conversation: OpenRouterMessage[] = [
-        { role: 'system', content: buildSystemPrompt(eventId, eventName, surface) },
+        { role: 'system', content: buildSystemPrompt(eventId, eventName, surface, answerScope) },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
     ]
     const result: ChatAgentResult = { text: '', proposals: [] }

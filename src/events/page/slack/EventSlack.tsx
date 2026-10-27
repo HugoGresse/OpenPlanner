@@ -18,6 +18,7 @@ const schema = yup
     .object({
         slackBotToken: yup.string().nullable(),
         slackSigningSecret: yup.string().nullable(),
+        slackAnswerAnyQuestion: yup.boolean().optional(),
     })
     .required()
 
@@ -32,6 +33,7 @@ const convertInputEvent = (event: Event): EventSettingForForm => ({
     repoToken: event.repoToken || null,
     slackBotToken: event.slackBotToken || '',
     slackSigningSecret: event.slackSigningSecret || '',
+    slackAnswerAnyQuestion: event.slackAnswerAnyQuestion === true,
 })
 
 export type EventSlackProps = {
