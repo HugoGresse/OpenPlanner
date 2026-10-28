@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { markdownToMrkdwn, stripMentions, threadToChatMessages } from './slackFormat'
+import { markdownToMrkdwn, splitForSlack, stripMentions, threadToChatMessages } from './slackFormat'
 
 const bot = 'U0BOT'
 
@@ -23,6 +23,22 @@ describe('markdownToMrkdwn', () => {
         )
         expect(markdownToMrkdwn('[docs](https://x.io/a?b=1&c=2)')).toBe('<https://x.io/a?b=1&amp;c=2|docs>')
         expect(markdownToMrkdwn('__init__ stays')).toBe('__init__ stays')
+    })
+})
+
+describe('splitForSlack', () => {
+    test('keeps short text as a single chunk', () => {
+        expect(splitForSlack('hello', 10)).toEqual(['hello'])
+        expect(splitForSlack('', 10)).toEqual([''])
+    })
+
+    test('splits at paragraph, then line, then word boundaries without losing text', () => {
+        expect(splitForSlack('aaa bbb\n\nccc ddd\neee fff', 12)).toEqual(['aaa bbb', 'ccc ddd', 'eee fff'])
+        expect(splitForSlack('one two three four', 10)).toEqual(['one two', 'three four'])
+    })
+
+    test('hard-cuts a single word longer than the limit', () => {
+        expect(splitForSlack('abcdefghijkl', 5)).toEqual(['abcde', 'fghij', 'kl'])
     })
 })
 

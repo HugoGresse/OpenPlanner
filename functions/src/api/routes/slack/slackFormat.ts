@@ -36,14 +36,33 @@ export const stripMentions = (text: string): string =>
         .trim()
 
 export const markdownToMrkdwn = (markdown: string): string =>
-    truncate(
-        escapeMrkdwn(markdown)
-            .replace(/^#{1,6}\s+(.+)$/gm, '*$1*')
-            .replace(/\*\*(.+?)\*\*/g, '*$1*')
-            .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<$2|$1>')
-            .replace(/^\s*[*+]\s+/gm, '- '),
-        MESSAGE_TEXT_LIMIT
-    )
+    escapeMrkdwn(markdown)
+        .replace(/^#{1,6}\s+(.+)$/gm, '*$1*')
+        .replace(/\*\*(.+?)\*\*/g, '*$1*')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<$2|$1>')
+        .replace(/^\s*[*+]\s+/gm, '- ')
+
+// Best cut point inside the window: paragraph break, else line break, else space (only in the second half), else hard cut.
+const findCut = (window: string, limit: number): number => {
+    for (const separator of ['\n\n', '\n', ' ']) {
+        const at = window.lastIndexOf(separator)
+        if (at > limit / 2) return at
+    }
+    return limit
+}
+
+// Slack caps message text; split a long reply at paragraph / line / word boundaries so nothing is silently dropped.
+export const splitForSlack = (text: string, limit: number = MESSAGE_TEXT_LIMIT): string[] => {
+    const chunks: string[] = []
+    let rest = text
+    while (rest.length > limit) {
+        const cut = findCut(rest.slice(0, limit), limit)
+        chunks.push(rest.slice(0, cut).trimEnd())
+        rest = rest.slice(cut).trimStart()
+    }
+    if (rest.length > 0 || chunks.length === 0) chunks.push(rest)
+    return chunks
+}
 
 const isBotMessage = (message: SlackThreadMessage, botUserId: string | undefined) =>
     Boolean(message.bot_id) || (Boolean(botUserId) && message.user === botUserId)

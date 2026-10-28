@@ -4,7 +4,14 @@ import { SlackCredentialSource, SlackProposalDao, SlackProposalRecord } from '..
 import { DEFAULT_CHAT_MODEL, runChatAgent } from '../chat/chatAgent'
 import { fetchSlackThreadReplies, postSlackMessage, updateSlackMessage, updateSlackMessageWithRetry } from './slackApi'
 import { buildBatchBlocks, buildProposalBlocks } from './slackCards'
-import { MESSAGE_TEXT_LIMIT, markdownToMrkdwn, stripMentions, threadToChatMessages, truncate } from './slackFormat'
+import {
+    MESSAGE_TEXT_LIMIT,
+    markdownToMrkdwn,
+    splitForSlack,
+    stripMentions,
+    threadToChatMessages,
+    truncate,
+} from './slackFormat'
 
 // chat.update is Tier 3 (~50/min per workspace); leave room for concurrent threads.
 const STREAM_UPDATE_INTERVAL_MS = 3000
@@ -119,7 +126,11 @@ export const handleSlackChatMessage = async (fastify: FastifyInstance, context: 
     const model = event.openRouterModel || DEFAULT_CHAT_MODEL
 
     const updater = createThrottledUpdater(
-        (text) => updateSlackMessage(token, { ...placeholder, text: `${markdownToMrkdwn(text)} …` }),
+        (text) =>
+            updateSlackMessage(token, {
+                ...placeholder,
+                text: `${truncate(markdownToMrkdwn(text), MESSAGE_TEXT_LIMIT)} …`,
+            }),
         STREAM_UPDATE_INTERVAL_MS
     )
     const errors: string[] = []
@@ -133,7 +144,7 @@ export const handleSlackChatMessage = async (fastify: FastifyInstance, context: 
         model,
         messages,
         surface: 'slack',
-        answerScope: event.slackAnswerAnyQuestion === true ? 'any' : 'event',
+        answerAnyQuestion: event.slackAnswerAnyQuestion === true,
         onEvent: (agentEvent) => {
             if (agentEvent.type === 'content') {
                 streamed += agentEvent.delta
@@ -149,10 +160,16 @@ export const handleSlackChatMessage = async (fastify: FastifyInstance, context: 
     await updater.stop()
 
     const errorText = errors.length > 0 ? `\n:warning: ${truncate(errors.join('\n'), ERROR_TEXT_LIMIT)}` : ''
-    const finalText = truncate(`${markdownToMrkdwn(result.text) || '_(no reply)_'}${errorText}`, MESSAGE_TEXT_LIMIT)
+    // Long answers (general questions) overflow Slack's per-message cap: continue them in the thread instead of cutting.
+    const [finalText, ...overflow] = splitForSlack(`${markdownToMrkdwn(result.text) || '_(no reply)_'}${errorText}`)
     await updateSlackMessageWithRetry(token, { ...placeholder, text: finalText }).catch((error) =>
         console.error('[slack chat] final message update failed', error)
     )
+    for (const text of overflow) {
+        await postSlackMessage(token, { channel, threadTs, text }).catch((error) =>
+            console.error('[slack chat] continuation message failed', error)
+        )
+    }
 
     if (result.proposals.length > 0) {
         const prompt = stripMentions(inbound.text ?? '')

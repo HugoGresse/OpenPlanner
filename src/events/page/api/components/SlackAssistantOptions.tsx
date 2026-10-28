@@ -1,12 +1,11 @@
 import { Box, Typography } from '@mui/material'
-import LoadingButton from '@mui/lab/LoadingButton'
 import { CheckboxElement } from 'react-hook-form-mui'
 
 export type SlackAssistantOptionsProps = {
     isSubmitting: boolean
 }
 
-// Behaviour toggles for the Slack assistant. Lives inside the EventSlack form.
+// Behaviour toggles for the Slack assistant. Lives inside the EventSlack form, which owns the Save button.
 export const SlackAssistantOptions = ({ isSubmitting }: SlackAssistantOptionsProps) => (
     <Box mt={3}>
         <Typography fontWeight="600">Assistant behaviour</Typography>
@@ -16,17 +15,10 @@ export const SlackAssistantOptions = ({ isSubmitting }: SlackAssistantOptionsPro
             disabled={isSubmitting}
         />
         <Typography variant="body2" color="text.secondary">
-            Off: the bot only helps with this event and politely declines other topics. On: it also acts as a general
-            assistant (same model and OpenRouter key).
+            Off (default): the assistant stays focused on this event and may decline unrelated questions. On: it also
+            acts as a general assistant. Anyone who can message the bot in your Slack workspace then uses your
+            OpenRouter key for any topic, so expect higher usage. Either way the scope is an instruction to the model,
+            not a hard block.
         </Typography>
-        <LoadingButton
-            type="submit"
-            disabled={isSubmitting}
-            loading={isSubmitting}
-            variant="contained"
-            size="small"
-            sx={{ mt: 1 }}>
-            Save
-        </LoadingButton>
     </Box>
 )
