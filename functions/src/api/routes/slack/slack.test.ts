@@ -241,6 +241,40 @@ describe('Slack routes', () => {
         expect(JSON.stringify(proposalPost.blocks)).toContain(`${eventId}|200-1-1`)
     })
 
+    // Minimal mention round-trip; returns the system prompt the handler sent to OpenRouter.
+    const mentionSystemPrompt = async () => {
+        let systemPrompt = ''
+        fetchSpy.mockImplementation(async (url: string, init: RequestInit) => {
+            if (url.includes('openrouter.ai')) {
+                systemPrompt = JSON.parse(String(init.body)).messages[0].content
+                return openRouterStream([sseChunk({ content: 'Paris.' }), 'data: [DONE]\n\n'])
+            }
+            if (url.endsWith('conversations.replies')) return slackOk({ messages: [] })
+            if (url.endsWith('chat.postMessage')) return slackOk({ channel: 'C1', ts: '200.1' })
+            if (url.endsWith('chat.update')) return slackOk()
+            throw new Error(`unexpected fetch ${url}`)
+        })
+        const raw = mentionEvent('<@U0BOT> what is the capital of France?')
+        const res = await fastify.inject({
+            method: 'POST',
+            url: eventsUrl,
+            headers: signedHeaders(raw, 'application/json'),
+            payload: raw,
+        })
+        expect(res.statusCode).toBe(200)
+        return systemPrompt
+    }
+
+    test('app_mention: slackAnswerAnyQuestion widens the scope, default leaves the prompt as before', async () => {
+        mockEventLoad()
+        expect(await mentionSystemPrompt()).not.toContain('Scope:')
+
+        mockEventLoad({ slackAnswerAnyQuestion: true })
+        expect(await mentionSystemPrompt()).toContain(
+            'Scope: besides managing the event, you may answer any other question'
+        )
+    })
+
     const pendingRecord: SlackProposalRecord = {
         id: 'call_1',
         batchId: '200.1',

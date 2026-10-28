@@ -5,6 +5,7 @@ import { Event } from '../../../../types'
 import { useSlackConfig } from '../../../../services/hooks/useSlackConfig'
 import { SlackOfficialConnect } from './SlackOfficialConnect'
 import { SlackManualSetup } from './SlackManualSetup'
+import { SlackAssistantOptions } from './SlackAssistantOptions'
 
 export type SlackChatSectionProps = {
     event: Event
@@ -61,6 +62,7 @@ export const SlackChatSection = ({ event, isSubmitting }: SlackChatSectionProps)
                 ) : (
                     <SlackManualSetup event={event} isSubmitting={isSubmitting} />
                 )}
+                <SlackAssistantOptions isSubmitting={isSubmitting} />
                 <Typography variant="body2" color="text.secondary" mt={2} mb={2}>
                     Requires the event OpenRouter key (Event settings). Invite the bot to a channel, then{' '}
                     <code>@OpenPlanner rename speaker Alice to Alicia</code>. Replies land in a thread; each proposed

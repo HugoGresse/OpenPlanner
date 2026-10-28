@@ -1,5 +1,4 @@
 import { Typography } from '@mui/material'
-import LoadingButton from '@mui/lab/LoadingButton'
 import { Event } from '../../../../types'
 import { FUNCTION_API_URL } from '../../../../env'
 import { TextFieldElementPrivate } from '../../../../components/form/TextFieldElementPrivate'
@@ -65,8 +64,8 @@ export const SlackManualSetup = ({ event, isSubmitting }: SlackManualSetupProps)
             </Typography>
             <Typography variant="body2" color="text.secondary">
                 Bot token from <strong>OAuth & Permissions</strong> (starts with xoxb-), signing secret from{' '}
-                <strong>Basic Information</strong>. Save before Slack verifies the request URLs: verification is signed
-                with the secret.
+                <strong>Basic Information</strong>. Save (button at the bottom) before Slack verifies the request URLs:
+                verification is signed with the secret.
             </Typography>
             <TextFieldElementPrivate
                 margin="normal"
@@ -84,17 +83,8 @@ export const SlackManualSetup = ({ event, isSubmitting }: SlackManualSetupProps)
                 name="slackSigningSecret"
                 disabled={isSubmitting}
             />
-            <LoadingButton
-                type="submit"
-                disabled={isSubmitting}
-                loading={isSubmitting}
-                fullWidth
-                variant="contained"
-                sx={{ mt: 1, mb: 2 }}>
-                Save
-            </LoadingButton>
 
-            <Typography fontWeight="600" mt={1}>
+            <Typography fontWeight="600" mt={2}>
                 3. Request URLs (already in the manifest)
             </Typography>
             <Typography variant="body2" gutterBottom>

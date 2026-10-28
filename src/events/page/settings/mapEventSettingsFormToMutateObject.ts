@@ -112,5 +112,9 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
         slackBotToken: data.slackBotToken !== undefined ? data.slackBotToken || null : event.slackBotToken ?? null,
         slackSigningSecret:
             data.slackSigningSecret !== undefined ? data.slackSigningSecret || null : event.slackSigningSecret ?? null,
+        slackAnswerAnyQuestion:
+            data.slackAnswerAnyQuestion !== undefined
+                ? data.slackAnswerAnyQuestion === true
+                : event.slackAnswerAnyQuestion ?? false,
     }
 }

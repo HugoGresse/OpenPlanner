@@ -4,6 +4,7 @@ import { doc } from 'firebase/firestore'
 import { FormContainer, useForm } from 'react-hook-form-mui'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Button, Container, Stack, Typography } from '@mui/material'
+import LoadingButton from '@mui/lab/LoadingButton'
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material'
 import { Link } from 'wouter'
 import { Event, EventSettingForForm } from '../../../types'
@@ -18,6 +19,7 @@ const schema = yup
     .object({
         slackBotToken: yup.string().nullable(),
         slackSigningSecret: yup.string().nullable(),
+        slackAnswerAnyQuestion: yup.boolean().optional(),
     })
     .required()
 
@@ -32,6 +34,7 @@ const convertInputEvent = (event: Event): EventSettingForForm => ({
     repoToken: event.repoToken || null,
     slackBotToken: event.slackBotToken || '',
     slackSigningSecret: event.slackSigningSecret || '',
+    slackAnswerAnyQuestion: event.slackAnswerAnyQuestion === true,
 })
 
 export type EventSlackProps = {
@@ -67,6 +70,15 @@ export const EventSlack = ({ event }: EventSlackProps) => {
                     createNotification('Slack configuration saved', { type: 'success' })
                 }}>
                 <SlackChatSection event={event} isSubmitting={formState.isSubmitting} />
+                <LoadingButton
+                    type="submit"
+                    disabled={formState.isSubmitting}
+                    loading={formState.isSubmitting}
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: 2 }}>
+                    Save
+                </LoadingButton>
                 <SaveShortcut />
             </FormContainer>
         </Container>
