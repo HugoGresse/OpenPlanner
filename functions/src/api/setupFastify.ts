@@ -2,7 +2,7 @@ import { app as firebaseApp } from 'firebase-admin'
 import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
 import Fastify from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-import { addContentTypeParserForServerless } from './other/addContentTypeParserForServerless'
+import { addContentTypeParserForServerless, addMultipartPassthrough } from './other/addContentTypeParserForServerless'
 import { firebasePlugin } from './dao/firebasePlugin'
 import { apiKeyPlugin } from './apiKeyPlugin'
 import { superAdminPlugin } from './superAdminPlugin'
@@ -50,6 +50,7 @@ export const setupFastify = () => {
         logger: isDev() || isNodeEnvDev || isNodeEnvTest,
     }).withTypeProvider<TypeBoxTypeProvider>()
 
+    addMultipartPassthrough(fastify)
     if (!isNodeEnvDev && !isNodeEnvTest) {
         addContentTypeParserForServerless(fastify)
     }

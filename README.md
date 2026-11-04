@@ -35,6 +35,7 @@ An all-in-one platform to plan a conference and run the live show: talks, speake
 
 -   public schedule website builtin (and optin)
 -   [API](https://api.openplanner.fr/) & webhooks
+-   `openplanner` CLI ([cli/](cli/)) for scripts and coding agents (Claude Code, Codex), with a ready-made agent skill
 -   AI chat assistant (OpenRouter, bring your own key) to query and edit sessions/speakers with reviewed proposals, in the app or from Slack ("Add to Slack" on the Integration & API page)
 
 ## Dev guidelines
@@ -123,6 +124,10 @@ Users can chat with the assistant from Slack. Two modes:
 -   **Self-managed app** (no env needed): each event pastes its own bot token + signing secret; the page shows a per-event manifest and request URLs.
 
 Slack must be acknowledged within 3 seconds, so the chat reply / Apply work runs in a second request the `api` function sends to itself (`POST /v1/slack/work`, signed with `SERVICE_API_KEY`). Set `API_SELF_URL` only if the function is not reachable at the default `https://europe-west1-<project>.cloudfunctions.net/api`.
+
+### CLI
+
+[cli/](cli/) holds `@openplanner/cli`, a JSON-first command-line client of the API (`openplanner sessions list -f id,title`, `openplanner event deploy`, `openplanner api PATCH /v1/{eventId}/event -d '{…}'`…). It ships the agent skill in [cli/skills/openplanner/SKILL.md](cli/skills/openplanner/SKILL.md), linked from `.claude/skills/` (Claude Code) and `.agents/skills/` (Codex), and installable anywhere with `openplanner skill install`. See [cli/README.md](cli/README.md).
 
 ### Scripts
 

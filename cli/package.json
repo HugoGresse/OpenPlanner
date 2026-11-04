@@ -1,0 +1,43 @@
+{
+    "name": "@openplanner/cli",
+    "version": "0.1.0",
+    "description": "Command-line client for the OpenPlanner API, built for humans and coding agents (Claude Code, Codex)",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/HugoGresse/OpenPlanner.git",
+        "directory": "cli"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "type": "module",
+    "bin": {
+        "openplanner": "./bin/openplanner.js"
+    },
+    "files": [
+        "bin",
+        "dist",
+        "skills",
+        "README.md"
+    ],
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "dev": "tsx src/index.ts",
+        "test": "vitest run",
+        "tscheck": "tsc -p tsconfig.json --noEmit",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "commander": "^15.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.6",
+        "tsx": "^4.23.15",
+        "typescript": "^5.9.3",
+        "vitest": "^5.1.0"
+    }
+}
