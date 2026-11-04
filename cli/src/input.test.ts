@@ -60,7 +60,7 @@ describe('buildBody', () => {
 })
 
 test('parsePairs with custom separator', () => {
-    expect(parsePairs(['password: s3cret', 'x-a:b'], ':')).toEqual({ password: 's3cret', 'x-a': 'b' })
+    expect(parsePairs(['accept: text/plain', 'x-a:b'], ':')).toEqual({ accept: 'text/plain', 'x-a': 'b' })
 })
 
 test('collect accumulates repeated options', () => {
