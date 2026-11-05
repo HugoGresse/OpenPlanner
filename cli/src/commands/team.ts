@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { call, DataOptions, dataOptions, run } from '../context.js'
+import { call, DataOptions, dataOptions, deleteCommand, run } from '../context.js'
 import { buildBody } from '../input.js'
 
 export const registerTeam = (program: Command): void => {
@@ -19,12 +19,8 @@ export const registerTeam = (program: Command): void => {
             )
         )
 
-    team.command('delete <memberId>')
-        .description('Delete a team member (irreversible)')
-        .requiredOption('--yes', 'Confirm the deletion')
-        .action(
-            run((ctx, _options, memberId) =>
-                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/team/${memberId}` })
-            )
-        )
+    deleteCommand(
+        team.command('delete <memberId>').description('Delete a team member (irreversible)'),
+        (memberId) => `/v1/{eventId}/team/${memberId}`
+    )
 }

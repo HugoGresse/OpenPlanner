@@ -62,15 +62,14 @@ describe('POST /v1/:eventId/team', () => {
 
     test('returns 409 when the member already exists', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
-        vi.spyOn(TeamDao, 'getMember').mockResolvedValue({ id: 'ada' } as any)
+        vi.spyOn(TeamDao, 'createMember').mockRejectedValue(Object.assign(new Error('exists'), { code: 6 }))
         const res = await post({ name: 'Ada' })
         expect(res.statusCode).toBe(409)
-        expect(res.body).toContain('ada')
+        expect(res.body).toBe('Team member already exists: ada')
     })
 
     test('creates the member and returns its id', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
-        vi.spyOn(TeamDao, 'getMember').mockResolvedValue(null)
         const createSpy = vi.spyOn(TeamDao, 'createMember').mockResolvedValue(undefined)
 
         const res = await post({ name: 'Ada Lovelace', role: 'Organizer', team: 'core' })

@@ -5,12 +5,11 @@ import { EventDao } from '../../dao/eventDao'
 import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { Session } from '../../../types'
-import { apiKeyQuerystring, apiKeySecurity, eventIdParams } from '../../other/routeSchemas'
+import { replyDaoError } from '../../other/daoErrors'
+import { apiKeyQuerystring, apiKeySecurity, eventIdParams, MAX_STRING_LENGTH } from '../../other/routeSchemas'
 import { TypeBoxPatchSession } from './patchSessionPATCH'
 import { parseSessionDates } from './parseSessionDates'
 import { findInvalidSessionReference } from './validateSessionReferences'
-
-const MAX_STRING_LENGTH = 10000
 
 export const TypeBoxCreateSession = Type.Object(
     {
@@ -34,7 +33,7 @@ export const createSessionPOSTSchema = {
     tags: ['sessions'],
     summary: 'Create a session',
     description:
-        'Creates one session. The id is generated when absent (409 when it already exists). trackId, format, category must exist on the event and speakers must be existing speaker ids (400 otherwise). Unknown fields are rejected.',
+        'Creates one session. The id is generated when absent (409 when it already exists). trackId, format, category must exist on the event and speakers must be existing speaker ids (400 otherwise). Dates are ISO 8601 and need both bounds. Unknown fields are rejected. Like the web admin, showInFeedback defaults to true.',
     params: eventIdParams(),
     querystring: apiKeyQuerystring,
     body: TypeBoxCreateSession,
@@ -46,11 +45,29 @@ export const createSessionPOSTSchema = {
     security: apiKeySecurity,
 }
 
-const findUnknownSpeakers = async (fastify: FastifyInstance, eventId: string, speakerIds: string[]) => {
-    const found = await Promise.all(
-        speakerIds.map((speakerId) => SpeakerDao.doesSpeakerExist(fastify.firebase, eventId, speakerId))
-    )
-    return speakerIds.filter((_, index) => !found[index])
+// Admin defaults for a new session (src/events/page/sessions/EventSessionForm.tsx).
+const NEW_SESSION_DEFAULTS: Partial<Session & { tags: string[] }> = {
+    speakers: [],
+    tags: [],
+    dates: null,
+    showInFeedback: true,
+    hideTrackTitle: false,
+    teasingHidden: false,
+}
+
+// Returns the message of the first invalid input, or null. Pure apart from the speaker lookup.
+const validateCreateBody = async (
+    fastify: FastifyInstance,
+    eventId: string,
+    body: CreateSessionType
+): Promise<string | null> => {
+    if (!body.title.trim()) return 'title must not be blank'
+    const event = await EventDao.getEvent(fastify.firebase, eventId)
+    const referenceError = findInvalidSessionReference(event, body)
+    if (referenceError) return referenceError
+    const missing = await SpeakerDao.findMissingSpeakerIds(fastify.firebase, eventId, body.speakers || [])
+    if (missing.length > 0) return `Unknown speaker id(s): ${missing.join(', ')}`
+    return null
 }
 
 export const createSessionRouteHandler = (fastify: FastifyInstance) => {
@@ -63,16 +80,9 @@ export const createSessionRouteHandler = (fastify: FastifyInstance) => {
         const sessionId = id || uuidv4()
 
         try {
-            const event = await EventDao.getEvent(fastify.firebase, eventId)
-            const referenceError = findInvalidSessionReference(event, rest)
-            if (referenceError) {
-                reply.status(400).send(referenceError)
-                return
-            }
-
-            const unknownSpeakers = await findUnknownSpeakers(fastify, eventId, rest.speakers || [])
-            if (unknownSpeakers.length > 0) {
-                reply.status(400).send(`Unknown speaker id(s): ${unknownSpeakers.join(', ')}`)
+            const inputError = await validateCreateBody(fastify, eventId, request.body)
+            if (inputError) {
+                reply.status(400).send(inputError)
                 return
             }
 
@@ -81,28 +91,23 @@ export const createSessionRouteHandler = (fastify: FastifyInstance) => {
                 reply.status(400).send(parsed.error)
                 return
             }
-
-            if (await SessionDao.doesSessionExist(fastify.firebase, eventId, sessionId)) {
-                reply.status(409).send(`Session already exists: ${sessionId}`)
-                return
-            }
-
-            const session: Partial<Session> & { id: string } = {
-                speakers: [],
-                tags: [],
-                dates: null,
-                ...rest,
-                id: sessionId,
-            }
+            const session: Partial<Session> & { id: string } = { ...NEW_SESSION_DEFAULTS, ...rest, id: sessionId }
             if (parsed.dates) {
-                session.dates = { start: parsed.dates.start ?? null, end: parsed.dates.end ?? null }
+                const { start = null, end = null } = parsed.dates
+                if (!start !== !end) {
+                    reply.status(400).send('dates.start and dates.end must be given together')
+                    return
+                }
+                session.dates = start && end ? { start, end } : null
             }
 
             await SessionDao.createSession(fastify.firebase, eventId, session)
             reply.status(201).send({ id: sessionId })
         } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : 'Unknown error'
-            reply.status(400).send(`Failed to create session: ${msg}`)
+            replyDaoError(reply, error, {
+                conflict: `Session already exists: ${sessionId}`,
+                failed: 'Failed to create session',
+            })
         }
     }
 }

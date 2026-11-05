@@ -2,8 +2,9 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { TeamDao } from '../../dao/teamDao'
 import { TeamMember } from '../../../../../src/types'
+import { slugify } from '../../../../../src/utils/slugify'
+import { replyDaoError } from '../../other/daoErrors'
 import { apiKeyQuerystring, apiKeySecurity, eventIdParams } from '../../other/routeSchemas'
-import { slugify } from '../../other/slugify'
 import { withSocialIcons } from '../../other/socials'
 import { TypeBoxCreateTeamMember } from './teamSchemas'
 
@@ -32,6 +33,7 @@ export const createTeamMemberPOSTSchema = {
     security: apiKeySecurity,
 }
 
+// Same defaults as the admin's MemberForm / NewMember.
 export const toTeamMember = (body: CreateTeamMemberType): TeamMember => ({
     id: body.id || slugify(body.name),
     name: body.name,
@@ -57,15 +59,13 @@ export const createTeamMemberRouteHandler = (fastify: FastifyInstance) => {
         }
 
         try {
-            if (await TeamDao.getMember(fastify.firebase, eventId, member.id)) {
-                reply.status(409).send(`Team member already exists: ${member.id}`)
-                return
-            }
             await TeamDao.createMember(fastify.firebase, eventId, member)
             reply.status(201).send({ id: member.id })
         } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : 'Unknown error'
-            reply.status(400).send(`Failed to add team member: ${msg}`)
+            replyDaoError(reply, error, {
+                conflict: `Team member already exists: ${member.id}`,
+                failed: 'Failed to add team member',
+            })
         }
     }
 }

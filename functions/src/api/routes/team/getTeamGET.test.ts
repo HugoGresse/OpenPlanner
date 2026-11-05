@@ -28,7 +28,15 @@ describe('GET /v1/:eventId/team', () => {
 
     test('returns members flat and grouped by team', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
-        const member = { id: 'ada', name: 'Ada', team: 'core', bio: null, socials: [] }
+        // '' photoUrl and a schemeless link are what the web admin stores; the read schema must not reject them
+        const member = {
+            id: 'ada',
+            name: 'Ada',
+            team: 'core',
+            bio: null,
+            photoUrl: '',
+            socials: [{ name: 'Site', icon: 'site', link: 'ada.example' }],
+        }
         vi.spyOn(TeamDao, 'getTeams').mockResolvedValue({
             team: [member],
             teams: [{ id: 'core', order: 0, members: [member] }],

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { strictValidatorCompiler } from '../../other/strictValidator'
+import { strictBodyValidatorCompiler } from '../../other/strictValidator'
 import { updateSpeakerPATCHSchema, UpdateSpeakerPATCHTypes, updateSpeakerRouteHandler } from './updateSpeakerPATCH'
 import { getSpeakersGETSchema, GetSpeakersGETTypes, getSpeakersRouteHandler } from './getSpeakersGET'
 import { getSpeakerGETSchema, GetSpeakerGETTypes, getSpeakerRouteHandler } from './getSpeakerGET'
@@ -42,7 +42,7 @@ export const speakersRoutes = (fastify: FastifyInstance, options: any, done: () 
         '/v1/:eventId/speakers',
         {
             schema: createSpeakerPOSTSchema,
-            validatorCompiler: strictValidatorCompiler,
+            validatorCompiler: strictBodyValidatorCompiler,
             preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         createSpeakerRouteHandler(fastify)

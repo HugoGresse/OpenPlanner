@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { strictValidatorCompiler } from '../../other/strictValidator'
+import { strictBodyValidatorCompiler } from '../../other/strictValidator'
 import { getTeamGETSchema, GetTeamGETTypes, getTeamRouteHandler } from './getTeamGET'
 import {
     createTeamMemberPOSTSchema,
@@ -23,7 +23,7 @@ export const teamRoutes = (fastify: FastifyInstance, options: any, done: () => a
         '/v1/:eventId/team',
         {
             schema: createTeamMemberPOSTSchema,
-            validatorCompiler: strictValidatorCompiler,
+            validatorCompiler: strictBodyValidatorCompiler,
             preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         createTeamMemberRouteHandler(fastify)

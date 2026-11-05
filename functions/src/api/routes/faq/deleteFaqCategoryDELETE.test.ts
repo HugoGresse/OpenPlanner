@@ -15,9 +15,9 @@ vi.mock('../../dao/firebasePlugin', async (importOriginal) => {
 const eventId = 'evt-1'
 const apiKey = 'test-key'
 
-describe('DELETE /v1/:eventId/faq/cat-1', () => {
+describe('DELETE /v1/:eventId/faq/categories/cat-1', () => {
     const fastify = setupFastify()
-    const url = `/v1/${eventId}/faq/cat-1`
+    const url = `/v1/${eventId}/faq/categories/cat-1`
 
     afterEach(() => {
         vi.restoreAllMocks()

@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { DataOptions, dataOptions, run } from '../context.js'
+import { DataOptions, dataOptions, deleteCommand, run, segment } from '../context.js'
 import { buildBody, parseData } from '../input.js'
 
 type ListOptions = {
@@ -45,7 +45,7 @@ export const registerSessions = (program: Command): void => {
         .description('Get one session')
         .action(
             run((ctx, _options, sessionId) =>
-                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/sessions/${sessionId}` })
+                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/sessions/${segment(sessionId)}` })
             )
         )
 
@@ -55,7 +55,7 @@ export const registerSessions = (program: Command): void => {
             run<DataOptions>((ctx, options, sessionId) =>
                 ctx.client.request({
                     method: 'PATCH',
-                    path: `/v1/{eventId}/sessions/${sessionId}`,
+                    path: `/v1/{eventId}/sessions/${segment(sessionId)}`,
                     body: buildBody(options),
                 })
             )
@@ -71,15 +71,10 @@ export const registerSessions = (program: Command): void => {
             )
         )
 
-    sessions
-        .command('delete <sessionId>')
-        .description('Delete a session (irreversible; its speakers are kept)')
-        .requiredOption('--yes', 'Confirm the deletion')
-        .action(
-            run((ctx, _options, sessionId) =>
-                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/sessions/${sessionId}` })
-            )
-        )
+    deleteCommand(
+        sessions.command('delete <sessionId>').description('Delete a session (irreversible; its speakers are kept)'),
+        (sessionId) => `/v1/{eventId}/sessions/${sessionId}`
+    )
 
     sessions
         .command('check-media <urls...>')
@@ -98,7 +93,7 @@ export const registerSessions = (program: Command): void => {
             run<DataOptions>((ctx, options, sessionId) =>
                 ctx.client.request({
                     method: 'POST',
-                    path: `/v1/{eventId}/sessions/${sessionId}/shortvid`,
+                    path: `/v1/{eventId}/sessions/${segment(sessionId)}/shortvid`,
                     body: parseData(options.data),
                 })
             )

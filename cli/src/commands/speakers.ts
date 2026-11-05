@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { DataOptions, dataOptions, run } from '../context.js'
+import { DataOptions, dataOptions, deleteCommand, run, segment } from '../context.js'
 import { buildBody } from '../input.js'
 
 type ListOptions = { limit?: string; offset?: string; includePrivate?: boolean }
@@ -37,7 +37,7 @@ export const registerSpeakers = (program: Command): void => {
             run<ListOptions>((ctx, options, speakerId) =>
                 ctx.client.request({
                     method: 'GET',
-                    path: `/v1/{eventId}/speakers/${speakerId}`,
+                    path: `/v1/{eventId}/speakers/${segment(speakerId)}`,
                     query: { includePrivate: options.includePrivate },
                 })
             )
@@ -51,7 +51,7 @@ export const registerSpeakers = (program: Command): void => {
             run<DataOptions>((ctx, options, speakerId) =>
                 ctx.client.request({
                     method: 'PATCH',
-                    path: `/v1/{eventId}/speakers/${speakerId}`,
+                    path: `/v1/{eventId}/speakers/${segment(speakerId)}`,
                     body: buildBody(options),
                 })
             )
@@ -67,15 +67,10 @@ export const registerSpeakers = (program: Command): void => {
             )
         )
 
-    speakers
-        .command('delete <speakerId>')
-        .description('Delete a speaker (irreversible)')
-        .requiredOption('--yes', 'Confirm the deletion')
-        .action(
-            run((ctx, _options, speakerId) =>
-                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/speakers/${speakerId}` })
-            )
-        )
+    deleteCommand(
+        speakers.command('delete <speakerId>').description('Delete a speaker (irreversible)'),
+        (speakerId) => `/v1/{eventId}/speakers/${speakerId}`
+    )
 
     const pending = speakers.command('pending-edits').description('Speaker self-edit requests awaiting review')
 
@@ -100,7 +95,7 @@ export const registerSpeakers = (program: Command): void => {
             run<ReviewOptions>((ctx, options, requestId) =>
                 ctx.client.request({
                     method: 'POST',
-                    path: `/v1/{eventId}/speaker-pending-edits/${requestId}/${action}`,
+                    path: `/v1/{eventId}/speaker-pending-edits/${segment(requestId)}/${action}`,
                     body: { reviewerUid: options.reviewer, reviewNote: options.note },
                 })
             )

@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
+import { replyDaoError } from '../../other/daoErrors'
 import { apiKeyQuerystring, apiKeySecurity, eventIdParams } from '../../other/routeSchemas'
 
 export type DeleteSessionDELETETypes = {
@@ -13,7 +14,7 @@ export const deleteSessionDELETESchema = {
     tags: ['sessions'],
     summary: 'Delete a session',
     description: 'Deletes a session by ID. Its speakers are kept. Returns 404 if the session does not exist.',
-    params: eventIdParams({ sessionId: 'Session ID' }),
+    params: eventIdParams({ sessionId: Type.String({ description: 'Session ID' }) }),
     querystring: apiKeyQuerystring,
     response: {
         200: Type.Object({ success: Type.Boolean() }),
@@ -30,12 +31,10 @@ export const deleteSessionRouteHandler = (fastify: FastifyInstance) => {
             await SessionDao.deleteSession(fastify.firebase, eventId, sessionId)
             reply.status(200).send({ success: true })
         } catch (error: unknown) {
-            if (error instanceof Error && error.message === 'Session not found') {
-                reply.status(404).send(`Session not found: ${sessionId}`)
-                return
-            }
-            const msg = error instanceof Error ? error.message : 'Unknown error'
-            reply.status(400).send(`Failed to delete session: ${msg}`)
+            replyDaoError(reply, error, {
+                notFound: `Session not found: ${sessionId}`,
+                failed: 'Failed to delete session',
+            })
         }
     }
 }

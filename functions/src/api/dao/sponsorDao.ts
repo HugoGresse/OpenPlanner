@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { SponsorCategory } from '../../../../src/types'
 import { Sponsor } from '../../../../src/types'
 import { NotFoundError } from '../other/Errors'
+import { deleteDocumentOr404 } from './documentHelpers'
 
 const { FieldValue } = firebase.firestore
 
@@ -75,18 +76,24 @@ export class SponsorDao {
         if (!token || token.trim().length === 0) {
             return null
         }
+        const byToken = (sponsor: Sponsor) => sponsor.jobPostToken === token
+        const match = await SponsorDao.findSponsorCategory(firebaseApp, eventId, byToken)
+        if (!match) return null
+        return { sponsor: match.sponsors.find(byToken) as Sponsor, categoryId: match.doc.id }
+    }
 
+    // Sponsors live inside their category document: scan the categories for the first one holding a match.
+    private static async findSponsorCategory(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        predicate: (sponsor: Sponsor) => boolean
+    ): Promise<{ doc: firebase.firestore.QueryDocumentSnapshot; sponsors: Sponsor[] } | null> {
         const db = firebaseApp.firestore()
         const snapshot = await db.collection(`events/${eventId}/sponsors`).get()
-
         for (const doc of snapshot.docs) {
-            const categoryData = doc.data() as SponsorCategory
-            const sponsor = categoryData.sponsors?.find((s: Sponsor) => s.jobPostToken === token)
-            if (sponsor) {
-                return { sponsor, categoryId: doc.id }
-            }
+            const sponsors = (doc.data() as SponsorCategory).sponsors || []
+            if (sponsors.some(predicate)) return { doc, sponsors }
         }
-
         return null
     }
 
@@ -120,23 +127,15 @@ export class SponsorDao {
         return token
     }
 
-    // Sponsors live inside their category document, so the category is scanned to find it.
     public static async deleteSponsor(
         firebaseApp: firebase.app.App,
         eventId: string,
         sponsorId: string
     ): Promise<string> {
-        const db = firebaseApp.firestore()
-        const snapshot = await db.collection(`events/${eventId}/sponsors`).get()
-
-        for (const doc of snapshot.docs) {
-            const sponsors = (doc.data() as SponsorCategory).sponsors || []
-            if (!sponsors.some((sponsor) => sponsor.id === sponsorId)) continue
-            await doc.ref.update({ sponsors: sponsors.filter((sponsor) => sponsor.id !== sponsorId) })
-            return doc.id
-        }
-
-        throw new NotFoundError('Sponsor not found')
+        const match = await SponsorDao.findSponsorCategory(firebaseApp, eventId, (sponsor) => sponsor.id === sponsorId)
+        if (!match) throw new NotFoundError('Sponsor not found')
+        await match.doc.ref.update({ sponsors: match.sponsors.filter((sponsor) => sponsor.id !== sponsorId) })
+        return match.doc.id
     }
 
     public static async deleteCategory(
@@ -144,12 +143,7 @@ export class SponsorDao {
         eventId: string,
         categoryId: string
     ): Promise<void> {
-        const db = firebaseApp.firestore()
-        const ref = db.collection(`events/${eventId}/sponsors`).doc(categoryId)
-        const snapshot = await ref.get()
-        if (!snapshot.exists) {
-            throw new NotFoundError('Sponsor category not found')
-        }
-        await ref.delete()
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/sponsors`).doc(categoryId)
+        await deleteDocumentOr404(ref, 'Sponsor category not found')
     }
 }

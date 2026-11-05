@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { setupFastify } from '../../setupFastify'
 import { getMockedFirestore } from '../../testUtils/mockedFirestore'
 import { SessionDao } from '../../dao/sessionDao'
+import { NotFoundError } from '../../other/Errors'
 
 vi.mock('../../dao/firebasePlugin', async (importOriginal) => {
     const mod = await importOriginal<typeof import('../../dao/firebasePlugin')>()
@@ -29,7 +30,7 @@ describe('DELETE /v1/:eventId/sessions/:sessionId', () => {
 
     test('returns 404 when session does not exist', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
-        vi.spyOn(SessionDao, 'deleteSession').mockRejectedValue(new Error('Session not found'))
+        vi.spyOn(SessionDao, 'deleteSession').mockRejectedValue(new NotFoundError('Session not found'))
 
         const res = await fastify.inject({
             method: 'DELETE',

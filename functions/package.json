@@ -18,6 +18,7 @@
     },
     "main": "lib/functions/src/index.js",
     "dependencies": {
+        "@fastify/ajv-compiler": "^3.5.0",
         "@fastify/auth": "^4.4.0",
         "@fastify/cors": "^8.4.2",
         "@fastify/swagger": "^8.12.0",

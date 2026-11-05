@@ -130,13 +130,13 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
         }
     )
     fastify.delete<DeleteFaqQuestionDELETETypes>(
-        '/v1/:eventId/faq/:categoryId/questions/:questionId',
+        '/v1/:eventId/faq/categories/:categoryId/questions/:questionId',
         { schema: deleteFaqQuestionDELETESchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
         deleteFaqQuestionRouteHandler(fastify)
     )
 
     fastify.delete<DeleteFaqCategoryDELETETypes>(
-        '/v1/:eventId/faq/:categoryId',
+        '/v1/:eventId/faq/categories/:categoryId',
         { schema: deleteFaqCategoryDELETESchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
         deleteFaqCategoryRouteHandler(fastify)
     )

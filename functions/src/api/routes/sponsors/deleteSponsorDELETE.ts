@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type from 'typebox'
 import { SponsorDao } from '../../dao/sponsorDao'
-import { NotFoundError } from '../../other/Errors'
+import { replyDaoError } from '../../other/daoErrors'
 import { apiKeyQuerystring, apiKeySecurity, eventIdParams } from '../../other/routeSchemas'
 
 export type DeleteSponsorDELETETypes = {
@@ -15,7 +15,7 @@ export const deleteSponsorDELETESchema = {
     summary: 'Delete a sponsor',
     description:
         'Removes a sponsor from its category (the category is kept). Returns the category id it was removed from, 404 if no category holds it.',
-    params: eventIdParams({ sponsorId: 'Sponsor ID' }),
+    params: eventIdParams({ sponsorId: Type.String({ description: 'Sponsor ID' }) }),
     querystring: apiKeyQuerystring,
     response: {
         200: Type.Object({ success: Type.Boolean(), categoryId: Type.String() }),
@@ -32,12 +32,10 @@ export const deleteSponsorRouteHandler = (fastify: FastifyInstance) => {
             const categoryId = await SponsorDao.deleteSponsor(fastify.firebase, eventId, sponsorId)
             reply.status(200).send({ success: true, categoryId })
         } catch (error: unknown) {
-            if (error instanceof NotFoundError) {
-                reply.status(404).send(`Sponsor not found: ${sponsorId}`)
-                return
-            }
-            const msg = error instanceof Error ? error.message : 'Unknown error'
-            reply.status(400).send(`Failed to delete sponsor: ${msg}`)
+            replyDaoError(reply, error, {
+                notFound: `Sponsor not found: ${sponsorId}`,
+                failed: 'Failed to delete sponsor',
+            })
         }
     }
 }

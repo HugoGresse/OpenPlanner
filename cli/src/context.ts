@@ -54,6 +54,17 @@ export const run =
 export const call = (method: string, path: string, extra: Partial<RequestOptions> = {}) =>
     run((ctx) => ctx.client.request({ method, path, ...extra }))
 
+// Ids typed by the user go through encodeURIComponent before landing in a path ('#', '?', '/' would change the route).
+export const segment = (id: string): string => encodeURIComponent(id)
+
+// Every delete is irreversible: `--yes` is the confirmation, the positionals are the encoded ids.
+export const deleteCommand = (command: Command, pathFor: (...ids: string[]) => string): Command =>
+    command
+        .requiredOption('--yes', 'Confirm the deletion')
+        .action(
+            run((ctx, _options, ...ids) => ctx.client.request({ method: 'DELETE', path: pathFor(...ids.map(segment)) }))
+        )
+
 export const DATA_HELP = 'JSON body: inline, @file.json, or - for stdin'
 
 export const dataOptions = (command: Command, { required = false } = {}): Command =>

@@ -1,6 +1,6 @@
 import firebase from 'firebase-admin'
 import { TeamMember } from '../../../../src/types'
-import { NotFoundError } from '../other/Errors'
+import { deleteDocumentOr404 } from './documentHelpers'
 
 export class TeamDao {
     public static async getTeams(
@@ -46,17 +46,7 @@ export class TeamDao {
         }
     }
 
-    public static async getMember(
-        firebaseApp: firebase.app.App,
-        eventId: string,
-        memberId: string
-    ): Promise<TeamMember | null> {
-        const db = firebaseApp.firestore()
-        const snapshot = await db.collection(`events/${eventId}/team`).doc(memberId).get()
-        const data = snapshot.data()
-        return data ? ({ id: snapshot.id, ...data } as TeamMember) : null
-    }
-
+    // Fails with ALREADY_EXISTS when the member id is taken.
     public static async createMember(
         firebaseApp: firebase.app.App,
         eventId: string,
@@ -64,16 +54,11 @@ export class TeamDao {
     ): Promise<void> {
         const db = firebaseApp.firestore()
         const { id, ...data } = member
-        await db.collection(`events/${eventId}/team`).doc(id).set(data)
+        await db.collection(`events/${eventId}/team`).doc(id).create(data)
     }
 
     public static async deleteMember(firebaseApp: firebase.app.App, eventId: string, memberId: string): Promise<void> {
-        const db = firebaseApp.firestore()
-        const ref = db.collection(`events/${eventId}/team`).doc(memberId)
-        const snapshot = await ref.get()
-        if (!snapshot.exists) {
-            throw new NotFoundError('Team member not found')
-        }
-        await ref.delete()
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/team`).doc(memberId)
+        await deleteDocumentOr404(ref, 'Team member not found')
     }
 }

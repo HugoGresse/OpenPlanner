@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type from 'typebox'
 import { FaqDao } from '../../dao/faqDao'
-import { NotFoundError } from '../../other/Errors'
+import { replyDaoError } from '../../other/daoErrors'
 import { apiKeyQuerystring, apiKeySecurity, eventIdParams } from '../../other/routeSchemas'
 
 export type DeleteFaqCategoryDELETETypes = {
@@ -14,7 +14,7 @@ export const deleteFaqCategoryDELETESchema = {
     tags: ['faq'],
     summary: 'Delete a FAQ category',
     description: 'Deletes a FAQ category and all its questions. Returns 404 if the category does not exist.',
-    params: eventIdParams({ categoryId: 'FAQ category ID' }),
+    params: eventIdParams({ categoryId: Type.String({ description: 'FAQ category ID' }) }),
     querystring: apiKeyQuerystring,
     response: {
         200: Type.Object({ success: Type.Boolean() }),
@@ -34,12 +34,10 @@ export const deleteFaqCategoryRouteHandler = (fastify: FastifyInstance) => {
             await FaqDao.deleteFaqCategory(fastify.firebase, eventId, categoryId)
             reply.status(200).send({ success: true })
         } catch (error: unknown) {
-            if (error instanceof NotFoundError) {
-                reply.status(404).send(`FAQ category not found: ${categoryId}`)
-                return
-            }
-            const msg = error instanceof Error ? error.message : 'Unknown error'
-            reply.status(400).send(`Failed to delete FAQ category: ${msg}`)
+            replyDaoError(reply, error, {
+                notFound: `FAQ category not found: ${categoryId}`,
+                failed: 'Failed to delete FAQ category',
+            })
         }
     }
 }

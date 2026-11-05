@@ -3,11 +3,10 @@ import Type, { Static } from 'typebox'
 import { v4 as uuidv4 } from 'uuid'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { Speaker } from '../../../types'
-import { apiKeyQuerystring, apiKeySecurity, eventIdParams } from '../../other/routeSchemas'
+import { replyDaoError } from '../../other/daoErrors'
+import { apiKeyQuerystring, apiKeySecurity, eventIdParams, MAX_STRING_LENGTH } from '../../other/routeSchemas'
 import { withSocialIcons } from '../../other/socials'
 import { TypeBoxUpdateSpeaker } from './updateSpeakerPATCH'
-
-const MAX_STRING_LENGTH = 10000
 
 export const TypeBoxCreateSpeaker = Type.Object(
     {
@@ -51,13 +50,12 @@ export const createSpeakerRouteHandler = (fastify: FastifyInstance) => {
         const { eventId } = request.params
         const { id, socials, ...rest } = request.body
         const speakerId = id || uuidv4()
+        if (!rest.name.trim()) {
+            reply.status(400).send('name must not be blank')
+            return
+        }
 
         try {
-            if (await SpeakerDao.doesSpeakerExist(fastify.firebase, eventId, speakerId)) {
-                reply.status(409).send(`Speaker already exists: ${speakerId}`)
-                return
-            }
-
             const speaker: Partial<Speaker> & { id: string } = {
                 ...rest,
                 id: speakerId,
@@ -66,8 +64,10 @@ export const createSpeakerRouteHandler = (fastify: FastifyInstance) => {
             await SpeakerDao.createSpeaker(fastify.firebase, eventId, speaker)
             reply.status(201).send({ id: speakerId })
         } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : 'Unknown error'
-            reply.status(400).send(`Failed to create speaker: ${msg}`)
+            replyDaoError(reply, error, {
+                conflict: `Speaker already exists: ${speakerId}`,
+                failed: 'Failed to create speaker',
+            })
         }
     }
 }

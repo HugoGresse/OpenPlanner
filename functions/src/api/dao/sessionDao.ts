@@ -2,6 +2,7 @@ import firebase from 'firebase-admin'
 import { Session } from '../../types'
 import { Session as SessionConverted } from '../../../../src/types'
 import { unknownToDateTime } from '../other/dateConverter'
+import { deleteDocumentOr404 } from './documentHelpers'
 const { FieldValue } = firebase.firestore
 
 export class SessionDao {
@@ -52,7 +53,7 @@ export class SessionDao {
         await db
             .collection(`events/${eventId}/sessions`)
             .doc(session.id)
-            .set({
+            .create({
                 ...session,
                 updatedAt: FieldValue.serverTimestamp(),
             })
@@ -109,14 +110,8 @@ export class SessionDao {
         eventId: string,
         sessionId: string
     ): Promise<void> {
-        const db = firebaseApp.firestore()
-
-        const existingSessionData = await SessionDao.doesSessionExist(firebaseApp, eventId, sessionId)
-        if (!existingSessionData) {
-            throw new Error('Session not found')
-        }
-
-        await db.collection(`events/${eventId}/sessions`).doc(sessionId).delete()
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/sessions`).doc(sessionId)
+        await deleteDocumentOr404(ref, 'Session not found')
     }
 
     public static async updateOrCreateSession(

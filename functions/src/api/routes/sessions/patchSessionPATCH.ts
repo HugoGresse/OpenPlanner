@@ -3,27 +3,30 @@ import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { Session } from '../../../types'
 import { parseSessionDates } from './parseSessionDates'
-
-const MAX_STRING_LENGTH = 10000
-const NullableString = Type.Union([Type.String({ maxLength: MAX_STRING_LENGTH }), Type.Null()])
-const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
+import { MAX_STRING_LENGTH, NullableString, NullableUri } from '../../other/routeSchemas'
 
 const PatchDates = Type.Union([
-    Type.Object({
-        start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-        end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    }),
+    Type.Object(
+        {
+            start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+            end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+        },
+        { additionalProperties: false }
+    ),
     Type.Null(),
 ])
 
 const PatchTeasingPosts = Type.Union([
-    Type.Object({
-        twitter: Type.Optional(NullableString),
-        linkedin: Type.Optional(NullableString),
-        facebook: Type.Optional(NullableString),
-        instagram: Type.Optional(NullableString),
-        bluesky: Type.Optional(NullableString),
-    }),
+    Type.Object(
+        {
+            twitter: Type.Optional(NullableString),
+            linkedin: Type.Optional(NullableString),
+            facebook: Type.Optional(NullableString),
+            instagram: Type.Optional(NullableString),
+            bluesky: Type.Optional(NullableString),
+        },
+        { additionalProperties: false }
+    ),
     Type.Null(),
 ])
 

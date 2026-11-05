@@ -29,29 +29,35 @@ describe('POST /v1/:eventId/speakers', () => {
         expect(res.statusCode).toBe(401)
     })
 
-    test('rejects unknown fields and a missing name', async () => {
+    test('rejects unknown fields (naming them), a missing name and a blank name', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
-        expect((await post({ name: 'A', compnay: 'X' })).statusCode).toBe(400)
+        const typo = await post({ name: 'A', compnay: 'X' })
+        expect(typo.statusCode).toBe(400)
+        expect(JSON.parse(typo.body).reason).toBe('Error: body must NOT have additional properties: compnay')
+        expect(
+            (await post({ name: 'A', socials: [{ name: 'X', link: 'https://x.com/a', url: 'y' }] })).statusCode
+        ).toBe(400)
         expect((await post({ company: 'X' })).statusCode).toBe(400)
+        expect((await post({ name: ' ' })).body).toBe('name must not be blank')
     })
 
     test('returns 409 when the id already exists', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
-        vi.spyOn(SpeakerDao, 'doesSpeakerExist').mockResolvedValue({ id: 'spk-1' } as any)
+        vi.spyOn(SpeakerDao, 'createSpeaker').mockRejectedValue(Object.assign(new Error('exists'), { code: 6 }))
         const res = await post({ id: 'spk-1', name: 'A' })
         expect(res.statusCode).toBe(409)
-        expect(res.body).toContain('spk-1')
+        expect(res.body).toBe('Speaker already exists: spk-1')
     })
 
-    test('creates the speaker with social icons filled in', async () => {
+    test('creates the speaker, keeps explicit nulls and fills social icons in', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
-        vi.spyOn(SpeakerDao, 'doesSpeakerExist').mockResolvedValue(false)
         const createSpy = vi.spyOn(SpeakerDao, 'createSpeaker').mockResolvedValue(undefined)
 
         const res = await post({
             name: 'Ada',
             company: 'AE',
-            socials: [{ name: 'Bluesky', link: 'https://b.sky/ada' }],
+            bio: null,
+            socials: [{ name: 'Blue Sky App', link: 'https://b.sky/ada' }],
         })
         expect(res.statusCode).toBe(201)
         const { id } = JSON.parse(res.body)
@@ -60,7 +66,8 @@ describe('POST /v1/:eventId/speakers', () => {
             id,
             name: 'Ada',
             company: 'AE',
-            socials: [{ name: 'Bluesky', icon: 'bluesky', link: 'https://b.sky/ada' }],
+            bio: null,
+            socials: [{ name: 'Blue Sky App', icon: 'blue-sky-app', link: 'https://b.sky/ada' }],
         })
     })
 })

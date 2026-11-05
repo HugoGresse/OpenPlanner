@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { strictValidatorCompiler } from '../../other/strictValidator'
+import { strictBodyValidatorCompiler } from '../../other/strictValidator'
 import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
@@ -168,7 +168,7 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
         '/v1/:eventId/sessions',
         {
             schema: createSessionPOSTSchema,
-            validatorCompiler: strictValidatorCompiler,
+            validatorCompiler: strictBodyValidatorCompiler,
             preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         createSessionRouteHandler(fastify)
