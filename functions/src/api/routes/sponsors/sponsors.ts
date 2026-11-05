@@ -1,5 +1,11 @@
 import { FastifyInstance } from 'fastify'
 import { addSponsorRouteHandler, addSponsorPOSTSchema, AddSponsorPOSTTypes } from './addSponsorsPOST'
+import { deleteSponsorRouteHandler, deleteSponsorDELETESchema, DeleteSponsorDELETETypes } from './deleteSponsorDELETE'
+import {
+    deleteSponsorCategoryRouteHandler,
+    deleteSponsorCategoryDELETESchema,
+    DeleteSponsorCategoryDELETETypes,
+} from './deleteSponsorCategoryDELETE'
 import {
     addJobPostRouteHandler,
     addJobPostPOSTSchema,
@@ -64,6 +70,18 @@ export const sponsorsRoutes = (fastify: FastifyInstance, options: any, done: () 
             preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         generateSponsorTokenRouteHandler(fastify)
+    )
+
+    fastify.delete<DeleteSponsorDELETETypes>(
+        '/v1/:eventId/sponsors/:sponsorId',
+        { schema: deleteSponsorDELETESchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        deleteSponsorRouteHandler(fastify)
+    )
+
+    fastify.delete<DeleteSponsorCategoryDELETETypes>(
+        '/v1/:eventId/sponsors/categories/:categoryId',
+        { schema: deleteSponsorCategoryDELETESchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        deleteSponsorCategoryRouteHandler(fastify)
     )
 
     // Original job post endpoint (using event private ID)

@@ -29,29 +29,31 @@ Check what is configured with `openplanner config show` (key masked). Never prin
 
 ## Commands
 
-| Area         | Commands                                                                                                                                                                                                                      |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Event        | `event get` (tracks, formats, categories, custom fields, dates, branding), `event update`, `event public` (the published JSON, as of the last deploy), `event usage`, `event files`, `event export-pdf`, `event pdf-metadata` |
-| Publish      | `event deploy [--no-webhooks]` regenerates the public/private JSON + static website ("Update website")                                                                                                                        |
-| Sessions     | `sessions list [--track --category --format --language --limit --offset]`, `get`, `update <id>`, `create`, `check-media <urls…>`, `shortvid <id> -d @body.json`                                                               |
-| Speakers     | `speakers list [--include-private]`, `get`, `update <id>`, `create`, `delete <id> --yes`, `speakers pending-edits list/approve/reject`                                                                                        |
-| Bulk         | `import -d @data.json` upserts `{"speakers":[…],"sessions":[…]}` (ConferenceHall-style; every item needs an `id`)                                                                                                             |
-| Sponsors     | `sponsors list`, `sponsors add`, `sponsors generate-token`, `sponsors job-posts list/get/set-status/delete`                                                                                                                   |
-| FAQ / files  | `faq add`, `faq get <privateId>` (private categories; public FAQ is in `event public -f faq`), `files upload <paths…>` (max 5, 10 MB each), `files reupload <url>`                                                            |
-| Day-of       | `whatsapp status/start/go/contacts/scheduled-tasks/cancel-task/send-test/configure-webhook`, `live transcription`, `live intermission`                                                                                        |
-| Integrations | `bupher channels/scheduled-posts/draft-post/login`, `slack channels/config/install-url --return-to <url>`                                                                                                                     |
-| AI           | `chat "<question>"` runs the event assistant; write proposals come back with an `applyCommand` and are **never applied automatically**                                                                                        |
-| Escape hatch | `api <METHOD> <path> [-d json] [-q k=v] [-H k:v] [--no-auth]` for any endpoint; `{eventId}` is substituted                                                                                                                    |
+| Area         | Commands                                                                                                                                                                                                                                                    |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Event        | `event get` (tracks, formats, categories, custom fields, dates, branding), `event update`, `event public` (the published JSON, as of the last deploy), `event usage`, `event files`, `event export-pdf`, `event pdf-metadata`                               |
+| Publish      | `event deploy [--no-webhooks]` regenerates the public/private JSON + static website ("Update website")                                                                                                                                                      |
+| Sessions     | `sessions list [--track --category --format --language --limit --offset]`, `get`, `update <id>`, `create`, `delete <id> --yes`, `check-media <urls…>`, `shortvid <id> -d @body.json`                                                                        |
+| Speakers     | `speakers list [--include-private]`, `get`, `update <id>`, `create`, `delete <id> --yes`, `speakers pending-edits list/approve/reject`                                                                                                                      |
+| Bulk         | `import -d @data.json` upserts `{"speakers":[…],"sessions":[…]}` (ConferenceHall-style; every item needs an `id`)                                                                                                                                           |
+| Sponsors     | `sponsors list`, `sponsors add`, `sponsors delete <id> --yes`, `sponsors delete-category <id> --yes`, `sponsors generate-token`, `sponsors job-posts list/get/set-status/delete`                                                                            |
+| Team         | `team list`, `team add` (name, role, team, bio, photoUrl, socials), `team delete <id> --yes`                                                                                                                                                                |
+| FAQ / files  | `faq add`, `faq get <privateId>` (private categories; public FAQ is in `event public -f faq`), `faq delete-question <categoryId> <questionId> --yes`, `faq delete-category <id> --yes`, `files upload <paths…>` (max 5, 10 MB each), `files reupload <url>` |
+| Day-of       | `whatsapp status/start/go/contacts/scheduled-tasks/cancel-task/send-test/configure-webhook`, `live transcription`, `live intermission`                                                                                                                      |
+| Integrations | `bupher channels/scheduled-posts/draft-post/login`, `slack channels/config/install-url --return-to <url>`                                                                                                                                                   |
+| AI           | `chat "<question>"` runs the event assistant; write proposals come back with an `applyCommand` and are **never applied automatically**                                                                                                                      |
+| Escape hatch | `api <METHOD> <path> [-d json] [-q k=v] [-H k:v] [--no-auth]` for any endpoint; `{eventId}` is substituted                                                                                                                                                  |
 
 Bodies: `-d '<json>'`, `-d @file.json`, `-d -` (stdin), and/or one `-s key=value` per field (values are parsed as JSON when they parse, otherwise kept as strings: `-s durationMinutes=45 -s tags='["ai"]' -s dates.start=2026-06-01T09:00:00Z -s note=@handle`). `-s` overrides the matching leaf of `-d`, nested objects are merged. Put options after the positional id: `sessions update <id> -s title=…`.
 
 ## Data model essentials
 
 -   Ids are strings. A session references `trackId`, `format` (format id), `category` (category id) and `speakers` (speaker ids). Read the valid ids first: `openplanner event get -f tracks,formats,categories`.
--   `sessions create` accepts those names (and `dates.start`/`dates.end`) and translates them for the bulk endpoint; `import` only speaks the bulk vocabulary: `speakerIds`, `formatId`, `categoryId`, `dateStart`, `dateEnd`. Both accept `trackName`/`formatName`/`categoryName`: an unknown name is created on the event when an id is given alongside. `sessions create` / `speakers create` reject unknown field names; omit `id` to get a UUID, pass an existing id to upsert.
+-   `sessions create` / `speakers create` take the same field names as `update` (`speakers`, `format`, `category`, `trackId`, `dates.start`/`dates.end`), reject unknown fields, check `trackId`/`format`/`category`/`speakers` against the event (400 names the valid ids) and answer 409 when the given `id` exists; omit `id` to get a UUID. `import` is the bulk upsert and speaks its own vocabulary: `speakerIds`, `formatId`, `categoryId`, `dateStart`, `dateEnd`, plus `trackName`/`formatName`/`categoryName` (an unknown name is created on the event when an id is given alongside).
 -   Dates are ISO 8601 strings; the event `timezone` is in `event get`.
 -   `event update` **replaces** array fields (`tracks`, `formats`, `categories`, custom fields): read them with `event get`, edit, send the full list back.
 -   `speakers list` hides `email`, `phone`, `note` and private custom fields unless `--include-private`.
+-   Team members: `team list` (ids are slugified names, e.g. `ada-lovelace`); `team add` creates them, the `team` field groups them. FAQ question ids are in `faq get <privateId>` / `event public -f faq`, sponsor ids in `sponsors list`.
 -   Public FAQ, team, sponsors and the full schedule are all in `event public` (as last deployed).
 
 ## Workflows
@@ -96,8 +98,7 @@ openplanner chat "Set the level of every workshop to intermediate" -f proposals.
 ## Rules
 
 1. Read before writing: list or get the document, then send a minimal partial body.
-2. Deleting (`speakers delete`, `job-posts delete`) is irreversible: confirm with the user first; the `--yes` flag is the confirmation.
+2. Every `delete` / `delete-question` / `delete-category` command is irreversible: confirm with the user first; the `--yes` flag is the confirmation. Deleting a session keeps its speakers; deleting a sponsor or FAQ category deletes everything inside it.
 3. After content changes meant for the public site, ask whether to run `event deploy`; it also calls the event webhooks unless `--no-webhooks`.
-4. There is no API to delete a session, a sponsor, a team member or a FAQ item; tell the user to use the web admin for those.
-5. Most PATCH endpoints **drop unknown fields silently** (200 with nothing changed). After an update, re-read the document with `-f` to confirm, and check `openplanner openapi --operation …` when a field seems ignored.
-6. Secrets never go on the command line: `bupher login` reads the password from `--password-stdin` or `OPENPLANNER_BUPHER_PASSWORD`; screen passwords can come from `OPENPLANNER_SCREEN_PASSWORD`.
+4. Most PATCH endpoints **drop unknown fields silently** (200 with nothing changed); only the `create` / `team add` commands reject them. After an update, re-read the document with `-f` to confirm, and check `openplanner openapi --operation …` when a field seems ignored.
+5. Secrets never go on the command line: `bupher login` reads the password from `--password-stdin` or `OPENPLANNER_BUPHER_PASSWORD`; screen passwords can come from `OPENPLANNER_SCREEN_PASSWORD`.

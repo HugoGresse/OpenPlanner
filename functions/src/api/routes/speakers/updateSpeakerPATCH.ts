@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { Speaker } from '../../../types'
+import { withSocialIcons } from '../../other/socials'
 
 const MAX_STRING_LENGTH = 10000
 
@@ -94,11 +95,7 @@ export const updateSpeakerRouteHandler = (fastify: FastifyInstance) => {
                 ...rest,
             }
             if (socials) {
-                patch.socials = socials.map((social) => ({
-                    name: social.name,
-                    icon: social.icon || social.name.toLowerCase().trim().replace(' ', '-'),
-                    link: social.link,
-                }))
+                patch.socials = withSocialIcons(socials)
             }
 
             await SpeakerDao.patchSpeaker(fastify.firebase, eventId, patch)

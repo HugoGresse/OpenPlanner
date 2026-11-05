@@ -104,6 +104,21 @@ export class SessionDao {
             .set({ ...rest, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
     }
 
+    public static async deleteSession(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        sessionId: string
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+
+        const existingSessionData = await SessionDao.doesSessionExist(firebaseApp, eventId, sessionId)
+        if (!existingSessionData) {
+            throw new Error('Session not found')
+        }
+
+        await db.collection(`events/${eventId}/sessions`).doc(sessionId).delete()
+    }
+
     public static async updateOrCreateSession(
         firebaseApp: firebase.app.App,
         eventId: string,

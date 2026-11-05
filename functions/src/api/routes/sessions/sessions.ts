@@ -1,22 +1,13 @@
 import { FastifyInstance } from 'fastify'
+import { strictValidatorCompiler } from '../../other/strictValidator'
 import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
-import {
-    getSessionsGETSchema,
-    GetSessionsGETTypes,
-    getSessionsRouteHandler,
-} from './getSessionsGET'
-import {
-    getSessionGETSchema,
-    GetSessionGETTypes,
-    getSessionRouteHandler,
-} from './getSessionGET'
-import {
-    patchSessionPATCHSchema,
-    PatchSessionPATCHTypes,
-    patchSessionRouteHandler,
-} from './patchSessionPATCH'
+import { getSessionsGETSchema, GetSessionsGETTypes, getSessionsRouteHandler } from './getSessionsGET'
+import { getSessionGETSchema, GetSessionGETTypes, getSessionRouteHandler } from './getSessionGET'
+import { patchSessionPATCHSchema, PatchSessionPATCHTypes, patchSessionRouteHandler } from './patchSessionPATCH'
+import { createSessionPOSTSchema, CreateSessionPOSTTypes, createSessionRouteHandler } from './createSessionPOST'
+import { deleteSessionDELETESchema, DeleteSessionDELETETypes, deleteSessionRouteHandler } from './deleteSessionDELETE'
 
 const CHECK_MEDIA_MAX_URLS = 100
 const CHECK_MEDIA_TIMEOUT_MS = 5000
@@ -173,6 +164,21 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
         patchSessionRouteHandler(fastify)
     )
 
+    fastify.post<CreateSessionPOSTTypes>(
+        '/v1/:eventId/sessions',
+        {
+            schema: createSessionPOSTSchema,
+            validatorCompiler: strictValidatorCompiler,
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        createSessionRouteHandler(fastify)
+    )
+
+    fastify.delete<DeleteSessionDELETETypes>(
+        '/v1/:eventId/sessions/:sessionId',
+        { schema: deleteSessionDELETESchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        deleteSessionRouteHandler(fastify)
+    )
 
     fastify.post<{ Body: CheckMediaType }>(
         '/v1/:eventId/check-media',

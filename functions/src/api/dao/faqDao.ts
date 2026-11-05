@@ -110,6 +110,40 @@ export class FaqDao {
         }))
     }
 
+    public static async deleteFaqQuestion(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string,
+        questionId: string
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+        const ref = db.collection(`events/${eventId}/faq/${categoryId}/items`).doc(questionId)
+        const snapshot = await ref.get()
+        if (!snapshot.exists) {
+            throw new NotFoundError('FAQ question not found')
+        }
+        await ref.delete()
+    }
+
+    // Deletes the category and its questions (a Firestore delete leaves subcollections behind otherwise).
+    public static async deleteFaqCategory(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+        const ref = db.collection(`events/${eventId}/faq`).doc(categoryId)
+        const snapshot = await ref.get()
+        if (!snapshot.exists) {
+            throw new NotFoundError('FAQ category not found')
+        }
+        const items = await ref.collection('items').get()
+        const batch = db.batch()
+        items.docs.forEach((item) => batch.delete(item.ref))
+        batch.delete(ref)
+        await batch.commit()
+    }
+
     private static async getFaqItems(firebaseApp: firebase.app.App, eventId: string, faqId: string): Promise<Faq[]> {
         const db = firebaseApp.firestore()
         const snapshots = await db.collection(`events/${eventId}/faq/${faqId}/items`).get()

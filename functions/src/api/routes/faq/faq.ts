@@ -2,6 +2,16 @@ import { FastifyInstance } from 'fastify'
 import Type, { Static } from 'typebox'
 import { FaqDao } from '../../dao/faqDao'
 import { EventDao } from '../../dao/eventDao'
+import {
+    deleteFaqQuestionDELETESchema,
+    DeleteFaqQuestionDELETETypes,
+    deleteFaqQuestionRouteHandler,
+} from './deleteFaqQuestionDELETE'
+import {
+    deleteFaqCategoryDELETESchema,
+    DeleteFaqCategoryDELETETypes,
+    deleteFaqCategoryRouteHandler,
+} from './deleteFaqCategoryDELETE'
 
 const FaqCategory = Type.Object({
     id: Type.String(),
@@ -119,5 +129,17 @@ export const faqRoutes = (fastify: FastifyInstance, options: any, done: () => an
             })
         }
     )
+    fastify.delete<DeleteFaqQuestionDELETETypes>(
+        '/v1/:eventId/faq/:categoryId/questions/:questionId',
+        { schema: deleteFaqQuestionDELETESchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        deleteFaqQuestionRouteHandler(fastify)
+    )
+
+    fastify.delete<DeleteFaqCategoryDELETETypes>(
+        '/v1/:eventId/faq/:categoryId',
+        { schema: deleteFaqCategoryDELETESchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        deleteFaqCategoryRouteHandler(fastify)
+    )
+
     done()
 }

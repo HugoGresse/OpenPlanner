@@ -4,6 +4,7 @@ import { SponsorResponse } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
 import { SponsorCategory } from '../../../../src/types'
 import { Sponsor } from '../../../../src/types'
+import { NotFoundError } from '../other/Errors'
 
 const { FieldValue } = firebase.firestore
 
@@ -117,5 +118,38 @@ export class SponsorDao {
         })
 
         return token
+    }
+
+    // Sponsors live inside their category document, so the category is scanned to find it.
+    public static async deleteSponsor(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        sponsorId: string
+    ): Promise<string> {
+        const db = firebaseApp.firestore()
+        const snapshot = await db.collection(`events/${eventId}/sponsors`).get()
+
+        for (const doc of snapshot.docs) {
+            const sponsors = (doc.data() as SponsorCategory).sponsors || []
+            if (!sponsors.some((sponsor) => sponsor.id === sponsorId)) continue
+            await doc.ref.update({ sponsors: sponsors.filter((sponsor) => sponsor.id !== sponsorId) })
+            return doc.id
+        }
+
+        throw new NotFoundError('Sponsor not found')
+    }
+
+    public static async deleteCategory(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+        const ref = db.collection(`events/${eventId}/sponsors`).doc(categoryId)
+        const snapshot = await ref.get()
+        if (!snapshot.exists) {
+            throw new NotFoundError('Sponsor category not found')
+        }
+        await ref.delete()
     }
 }

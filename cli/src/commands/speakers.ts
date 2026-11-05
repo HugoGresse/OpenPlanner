@@ -1,7 +1,6 @@
 import { Command } from 'commander'
 import { DataOptions, dataOptions, run } from '../context.js'
 import { buildBody } from '../input.js'
-import { createSpeaker } from './create.js'
 
 type ListOptions = { limit?: string; offset?: string; includePrivate?: boolean }
 type ReviewOptions = { reviewer?: string; note?: string }
@@ -59,8 +58,14 @@ export const registerSpeakers = (program: Command): void => {
         )
 
     dataOptions(speakers.command('create'))
-        .description('Create one speaker (id generated unless given; an existing id is upserted)')
-        .action(run<DataOptions>((ctx, options) => createSpeaker(ctx, options)))
+        .description(
+            'Create one speaker: name required, id generated unless given (409 if taken); unknown fields are rejected'
+        )
+        .action(
+            run<DataOptions>((ctx, options) =>
+                ctx.client.request({ method: 'POST', path: '/v1/{eventId}/speakers', body: buildBody(options) })
+            )
+        )
 
     speakers
         .command('delete <speakerId>')

@@ -44,6 +44,27 @@ export const registerFaq = (program: Command): void => {
                 ctx.client.request({ method: 'POST', path: '/v1/{eventId}/faq', body: buildBody(options) })
             )
         )
+
+    faq.command('delete-question <categoryId> <questionId>')
+        .description('Delete one FAQ question (irreversible)')
+        .requiredOption('--yes', 'Confirm the deletion')
+        .action(
+            run((ctx, _options, categoryId, questionId) =>
+                ctx.client.request({
+                    method: 'DELETE',
+                    path: `/v1/{eventId}/faq/${categoryId}/questions/${questionId}`,
+                })
+            )
+        )
+
+    faq.command('delete-category <categoryId>')
+        .description('Delete a FAQ category and all its questions (irreversible)')
+        .requiredOption('--yes', 'Confirm the deletion')
+        .action(
+            run((ctx, _options, categoryId) =>
+                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/faq/${categoryId}` })
+            )
+        )
 }
 
 export const registerFiles = (program: Command): void => {

@@ -1,5 +1,6 @@
 import firebase from 'firebase-admin'
 import { TeamMember } from '../../../../src/types'
+import { NotFoundError } from '../other/Errors'
 
 export class TeamDao {
     public static async getTeams(
@@ -43,5 +44,36 @@ export class TeamDao {
             team: members,
             teams: teamOrdered,
         }
+    }
+
+    public static async getMember(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        memberId: string
+    ): Promise<TeamMember | null> {
+        const db = firebaseApp.firestore()
+        const snapshot = await db.collection(`events/${eventId}/team`).doc(memberId).get()
+        const data = snapshot.data()
+        return data ? ({ id: snapshot.id, ...data } as TeamMember) : null
+    }
+
+    public static async createMember(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        member: TeamMember
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+        const { id, ...data } = member
+        await db.collection(`events/${eventId}/team`).doc(id).set(data)
+    }
+
+    public static async deleteMember(firebaseApp: firebase.app.App, eventId: string, memberId: string): Promise<void> {
+        const db = firebaseApp.firestore()
+        const ref = db.collection(`events/${eventId}/team`).doc(memberId)
+        const snapshot = await ref.get()
+        if (!snapshot.exists) {
+            throw new NotFoundError('Team member not found')
+        }
+        await ref.delete()
     }
 }

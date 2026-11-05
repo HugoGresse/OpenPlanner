@@ -1,7 +1,6 @@
 import { Command } from 'commander'
 import { DataOptions, dataOptions, run } from '../context.js'
 import { buildBody, parseData } from '../input.js'
-import { createSession } from './create.js'
 
 type ListOptions = {
     track?: string
@@ -64,9 +63,23 @@ export const registerSessions = (program: Command): void => {
 
     dataOptions(sessions.command('create'))
         .description(
-            'Create one session (id generated unless given; an existing id is upserted). Accepts speakers/format/category/dates or speakerIds/formatId/categoryId/dateStart/dateEnd; *Name fields auto-create tracks, formats, categories'
+            'Create one session: title required, id generated unless given (409 if taken); trackId, format, category and speakers are checked against the event; unknown fields are rejected'
         )
-        .action(run<DataOptions>((ctx, options) => createSession(ctx, options)))
+        .action(
+            run<DataOptions>((ctx, options) =>
+                ctx.client.request({ method: 'POST', path: '/v1/{eventId}/sessions', body: buildBody(options) })
+            )
+        )
+
+    sessions
+        .command('delete <sessionId>')
+        .description('Delete a session (irreversible; its speakers are kept)')
+        .requiredOption('--yes', 'Confirm the deletion')
+        .action(
+            run((ctx, _options, sessionId) =>
+                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/sessions/${sessionId}` })
+            )
+        )
 
     sessions
         .command('check-media <urls...>')

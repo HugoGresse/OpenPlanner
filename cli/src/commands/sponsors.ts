@@ -25,6 +25,26 @@ export const registerSponsors = (program: Command): void => {
         )
 
     sponsors
+        .command('delete <sponsorId>')
+        .description('Remove a sponsor from its category (irreversible; the category is kept)')
+        .requiredOption('--yes', 'Confirm the deletion')
+        .action(
+            run((ctx, _options, sponsorId) =>
+                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/sponsors/${sponsorId}` })
+            )
+        )
+
+    sponsors
+        .command('delete-category <categoryId>')
+        .description('Delete a sponsor category and every sponsor in it (irreversible)')
+        .requiredOption('--yes', 'Confirm the deletion')
+        .action(
+            run((ctx, _options, categoryId) =>
+                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/sponsors/categories/${categoryId}` })
+            )
+        )
+
+    sponsors
         .command('generate-token')
         .description('Generate the token a sponsor uses to manage its own job posts')
         .requiredOption('--sponsor-id <id>')
