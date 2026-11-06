@@ -2,39 +2,39 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { EventDao } from '../../dao/eventDao'
 
-const NullableString = Type.Union([Type.String(), Type.Null()])
-const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
+export const NullableString = Type.Union([Type.String(), Type.Null()])
+export const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
 
-const PatchDates = Type.Object({
+export const PatchDates = Type.Object({
     start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 })
 
-const TrackSchema = Type.Object({
+export const TrackSchema = Type.Object({
     id: Type.String(),
     name: Type.String(),
 })
 
-const FormatSchema = Type.Object({
+export const FormatSchema = Type.Object({
     id: Type.String(),
     name: Type.String(),
     durationMinutes: Type.Number(),
 })
 
-const CategorySchema = Type.Object({
+export const CategorySchema = Type.Object({
     id: Type.String(),
     name: Type.String(),
     color: Type.Optional(Type.String()),
     colorSecondary: Type.Optional(Type.String()),
 })
 
-const SponsorCustomFieldSchema = Type.Object({
+export const SponsorCustomFieldSchema = Type.Object({
     id: Type.String(),
     name: Type.String(),
     type: Type.Union([Type.Literal('boolean'), Type.Literal('text')]),
 })
 
-const SpeakerCustomFieldSchema = Type.Object({
+export const SpeakerCustomFieldSchema = Type.Object({
     id: Type.String(),
     name: Type.String(),
     type: Type.Union([Type.Literal('boolean'), Type.Literal('text')]),

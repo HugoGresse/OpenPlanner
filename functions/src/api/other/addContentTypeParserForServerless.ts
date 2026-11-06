@@ -24,7 +24,12 @@ export const addContentTypeParserForServerless = (fastify: FastifyInstance<any, 
             .then((raw) => done(null, raw ? JSON.parse(raw) : undefined))
             .catch((error) => done(error as Error))
     })
-    fastify.addContentTypeParser('multipart/form-data', {}, (req, body, done) => {
+}
+
+// Multipart bodies are parsed by the route itself (busboy over the raw request),
+// so Fastify only needs to let them through, whatever the runtime.
+export const addMultipartPassthrough = (fastify: FastifyInstance<any, any, any, any, any>) => {
+    fastify.addContentTypeParser('multipart/form-data', {}, (req, _body, done) => {
         done(null, req)
     })
 }

@@ -10,6 +10,7 @@ OpenPlanner is a React-based application for managing events, sessions, speakers
 -   [src/services/](src/services/) — Data access, hooks, Firebase wiring
 -   [src/types.ts](src/types.ts) — TypeScript type definitions, shared across the app
 -   [functions/](functions/) — Backend API. Used for admin features that need privileged operations and for public-facing flows that cannot run in the browser
+-   [cli/](cli/) — `openplanner` CLI (`@openplanner/cli`), a JSON-first client of the API for scripts and coding agents. Its agent skill lives in [cli/skills/openplanner/SKILL.md](cli/skills/openplanner/SKILL.md) and is symlinked from `.claude/skills/openplanner` and `.agents/skills/openplanner`. When an API endpoint is added or its contract changes, update the matching CLI command and the skill
 
 ## Code organisation
 
