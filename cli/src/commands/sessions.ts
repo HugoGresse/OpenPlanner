@@ -1,7 +1,6 @@
 import { Command } from 'commander'
-import { DataOptions, dataOptions, run } from '../context.js'
+import { DataOptions, dataOptions, deleteCommand, run, segment } from '../context.js'
 import { buildBody, parseData } from '../input.js'
-import { createSession } from './create.js'
 
 type ListOptions = {
     track?: string
@@ -46,7 +45,7 @@ export const registerSessions = (program: Command): void => {
         .description('Get one session')
         .action(
             run((ctx, _options, sessionId) =>
-                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/sessions/${sessionId}` })
+                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/sessions/${segment(sessionId)}` })
             )
         )
 
@@ -56,7 +55,7 @@ export const registerSessions = (program: Command): void => {
             run<DataOptions>((ctx, options, sessionId) =>
                 ctx.client.request({
                     method: 'PATCH',
-                    path: `/v1/{eventId}/sessions/${sessionId}`,
+                    path: `/v1/{eventId}/sessions/${segment(sessionId)}`,
                     body: buildBody(options),
                 })
             )
@@ -64,9 +63,18 @@ export const registerSessions = (program: Command): void => {
 
     dataOptions(sessions.command('create'))
         .description(
-            'Create one session (id generated unless given; an existing id is upserted). Accepts speakers/format/category/dates or speakerIds/formatId/categoryId/dateStart/dateEnd; *Name fields auto-create tracks, formats, categories'
+            'Create one session: title required, id generated unless given (409 if taken); trackId, format, category and speakers are checked against the event; unknown fields are rejected'
         )
-        .action(run<DataOptions>((ctx, options) => createSession(ctx, options)))
+        .action(
+            run<DataOptions>((ctx, options) =>
+                ctx.client.request({ method: 'POST', path: '/v1/{eventId}/sessions', body: buildBody(options) })
+            )
+        )
+
+    deleteCommand(
+        sessions.command('delete <sessionId>').description('Delete a session (irreversible; its speakers are kept)'),
+        (sessionId) => `/v1/{eventId}/sessions/${sessionId}`
+    )
 
     sessions
         .command('check-media <urls...>')
@@ -85,7 +93,7 @@ export const registerSessions = (program: Command): void => {
             run<DataOptions>((ctx, options, sessionId) =>
                 ctx.client.request({
                     method: 'POST',
-                    path: `/v1/{eventId}/sessions/${sessionId}/shortvid`,
+                    path: `/v1/{eventId}/sessions/${segment(sessionId)}/shortvid`,
                     body: parseData(options.data),
                 })
             )

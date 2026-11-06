@@ -1,7 +1,7 @@
 import { openAsBlob } from 'node:fs'
 import { basename } from 'node:path'
 import { Command } from 'commander'
-import { DataOptions, dataOptions, run } from '../context.js'
+import { DataOptions, dataOptions, deleteCommand, run, segment } from '../context.js'
 import { buildBody, parseData } from '../input.js'
 
 const MAX_UPLOAD_FILES = 5
@@ -31,7 +31,7 @@ export const registerFaq = (program: Command): void => {
         .description('One private FAQ category by its private id (public FAQ: `event public -f faq`)')
         .action(
             run((ctx, _options, privateId) =>
-                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/faq/${privateId}`, auth: false })
+                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/faq/${segment(privateId)}`, auth: false })
             )
         )
 
@@ -44,6 +44,18 @@ export const registerFaq = (program: Command): void => {
                 ctx.client.request({ method: 'POST', path: '/v1/{eventId}/faq', body: buildBody(options) })
             )
         )
+
+    deleteCommand(
+        faq.command('delete-question <categoryId> <questionId>').description('Delete one FAQ question (irreversible)'),
+        (categoryId, questionId) => `/v1/{eventId}/faq/categories/${categoryId}/questions/${questionId}`
+    )
+
+    deleteCommand(
+        faq
+            .command('delete-category <categoryId>')
+            .description('Delete a FAQ category and all its questions (irreversible)'),
+        (categoryId) => `/v1/{eventId}/faq/categories/${categoryId}`
+    )
 }
 
 export const registerFiles = (program: Command): void => {

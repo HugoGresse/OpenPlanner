@@ -1,5 +1,6 @@
 import { Speaker } from '../../types'
 import firebase from 'firebase-admin'
+import { deleteDocumentOr404 } from './documentHelpers'
 
 const { FieldValue } = firebase.firestore
 
@@ -77,11 +78,25 @@ export class SpeakerDao {
         await db
             .collection(`events/${eventId}/speakers`)
             .doc(speaker.id)
-            .set({
+            .create({
                 ...speaker,
                 updatedAt: FieldValue.serverTimestamp(),
             })
         return speaker
+    }
+
+    // Ids (deduplicated) that match no speaker document, fetched in a single batched read.
+    public static async findMissingSpeakerIds(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        speakerIds: string[]
+    ): Promise<string[]> {
+        const ids = [...new Set(speakerIds)]
+        if (ids.length === 0) return []
+        const db = firebaseApp.firestore()
+        const collection = db.collection(`events/${eventId}/speakers`)
+        const snapshots = await db.getAll(...ids.map((id) => collection.doc(id)))
+        return ids.filter((_, index) => !snapshots[index].exists)
     }
 
     public static async updateSpeaker(
@@ -142,14 +157,8 @@ export class SpeakerDao {
         eventId: string,
         speakerId: string
     ): Promise<void> {
-        const db = firebaseApp.firestore()
-
-        const existingSpeakerData = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
-        if (!existingSpeakerData) {
-            throw new Error('Speaker not found')
-        }
-
-        await db.collection(`events/${eventId}/speakers`).doc(speakerId).delete()
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/speakers`).doc(speakerId)
+        await deleteDocumentOr404(ref, 'Speaker not found')
     }
 
     public static async updateOrCreateSpeaker(

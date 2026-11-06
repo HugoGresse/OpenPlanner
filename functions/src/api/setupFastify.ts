@@ -13,6 +13,7 @@ import { isDev } from '../utils/functionUrls'
 import { sponsorsRoutes } from './routes/sponsors/sponsors'
 import { sessionsRoutes } from './routes/sessions/sessions'
 import { faqRoutes } from './routes/faq/faq'
+import { teamRoutes } from './routes/team/team'
 import { transcriptionRoutes } from './routes/transcription/transcription'
 import { intermissionRoutes } from './routes/intermission/intermission'
 import { whatsappRoutes } from './routes/whatsapp/whatsapp'
@@ -81,6 +82,7 @@ export const setupFastify = () => {
     fastify.register(sessionsSpeakers)
     fastify.register(speakersRoutes)
     fastify.register(faqRoutes)
+    fastify.register(teamRoutes)
     fastify.register(transcriptionRoutes)
     fastify.register(intermissionRoutes)
     fastify.register(whatsappRoutes)

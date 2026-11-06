@@ -8,6 +8,7 @@ import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { convertBodySessionToSession } from './convertBodySessionToSession'
 import { Speaker } from '../../../types'
+import { withSocialIcons } from '../../other/socials'
 
 const MAX_STRING_LENGTH = 10000
 
@@ -292,11 +293,7 @@ export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: (
                 try {
                     const speakerWithAllFields: Partial<Speaker> & { id: string } = {
                         ...speaker,
-                        socials: (speaker.socials || []).map((social) => ({
-                            name: social.name,
-                            icon: social.icon || social.name.toLowerCase().trim().replace(' ', '-'),
-                            link: social.link,
-                        })),
+                        socials: withSocialIcons(speaker.socials || []),
                     }
                     await SpeakerDao.updateOrCreateSpeaker(fastify.firebase, eventId, speakerWithAllFields)
                 } catch (error) {

@@ -1,7 +1,9 @@
 import { FastifyInstance } from 'fastify'
+import { strictBodyValidatorCompiler } from '../../other/strictValidator'
 import { updateSpeakerPATCHSchema, UpdateSpeakerPATCHTypes, updateSpeakerRouteHandler } from './updateSpeakerPATCH'
 import { getSpeakersGETSchema, GetSpeakersGETTypes, getSpeakersRouteHandler } from './getSpeakersGET'
 import { getSpeakerGETSchema, GetSpeakerGETTypes, getSpeakerRouteHandler } from './getSpeakerGET'
+import { createSpeakerPOSTSchema, CreateSpeakerPOSTTypes, createSpeakerRouteHandler } from './createSpeakerPOST'
 import { deleteSpeakerDELETESchema, DeleteSpeakerDELETETypes, deleteSpeakerRouteHandler } from './deleteSpeakerDELETE'
 import { requestEditLinkPOSTSchema, RequestEditLinkPOSTTypes, requestEditLinkRouteHandler } from './requestEditLinkPOST'
 import { getSelfSpeakerGETSchema, GetSelfSpeakerGETTypes, getSelfSpeakerRouteHandler } from './getSelfSpeakerGET'
@@ -34,6 +36,16 @@ export const speakersRoutes = (fastify: FastifyInstance, options: any, done: () 
         '/v1/:eventId/speakers/:speakerId',
         { schema: getSpeakerGETSchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
         getSpeakerRouteHandler(fastify)
+    )
+
+    fastify.post<CreateSpeakerPOSTTypes>(
+        '/v1/:eventId/speakers',
+        {
+            schema: createSpeakerPOSTSchema,
+            validatorCompiler: strictBodyValidatorCompiler,
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        createSpeakerRouteHandler(fastify)
     )
 
     fastify.patch<UpdateSpeakerPATCHTypes>(

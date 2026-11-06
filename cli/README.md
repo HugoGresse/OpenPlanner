@@ -32,7 +32,7 @@ In this repository the skill is already linked from `.claude/skills/openplanner`
 
 ## Commands
 
-Run `openplanner --help` or `openplanner <group> --help`. Groups: `event`, `sessions`, `speakers`, `sponsors`, `faq`, `files`, `import`, `live`, `whatsapp`, `bupher`, `slack`, `chat`, `api` (any endpoint), `openapi` (discovery), `config`, `skill`.
+Run `openplanner --help` or `openplanner <group> --help`. Groups: `event`, `sessions`, `speakers`, `sponsors`, `team`, `faq`, `files`, `import`, `live`, `whatsapp`, `bupher`, `slack`, `chat`, `api` (any endpoint), `openapi` (discovery), `config`, `skill`.
 
 Useful flags on every command: `-f a,b.c` keeps only some fields (`list.length`, `list.0` address a list), `-c` prints compact JSON. Errors never print the API key.
 

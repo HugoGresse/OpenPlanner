@@ -2,11 +2,8 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { Speaker } from '../../../types'
-
-const MAX_STRING_LENGTH = 10000
-
-const NullableString = Type.Union([Type.String({ maxLength: MAX_STRING_LENGTH }), Type.Null()])
-const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
+import { withSocialIcons } from '../../other/socials'
+import { MAX_STRING_LENGTH, NullableString, NullableUri, SocialSchema } from '../../other/routeSchemas'
 
 export const TypeBoxUpdateSpeaker = Type.Object(
     {
@@ -21,15 +18,7 @@ export const TypeBoxUpdateSpeaker = Type.Object(
         geolocation: Type.Optional(NullableString),
         photoUrl: Type.Optional(NullableUri),
         note: Type.Optional(NullableString),
-        socials: Type.Optional(
-            Type.Array(
-                Type.Object({
-                    name: Type.String({ maxLength: MAX_STRING_LENGTH }),
-                    icon: Type.Optional(Type.String()),
-                    link: Type.String({ format: 'uri' }),
-                })
-            )
-        ),
+        socials: Type.Optional(Type.Array(SocialSchema)),
         customFields: Type.Optional(
             Type.Record(
                 Type.String({ maxLength: MAX_STRING_LENGTH }),
@@ -94,11 +83,7 @@ export const updateSpeakerRouteHandler = (fastify: FastifyInstance) => {
                 ...rest,
             }
             if (socials) {
-                patch.socials = socials.map((social) => ({
-                    name: social.name,
-                    icon: social.icon || social.name.toLowerCase().trim().replace(' ', '-'),
-                    link: social.link,
-                }))
+                patch.socials = withSocialIcons(socials)
             }
 
             await SpeakerDao.patchSpeaker(fastify.firebase, eventId, patch)

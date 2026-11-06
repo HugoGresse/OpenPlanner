@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { call, DataOptions, dataOptions, run } from '../context.js'
+import { call, DataOptions, dataOptions, deleteCommand, run, segment } from '../context.js'
 import { buildBody } from '../input.js'
 
 export const registerSponsors = (program: Command): void => {
@@ -23,6 +23,20 @@ export const registerSponsors = (program: Command): void => {
                 })
             )
         )
+
+    deleteCommand(
+        sponsors
+            .command('delete <sponsorId>')
+            .description('Remove a sponsor from its category (irreversible; the category is kept)'),
+        (sponsorId) => `/v1/{eventId}/sponsors/${sponsorId}`
+    )
+
+    deleteCommand(
+        sponsors
+            .command('delete-category <categoryId>')
+            .description('Delete a sponsor category and every sponsor in it (irreversible)'),
+        (categoryId) => `/v1/{eventId}/sponsors/categories/${categoryId}`
+    )
 
     sponsors
         .command('generate-token')
@@ -59,7 +73,7 @@ export const registerSponsors = (program: Command): void => {
         .description('Get one job post')
         .action(
             run((ctx, _options, id) =>
-                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/sponsors/jobPosts/${id}` })
+                ctx.client.request({ method: 'GET', path: `/v1/{eventId}/sponsors/jobPosts/${segment(id)}` })
             )
         )
 
@@ -69,18 +83,14 @@ export const registerSponsors = (program: Command): void => {
             run((ctx, _options, id, status) =>
                 ctx.client.request({
                     method: 'PUT',
-                    path: `/v1/{eventId}/sponsors/jobPosts/${id}/approval`,
+                    path: `/v1/{eventId}/sponsors/jobPosts/${segment(id)}/approval`,
                     body: { status },
                 })
             )
         )
 
-    jobs.command('delete <jobPostId>')
-        .description('Delete a job post (irreversible)')
-        .requiredOption('--yes', 'Confirm the deletion')
-        .action(
-            run((ctx, _options, id) =>
-                ctx.client.request({ method: 'DELETE', path: `/v1/{eventId}/sponsors/jobPosts/${id}` })
-            )
-        )
+    deleteCommand(
+        jobs.command('delete <jobPostId>').description('Delete a job post (irreversible)'),
+        (id) => `/v1/{eventId}/sponsors/jobPosts/${id}`
+    )
 }

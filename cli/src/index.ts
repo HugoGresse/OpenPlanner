@@ -10,6 +10,7 @@ import { registerSessions } from './commands/sessions.js'
 import { registerSkill } from './commands/skill.js'
 import { registerSpeakers } from './commands/speakers.js'
 import { registerSponsors } from './commands/sponsors.js'
+import { registerTeam } from './commands/team.js'
 import { exitQuietlyOnClosedStdout, fail } from './output.js'
 
 const { version } = createRequire(import.meta.url)('../package.json') as { version: string }
@@ -34,6 +35,7 @@ registerEvent(program)
 registerSessions(program)
 registerSpeakers(program)
 registerSponsors(program)
+registerTeam(program)
 registerFaq(program)
 registerFiles(program)
 registerImport(program)

@@ -2,27 +2,31 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { Session } from '../../../types'
-
-const MAX_STRING_LENGTH = 10000
-const NullableString = Type.Union([Type.String({ maxLength: MAX_STRING_LENGTH }), Type.Null()])
-const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
+import { parseSessionDates } from './parseSessionDates'
+import { MAX_STRING_LENGTH, NullableString, NullableUri } from '../../other/routeSchemas'
 
 const PatchDates = Type.Union([
-    Type.Object({
-        start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-        end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    }),
+    Type.Object(
+        {
+            start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+            end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+        },
+        { additionalProperties: false }
+    ),
     Type.Null(),
 ])
 
 const PatchTeasingPosts = Type.Union([
-    Type.Object({
-        twitter: Type.Optional(NullableString),
-        linkedin: Type.Optional(NullableString),
-        facebook: Type.Optional(NullableString),
-        instagram: Type.Optional(NullableString),
-        bluesky: Type.Optional(NullableString),
-    }),
+    Type.Object(
+        {
+            twitter: Type.Optional(NullableString),
+            linkedin: Type.Optional(NullableString),
+            facebook: Type.Optional(NullableString),
+            instagram: Type.Optional(NullableString),
+            bluesky: Type.Optional(NullableString),
+        },
+        { additionalProperties: false }
+    ),
     Type.Null(),
 ])
 
@@ -68,7 +72,8 @@ export type PatchSessionPATCHTypes = {
 export const patchSessionPATCHSchema = {
     tags: ['sessions'],
     summary: 'Partial update a session',
-    description: 'Update one or more fields on a session. Only provided fields are updated; missing fields are preserved.',
+    description:
+        'Update one or more fields on a session. Only provided fields are updated; missing fields are preserved.',
     params: {
         type: 'object',
         properties: {
@@ -110,31 +115,13 @@ export const patchSessionRouteHandler = (fastify: FastifyInstance) => {
                 ...rest,
             }
 
-            if (dates !== undefined) {
-                if (dates === null) {
-                    patch.dates = null
-                } else {
-                    const datesPatch: { start?: Date | null; end?: Date | null } = {}
-                    if (dates.start !== undefined) {
-                        const start = dates.start ? new Date(dates.start) : null
-                        if (start !== null && Number.isNaN(start.getTime())) {
-                            reply.status(400).send('Invalid dates.start value')
-                            return
-                        }
-                        datesPatch.start = start
-                    }
-                    if (dates.end !== undefined) {
-                        const end = dates.end ? new Date(dates.end) : null
-                        if (end !== null && Number.isNaN(end.getTime())) {
-                            reply.status(400).send('Invalid dates.end value')
-                            return
-                        }
-                        datesPatch.end = end
-                    }
-                    if (Object.keys(datesPatch).length > 0) {
-                        patch.dates = datesPatch as Session['dates']
-                    }
-                }
+            const parsed = parseSessionDates(dates)
+            if (parsed.error) {
+                reply.status(400).send(parsed.error)
+                return
+            }
+            if (parsed.dates !== undefined) {
+                patch.dates = parsed.dates as Session['dates']
             }
 
             await SessionDao.patchSession(fastify.firebase, eventId, patch)
