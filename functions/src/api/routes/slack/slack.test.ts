@@ -208,9 +208,13 @@ describe('Slack routes', () => {
         })
         expect(res.statusCode).toBe(200)
 
-        const firstMessages = openRouterCalls[0].messages as Array<{ role: string; content: string }>
+        const firstMessages = openRouterCalls[0].messages as Array<{ role: string; content: unknown }>
         expect(firstMessages[0].role).toBe('system')
-        expect(firstMessages[0].content).toContain('Slack')
+        // The default model is an Anthropic one: the system prompt is sent as a cached content part.
+        const [systemPart] = firstMessages[0].content as Array<{ text: string; cache_control: unknown }>
+        expect(systemPart.text).toContain('Slack')
+        expect(systemPart.cache_control).toEqual({ type: 'ephemeral' })
+        expect(openRouterCalls[0].cache_control).toEqual({ type: 'ephemeral' })
         expect(repliesCalls).toBe(2)
         expect(firstMessages.slice(1)).toEqual([
             { role: 'user', content: 'earlier question\n\nrename Alice to Alicia' },
@@ -246,7 +250,7 @@ describe('Slack routes', () => {
         let systemPrompt = ''
         fetchSpy.mockImplementation(async (url: string, init: RequestInit) => {
             if (url.includes('openrouter.ai')) {
-                systemPrompt = JSON.parse(String(init.body)).messages[0].content
+                systemPrompt = JSON.parse(String(init.body)).messages[0].content[0].text
                 return openRouterStream([sseChunk({ content: 'Paris.' }), 'data: [DONE]\n\n'])
             }
             if (url.endsWith('conversations.replies')) return slackOk({ messages: [] })

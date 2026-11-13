@@ -69,6 +69,32 @@ export class SponsorDao {
         })) as SponsorCategory[]
     }
 
+    public static async getCategory(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string
+    ): Promise<SponsorCategory | null> {
+        const snapshot = await firebaseApp.firestore().collection(`events/${eventId}/sponsors`).doc(categoryId).get()
+        return snapshot.exists ? ({ id: snapshot.id, ...snapshot.data() } as SponsorCategory) : null
+    }
+
+    // The category holding a sponsor. With the category id (a hint, e.g. from a listing) it is a single document
+    // read; without it, or when the hint is wrong, the categories are scanned as the DELETE route does.
+    public static async findCategoryOfSponsor(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        sponsorId: string,
+        categoryIdHint?: string
+    ): Promise<SponsorCategory | null> {
+        const hasSponsor = (sponsor: Sponsor) => sponsor.id === sponsorId
+        if (categoryIdHint) {
+            const hinted = await SponsorDao.getCategory(firebaseApp, eventId, categoryIdHint)
+            if (hinted?.sponsors?.some(hasSponsor)) return hinted
+        }
+        const match = await SponsorDao.findSponsorCategory(firebaseApp, eventId, hasSponsor)
+        return match ? ({ id: match.doc.id, ...match.doc.data() } as SponsorCategory) : null
+    }
+
     public static async findSponsorByToken(
         firebaseApp: firebase.app.App,
         eventId: string,

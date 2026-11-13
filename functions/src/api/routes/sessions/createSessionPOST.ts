@@ -2,15 +2,13 @@ import firebase from 'firebase-admin'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { v4 as uuidv4 } from 'uuid'
-import { EventDao } from '../../dao/eventDao'
 import { SessionDao } from '../../dao/sessionDao'
-import { SpeakerDao } from '../../dao/speakerDao'
 import { Session } from '../../../types'
 import { replyDaoError } from '../../other/daoErrors'
 import { apiKeyQuerystring, apiKeySecurity, eventIdParams, MAX_STRING_LENGTH } from '../../other/routeSchemas'
 import { TypeBoxPatchSession } from './patchSessionPATCH'
 import { parseSessionDates } from './parseSessionDates'
-import { findInvalidSessionReference } from './validateSessionReferences'
+import { findInvalidReferences } from './validateSessionReferences'
 
 export const TypeBoxCreateSession = Type.Object(
     {
@@ -54,28 +52,6 @@ const NEW_SESSION_DEFAULTS: Partial<Session & { tags: string[] }> = {
     showInFeedback: true,
     hideTrackTitle: false,
     teasingHidden: false,
-}
-
-type SessionReferences = {
-    trackId?: string | null
-    format?: string | null
-    category?: string | null
-    speakers?: string[]
-}
-
-// Returns the message of the first reference (track, format, category, speaker) that does not exist, or null.
-// The event is only read when a track, format or category is set.
-export const findInvalidReferences = async (
-    firebaseApp: firebase.app.App,
-    eventId: string,
-    references: SessionReferences
-): Promise<string | null> => {
-    if (references.trackId || references.format || references.category) {
-        const referenceError = findInvalidSessionReference(await EventDao.getEvent(firebaseApp, eventId), references)
-        if (referenceError) return referenceError
-    }
-    const missing = await SpeakerDao.findMissingSpeakerIds(firebaseApp, eventId, references.speakers || [])
-    return missing.length > 0 ? `Unknown speaker id(s): ${missing.join(', ')}` : null
 }
 
 // Returns the message of the first invalid input, or null. Pure apart from the reference lookups.

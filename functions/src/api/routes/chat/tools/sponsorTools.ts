@@ -1,4 +1,5 @@
 import { SponsorDao } from '../../../dao/sponsorDao'
+import { SponsorCategory } from '../../../../../../src/types'
 import { TypeBoxSponsor } from '../../sponsors/addSponsorsPOST'
 import { toApiSponsorCategory } from '../../sponsors/getSponsorsGET'
 import {
@@ -17,11 +18,19 @@ import {
 } from '../toolKit'
 
 // The REST DTO without the sponsor job-board token (a credential the model has no use for).
+const toToolCategory = (category: SponsorCategory) => {
+    const dto = toApiSponsorCategory(category)
+    return { ...dto, sponsors: dto.sponsors.map(({ jobPostToken: _token, ...sponsor }) => sponsor) }
+}
+
 const listCategories = async ({ firebaseApp, eventId }: ToolContext) =>
-    (await SponsorDao.getSponsors(firebaseApp, eventId)).map((category) => {
-        const dto = toApiSponsorCategory(category)
-        return { ...dto, sponsors: dto.sponsors.map(({ jobPostToken: _token, ...sponsor }) => sponsor) }
-    })
+    (await SponsorDao.getSponsors(firebaseApp, eventId)).map(toToolCategory)
+
+// Proposals resolve the one category they touch instead of loading every sponsor.
+const loadCategory = async ({ firebaseApp, eventId }: ToolContext, categoryId: string) => {
+    const category = await SponsorDao.getCategory(firebaseApp, eventId, categoryId)
+    return category ? toToolCategory(category) : null
+}
 
 export const SPONSOR_TOOLS: ChatTool[] = [
     {
@@ -45,7 +54,7 @@ export const SPONSOR_TOOLS: ChatTool[] = [
             const parsed = parseBody(TypeBoxSponsor, args?.sponsor)
             if (parsed.error !== undefined) return rejected(parsed.error)
             const body = parsed.value
-            const category = (await listCategories(ctx)).find((item) => item.id === body.categoryId)
+            const category = await loadCategory(ctx, body.categoryId)
             const where = category ? `to ${category.name}` : `to the new category ${body.categoryName}`
             return proposed(args, {
                 summary: `Add sponsor ${body.name} ${where}`,
@@ -61,10 +70,11 @@ export const SPONSOR_TOOLS: ChatTool[] = [
         kind: 'deleteSponsor',
         capabilities: ['sponsors.delete'],
         description:
-            'Propose removing a sponsor from its category (irreversible; the category is kept). Does NOT apply: the user confirms. Pass expectedSponsorName = the sponsor name from listSponsors.',
+            'Propose removing a sponsor from its category (irreversible; the category is kept). Does NOT apply: the user confirms. Pass expectedSponsorName = the sponsor name from listSponsors, and categoryId = the id of its category when you have it.',
         parameters: objectSchema(
             {
                 sponsorId: { type: 'string' },
+                categoryId: { type: 'string', description: 'Id of the category listing the sponsor (optional).' },
                 expectedSponsorName: expectedParam("sponsor's `name`", 'listSponsors'),
                 rationale: RATIONALE_PARAM,
             },
@@ -73,8 +83,13 @@ export const SPONSOR_TOOLS: ChatTool[] = [
         build: async (ctx, args) => {
             const sponsorId = stringArg(args, 'sponsorId')
             if (!sponsorId) return rejected('sponsorId is required')
-            const categories = await listCategories(ctx)
-            const category = categories.find((item) => item.sponsors.some((sponsor) => sponsor.id === sponsorId))
+            const found = await SponsorDao.findCategoryOfSponsor(
+                ctx.firebaseApp,
+                ctx.eventId,
+                sponsorId,
+                stringArg(args, 'categoryId') || undefined
+            )
+            const category = found ? toToolCategory(found) : null
             const sponsor = category?.sponsors.find((item) => item.id === sponsorId)
             if (!category || !sponsor) return rejected(`Sponsor not found: ${sponsorId}`)
             const mismatch = expectedMismatch({
@@ -112,7 +127,7 @@ export const SPONSOR_TOOLS: ChatTool[] = [
         build: async (ctx, args) => {
             const categoryId = stringArg(args, 'categoryId')
             if (!categoryId) return rejected('categoryId is required')
-            const category = (await listCategories(ctx)).find((item) => item.id === categoryId)
+            const category = await loadCategory(ctx, categoryId)
             if (!category) return rejected(`Sponsor category not found: ${categoryId}`)
             const mismatch = expectedMismatch({
                 arg: 'expectedCategoryName',

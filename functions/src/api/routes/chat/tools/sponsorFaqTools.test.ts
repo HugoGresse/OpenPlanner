@@ -39,6 +39,14 @@ const faq = [
 describe('sponsor and job post tools', () => {
     beforeEach(() => {
         vi.spyOn(SponsorDao, 'getSponsors').mockResolvedValue(categories as never)
+        vi.spyOn(SponsorDao, 'getCategory').mockImplementation(
+            async (_app, _eventId, id) => (categories.find((category) => category.id === id) ?? null) as never
+        )
+        vi.spyOn(SponsorDao, 'findCategoryOfSponsor').mockImplementation(
+            async (_app, _eventId, sponsorId) =>
+                (categories.find((category) => category.sponsors.some((sponsor) => sponsor.id === sponsorId)) ??
+                    null) as never
+        )
         vi.spyOn(JobPostDao, 'getAllJobPosts').mockResolvedValue([jobPost] as never)
         vi.spyOn(JobPostDao, 'getJobPost').mockResolvedValue(jobPost as never)
     })
@@ -83,6 +91,27 @@ describe('sponsor and job post tools', () => {
         expect(category.diff).toEqual({ before: { name: 'Gold', sponsors: ['ACME', 'Globex'] }, after: null })
     })
 
+    test('sponsor proposals read one category, never the whole collection', async () => {
+        const fullRead = vi.mocked(SponsorDao.getSponsors)
+        expectProposal(
+            await propose('proposeAddSponsor', {
+                sponsor: { name: 'Initech', categoryId: 'gold', categoryName: 'Gold' },
+            })
+        )
+        expectProposal(
+            await propose('proposeDeleteSponsorCategory', { categoryId: 'gold', expectedCategoryName: 'Gold' })
+        )
+        expectProposal(
+            await propose('proposeDeleteSponsor', {
+                sponsorId: 'acme',
+                categoryId: 'gold',
+                expectedSponsorName: 'ACME',
+            })
+        )
+        expect(fullRead).not.toHaveBeenCalled()
+        expect(SponsorDao.findCategoryOfSponsor).toHaveBeenCalledWith(expect.anything(), 'evt', 'acme', 'gold')
+    })
+
     test('job post moderation is a PUT on the approval route', async () => {
         expect(await read('listJobPosts', { status: 'pending' })).toEqual([jobPost])
         const proposal = expectProposal(
@@ -124,6 +153,13 @@ describe('sponsor and job post tools', () => {
 describe('FAQ tools', () => {
     beforeEach(() => {
         vi.spyOn(FaqDao, 'getFullFaqs').mockResolvedValue(faq as never)
+        vi.spyOn(FaqDao, 'getFaqCategory').mockImplementation(
+            async (_app, _eventId, id) => (faq.find((category) => category.id === id) ?? null) as never
+        )
+        vi.spyOn(FaqDao, 'findFaqQuestionCategoryId').mockImplementation(
+            async (_app, _eventId, questionId) =>
+                faq.find((category) => category.items.some((item) => item.id === questionId))?.id ?? null
+        )
     })
     afterEach(() => vi.restoreAllMocks())
 
@@ -177,6 +213,21 @@ describe('FAQ tools', () => {
             }),
             'FAQ question q1 belongs to category venue: pass that categoryId (moving a question is not supported)'
         )
+    })
+
+    test('FAQ proposals read one category, never the whole FAQ', async () => {
+        const fullRead = vi.mocked(FaqDao.getFullFaqs)
+        expectProposal(
+            await propose('proposeAddFaqQuestion', {
+                question: { categoryId: 'venue', question: 'Wifi?', answer: 'Yes', order: 1, categoryOrder: 0 },
+            })
+        )
+        expectProposal(
+            await propose('proposeDeleteFaqCategory', { categoryId: 'venue', expectedCategoryName: 'Venue' })
+        )
+        expect(fullRead).not.toHaveBeenCalled()
+        expect(FaqDao.findFaqQuestionCategoryId).not.toHaveBeenCalled()
+        expect(FaqDao.getFaqCategory).toHaveBeenCalledWith(expect.anything(), 'evt', 'venue')
     })
 
     test('FAQ deletes target the category routes, guarded by the text', async () => {

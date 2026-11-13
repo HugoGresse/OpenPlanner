@@ -3,6 +3,7 @@ import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { Session } from '../../../types'
 import { parseSessionDates } from './parseSessionDates'
+import { findInvalidReferences } from './validateSessionReferences'
 import { MAX_STRING_LENGTH, NullableString, NullableUri } from '../../other/routeSchemas'
 
 const PatchDates = Type.Union([
@@ -73,7 +74,7 @@ export const patchSessionPATCHSchema = {
     tags: ['sessions'],
     summary: 'Partial update a session',
     description:
-        'Update one or more fields on a session. Only provided fields are updated; missing fields are preserved.',
+        'Update one or more fields on a session. Only provided fields are updated; missing fields are preserved. Unknown fields are rejected (400), an explicit null clears a field. trackId, format, category must exist on the event and speakers must be existing speaker ids (400 otherwise).',
     params: {
         type: 'object',
         properties: {
@@ -122,6 +123,12 @@ export const patchSessionRouteHandler = (fastify: FastifyInstance) => {
             }
             if (parsed.dates !== undefined) {
                 patch.dates = parsed.dates as Session['dates']
+            }
+
+            const referenceError = await findInvalidReferences(fastify.firebase, eventId, rest)
+            if (referenceError) {
+                reply.status(400).send(referenceError)
+                return
             }
 
             await SessionDao.patchSession(fastify.firebase, eventId, patch)

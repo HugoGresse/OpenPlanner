@@ -52,6 +52,7 @@ export const speakersRoutes = (fastify: FastifyInstance, options: any, done: () 
         '/v1/:eventId/speakers/:speakerId',
         {
             schema: updateSpeakerPATCHSchema,
+            validatorCompiler: strictBodyValidatorCompiler,
             preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         updateSpeakerRouteHandler(fastify)

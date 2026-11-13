@@ -39,9 +39,10 @@ describe('PATCH /v1/:eventId/event', () => {
         const res = await fastify.inject({
             method: 'PATCH',
             url: `/v1/${eventId}/event?apiKey=${apiKey}`,
-            payload: { owner: 'hacker' },
+            payload: { name: 'Kept', owner: 'hacker' },
         })
         expect(res.statusCode).toBe(400)
+        expect(res.body).toContain('owner')
     })
 
     test('returns 404 when event does not exist', async () => {

@@ -98,7 +98,7 @@ const compile = (schema: TSchema): Validate => {
 
 export type Parsed<T> = { value: T; error?: undefined } | { error: string }
 
-// Validates the model's object against a route body schema with the strict create-route compiler: an unknown
+// Validates the model's object against a route body schema with the compiler the write routes use: an unknown
 // (e.g. misspelled) field is an error the model can fix, never silently dropped. `omit` removes server-owned
 // keys first; `nonEmpty` is for patches.
 export const parseBody = <T extends TSchema>(
