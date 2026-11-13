@@ -37,11 +37,11 @@ Check what is configured with `openplanner config show` (key masked). Never prin
 | Speakers     | `speakers list [--include-private]`, `get`, `update <id>`, `create`, `delete <id> --yes`, `speakers pending-edits list/approve/reject`                                                                                                                      |
 | Bulk         | `import -d @data.json` upserts `{"speakers":[…],"sessions":[…]}` (ConferenceHall-style; every item needs an `id`)                                                                                                                                           |
 | Sponsors     | `sponsors list`, `sponsors add`, `sponsors delete <id> --yes`, `sponsors delete-category <id> --yes`, `sponsors generate-token`, `sponsors job-posts list/get/set-status/delete`                                                                            |
-| Team         | `team list`, `team add` (name; role, team, bio, photoUrl, socials, order, teamOrder, id), `team delete <id> --yes`                                                                                                                                          |
+| Team         | `team list`, `team add` (name; role, team, bio, photoUrl, socials, order, teamOrder, id), `team update <id>`, `team delete <id> --yes`                                                                                                                      |
 | FAQ / files  | `faq add`, `faq get <privateId>` (private categories; public FAQ is in `event public -f faq`), `faq delete-question <categoryId> <questionId> --yes`, `faq delete-category <id> --yes`, `files upload <paths…>` (max 5, 10 MB each), `files reupload <url>` |
 | Day-of       | `whatsapp status/start/go/contacts/scheduled-tasks/cancel-task/send-test/configure-webhook`, `live transcription`, `live intermission`                                                                                                                      |
 | Integrations | `bupher channels/scheduled-posts/draft-post/login`, `slack channels/config/install-url --return-to <url>`                                                                                                                                                   |
-| AI           | `chat "<question>"` runs the event assistant; write proposals come back with an `applyCommand` and are **never applied automatically**                                                                                                                      |
+| AI           | `chat "<question>"` runs the event assistant (same agent as the in-app chat and the Slack bot); write proposals come back with an `applyCommand` and are **never applied automatically**                                                                    |
 | Escape hatch | `api <METHOD> <path> [-d json] [-q k=v] [-H k:v] [--no-auth]` for any endpoint; `{eventId}` is substituted                                                                                                                                                  |
 
 Bodies: `-d '<json>'`, `-d @file.json`, `-d -` (stdin), and/or one `-s key=value` per field (values are parsed as JSON when they parse, otherwise kept as strings: `-s durationMinutes=45 -s tags='["ai"]' -s dates.start=2026-06-01T09:00:00Z -s note=@handle`). `-s` overrides the matching leaf of `-d`, nested objects are merged. Put options after the positional id: `sessions update <id> -s title=…`.
@@ -53,7 +53,7 @@ Bodies: `-d '<json>'`, `-d @file.json`, `-d -` (stdin), and/or one `-s key=value
 -   Dates are ISO 8601 strings; the event `timezone` is in `event get`.
 -   `event update` **replaces** array fields (`tracks`, `formats`, `categories`, custom fields): read them with `event get`, edit, send the full list back.
 -   `speakers list` hides `email`, `phone`, `note` and private custom fields unless `--include-private`.
--   Team members: `team list` (ids are slugified names, e.g. `ada-lovelace`); `team add` creates them, the `team` field groups them. FAQ question ids are in `faq get <privateId>` / `event public -f faq`, sponsor ids in `sponsors list`.
+-   Team members: `team list` (ids are slugified names, e.g. `ada-lovelace`); `team add` creates them, `team update <id>` patches them (unknown fields rejected, the id never changes), the `team` field groups them. FAQ question ids are in `faq get <privateId>` / `event public -f faq`, sponsor ids in `sponsors list`.
 -   Public FAQ, team, sponsors and the full schedule are all in `event public` (as last deployed).
 
 ## Workflows
@@ -95,10 +95,50 @@ openplanner chat "Set the level of every workshop to intermediate" -f proposals.
 # review, then run the printed applyCommand(s)
 ```
 
+## Assistant and gaps
+
+The event assistant (`openplanner chat`, the in-app chat and the Slack bot run the same agent) reads with tools and writes only through proposals: each one carries the exact REST call (`endpoint`, `applyCommand`) that a human applies. Deletes are flagged as irreversible, approving or rejecting a speaker edit emails the speaker, and the deploy proposal publishes the website. What it cannot do is listed below and in its system prompt; for those, use the CLI command of the matrix or the web admin.
+
+<!-- capabilities:start (generated by `npm run capabilities:docs` in functions/, do not edit) -->
+
+### Not available yet
+
+-   Create or delete an event, manage its admins, API key, webhooks and integrations settings (event): no API route; web admin only.
+-   Edit a sponsor or a sponsor category (sponsors): no API route; web admin only.
+-   List every FAQ category with its questions (faq): no API route; the assistant (`getFaq`) and the web admin.
+-   Rename, reorder, share or make private a FAQ category (faq): no API route; web admin only.
+
+### Not available in the assistant
+
+-   Read the published public JSON: The assistant reads live data; the published JSON only changes on deploy. CLI: `openplanner event public`.
+-   Storage and network usage: Not in the assistant yet; use the CLI command or the web admin. CLI: `openplanner event usage`.
+-   Create or delete an event, manage its admins, API key, webhooks and integrations settings: Only in the web admin, there is no API route for it yet.
+-   Storage paths of the exported files: Not in the assistant yet; use the CLI command or the web admin. CLI: `openplanner event files`.
+-   Render the schedule as a PDF: Long-running render; use the CLI or the web admin. CLI: `openplanner event export-pdf`.
+-   Last generated schedule PDF: Not in the assistant yet; use the CLI command or the web admin. CLI: `openplanner event pdf-metadata`.
+-   Check that media URLs are reachable: Not in the assistant yet; use the CLI command or the web admin. CLI: `openplanner sessions check-media`.
+-   Generate the session announcement video (shortvid.io): Video generation needs the full render settings; use the CLI or the web admin. CLI: `openplanner sessions shortvid`.
+-   Bulk upsert sessions and speakers: Bulk import takes a JSON file; use the CLI. CLI: `openplanner import`.
+-   Edit a sponsor or a sponsor category: Only in the web admin, there is no API route for it yet.
+-   Generate the job-board token of a sponsor: It creates a secret token; use the CLI or the web admin. CLI: `openplanner sponsors generate-token`.
+-   Read one private FAQ category by its private link id: The assistant never sees private FAQ links nor their answers; use the CLI or the web admin. CLI: `openplanner faq get`.
+-   Rename, reorder, share or make private a FAQ category: Only in the web admin, there is no API route for it yet.
+-   Upload files to the event storage: The assistant cannot receive files; use the CLI or the web admin. CLI: `openplanner files upload`.
+-   Re-host a remote image on the event storage: Not in the assistant yet; use the CLI command or the web admin. CLI: `openplanner files reupload`.
+-   Transcription screen data; Intermission screen data: Day-of screens are not exposed to the assistant. CLI: `openplanner live transcription|intermission`.
+-   whatsapp (8 operations): WhatsApp tooling is CLI / web admin only. CLI: `openplanner whatsapp status|start|go|contacts|scheduled-tasks|cancel-task|send-test|configure-webhook`.
+-   Log in to Bupher: Needs a password; Bupher is CLI / web admin only. CLI: `openplanner bupher login`.
+-   List Bupher channels; List scheduled Bupher posts; Draft a Bupher social post: Bupher is CLI / web admin only. CLI: `openplanner bupher channels|scheduled-posts|draft-post`.
+-   List Slack channels of the installed app; Install the official Slack app; Official Slack app configuration: Slack setup is CLI / web admin only. CLI: `openplanner slack channels|install-url|config`.
+
+Every capability per surface (REST route, CLI command, assistant tool): [capabilities.md](capabilities.md).
+
+<!-- capabilities:end -->
+
 ## Rules
 
 1. Read before writing: list or get the document, then send a minimal partial body.
 2. Every `delete` / `delete-question` / `delete-category` command is irreversible: confirm with the user first; the `--yes` flag is the confirmation. Deleting a session keeps its speakers; deleting a sponsor or FAQ category deletes everything inside it.
 3. After content changes meant for the public site, ask whether to run `event deploy`; it also calls the event webhooks unless `--no-webhooks`.
-4. Most PATCH endpoints **drop unknown fields silently** (200 with nothing changed); only the `create` / `team add` commands reject them. After an update, re-read the document with `-f` to confirm, and check `openplanner openapi --operation …` when a field seems ignored.
+4. Most PATCH endpoints **drop unknown fields silently** (200 with nothing changed); only the `create`, `team add` and `team update` commands reject them. After an update, re-read the document with `-f` to confirm, and check `openplanner openapi --operation …` when a field seems ignored.
 5. Secrets never go on the command line: `bupher login` reads the password from `--password-stdin` or `OPENPLANNER_BUPHER_PASSWORD`; screen passwords can come from `OPENPLANNER_SCREEN_PASSWORD`.

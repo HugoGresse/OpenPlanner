@@ -33,7 +33,7 @@ export const chatStreamPOSTSchema = {
     tags: ['chat'],
     summary: 'Stream the OpenPlanner chat assistant for an event (read + propose-write)',
     description:
-        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n` and executes whitelisted read tools server-side. Write tools (proposePatchSpeaker / proposePatchSession / proposePatchEvent / proposeDeleteSpeaker) NEVER mutate Firestore directly — they emit a `proposal` event with a field-level diff that the client renders for explicit user approval before the corresponding PATCH/DELETE endpoint is hit. A request is capped at 25 proposals (model batches related changes for review).',
+        'Server-Sent Events stream. The server forwards OpenRouter deltas as `data: {...}\\n\\n` and executes whitelisted read tools server-side. Write tools (propose*: sessions, speakers, speaker pending edits, event settings and deploy, sponsors, job posts, team, FAQ) NEVER mutate Firestore directly — they emit a `proposal` event with a field-level diff and the REST call (`endpoint`) that the client renders for explicit user approval before that endpoint is hit. A request is capped at 25 proposals (model batches related changes for review).',
     params: {
         type: 'object',
         properties: { eventId: { type: 'string' } },

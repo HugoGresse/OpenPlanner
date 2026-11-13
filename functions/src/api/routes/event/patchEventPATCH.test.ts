@@ -77,6 +77,21 @@ describe('PATCH /v1/:eventId/event', () => {
         })
     })
 
+    test('keeps editableBySpeaker on speaker custom fields', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        const patchSpy = vi.spyOn(EventDao, 'patchEvent').mockResolvedValue(undefined)
+        const speakerCustomFields = [
+            { id: 'tshirt', name: 'T-shirt', type: 'text', privacy: 'private', editableBySpeaker: true },
+        ]
+        const res = await fastify.inject({
+            method: 'PATCH',
+            url: `/v1/${eventId}/event?apiKey=${apiKey}`,
+            payload: { speakerCustomFields },
+        })
+        expect(res.statusCode).toBe(200)
+        expect(patchSpy).toHaveBeenCalledWith(fastify.firebase, eventId, { speakerCustomFields })
+    })
+
     test('converts date strings to Date objects before calling patchEvent', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
         const patchSpy = vi.spyOn(EventDao, 'patchEvent').mockResolvedValue(undefined)

@@ -50,7 +50,10 @@ describe('GET /v1/:eventId/event/details', () => {
             getMockedFirestore({
                 ...eventDoc,
                 formats: [{ id: 'f', name: 'F' }],
-                speakerCustomFields: [{ id: 'x', name: 'X', type: 'text' }],
+                speakerCustomFields: [
+                    { id: 'x', name: 'X', type: 'text' },
+                    { id: 'y', name: 'Y', type: 'boolean', privacy: 'private', editableBySpeaker: true },
+                ],
                 sponsorCustomFields: [{ id: 'y', name: 'Y' }],
             })
         )
@@ -58,7 +61,10 @@ describe('GET /v1/:eventId/event/details', () => {
         expect(res.statusCode).toBe(200)
         const body = JSON.parse(res.body)
         expect(body.formats).toEqual([{ id: 'f', name: 'F', durationMinutes: 20 }])
-        expect(body.speakerCustomFields).toEqual([{ id: 'x', name: 'X', type: 'text', privacy: 'public' }])
+        expect(body.speakerCustomFields).toEqual([
+            { id: 'x', name: 'X', type: 'text', privacy: 'public' },
+            { id: 'y', name: 'Y', type: 'boolean', privacy: 'private', editableBySpeaker: true },
+        ])
         expect(body.sponsorCustomFields).toEqual([{ id: 'y', name: 'Y', type: 'text' }])
     })
 })

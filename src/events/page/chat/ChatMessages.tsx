@@ -6,7 +6,21 @@ import ReactMarkdown from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import { ChatTurn } from './useChatStream'
 import { ProposalCard } from './ProposalCard'
+import { isDestructive } from './proposalKinds'
 import { ProposalEntry } from './types'
+
+// Deletes are irreversible: applying a batch that holds some asks first, like their own "Confirm delete" button.
+const applyAllWithConfirmation = (entries: ProposalEntry[], applyAll: (ids: string[]) => void) => {
+    const pending = entries.filter((entry) => entry.status === 'pending')
+    const deletions = pending.filter((entry) => isDestructive(entry.proposal)).length
+    if (
+        deletions > 0 &&
+        !window.confirm(`Apply ${pending.length} changes, including ${deletions} irreversible deletion(s)?`)
+    ) {
+        return
+    }
+    applyAll(pending.map((entry) => entry.id))
+}
 
 export type ChatMessagesProps = {
     turns: ChatTurn[]
@@ -150,11 +164,7 @@ export const ChatMessages = ({
                                         size="small"
                                         variant="contained"
                                         startIcon={<CheckIcon />}
-                                        onClick={() =>
-                                            onApplyAllProposals(
-                                                turnProposals.filter((p) => p.status === 'pending').map((p) => p.id)
-                                            )
-                                        }>
+                                        onClick={() => applyAllWithConfirmation(turnProposals, onApplyAllProposals)}>
                                         Apply all
                                     </Button>
                                     <Button

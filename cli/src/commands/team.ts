@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { call, DataOptions, dataOptions, deleteCommand, run } from '../context.js'
+import { call, DataOptions, dataOptions, deleteCommand, run, segment } from '../context.js'
 import { buildBody } from '../input.js'
 
 export const registerTeam = (program: Command): void => {
@@ -16,6 +16,20 @@ export const registerTeam = (program: Command): void => {
         .action(
             run<DataOptions>((ctx, options) =>
                 ctx.client.request({ method: 'POST', path: '/v1/{eventId}/team', body: buildBody(options) })
+            )
+        )
+
+    dataOptions(team.command('update <memberId>'))
+        .description(
+            'Partial update: name, role, team, bio, photoUrl, order, teamOrder, socials (unknown fields rejected)'
+        )
+        .action(
+            run<DataOptions>((ctx, options, memberId) =>
+                ctx.client.request({
+                    method: 'PATCH',
+                    path: `/v1/{eventId}/team/${segment(memberId)}`,
+                    body: buildBody(options),
+                })
             )
         )
 

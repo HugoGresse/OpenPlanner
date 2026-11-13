@@ -22,7 +22,7 @@ export type SlackInteractionPayload = {
 }
 
 const description =
-    'Handles the Apply / Reject buttons on chat proposals. Applying a proposal replays the PATCH/DELETE the web UI would have called and records the decision in the AI audit log.'
+    'Handles the Apply / Reject buttons on chat proposals. Applying a proposal replays the REST call (POST/PATCH/PUT/DELETE) the web UI would have called and records the decision in the AI audit log.'
 
 export const slackInteractionsPOSTSchema = {
     tags: ['slack'],

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { Proposal } from '../chat/proposalTools'
+import { Proposal } from '../chat/toolKit'
 import { SLACK_ACTION_IDS } from './slackFormat'
 import { buildBatchBlocks, buildProposalBlocks, formatFieldValue } from './slackCards'
 
@@ -68,11 +68,84 @@ describe('buildProposalBlocks', () => {
         })
         const blocks = blocksOf(message)
         expect(blocks[0].text?.text).toBe('🗑️ Delete speaker Alice')
-        expect(blocks[2].fields?.map((f) => f.text)).toEqual(['*name*', 'Alice'])
+        expect(blocks[2].elements?.[0].text).toContain('Irreversible: applying this deletes data for good.')
+        expect(blocks[3].fields?.map((f) => f.text)).toEqual(['*name*', 'Alice'])
         const apply = blocks.find((b) => b.type === 'actions')?.elements?.[0]
         expect(apply).toMatchObject({ style: 'danger', text: { text: 'Delete' } })
         expect(apply.confirm.confirm.text).toBe('Delete')
         expect(apply.confirm.style).toBe('danger')
+    })
+
+    test('new kinds: a team member delete is destructive, a deploy shows its side effect and no diff rows', () => {
+        const teamDelete = blocksOf(
+            buildProposalBlocks({
+                eventId: 'evt',
+                proposalId: 'p4',
+                proposal: {
+                    kind: 'deleteTeamMember',
+                    summary: 'Remove Ada (Organizer) from the team (cannot be undone)',
+                    endpoint: { method: 'DELETE', path: '/v1/evt/team/ada' },
+                    target: { id: 'ada', label: 'Ada' },
+                    diff: { before: { name: 'Ada', role: 'Organizer' }, after: null },
+                },
+                status: 'pending',
+            })
+        )
+        expect(teamDelete[0].text?.text).toBe('🗑️ Remove Ada (Organizer) from the team (cannot be undone)')
+        expect(teamDelete[1].elements?.[0].text).toBe('Team member · Ada · `ada`')
+        expect(teamDelete.find((b) => b.type === 'actions')?.elements?.[0]).toMatchObject({
+            style: 'danger',
+            text: { text: 'Delete' },
+        })
+
+        const deploy = blocksOf(
+            buildProposalBlocks({
+                eventId: 'evt',
+                proposalId: 'p5',
+                proposal: {
+                    kind: 'deployEvent',
+                    summary: 'Update the website of DevFest',
+                    endpoint: { method: 'POST', path: '/v1/evt/deploy', body: {} },
+                    target: { id: 'evt', label: 'DevFest' },
+                    diff: { before: {}, after: {} },
+                },
+                status: 'pending',
+            })
+        )
+        expect(deploy.map((b) => b.type)).toEqual(['header', 'context', 'context', 'divider', 'actions'])
+        expect(deploy[2].elements?.[0].text).toContain('Publishes the current data to the public website')
+        expect(deploy[4].elements?.[0]).toMatchObject({ style: 'primary', text: { text: 'Apply' } })
+    })
+
+    test('the delete confirm dialog stays under the Slack 300-char limit', () => {
+        const blocks = blocksOf(
+            buildProposalBlocks({
+                eventId: 'evt',
+                proposalId: 'p7',
+                proposal: {
+                    kind: 'deleteFaqQuestion',
+                    summary: `Delete FAQ question "${'q'.repeat(400)}"`,
+                    endpoint: { method: 'DELETE', path: '/v1/evt/faq/categories/c/questions/q' },
+                    target: { id: 'q' },
+                    diff: { before: { question: 'q' }, after: null },
+                },
+                status: 'pending',
+            })
+        )
+        const apply = blocks.find((b) => b.type === 'actions')?.elements?.[0]
+        expect(apply.confirm.text.text.length).toBeLessThanOrEqual(300)
+    })
+
+    test('a stored proposal of an unknown kind still renders', () => {
+        const blocks = blocksOf(
+            buildProposalBlocks({
+                eventId: 'evt',
+                proposalId: 'p6',
+                proposal: { ...proposal, kind: 'renameThing' as Proposal['kind'], rationale: undefined },
+                status: 'rejected',
+            })
+        )
+        expect(blocks[0].text?.text).toBe('✏️ Update speaker Alice')
     })
 
     test('caps the number of field rows and keeps the diff on decided cards', () => {

@@ -2,19 +2,13 @@ import * as React from 'react'
 import { Alert, Box, Button, Chip, CircularProgress, Paper, Stack, Typography } from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
+import { IRREVERSIBLE_WARNING, isDestructive, proposalKindMeta } from './proposalKinds'
 import { ProposalEntry } from './types'
 
 export type ProposalCardProps = {
     entry: ProposalEntry
     onApply: (id: string) => void
     onReject: (id: string) => void
-}
-
-const labelForKind: Record<ProposalEntry['proposal']['kind'], string> = {
-    patchSpeaker: 'Update speaker',
-    patchSession: 'Update session',
-    patchEvent: 'Update event',
-    deleteSpeaker: 'Delete speaker',
 }
 
 const renderValue = (value: unknown) => {
@@ -26,7 +20,8 @@ const renderValue = (value: unknown) => {
 
 export const ProposalCard = ({ entry, onApply, onReject }: ProposalCardProps) => {
     const { proposal, status, error } = entry
-    const isDelete = proposal.kind === 'deleteSpeaker'
+    const meta = proposalKindMeta(proposal.kind)
+    const isDelete = isDestructive(proposal)
     const beforeKeys = Object.keys(proposal.diff.before ?? {})
     const afterKeys = Object.keys(proposal.diff.after ?? {})
     const allKeys = Array.from(new Set([...beforeKeys, ...afterKeys]))
@@ -34,7 +29,7 @@ export const ProposalCard = ({ entry, onApply, onReject }: ProposalCardProps) =>
     return (
         <Paper variant="outlined" sx={{ borderColor: isDelete ? 'error.main' : 'warning.main', p: 1.5, my: 1 }}>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                <Chip size="small" label={labelForKind[proposal.kind]} color={isDelete ? 'error' : 'warning'} />
+                <Chip size="small" label={meta.label} color={isDelete ? 'error' : 'warning'} />
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {proposal.target.label || proposal.target.id}
                 </Typography>
@@ -43,6 +38,16 @@ export const ProposalCard = ({ entry, onApply, onReject }: ProposalCardProps) =>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                     {proposal.summary}
                 </Typography>
+            )}
+            {isDelete && (
+                <Alert severity="error" sx={{ py: 0, mb: 1 }}>
+                    {IRREVERSIBLE_WARNING}
+                </Alert>
+            )}
+            {meta.effect && (
+                <Alert severity="info" sx={{ py: 0, mb: 1 }}>
+                    {meta.effect}
+                </Alert>
             )}
             {proposal.rationale && (
                 <Typography
@@ -53,50 +58,52 @@ export const ProposalCard = ({ entry, onApply, onReject }: ProposalCardProps) =>
                 </Typography>
             )}
 
-            <Box
-                sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'auto 1fr 1fr',
-                    columnGap: 1,
-                    rowGap: 0.5,
-                    fontSize: '0.85rem',
-                    mb: 1.5,
-                }}>
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                    field
-                </Typography>
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                    before
-                </Typography>
-                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                    after
-                </Typography>
-                {isDelete ? (
-                    <>
-                        <Typography variant="caption">document</Typography>
-                        <Typography variant="caption" component="div">
-                            {renderValue(proposal.diff.before)}
-                        </Typography>
-                        <Typography variant="caption" component="div" color="error">
-                            (deleted)
-                        </Typography>
-                    </>
-                ) : (
-                    allKeys.map((k) => (
-                        <React.Fragment key={k}>
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                                {k}
-                            </Typography>
-                            <Typography variant="caption" component="div" color="text.secondary">
-                                {renderValue((proposal.diff.before as any)?.[k])}
-                            </Typography>
+            {(isDelete || allKeys.length > 0) && (
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'auto 1fr 1fr',
+                        columnGap: 1,
+                        rowGap: 0.5,
+                        fontSize: '0.85rem',
+                        mb: 1.5,
+                    }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        field
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        before
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        after
+                    </Typography>
+                    {isDelete ? (
+                        <>
+                            <Typography variant="caption">document</Typography>
                             <Typography variant="caption" component="div">
-                                {renderValue((proposal.diff.after as any)?.[k])}
+                                {renderValue(proposal.diff.before)}
                             </Typography>
-                        </React.Fragment>
-                    ))
-                )}
-            </Box>
+                            <Typography variant="caption" component="div" color="error">
+                                (deleted)
+                            </Typography>
+                        </>
+                    ) : (
+                        allKeys.map((k) => (
+                            <React.Fragment key={k}>
+                                <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                                    {k}
+                                </Typography>
+                                <Typography variant="caption" component="div" color="text.secondary">
+                                    {renderValue((proposal.diff.before as any)?.[k])}
+                                </Typography>
+                                <Typography variant="caption" component="div">
+                                    {renderValue((proposal.diff.after as any)?.[k])}
+                                </Typography>
+                            </React.Fragment>
+                        ))
+                    )}
+                </Box>
+            )}
 
             {error && (
                 <Alert severity="error" sx={{ mb: 1 }}>

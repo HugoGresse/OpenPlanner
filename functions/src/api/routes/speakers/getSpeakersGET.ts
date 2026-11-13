@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SpeakerDao } from '../../dao/speakerDao'
+import { Speaker } from '../../../types'
 
 const ApiSocialSchema = Type.Object({
     name: Type.String(),
@@ -65,6 +66,29 @@ export const getSpeakersGETSchema = {
     security: [{ apiKey: [] }],
 }
 
+export const toApiSpeaker = (s: Speaker, includePrivate = false): ApiSpeakerType => {
+    const out: ApiSpeakerType = {
+        id: s.id,
+        conferenceHallId: s.conferenceHallId ?? null,
+        name: s.name,
+        pronouns: s.pronouns ?? null,
+        jobTitle: s.jobTitle ?? null,
+        bio: s.bio ?? null,
+        company: s.company ?? null,
+        companyLogoUrl: s.companyLogoUrl ?? null,
+        geolocation: s.geolocation ?? null,
+        photoUrl: s.photoUrl ?? null,
+        socials: s.socials ?? [],
+    }
+    if (s.customFields !== undefined) out.customFields = s.customFields
+    if (includePrivate) {
+        out.email = s.email ?? null
+        out.phone = s.phone ?? null
+        out.note = s.note ?? null
+    }
+    return out
+}
+
 export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
     return async (
         request: FastifyRequest<{
@@ -80,30 +104,7 @@ export const getSpeakersRouteHandler = (fastify: FastifyInstance) => {
             const speakers = await SpeakerDao.getSpeakers(fastify.firebase, eventId)
             const page = speakers.slice(offset, offset + limit)
 
-            const result: ApiSpeakerType[] = page.map((s) => {
-                const out: ApiSpeakerType = {
-                    id: s.id,
-                    conferenceHallId: s.conferenceHallId ?? null,
-                    name: s.name,
-                    pronouns: s.pronouns ?? null,
-                    jobTitle: s.jobTitle ?? null,
-                    bio: s.bio ?? null,
-                    company: s.company ?? null,
-                    companyLogoUrl: s.companyLogoUrl ?? null,
-                    geolocation: s.geolocation ?? null,
-                    photoUrl: s.photoUrl ?? null,
-                    socials: s.socials ?? [],
-                }
-                if (s.customFields !== undefined) out.customFields = s.customFields
-                if (includePrivate) {
-                    out.email = s.email ?? null
-                    out.phone = s.phone ?? null
-                    out.note = s.note ?? null
-                }
-                return out
-            })
-
-            reply.status(200).send(result)
+            reply.status(200).send(page.map((speaker) => toApiSpeaker(speaker, includePrivate)))
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : 'Unknown error'
             reply.status(400).send(`Failed to list speakers: ${msg}`)

@@ -3,7 +3,7 @@ import Type, { Static } from 'typebox'
 import { JobPostDao } from '../../dao/jobPostDao'
 import { JobStatus } from '../../../../../src/constants/jobStatus'
 
-const TypeBoxJobPostStatus = Type.Object({
+export const TypeBoxJobPostStatus = Type.Object({
     status: Type.Enum(JobStatus as Record<string, string>),
 })
 

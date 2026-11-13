@@ -1,3 +1,4 @@
+import { truncate } from '../../other/truncate'
 import { ChatAgentMessage, MAX_CONTENT_LENGTH, MAX_MESSAGES } from '../chat/chatAgent'
 
 export type SlackThreadMessage = {
@@ -20,7 +21,7 @@ export const SLACK_ACTION_IDS = {
 
 export const MESSAGE_TEXT_LIMIT = 39000
 
-export const truncate = (text: string, limit: number) => (text.length > limit ? `${text.slice(0, limit - 1)}…` : text)
+export { truncate }
 
 // Slack mrkdwn treats & < > as control characters (entities, links, mentions).
 export const escapeMrkdwn = (text: string): string =>

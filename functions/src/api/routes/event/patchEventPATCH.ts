@@ -39,6 +39,7 @@ export const SpeakerCustomFieldSchema = Type.Object({
     name: Type.String(),
     type: Type.Union([Type.Literal('boolean'), Type.Literal('text')]),
     privacy: Type.Union([Type.Literal('public'), Type.Literal('private')]),
+    editableBySpeaker: Type.Optional(Type.Boolean()),
 })
 
 export const TypeBoxPatchEvent = Type.Object(

@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SponsorDao } from '../../dao/sponsorDao'
-import { Sponsor } from '../../../../../src/types'
+import { Sponsor, SponsorCategory } from '../../../../../src/types'
 
 const ApiSponsorSchema = Type.Object({
     id: Type.String(),
@@ -18,7 +18,7 @@ const ApiSponsorCategorySchema = Type.Object({
     order: Type.Optional(Type.Number()),
     sponsors: Type.Array(ApiSponsorSchema),
 })
-type ApiSponsorCategoryType = Static<typeof ApiSponsorCategorySchema>
+export type ApiSponsorCategoryType = Static<typeof ApiSponsorCategorySchema>
 
 export type GetSponsorsGETTypes = {
     Params: { eventId: string }
@@ -51,31 +51,29 @@ export const getSponsorsGETSchema = {
     security: [{ apiKey: [] }],
 }
 
+export const toApiSponsorCategory = (cat: SponsorCategory): ApiSponsorCategoryType => ({
+    id: cat.id,
+    name: cat.name,
+    ...(cat.order !== undefined ? { order: cat.order } : {}),
+    sponsors: (cat.sponsors ?? []).map((s: Sponsor) => {
+        const sponsor: Static<typeof ApiSponsorSchema> = {
+            id: s.id,
+            name: s.name,
+            logoUrl: s.logoUrl ?? '',
+        }
+        if (s.website !== undefined) sponsor.website = s.website ?? null
+        if (s.jobPostToken !== undefined) sponsor.jobPostToken = s.jobPostToken ?? null
+        if (s.customFields !== undefined) sponsor.customFields = s.customFields
+        return sponsor
+    }),
+})
+
 export const getSponsorsRouteHandler = (fastify: FastifyInstance) => {
-    return async (
-        request: FastifyRequest<{ Params: { eventId: string } }>,
-        reply: FastifyReply
-    ) => {
+    return async (request: FastifyRequest<{ Params: { eventId: string } }>, reply: FastifyReply) => {
         try {
             const { eventId } = request.params
             const categories = await SponsorDao.getSponsors(fastify.firebase, eventId)
-            const result: ApiSponsorCategoryType[] = categories.map((cat) => ({
-                id: cat.id,
-                name: cat.name,
-                ...(cat.order !== undefined ? { order: cat.order } : {}),
-                sponsors: (cat.sponsors ?? []).map((s: Sponsor) => {
-                    const sponsor: Static<typeof ApiSponsorSchema> = {
-                        id: s.id,
-                        name: s.name,
-                        logoUrl: s.logoUrl ?? '',
-                    }
-                    if (s.website !== undefined) sponsor.website = s.website ?? null
-                    if (s.jobPostToken !== undefined) sponsor.jobPostToken = s.jobPostToken ?? null
-                    if (s.customFields !== undefined) sponsor.customFields = s.customFields
-                    return sponsor
-                }),
-            }))
-            reply.status(200).send(result)
+            reply.status(200).send(categories.map(toApiSponsorCategory))
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : 'Unknown error'
             reply.status(400).send(`Failed to list sponsors: ${msg}`)

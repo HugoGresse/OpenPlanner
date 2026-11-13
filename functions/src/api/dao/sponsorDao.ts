@@ -34,7 +34,8 @@ export class SponsorDao {
                     id: sponsorId,
                     name: sponsor.name,
                     logoUrl: sponsor.logoUrl || '',
-                    website: sponsor.website,
+                    // Firestore rejects undefined: an omitted website is stored as null.
+                    website: sponsor.website ?? null,
                 }),
             })
 
