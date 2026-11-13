@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { SessionDao } from '../../dao/sessionDao'
 import { dateToString } from '../../other/dateConverter'
+import { Session as SessionConverted } from '../../../../../src/types'
 
 const ApiDates = Type.Union([
     Type.Object({
@@ -99,6 +100,43 @@ export const getSessionsGETSchema = {
     security: [{ apiKey: [] }],
 }
 
+export const toApiSession = (s: SessionConverted): ApiSessionType => {
+    const a = s as any
+    const out: ApiSessionType = {
+        id: a.id,
+        conferenceHallId: a.conferenceHallId ?? null,
+        title: a.title ?? '',
+        abstract: a.abstract ?? null,
+        dates: s.dates
+            ? {
+                  start: dateToString(s.dates.start),
+                  end: dateToString(s.dates.end),
+              }
+            : null,
+        durationMinutes: a.durationMinutes ?? 0,
+        speakers: a.speakers ?? [],
+        trackId: a.trackId ?? null,
+        language: a.language ?? null,
+        level: a.level ?? null,
+        presentationLink: a.presentationLink ?? null,
+        videoLink: a.videoLink ?? null,
+        imageUrl: a.imageUrl ?? null,
+        format: a.format ?? null,
+        category: a.category ?? null,
+        image: a.image ?? null,
+        showInFeedback: a.showInFeedback ?? false,
+        hideTrackTitle: a.hideTrackTitle ?? false,
+        teaserVideoUrl: a.teaserVideoUrl ?? null,
+        teaserImageUrl: a.teaserImageUrl ?? null,
+        teasingHidden: a.teasingHidden ?? false,
+        teasingPosts: a.teasingPosts ?? null,
+    }
+    if (a.tags !== undefined) out.tags = a.tags
+    if (a.extendHeight !== undefined) out.extendHeight = a.extendHeight
+    if (a.extendWidth !== undefined) out.extendWidth = a.extendWidth
+    return out
+}
+
 export const getSessionsRouteHandler = (fastify: FastifyInstance) => {
     return async (
         request: FastifyRequest<{
@@ -127,44 +165,7 @@ export const getSessionsRouteHandler = (fastify: FastifyInstance) => {
 
             const page = sessions.slice(offset, offset + limit)
 
-            const result: ApiSessionType[] = page.map((s) => {
-                const a = s as any
-                const out: ApiSessionType = {
-                    id: a.id,
-                    conferenceHallId: a.conferenceHallId ?? null,
-                    title: a.title ?? '',
-                    abstract: a.abstract ?? null,
-                    dates: s.dates
-                        ? {
-                              start: dateToString(s.dates.start),
-                              end: dateToString(s.dates.end),
-                          }
-                        : null,
-                    durationMinutes: a.durationMinutes ?? 0,
-                    speakers: a.speakers ?? [],
-                    trackId: a.trackId ?? null,
-                    language: a.language ?? null,
-                    level: a.level ?? null,
-                    presentationLink: a.presentationLink ?? null,
-                    videoLink: a.videoLink ?? null,
-                    imageUrl: a.imageUrl ?? null,
-                    format: a.format ?? null,
-                    category: a.category ?? null,
-                    image: a.image ?? null,
-                    showInFeedback: a.showInFeedback ?? false,
-                    hideTrackTitle: a.hideTrackTitle ?? false,
-                    teaserVideoUrl: a.teaserVideoUrl ?? null,
-                    teaserImageUrl: a.teaserImageUrl ?? null,
-                    teasingHidden: a.teasingHidden ?? false,
-                    teasingPosts: a.teasingPosts ?? null,
-                }
-                if (a.tags !== undefined) out.tags = a.tags
-                if (a.extendHeight !== undefined) out.extendHeight = a.extendHeight
-                if (a.extendWidth !== undefined) out.extendWidth = a.extendWidth
-                return out
-            })
-
-            reply.status(200).send(result)
+            reply.status(200).send(page.map(toApiSession))
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : 'Unknown error'
             reply.status(400).send(`Failed to list sessions: ${msg}`)

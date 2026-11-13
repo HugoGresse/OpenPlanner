@@ -356,6 +356,61 @@ describe('Slack routes', () => {
         expect(update.text).toBe('✅ Applied: Update speaker Alice')
     })
 
+    test('Apply replays a POST with its body and a DELETE without one (new proposal kinds)', async () => {
+        mockEventLoad()
+        vi.spyOn(SlackProposalDao, 'updateStatus').mockResolvedValue()
+        const auditSpy = vi.spyOn(AiActionDao, 'addAction').mockResolvedValue('a1')
+        fetchSpy.mockResolvedValue(slackOk())
+        const originalInject = fastify.inject.bind(fastify)
+        const injectSpy = vi
+            .spyOn(fastify, 'inject')
+            .mockImplementation(((opts: { url: string }) =>
+                opts.url.includes('/team')
+                    ? Promise.resolve({ statusCode: 201, body: '' })
+                    : originalInject(opts as never)) as never)
+        const claim = vi.spyOn(SlackProposalDao, 'claimProposal')
+        const click = () => {
+            const raw = interaction(SLACK_ACTION_IDS.applyProposal, `${eventId}|call_1`)
+            return fastify.inject({
+                method: 'POST',
+                url: interactionsUrl,
+                headers: signedHeaders(raw, 'application/x-www-form-urlencoded'),
+                payload: raw,
+            })
+        }
+        const teamRecord = (proposal: SlackProposalRecord['proposal']) => ({ ...pendingRecord, proposal })
+
+        claim.mockResolvedValueOnce(
+            teamRecord({
+                kind: 'addTeamMember',
+                summary: 'Add Ada to the team',
+                endpoint: { method: 'POST', path: `/v1/${eventId}/team`, body: { name: 'Ada', id: 'ada' } },
+                target: { id: 'ada', label: 'Ada' },
+                diff: { before: {}, after: { name: 'Ada' } },
+            })
+        )
+        expect((await click()).statusCode).toBe(200)
+        claim.mockResolvedValueOnce(
+            teamRecord({
+                kind: 'deleteTeamMember',
+                summary: 'Remove Ada from the team (cannot be undone)',
+                endpoint: { method: 'DELETE', path: `/v1/${eventId}/team/ada` },
+                target: { id: 'ada', label: 'Ada' },
+                diff: { before: { name: 'Ada' }, after: null },
+            })
+        )
+        expect((await click()).statusCode).toBe(200)
+
+        const replays = injectSpy.mock.calls
+            .map(([opts]) => opts as { method: string; url: string; payload?: unknown })
+            .filter((opts) => opts.url.includes('/team'))
+        expect(replays).toEqual([
+            { method: 'POST', url: `/v1/${eventId}/team?apiKey=op_key`, payload: { name: 'Ada', id: 'ada' } },
+            { method: 'DELETE', url: `/v1/${eventId}/team/ada?apiKey=op_key`, payload: undefined },
+        ])
+        expect(auditSpy.mock.calls.map((call) => call[2].tool)).toEqual(['addTeamMember', 'deleteTeamMember'])
+    })
+
     test('Reject button never hits the API and marks the proposal rejected', async () => {
         mockEventLoad()
         vi.spyOn(SlackProposalDao, 'claimProposal').mockResolvedValue(pendingRecord)

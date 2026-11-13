@@ -42,7 +42,7 @@ const buildChatUrl = (eventId: string, eventApiKey: string) => {
 }
 
 const buildHostedUrl = (path: string, eventApiKey: string) => {
-    // Non-streaming endpoints (PATCH/DELETE/POST audit log) go through the
+    // Non-streaming endpoints (proposal REST calls, POST audit log) go through the
     // Hosting-backed API URL so they share the same auth/CORS path as the
     // rest of the admin app.
     const apiUrl = new URL(API_URL as string)
@@ -367,9 +367,7 @@ const applyEvent = (
             if (last && last.role === 'assistant') {
                 const needsSeparator =
                     last.pendingSeparator && last.content.length > 0 && !last.content.endsWith('\n\n')
-                const delta = needsSeparator
-                    ? `${last.content.endsWith('\n') ? '\n' : '\n\n'}${evt.delta}`
-                    : evt.delta
+                const delta = needsSeparator ? `${last.content.endsWith('\n') ? '\n' : '\n\n'}${evt.delta}` : evt.delta
                 turns[turns.length - 1] = {
                     ...last,
                     content: last.content + delta,

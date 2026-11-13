@@ -32,3 +32,10 @@ export const TypeBoxCreateTeamMember = Type.Object(
     },
     { additionalProperties: false }
 )
+
+const { id: _id, name: _name, ...patchableMemberFields } = TypeBoxCreateTeamMember.properties
+
+export const TypeBoxPatchTeamMember = Type.Object(
+    { ...patchableMemberFields, name: Type.Optional(Type.String({ minLength: 1, maxLength: MAX_STRING_LENGTH })) },
+    { additionalProperties: false, minProperties: 1 }
+)

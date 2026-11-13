@@ -1,3 +1,4 @@
+import firebase from 'firebase-admin'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { v4 as uuidv4 } from 'uuid'
@@ -55,19 +56,38 @@ const NEW_SESSION_DEFAULTS: Partial<Session & { tags: string[] }> = {
     teasingHidden: false,
 }
 
-// Returns the message of the first invalid input, or null. Pure apart from the speaker lookup.
-const validateCreateBody = async (
-    fastify: FastifyInstance,
+// Returns the message of the first invalid input, or null. Pure apart from the event and speaker lookups.
+export const validateCreateSessionBody = async (
+    firebaseApp: firebase.app.App,
     eventId: string,
     body: CreateSessionType
 ): Promise<string | null> => {
     if (!body.title.trim()) return 'title must not be blank'
-    const event = await EventDao.getEvent(fastify.firebase, eventId)
+    const event = await EventDao.getEvent(firebaseApp, eventId)
     const referenceError = findInvalidSessionReference(event, body)
     if (referenceError) return referenceError
-    const missing = await SpeakerDao.findMissingSpeakerIds(fastify.firebase, eventId, body.speakers || [])
+    const missing = await SpeakerDao.findMissingSpeakerIds(firebaseApp, eventId, body.speakers || [])
     if (missing.length > 0) return `Unknown speaker id(s): ${missing.join(', ')}`
     return null
+}
+
+type NewSession = Partial<Session> & { id: string }
+
+// Applies the admin defaults and parses the dates; the error is the 400 message.
+export const toNewSession = (
+    body: CreateSessionType,
+    sessionId: string
+): { session: NewSession; error?: undefined } | { error: string } => {
+    const { id: _id, dates, ...rest } = body
+    const parsed = parseSessionDates(dates)
+    if (parsed.error) return { error: parsed.error }
+    const session: NewSession = { ...NEW_SESSION_DEFAULTS, ...rest, id: sessionId }
+    if (parsed.dates) {
+        const { start = null, end = null } = parsed.dates
+        if (!start !== !end) return { error: 'dates.start and dates.end must be given together' }
+        session.dates = start && end ? { start, end } : null
+    }
+    return { session }
 }
 
 export const createSessionRouteHandler = (fastify: FastifyInstance) => {
@@ -76,32 +96,20 @@ export const createSessionRouteHandler = (fastify: FastifyInstance) => {
         reply: FastifyReply
     ) => {
         const { eventId } = request.params
-        const { id, dates, ...rest } = request.body
-        const sessionId = id || uuidv4()
+        const sessionId = request.body.id || uuidv4()
 
         try {
-            const inputError = await validateCreateBody(fastify, eventId, request.body)
+            const inputError = await validateCreateSessionBody(fastify.firebase, eventId, request.body)
             if (inputError) {
                 reply.status(400).send(inputError)
                 return
             }
-
-            const parsed = parseSessionDates(dates)
-            if (parsed.error) {
-                reply.status(400).send(parsed.error)
+            const built = toNewSession(request.body, sessionId)
+            if (built.error !== undefined) {
+                reply.status(400).send(built.error)
                 return
             }
-            const session: Partial<Session> & { id: string } = { ...NEW_SESSION_DEFAULTS, ...rest, id: sessionId }
-            if (parsed.dates) {
-                const { start = null, end = null } = parsed.dates
-                if (!start !== !end) {
-                    reply.status(400).send('dates.start and dates.end must be given together')
-                    return
-                }
-                session.dates = start && end ? { start, end } : null
-            }
-
-            await SessionDao.createSession(fastify.firebase, eventId, session)
+            await SessionDao.createSession(fastify.firebase, eventId, built.session)
             reply.status(201).send({ id: sessionId })
         } catch (error: unknown) {
             replyDaoError(reply, error, {

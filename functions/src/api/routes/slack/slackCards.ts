@@ -1,4 +1,5 @@
-import { Proposal, ProposalKind } from '../chat/proposalTools'
+import { proposalKindMeta } from '../../../../../src/events/page/chat/proposalKinds'
+import { Proposal } from '../chat/toolKit'
 import { SLACK_ACTION_IDS, SlackProposalStatus, escapeMrkdwn, truncate } from './slackFormat'
 import { encodeActionValue } from './slackRouting'
 
@@ -6,15 +7,6 @@ import { encodeActionValue } from './slackRouting'
 const HEADER_LIMIT = 150
 const FIELD_VALUE_LIMIT = 700
 const MAX_FIELD_ROWS = 8
-
-type KindMeta = { emoji: string; entity: string; destructive: boolean }
-
-const KIND_META: Record<ProposalKind, KindMeta> = {
-    patchSpeaker: { emoji: '🧑‍🎤', entity: 'Speaker', destructive: false },
-    patchSession: { emoji: '🎤', entity: 'Session', destructive: false },
-    patchEvent: { emoji: '📅', entity: 'Event', destructive: false },
-    deleteSpeaker: { emoji: '🗑️', entity: 'Speaker', destructive: true },
-}
 
 const STATUS_LABELS: Record<SlackProposalStatus, string> = {
     pending: '⏳ Pending review',
@@ -111,12 +103,14 @@ export const buildProposalBlocks = ({
     decidedBy,
     error,
 }: ProposalBlocksArgs) => {
-    const meta = KIND_META[proposal.kind]
+    const meta = proposalKindMeta(proposal.kind)
     const target = [meta.entity, proposal.target.label, `\`${proposal.target.id}\``]
         .filter((part): part is string => Boolean(part))
         .map((part, index) => (index === 1 ? escapeMrkdwn(part) : part))
         .join(' · ')
     const blocks: object[] = [{ type: 'header', text: plainText(`${meta.emoji} ${proposal.summary}`) }, context(target)]
+    if (meta.destructive) blocks.push(context('⚠️ *Irreversible:* applying this deletes data for good.'))
+    if (meta.effect) blocks.push(context(`ℹ️ ${escapeMrkdwn(meta.effect)}`))
     if (proposal.rationale) blocks.push(context(`💬 _${escapeMrkdwn(truncate(proposal.rationale, 500))}_`))
     blocks.push(...diffBlocks(proposal), { type: 'divider' })
 

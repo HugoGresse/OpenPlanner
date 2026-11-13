@@ -11,6 +11,11 @@ import {
     DeleteTeamMemberDELETETypes,
     deleteTeamMemberRouteHandler,
 } from './deleteTeamMemberDELETE'
+import {
+    updateTeamMemberPATCHSchema,
+    UpdateTeamMemberPATCHTypes,
+    updateTeamMemberRouteHandler,
+} from './updateTeamMemberPATCH'
 
 export const teamRoutes = (fastify: FastifyInstance, options: any, done: () => any) => {
     fastify.get<GetTeamGETTypes>(
@@ -27,6 +32,16 @@ export const teamRoutes = (fastify: FastifyInstance, options: any, done: () => a
             preHandler: fastify.auth([fastify.verifyApiKey]),
         },
         createTeamMemberRouteHandler(fastify)
+    )
+
+    fastify.patch<UpdateTeamMemberPATCHTypes>(
+        '/v1/:eventId/team/:memberId',
+        {
+            schema: updateTeamMemberPATCHSchema,
+            validatorCompiler: strictBodyValidatorCompiler,
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
+        updateTeamMemberRouteHandler(fastify)
     )
 
     fastify.delete<DeleteTeamMemberDELETETypes>(

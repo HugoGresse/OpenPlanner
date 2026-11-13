@@ -1,6 +1,6 @@
 import firebase from 'firebase-admin'
 import { TeamMember } from '../../../../src/types'
-import { deleteDocumentOr404 } from './documentHelpers'
+import { deleteDocumentOr404, updateDocumentOr404 } from './documentHelpers'
 
 export class TeamDao {
     public static async getTeams(
@@ -60,5 +60,15 @@ export class TeamDao {
     public static async deleteMember(firebaseApp: firebase.app.App, eventId: string, memberId: string): Promise<void> {
         const ref = firebaseApp.firestore().collection(`events/${eventId}/team`).doc(memberId)
         await deleteDocumentOr404(ref, 'Team member not found')
+    }
+
+    public static async updateMember(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        memberId: string,
+        patch: Partial<Omit<TeamMember, 'id'>>
+    ): Promise<void> {
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/team`).doc(memberId)
+        await updateDocumentOr404(ref, patch, 'Team member not found')
     }
 }

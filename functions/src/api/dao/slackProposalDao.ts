@@ -1,5 +1,5 @@
 import firebase from 'firebase-admin'
-import { Proposal } from '../routes/chat/proposalTools'
+import { Proposal } from '../routes/chat/toolKit'
 import { SlackProposalStatus } from '../routes/slack/slackFormat'
 
 const { FieldValue } = firebase.firestore
