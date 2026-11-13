@@ -68,7 +68,7 @@ describe('buildProposalBlocks', () => {
         })
         const blocks = blocksOf(message)
         expect(blocks[0].text?.text).toBe('🗑️ Delete speaker Alice')
-        expect(blocks[2].elements?.[0].text).toContain('*Irreversible:*')
+        expect(blocks[2].elements?.[0].text).toContain('Irreversible: applying this deletes data for good.')
         expect(blocks[3].fields?.map((f) => f.text)).toEqual(['*name*', 'Alice'])
         const apply = blocks.find((b) => b.type === 'actions')?.elements?.[0]
         expect(apply).toMatchObject({ style: 'danger', text: { text: 'Delete' } })
@@ -115,6 +115,25 @@ describe('buildProposalBlocks', () => {
         expect(deploy.map((b) => b.type)).toEqual(['header', 'context', 'context', 'divider', 'actions'])
         expect(deploy[2].elements?.[0].text).toContain('Publishes the current data to the public website')
         expect(deploy[4].elements?.[0]).toMatchObject({ style: 'primary', text: { text: 'Apply' } })
+    })
+
+    test('the delete confirm dialog stays under the Slack 300-char limit', () => {
+        const blocks = blocksOf(
+            buildProposalBlocks({
+                eventId: 'evt',
+                proposalId: 'p7',
+                proposal: {
+                    kind: 'deleteFaqQuestion',
+                    summary: `Delete FAQ question "${'q'.repeat(400)}"`,
+                    endpoint: { method: 'DELETE', path: '/v1/evt/faq/categories/c/questions/q' },
+                    target: { id: 'q' },
+                    diff: { before: { question: 'q' }, after: null },
+                },
+                status: 'pending',
+            })
+        )
+        const apply = blocks.find((b) => b.type === 'actions')?.elements?.[0]
+        expect(apply.confirm.text.text.length).toBeLessThanOrEqual(300)
     })
 
     test('a stored proposal of an unknown kind still renders', () => {

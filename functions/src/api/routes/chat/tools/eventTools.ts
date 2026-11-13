@@ -1,18 +1,25 @@
 import { EventDao } from '../../../dao/eventDao'
+import { Event } from '../../../../types'
 import { toEventDetails } from '../../event/getEventDetailsGET'
 import { TypeBoxPatchEvent } from '../../event/patchEventPATCH'
 import {
     ChatTool,
+    checkDateBounds,
     endpointFor,
     objectSchema,
-    pickSchemaFields,
+    parseBody,
     proposed,
     RATIONALE_PARAM,
     rejected,
     snapshot,
     toJsonSchema,
-    validateBody,
 } from '../toolKit'
+
+// The GET /event/details DTO without `files`: the private export path is a capability URL to speaker contacts.
+const toToolEvent = (event: Event) => {
+    const { files: _files, ...details } = toEventDetails(event)
+    return details
+}
 
 export const EVENT_TOOLS: ChatTool[] = [
     {
@@ -20,9 +27,9 @@ export const EVENT_TOOLS: ChatTool[] = [
         name: 'getEvent',
         capabilities: ['event.get'],
         description:
-            'Fetch the event settings, same as GET /event/details: name, dates, location, theme, tracks / formats / categories (their ids are what sessions reference), custom-field schemas, public flags. Secrets are never included.',
+            'Fetch the event settings, same as GET /event/details: name, dates, timezone, location, theme, tracks / formats / categories (their ids are what sessions reference), custom-field schemas, public flags. Secrets and export paths are never included.',
         parameters: objectSchema({}),
-        run: async ({ firebaseApp, eventId }) => toEventDetails(await EventDao.getEvent(firebaseApp, eventId)),
+        run: async ({ firebaseApp, eventId }) => toToolEvent(await EventDao.getEvent(firebaseApp, eventId)),
     },
     {
         type: 'proposal',
@@ -30,15 +37,16 @@ export const EVENT_TOOLS: ChatTool[] = [
         kind: 'patchEvent',
         capabilities: ['event.update'],
         description:
-            'Propose a partial update to event-level settings (name, dates, location, theme, tracks/formats/categories, custom-field schemas, public flags). Array fields REPLACE the stored list: read them with getEvent, edit, and send the full list. Does NOT apply the change: emits a proposal for user review.',
+            'Propose a partial update to event-level settings (name, dates, location, theme, tracks/formats/categories, custom-field schemas, public flags). Array fields REPLACE the stored list: read them with getEvent, edit, and send the full list back unchanged apart from your edit. Dates are ISO 8601 with a UTC offset. Does NOT apply the change: emits a proposal for user review.',
         parameters: objectSchema({ patch: toJsonSchema(TypeBoxPatchEvent), rationale: RATIONALE_PARAM }, ['patch']),
         build: async ({ firebaseApp, eventId }, args) => {
-            const patch = pickSchemaFields(args?.patch, TypeBoxPatchEvent)
-            if (Object.keys(patch).length === 0) return rejected('patch must contain at least one allowed field')
-            const invalid = validateBody(TypeBoxPatchEvent, patch)
-            if (invalid) return rejected(invalid)
-            const event = toEventDetails(await EventDao.getEvent(firebaseApp, eventId))
-            return proposed('patchEvent', args, {
+            const parsed = parseBody(TypeBoxPatchEvent, args?.patch, { nonEmpty: true })
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const patch = parsed.value
+            const dateError = checkDateBounds(patch.dates)
+            if (dateError) return rejected(dateError)
+            const event = toToolEvent(await EventDao.getEvent(firebaseApp, eventId))
+            return proposed(args, {
                 summary: `Update event ${event.name || eventId}`,
                 endpoint: endpointFor('event.update', { eventId }, patch),
                 target: { id: eventId, label: event.name || eventId },
@@ -56,9 +64,9 @@ export const EVENT_TOOLS: ChatTool[] = [
         parameters: objectSchema({ rationale: RATIONALE_PARAM }),
         build: async ({ firebaseApp, eventId }, args) => {
             const event = await EventDao.getEvent(firebaseApp, eventId)
-            return proposed('deployEvent', args, {
+            return proposed(args, {
                 summary: `Update the website of ${event.name || eventId}`,
-                endpoint: endpointFor('publish.deploy', { eventId }, {}),
+                endpoint: endpointFor('publish.deploy', { eventId }),
                 target: { id: eventId, label: event.name || eventId },
                 diff: { before: {}, after: {} },
             })

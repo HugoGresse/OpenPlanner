@@ -9,7 +9,7 @@ import { OPENPLANNER_CONTACT_EMAIL } from '../../other/speakerEmailFooter'
 import { renderRejectedEmail } from '../../other/renderPendingEditDecisionEmail'
 import { Speaker } from '../../../types'
 
-const TypeBoxRejectBody = Type.Object(
+export const TypeBoxRejectBody = Type.Object(
     {
         reviewerUid: Type.Optional(Type.String({ maxLength: 200 })),
         reviewNote: Type.Optional(Type.String({ maxLength: 2000 })),

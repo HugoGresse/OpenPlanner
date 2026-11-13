@@ -44,7 +44,7 @@ describe('speaker and pending edit tools', () => {
         const proposal = expectProposal(
             await propose('proposeDeleteSpeaker', { speakerId: 'sp1', expectedSpeakerName: 'Alice' })
         )
-        expect(proposal.summary).toBe('Delete speaker Alice (cannot be undone)')
+        expect(proposal.summary).toBe('Delete speaker Alice')
         expect(proposal.diff.before).toMatchObject({ id: 'sp1', name: 'Alice', company: 'ACME' })
         expect(proposal.diff.before).not.toHaveProperty('email')
     })
@@ -72,6 +72,10 @@ describe('speaker and pending edit tools', () => {
                 reviewNote: 'Use the legal name',
             })
         )
+        expect(reject.diff).toEqual({
+            before: { status: 'pending', requestedChange: { company: 'Initech' } },
+            after: { status: 'rejected', requestedChange: null, reviewNote: 'Use the legal name' },
+        })
         expect(reject.endpoint).toEqual({
             method: 'POST',
             path: '/v1/evt/speaker-pending-edits/req1/reject',
@@ -110,6 +114,36 @@ describe('event tools', () => {
         expect(JSON.stringify(event)).not.toContain('secret')
     })
 
+    test('getEvent hides the export paths and round-trips custom fields losslessly', async () => {
+        const speakerCustomFields = [
+            { id: 'tshirt', name: 'T-shirt', type: 'text', privacy: 'private', editableBySpeaker: true },
+        ]
+        vi.mocked(EventDao.getEvent).mockResolvedValue({
+            id: 'evt',
+            name: 'DevFest',
+            files: { public: 'events/evt/public.json', private: 'events/evt/uuid-private.json' },
+            categories: [{ id: 'web', name: 'Web' }],
+            speakerCustomFields,
+        } as never)
+        const event = (await read('getEvent')) as Record<string, unknown>
+        expect(event).not.toHaveProperty('files')
+        expect(event.speakerCustomFields).toEqual(speakerCustomFields)
+
+        const proposal = expectProposal(
+            await propose('proposePatchEvent', { patch: { categories: [{ id: 'web', name: 'Web dev' }] } })
+        )
+        // No undefined color keys: Slack stores the proposal in Firestore.
+        expect(proposal.diff.before).toEqual({ categories: [{ id: 'web', name: 'Web' }] })
+        expect(proposal).not.toHaveProperty('rationale')
+    })
+
+    test('proposePatchEvent rejects dates the PATCH route cannot parse', async () => {
+        expectRejected(
+            await propose('proposePatchEvent', { patch: { dates: { start: 'TBD' } } }),
+            /dates.start must be ISO 8601/
+        )
+    })
+
     test('proposePatchEvent validates against the PATCH /event schema', async () => {
         expectRejected(
             await propose('proposePatchEvent', { patch: { scheduleVisible: 'yes' } }),
@@ -119,12 +153,12 @@ describe('event tools', () => {
         expect(proposal.diff).toEqual({ before: { scheduleVisible: false }, after: { scheduleVisible: true } })
     })
 
-    test('proposeDeployEvent posts an empty JSON body to /deploy', async () => {
+    test('proposeDeployEvent posts to /deploy without a body', async () => {
         const proposal = expectProposal(await propose('proposeDeployEvent', {}))
         expect(proposal).toMatchObject({
             kind: 'deployEvent',
             summary: 'Update the website of DevFest',
-            endpoint: { method: 'POST', path: '/v1/evt/deploy', body: {} },
         })
+        expect(proposal.endpoint).toEqual({ method: 'POST', path: '/v1/evt/deploy' })
     })
 })

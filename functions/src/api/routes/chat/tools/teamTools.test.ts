@@ -7,17 +7,19 @@ const ada = { id: 'ada', name: 'Ada', role: 'Organizer', team: 'core', bio: null
 describe('team tools', () => {
     beforeEach(() => {
         vi.spyOn(TeamDao, 'getTeams').mockResolvedValue({ team: [ada], teams: [] } as never)
+        vi.spyOn(TeamDao, 'getMember').mockImplementation(async (_app, _event, id) => (id === 'ada' ? ada : null))
     })
     afterEach(() => vi.restoreAllMocks())
 
-    test('listTeam returns the members', async () => {
-        expect(await read('listTeam')).toEqual([ada])
+    test('listTeam returns a lean projection unless fields[] asks for more', async () => {
+        expect(await read('listTeam')).toEqual([{ id: 'ada', name: 'Ada', role: 'Organizer', team: 'core' }])
+        expect(await read('listTeam', { fields: ['bio'] })).toEqual([{ id: 'ada', bio: null }])
     })
 
     test('proposeAddTeamMember posts the route body with the slugified id and shows the stored member', async () => {
         const proposal = expectProposal(
             await propose('proposeAddTeamMember', {
-                member: { name: 'Grace Hopper', role: 'Speaker manager', nickname: 'dropped' },
+                member: { name: 'Grace Hopper', role: 'Speaker manager' },
                 rationale: ' new volunteer ',
             })
         )
@@ -39,6 +41,10 @@ describe('team tools', () => {
         expectRejected(await propose('proposeAddTeamMember', { member: { name: 'Ada' } }), /already exists: ada/)
         expectRejected(await propose('proposeAddTeamMember', { member: { role: 'x' } }), /must have required/)
         expectRejected(
+            await propose('proposeAddTeamMember', { member: { name: 'Bob', nickname: 'b' } }),
+            /Unknown field\(s\) "nickname"/
+        )
+        expectRejected(
             await propose('proposeAddTeamMember', { member: { name: 'Bob', photoUrl: 'not a url' } }),
             /photoUrl/
         )
@@ -49,7 +55,7 @@ describe('team tools', () => {
             await propose('proposeUpdateTeamMember', {
                 memberId: 'ada',
                 expectedMemberName: ' ada ',
-                patch: { role: 'Lead', id: 'ignored' },
+                patch: { role: 'Lead' },
             })
         )
         expect(proposal.endpoint).toEqual({ method: 'PATCH', path: '/v1/evt/team/ada', body: { role: 'Lead' } })
@@ -65,7 +71,15 @@ describe('team tools', () => {
         )
         expectRejected(
             await propose('proposeUpdateTeamMember', { memberId: 'ada', expectedMemberName: 'Ada', patch: {} }),
-            'patch must contain at least one allowed field'
+            'patch must contain at least one field'
+        )
+        expectRejected(
+            await propose('proposeUpdateTeamMember', {
+                memberId: 'ada',
+                expectedMemberName: 'Ada',
+                patch: { id: 'grace' },
+            }),
+            /Unknown field\(s\) "id"/
         )
         expectRejected(
             await propose('proposeUpdateTeamMember', {
@@ -83,7 +97,7 @@ describe('team tools', () => {
         )
         expect(proposal).toMatchObject({
             kind: 'deleteTeamMember',
-            summary: 'Remove Ada (Organizer) from the team (cannot be undone)',
+            summary: 'Remove Ada (Organizer) from the team',
             endpoint: { method: 'DELETE', path: '/v1/evt/team/ada' },
             diff: { before: ada, after: null },
         })

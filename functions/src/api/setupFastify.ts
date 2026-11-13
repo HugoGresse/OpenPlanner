@@ -1,6 +1,6 @@
 import { app as firebaseApp } from 'firebase-admin'
 import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
-import Fastify from 'fastify'
+import Fastify, { onRouteHookHandler } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { addContentTypeParserForServerless, addMultipartPassthrough } from './other/addContentTypeParserForServerless'
 import { firebasePlugin } from './dao/firebasePlugin'
@@ -43,13 +43,15 @@ declare module 'fastify' {
 
 export { isDev }
 
-export const setupFastify = () => {
+// `onRoute` sees every route, including the ones declared on the root instance (the capability test needs it).
+export const setupFastify = ({ onRoute }: { onRoute?: onRouteHookHandler } = {}) => {
     const isNodeEnvDev = process.env.NODE_ENV === 'development'
     const isNodeEnvTest = process.env.NODE_ENV === 'test'
 
     const fastify = Fastify({
         logger: isDev() || isNodeEnvDev || isNodeEnvTest,
     }).withTypeProvider<TypeBoxTypeProvider>()
+    if (onRoute) fastify.addHook('onRoute', onRoute)
 
     addMultipartPassthrough(fastify)
     if (!isNodeEnvDev && !isNodeEnvTest) {

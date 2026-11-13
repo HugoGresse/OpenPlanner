@@ -1,15 +1,16 @@
 import { TeamDao } from '../../../dao/teamDao'
 import { TeamMember } from '../../../../../../src/types'
-import { CreateTeamMemberType, toTeamMember } from '../../team/createTeamMemberPOST'
+import { toTeamMember } from '../../team/createTeamMemberPOST'
 import { TypeBoxCreateTeamMember, TypeBoxPatchTeamMember } from '../../team/teamSchemas'
 import {
     ChatTool,
     endpointFor,
     expectedMismatch,
     expectedParam,
-    IRREVERSIBLE,
+    fieldsParam,
     objectSchema,
-    pickSchemaFields,
+    parseBody,
+    projectFields,
     proposed,
     RATIONALE_PARAM,
     rejected,
@@ -18,7 +19,6 @@ import {
     toJsonSchema,
     ToolArgs,
     ToolContext,
-    validateBody,
 } from '../toolKit'
 
 const memberParams = {
@@ -26,11 +26,23 @@ const memberParams = {
     expectedMemberName: expectedParam("member's `name`", 'listTeam'),
 }
 
+const ALLOWED_MEMBER_FIELDS = [
+    'id',
+    'name',
+    'role',
+    'team',
+    'bio',
+    'photoUrl',
+    'socials',
+    'order',
+    'teamOrder',
+] as const
+const DEFAULT_MEMBER_FIELDS = ['id', 'name', 'role', 'team'] as const
+
 const resolveMember = async ({ firebaseApp, eventId }: ToolContext, args: ToolArgs) => {
     const memberId = stringArg(args, 'memberId')
     if (!memberId) return { error: 'memberId is required' }
-    const { team } = await TeamDao.getTeams(firebaseApp, eventId)
-    const member = team.find((item) => item.id === memberId)
+    const member = await TeamDao.getMember(firebaseApp, eventId, memberId)
     if (!member) return { error: `Team member not found: ${memberId}` }
     const mismatch = expectedMismatch({
         arg: 'expectedMemberName',
@@ -50,10 +62,14 @@ export const TEAM_TOOLS: ChatTool[] = [
         type: 'read',
         name: 'listTeam',
         capabilities: ['team.list'],
-        description:
-            'List the organizing team members (id, name, role, team, bio, photoUrl, socials, order, teamOrder). Ids are slugified names such as "ada-lovelace"; `team` groups members.',
-        parameters: objectSchema({}),
-        run: async ({ firebaseApp, eventId }) => (await TeamDao.getTeams(firebaseApp, eventId)).team,
+        description: `List the organizing team members (${DEFAULT_MEMBER_FIELDS.join(
+            ', '
+        )} by default; pass fields[] for bio, photoUrl, socials, order, teamOrder). Ids are slugified names such as "ada-lovelace"; \`team\` groups members.`,
+        parameters: objectSchema({ fields: fieldsParam(ALLOWED_MEMBER_FIELDS) }),
+        run: async ({ firebaseApp, eventId }, args) =>
+            (await TeamDao.getTeams(firebaseApp, eventId)).team.map((member) =>
+                projectFields(member, args.fields, ALLOWED_MEMBER_FIELDS, DEFAULT_MEMBER_FIELDS)
+            ),
     },
     {
         type: 'proposal',
@@ -66,17 +82,16 @@ export const TEAM_TOOLS: ChatTool[] = [
             'member',
         ]),
         build: async ({ firebaseApp, eventId }, args) => {
-            const body = pickSchemaFields(args?.member, TypeBoxCreateTeamMember)
-            const invalid = validateBody(TypeBoxCreateTeamMember, body)
-            if (invalid) return rejected(invalid)
-            const member = toTeamMember(body as CreateTeamMemberType)
+            const parsed = parseBody(TypeBoxCreateTeamMember, args?.member)
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const body = parsed.value
+            const member = toTeamMember(body)
             if (!member.id) return rejected('The name yields an empty id, pass an explicit id')
-            const { team } = await TeamDao.getTeams(firebaseApp, eventId)
-            if (team.some((item) => item.id === member.id)) {
+            if (await TeamDao.getMember(firebaseApp, eventId, member.id)) {
                 return rejected(`Team member already exists: ${member.id}. Use proposeUpdateTeamMember instead.`)
             }
             const { id, ...stored } = member
-            return proposed('addTeamMember', args, {
+            return proposed(args, {
                 summary: `Add ${label(member)} to the team`,
                 endpoint: endpointFor('team.add', { eventId }, { ...body, id }),
                 target: { id, label: member.name },
@@ -96,14 +111,13 @@ export const TEAM_TOOLS: ChatTool[] = [
             ['memberId', 'expectedMemberName', 'patch']
         ),
         build: async (ctx, args) => {
-            const patch = pickSchemaFields(args?.patch, TypeBoxPatchTeamMember)
-            if (Object.keys(patch).length === 0) return rejected('patch must contain at least one allowed field')
-            const invalid = validateBody(TypeBoxPatchTeamMember, patch)
-            if (invalid) return rejected(invalid)
+            const parsed = parseBody(TypeBoxPatchTeamMember, args?.patch, { nonEmpty: true })
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const patch = parsed.value
             const resolved = await resolveMember(ctx, args)
             if (resolved.error !== undefined) return rejected(resolved.error)
             const { member, memberId } = resolved
-            return proposed('updateTeamMember', args, {
+            return proposed(args, {
                 summary: `Update team member ${member.name}`,
                 endpoint: endpointFor('team.update', { eventId: ctx.eventId, memberId }, patch),
                 target: { id: memberId, label: member.name },
@@ -123,8 +137,8 @@ export const TEAM_TOOLS: ChatTool[] = [
             const resolved = await resolveMember(ctx, args)
             if (resolved.error !== undefined) return rejected(resolved.error)
             const { member, memberId } = resolved
-            return proposed('deleteTeamMember', args, {
-                summary: `Remove ${label(member)} from the team${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Remove ${label(member)} from the team`,
                 endpoint: endpointFor('team.delete', { eventId: ctx.eventId, memberId }),
                 target: { id: memberId, label: member.name },
                 diff: { before: { ...member }, after: null },

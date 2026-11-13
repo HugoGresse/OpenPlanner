@@ -2,13 +2,18 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { AiActionDao } from '../../dao/aiActionDao'
 
+// Proposals are trimmed to these limits (toolKit `proposed`) so the audit write never rejects them.
+export const AI_ACTION_ID_MAX = 200
+export const AI_ACTION_LABEL_MAX = 500
+export const AI_ACTION_SUMMARY_MAX = 1000
+
 const TypeBoxAiAction = Type.Object(
     {
         tool: Type.String({ maxLength: 200 }),
         target: Type.Object(
             {
-                id: Type.String({ maxLength: 200 }),
-                label: Type.Optional(Type.String({ maxLength: 500 })),
+                id: Type.String({ maxLength: AI_ACTION_ID_MAX }),
+                label: Type.Optional(Type.String({ maxLength: AI_ACTION_LABEL_MAX })),
             },
             { additionalProperties: false }
         ),
@@ -20,7 +25,7 @@ const TypeBoxAiAction = Type.Object(
             },
             { additionalProperties: false }
         ),
-        summary: Type.Optional(Type.String({ maxLength: 1000 })),
+        summary: Type.Optional(Type.String({ maxLength: AI_ACTION_SUMMARY_MAX })),
         prompt: Type.Optional(Type.String({ maxLength: 50000 })),
         model: Type.Optional(Type.String({ maxLength: 200 })),
         applied: Type.Boolean(),

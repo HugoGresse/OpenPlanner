@@ -450,6 +450,13 @@ describe('POST /v1/:eventId/chat', () => {
         expect(res.body).toContain('"before"')
         expect(res.body).toContain('"after"')
         expect(res.body).toContain('"status":"pending_user_approval"')
+        // The tool result hands the target back to the model (e.g. the id of a speaker it proposes to create).
+        const secondRound = JSON.parse(String(fetchSpy.mock.calls[1][1].body))
+        const toolMessage = secondRound.messages.find((m: { role: string }) => m.role === 'tool')
+        expect(JSON.parse(toolMessage.content)).toMatchObject({
+            status: 'pending_user_approval',
+            target: { id: 'sp1', label: 'Alice' },
+        })
     })
 
     test('rejects a proposal when expectedSpeakerName does not match the speaker doc', async () => {

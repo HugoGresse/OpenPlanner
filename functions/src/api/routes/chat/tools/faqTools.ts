@@ -6,9 +6,8 @@ import {
     endpointFor,
     expectedMismatch,
     expectedParam,
-    IRREVERSIBLE,
     objectSchema,
-    pickSchemaFields,
+    parseBody,
     proposed,
     RATIONALE_PARAM,
     rejected,
@@ -16,17 +15,22 @@ import {
     stringArg,
     toJsonSchema,
     ToolContext,
-    validateBody,
 } from '../toolKit'
 
-// privateId is the secret part of a private FAQ link; the flags are enough for the model.
+const isPublic = (category: FaqCategory) => category.share === true && category.private !== true
+
+// privateId is the secret part of a private FAQ link, and the answers of private or unpublished categories
+// stay out of the model's reach (the Slack bot answers anyone in the workspace): ids and questions are enough
+// to manage them.
 const toToolCategory = (category: FaqCategory) => ({
     id: category.id,
     name: category.name,
     order: category.order,
     share: category.share ?? false,
     private: category.private ?? false,
-    items: (category.items ?? []).map(({ id, question, answer, order }) => ({ id, question, answer, order })),
+    items: (category.items ?? []).map(({ id, question, answer, order }) =>
+        isPublic(category) ? { id, question, answer, order } : { id, question, order }
+    ),
 })
 
 const listFaq = async ({ firebaseApp, eventId }: ToolContext) =>
@@ -43,7 +47,7 @@ export const FAQ_TOOLS: ChatTool[] = [
         name: 'getFaq',
         capabilities: ['faq.list'],
         description:
-            'List every FAQ category of the event with its questions (id, question, answer, order). `share` tells whether the category is on the public site, `private` whether it is only reachable by its private link.',
+            'List every FAQ category of the event with its questions (id, question, answer, order). `share` tells whether the category is on the public site, `private` whether it is only reachable by its private link; answers of private or unshared categories are withheld, never guess them.',
         parameters: objectSchema({}),
         run: (ctx) => listFaq(ctx),
     },
@@ -56,16 +60,23 @@ export const FAQ_TOOLS: ChatTool[] = [
             'Propose adding a FAQ question (same body as POST /faq). Use an existing categoryId from getFaq, or a new id plus categoryName to create the category. order / categoryOrder position the question and the category. Passing the id of an existing question updates it instead. Does NOT apply: emits a proposal for user review.',
         parameters: objectSchema({ question: toJsonSchema(Faq), rationale: RATIONALE_PARAM }, ['question']),
         build: async (ctx, args) => {
-            const body = pickSchemaFields(args?.question, Faq)
-            const invalid = validateBody(Faq, body)
-            if (invalid) return rejected(invalid)
-            const category = (await listFaq(ctx)).find((item) => item.id === body.categoryId)
+            const parsed = parseBody(Faq, args?.question)
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const body = parsed.value
+            const categories = await listFaq(ctx)
+            const category = categories.find((item) => item.id === body.categoryId)
+            const owner = body.id ? categories.find((item) => item.items.some((q) => q.id === body.id)) : undefined
+            if (owner && owner.id !== body.categoryId) {
+                return rejected(
+                    `FAQ question ${body.id} belongs to category ${owner.id}: pass that categoryId (moving a question is not supported)`
+                )
+            }
             if (!category && !body.categoryName) {
                 return rejected(`FAQ category ${body.categoryId} does not exist: pass categoryName to create it`)
             }
             const existing = body.id ? category?.items.find((item) => item.id === body.id) : undefined
             const { categoryId: _c, categoryName: _n, categoryOrder: _o, ...fields } = body
-            return proposed('addFaqQuestion', args, {
+            return proposed(args, {
                 summary: `${existing ? 'Update' : 'Add'} FAQ question "${body.question}" in ${
                     category?.name ?? body.categoryName
                 }`,
@@ -107,8 +118,8 @@ export const FAQ_TOOLS: ChatTool[] = [
                 listTool: 'getFaq',
             })
             if (mismatch) return rejected(mismatch)
-            return proposed('deleteFaqQuestion', args, {
-                summary: `Delete FAQ question "${question.question}"${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Delete FAQ question "${question.question}"`,
                 endpoint: endpointFor('faq.deleteQuestion', { eventId: ctx.eventId, categoryId, questionId }),
                 target: { id: questionId, label: question.question },
                 diff: { before: { ...question, category: category.name }, after: null },
@@ -141,10 +152,8 @@ export const FAQ_TOOLS: ChatTool[] = [
             })
             if (mismatch) return rejected(mismatch)
             const count = category.items.length
-            return proposed('deleteFaqCategory', args, {
-                summary: `Delete FAQ category ${category.name} and its ${count} question${
-                    count === 1 ? '' : 's'
-                }${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Delete FAQ category ${category.name} and its ${count} question${count === 1 ? '' : 's'}`,
                 endpoint: endpointFor('faq.deleteCategory', { eventId: ctx.eventId, categoryId }),
                 target: { id: categoryId, label: category.name },
                 diff: {

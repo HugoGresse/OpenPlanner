@@ -10,10 +10,9 @@ import {
     expectedMismatch,
     expectedParam,
     fieldsParam,
-    IRREVERSIBLE,
     listLimit,
     objectSchema,
-    pickSchemaFields,
+    parseBody,
     projectFields,
     proposed,
     RATIONALE_PARAM,
@@ -22,7 +21,6 @@ import {
     stringArg,
     toJsonSchema,
     ToolContext,
-    validateBody,
 } from '../toolKit'
 
 const ALLOWED_SPEAKER_FIELDS = [
@@ -46,6 +44,7 @@ const ALLOWED_SPEAKER_FIELDS = [
 const DEFAULT_SPEAKER_FIELDS = ['id', 'name', 'pronouns', 'jobTitle', 'company', 'customFields'] as const
 
 export const loadSpeaker = async ({ firebaseApp, eventId }: ToolContext, speakerId: string) => {
+    if (!speakerId) return null
     const existing = await SpeakerDao.doesSpeakerExist(firebaseApp, eventId, speakerId)
     return existing ? toApiSpeaker({ ...(existing as Speaker), id: speakerId }, true) : null
 }
@@ -100,7 +99,7 @@ export const SPEAKER_TOOLS: ChatTool[] = [
             'speakerId',
         ]),
         run: async (ctx, args) => {
-            const speaker = (await listSpeakersRun(ctx)).find((s) => s.id === args.speakerId)
+            const speaker = await loadSpeaker(ctx, stringArg(args, 'speakerId'))
             if (!speaker) return { error: 'Speaker not found' }
             return projectFields(speaker, args.fields, ALLOWED_SPEAKER_FIELDS, DEFAULT_SPEAKER_FIELDS)
         },
@@ -119,15 +118,14 @@ export const SPEAKER_TOOLS: ChatTool[] = [
         build: async (ctx, args) => {
             const speakerId = stringArg(args, 'speakerId')
             if (!speakerId) return rejected('speakerId is required')
-            const patch = pickSchemaFields(args?.patch, TypeBoxUpdateSpeaker)
-            if (Object.keys(patch).length === 0) return rejected('patch must contain at least one allowed field')
-            const invalid = validateBody(TypeBoxUpdateSpeaker, patch)
-            if (invalid) return rejected(invalid)
+            const parsed = parseBody(TypeBoxUpdateSpeaker, args?.patch, { nonEmpty: true })
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const patch = parsed.value
             const speaker = await loadSpeaker(ctx, speakerId)
             if (!speaker) return rejected(`Speaker not found: ${speakerId}`)
             const mismatch = checkExpectedSpeakerName(speaker, args)
             if (mismatch) return rejected(mismatch)
-            return proposed('patchSpeaker', args, {
+            return proposed(args, {
                 summary: `Update speaker ${speaker.name || speakerId}`,
                 endpoint: endpointFor('speakers.update', { eventId: ctx.eventId, speakerId }, patch),
                 target: { id: speakerId, label: speaker.name || speakerId },
@@ -141,17 +139,17 @@ export const SPEAKER_TOOLS: ChatTool[] = [
         kind: 'createSpeaker',
         capabilities: ['speakers.create'],
         description:
-            'Propose creating one speaker (same fields as POST /speakers; the id is generated and returned in the proposal target, use it to link the speaker to a session). name is required. Does NOT apply: emits a proposal for user review.',
+            'Propose creating one speaker (same fields as POST /speakers; the id is generated and returned in the tool result `target`). name is required. Does NOT apply: emits a proposal for user review. A session can reference the new speaker only once the user applied this proposal.',
         parameters: objectSchema({ speaker: toJsonSchema(TypeBoxCreateSpeaker, ['id']), rationale: RATIONALE_PARAM }, [
             'speaker',
         ]),
         build: async (ctx, args) => {
-            const { id: _ignored, ...body } = pickSchemaFields(args?.speaker, TypeBoxCreateSpeaker)
-            const invalid = validateBody(TypeBoxCreateSpeaker, body)
-            if (invalid) return rejected(invalid)
-            if (!String(body.name).trim()) return rejected('name must not be blank')
+            const parsed = parseBody(TypeBoxCreateSpeaker, args?.speaker, { omit: ['id'] })
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const body = parsed.value
+            if (!body.name.trim()) return rejected('name must not be blank')
             const speakerId = uuidv4()
-            return proposed('createSpeaker', args, {
+            return proposed(args, {
                 summary: `Create speaker ${body.name}`,
                 endpoint: endpointFor('speakers.create', { eventId: ctx.eventId }, { ...body, id: speakerId }),
                 target: { id: speakerId, label: body.name },
@@ -178,8 +176,8 @@ export const SPEAKER_TOOLS: ChatTool[] = [
             const mismatch = checkExpectedSpeakerName(speaker, args)
             if (mismatch) return rejected(mismatch)
             const { email: _email, phone: _phone, note: _note, ...publicFields } = speaker
-            return proposed('deleteSpeaker', args, {
-                summary: `Delete speaker ${speaker.name || speakerId}${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Delete speaker ${speaker.name || speakerId}`,
                 endpoint: endpointFor('speakers.delete', { eventId: ctx.eventId, speakerId }),
                 target: { id: speakerId, label: speaker.name || speakerId },
                 diff: { before: publicFields, after: null },

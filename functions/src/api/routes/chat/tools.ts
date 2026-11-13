@@ -1,7 +1,9 @@
 import firebase from 'firebase-admin'
+import { getCapability } from './capabilities'
 import {
     BuildProposalResult,
     ChatTool,
+    matchesRoute,
     ProposalTool,
     ReadTool,
     ToolArgs,
@@ -20,7 +22,7 @@ import { TEAM_TOOLS } from './tools/teamTools'
 export type { Proposal, ToolDefinition } from './toolKit'
 
 // Every tool of the event assistant (in-app chat and Slack bot). Read tools return data, proposal tools never
-// write: they return a Proposal the user approves, which then calls the REST route named by its capability.
+// write: they return a Proposal the user approves, which then calls the REST route of the tool's capability.
 export const CHAT_TOOLS: ChatTool[] = [
     ...EVENT_TOOLS,
     ...SESSION_TOOLS,
@@ -53,6 +55,9 @@ export const executeTool = async (
 
 export type BuildProposalArgs = { firebaseApp: firebase.app.App; eventId: string; name: string; args: ToolArgs }
 
+const errorMessage = (error: unknown) => (error instanceof Error ? error.message : 'Unknown error')
+
+// A tool error (e.g. a malformed id reaching Firestore) is a rejection the model can fix, never a failed turn.
 export const buildProposal = async ({
     firebaseApp,
     eventId,
@@ -61,5 +66,16 @@ export const buildProposal = async ({
 }: BuildProposalArgs): Promise<BuildProposalResult> => {
     const tool = WRITE_TOOLS.find((item) => item.name === name)
     if (!tool) return { ok: false, error: `Unknown proposal tool: ${name}` }
-    return tool.build({ firebaseApp, eventId }, args ?? {})
+    try {
+        const result = await tool.build({ firebaseApp, eventId }, args ?? {})
+        if (!result.ok) return result
+        const { endpoint } = result.draft
+        const { route } = getCapability(tool.capabilities[0])
+        if (!route || !matchesRoute(route, endpoint)) {
+            throw new Error(`${name} built ${endpoint.method} ${endpoint.path}, outside its capability route`)
+        }
+        return { ok: true, proposal: { kind: tool.kind, ...result.draft } }
+    } catch (error) {
+        return { ok: false, error: errorMessage(error) }
+    }
 }

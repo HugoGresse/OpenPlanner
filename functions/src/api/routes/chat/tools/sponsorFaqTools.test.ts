@@ -22,9 +22,17 @@ const faq = [
         name: 'Venue',
         order: 0,
         share: true,
+        private: false,
+        items: [{ id: 'q1', question: 'Where?', answer: 'Paris', order: 0 }],
+    },
+    {
+        id: 'speakers',
+        name: 'Speakers',
+        order: 1,
+        share: true,
         private: true,
         privateId: 'secret-link',
-        items: [{ id: 'q1', question: 'Where?', answer: 'Paris', order: 0 }],
+        items: [{ id: 'q2', question: 'Hotel code?', answer: 'X123', order: 0 }],
     },
 ]
 
@@ -70,7 +78,7 @@ describe('sponsor and job post tools', () => {
         const category = expectProposal(
             await propose('proposeDeleteSponsorCategory', { categoryId: 'gold', expectedCategoryName: 'Gold' })
         )
-        expect(category.summary).toBe('Delete sponsor category Gold and its 2 sponsors (cannot be undone)')
+        expect(category.summary).toBe('Delete sponsor category Gold and its 2 sponsors')
         expect(category.endpoint.path).toBe('/v1/evt/sponsors/categories/gold')
         expect(category.diff).toEqual({ before: { name: 'Gold', sponsors: ['ACME', 'Globex'] }, after: null })
     })
@@ -96,7 +104,7 @@ describe('sponsor and job post tools', () => {
                 expectedJobPostTitle: 'Rust dev',
                 status: 'live',
             }),
-            /status must be one of/
+            /status must be equal to one of the allowed values/
         )
         expectRejected(
             await propose('proposeSetJobPostStatus', {
@@ -119,10 +127,16 @@ describe('FAQ tools', () => {
     })
     afterEach(() => vi.restoreAllMocks())
 
-    test('getFaq returns every category with its flags but never the private link id', async () => {
-        const [category] = (await read('getFaq')) as Array<Record<string, unknown>>
-        expect(category).toMatchObject({ id: 'venue', share: true, private: true })
-        expect(JSON.stringify(category)).not.toContain('secret-link')
+    test('getFaq lists every category but withholds private answers and the private link id', async () => {
+        const [venue, speakers] = (await read('getFaq')) as Array<Record<string, unknown>>
+        expect(venue).toMatchObject({ id: 'venue', items: [{ id: 'q1', question: 'Where?', answer: 'Paris' }] })
+        expect(speakers).toMatchObject({
+            id: 'speakers',
+            private: true,
+            items: [{ id: 'q2', question: 'Hotel code?' }],
+        })
+        expect(JSON.stringify(speakers)).not.toContain('X123')
+        expect(JSON.stringify(speakers)).not.toContain('secret-link')
     })
 
     test('proposeAddFaqQuestion needs a categoryName for a new category and spots updates', async () => {
@@ -149,6 +163,22 @@ describe('FAQ tools', () => {
         expect(update.diff.before).toMatchObject({ answer: 'Paris' })
     })
 
+    test('proposeAddFaqQuestion refuses to copy an existing question into another category', async () => {
+        expectRejected(
+            await propose('proposeAddFaqQuestion', {
+                question: {
+                    id: 'q1',
+                    categoryId: 'speakers',
+                    question: 'Where?',
+                    answer: 'Lyon',
+                    order: 0,
+                    categoryOrder: 1,
+                },
+            }),
+            'FAQ question q1 belongs to category venue: pass that categoryId (moving a question is not supported)'
+        )
+    })
+
     test('FAQ deletes target the category routes, guarded by the text', async () => {
         const question = expectProposal(
             await propose('proposeDeleteFaqQuestion', {
@@ -169,7 +199,7 @@ describe('FAQ tools', () => {
         const category = expectProposal(
             await propose('proposeDeleteFaqCategory', { categoryId: 'venue', expectedCategoryName: 'Venue' })
         )
-        expect(category.summary).toBe('Delete FAQ category Venue and its 1 question (cannot be undone)')
+        expect(category.summary).toBe('Delete FAQ category Venue and its 1 question')
         expect(category.endpoint.path).toBe('/v1/evt/faq/categories/venue')
     })
 })

@@ -12,12 +12,13 @@ const ALL: readonly Capability[] = CAPABILITIES
 const SKILL_DIR = resolve(__dirname, '../../../../../cli/skills/openplanner')
 
 const registeredRoutes = async (): Promise<string[]> => {
-    const fastify = setupFastify()
     const routes: string[] = []
-    fastify.addHook('onRoute', (route) => {
-        for (const method of ([] as string[]).concat(route.method)) {
-            if (method !== 'HEAD') routes.push(`${method} ${route.url}`)
-        }
+    const fastify = setupFastify({
+        onRoute: (route) => {
+            for (const method of ([] as string[]).concat(route.method)) {
+                if (method !== 'HEAD') routes.push(`${method} ${route.url}`)
+            }
+        },
     })
     await fastify.ready()
     await fastify.close()

@@ -167,13 +167,12 @@ export const useChatStream = (eventId: string, eventApiKey: string | null) => {
             setProposalStatus(id, { status: 'applying', error: undefined })
             try {
                 const url = buildHostedUrl(entry.proposal.endpoint.path, eventApiKey)
-                const init: RequestInit = {
-                    method: entry.proposal.endpoint.method,
-                    headers: { 'Content-Type': 'application/json' },
-                }
-                if (entry.proposal.endpoint.body && entry.proposal.endpoint.method !== 'DELETE') {
-                    init.body = JSON.stringify(entry.proposal.endpoint.body)
-                }
+                const { method, body } = entry.proposal.endpoint
+                // A JSON content type without a body is a 400 for Fastify: send the header only with a body.
+                const init: RequestInit =
+                    body && method !== 'DELETE'
+                        ? { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+                        : { method }
                 const response = await fetch(url, init)
                 if (!response.ok) {
                     const text = await response.text().catch(() => '')

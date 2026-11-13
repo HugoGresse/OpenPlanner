@@ -103,9 +103,10 @@ The event assistant (`openplanner chat`, the in-app chat and the Slack bot run t
 
 ### Not available yet
 
--   Create or delete an event, manage its admins, API key, webhooks and integrations settings (event): web admin only.
--   Edit a sponsor or a sponsor category (sponsors): web admin only.
--   Rename, reorder, share or make private a FAQ category (faq): web admin only.
+-   Create or delete an event, manage its admins, API key, webhooks and integrations settings (event): no API route; web admin only.
+-   Edit a sponsor or a sponsor category (sponsors): no API route; web admin only.
+-   List every FAQ category with its questions (faq): no API route; the assistant (`getFaq`) and the web admin.
+-   Rename, reorder, share or make private a FAQ category (faq): no API route; web admin only.
 
 ### Not available in the assistant
 
@@ -120,6 +121,7 @@ The event assistant (`openplanner chat`, the in-app chat and the Slack bot run t
 -   Bulk upsert sessions and speakers: Bulk import takes a JSON file; use the CLI. CLI: `openplanner import`.
 -   Edit a sponsor or a sponsor category: Only in the web admin, there is no API route for it yet.
 -   Generate the job-board token of a sponsor: It creates a secret token; use the CLI or the web admin. CLI: `openplanner sponsors generate-token`.
+-   Read one private FAQ category by its private link id: The assistant never sees private FAQ links nor their answers; use the CLI or the web admin. CLI: `openplanner faq get`.
 -   Rename, reorder, share or make private a FAQ category: Only in the web admin, there is no API route for it yet.
 -   Upload files to the event storage: The assistant cannot receive files; use the CLI or the web admin. CLI: `openplanner files upload`.
 -   Re-host a remote image on the event storage: Not in the assistant yet; use the CLI command or the web admin. CLI: `openplanner files reupload`.
@@ -138,5 +140,5 @@ Every capability per surface (REST route, CLI command, assistant tool): [capabil
 1. Read before writing: list or get the document, then send a minimal partial body.
 2. Every `delete` / `delete-question` / `delete-category` command is irreversible: confirm with the user first; the `--yes` flag is the confirmation. Deleting a session keeps its speakers; deleting a sponsor or FAQ category deletes everything inside it.
 3. After content changes meant for the public site, ask whether to run `event deploy`; it also calls the event webhooks unless `--no-webhooks`.
-4. Most PATCH endpoints **drop unknown fields silently** (200 with nothing changed); only the `create` / `team add` commands reject them. After an update, re-read the document with `-f` to confirm, and check `openplanner openapi --operation …` when a field seems ignored.
+4. Most PATCH endpoints **drop unknown fields silently** (200 with nothing changed); only the `create`, `team add` and `team update` commands reject them. After an update, re-read the document with `-f` to confirm, and check `openplanner openapi --operation …` when a field seems ignored.
 5. Secrets never go on the command line: `bupher login` reads the password from `--password-stdin` or `OPENPLANNER_BUPHER_PASSWORD`; screen passwords can come from `OPENPLANNER_SCREEN_PASSWORD`.

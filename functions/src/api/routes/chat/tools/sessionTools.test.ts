@@ -51,7 +51,12 @@ describe('session tools', () => {
         await reject({ title: 'x', trackId: 'nope' }, 'Unknown trackId "nope". Valid ids: t1')
         await reject({ title: 'x', speakers: ['ghost'] }, 'Unknown speaker id(s): ghost')
         await reject({ title: 'x', dates: { start: '2026-06-01T09:00:00Z' } }, /given together/)
-        await reject({ title: 'x', dates: { start: 'tomorrow', end: 'later' } }, /expected ISO 8601/)
+        await reject({ title: 'x', dates: { start: 'tomorrow', end: 'later' } }, /must be ISO 8601 with a UTC offset/)
+        await reject(
+            { title: 'x', dates: { start: '2026-06-01T09:00:00', end: '2026-06-01T09:30:00' } },
+            'dates.start must be ISO 8601 with a UTC offset (e.g. 2026-06-12T14:00:00+02:00), got "2026-06-01T09:00:00"'
+        )
+        await reject({ title: 'x', speaker: ['sp1'] }, /Unknown field\(s\) "speaker"\. Allowed: .*speakers/)
         await reject({ title: ' ' }, 'title must not be blank')
         await reject({ title: 'x', durationMinutes: '45' }, /durationMinutes must be number/)
     })
@@ -82,7 +87,7 @@ describe('session tools', () => {
         )
         expect(proposal).toMatchObject({
             kind: 'deleteSession',
-            summary: 'Delete session Keynote (cannot be undone)',
+            summary: 'Delete session Keynote',
             endpoint: { method: 'DELETE', path: '/v1/evt/sessions/s%2F1' },
             diff: { before: { id: 's/1', title: 'Keynote', speakers: ['sp1'] }, after: null },
         })

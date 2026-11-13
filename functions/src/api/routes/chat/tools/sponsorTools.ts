@@ -6,16 +6,14 @@ import {
     endpointFor,
     expectedMismatch,
     expectedParam,
-    IRREVERSIBLE,
     objectSchema,
-    pickSchemaFields,
+    parseBody,
     proposed,
     RATIONALE_PARAM,
     rejected,
     stringArg,
     toJsonSchema,
     ToolContext,
-    validateBody,
 } from '../toolKit'
 
 // The REST DTO without the sponsor job-board token (a credential the model has no use for).
@@ -44,12 +42,12 @@ export const SPONSOR_TOOLS: ChatTool[] = [
             'Propose adding a sponsor to a category (same body as POST /sponsors). Use the categoryId + categoryName of an existing category from listSponsors, or a new id + name to create the category. website and logoUrl must be absolute URLs. Does NOT apply: emits a proposal for user review.',
         parameters: objectSchema({ sponsor: toJsonSchema(TypeBoxSponsor), rationale: RATIONALE_PARAM }, ['sponsor']),
         build: async (ctx, args) => {
-            const body = pickSchemaFields(args?.sponsor, TypeBoxSponsor)
-            const invalid = validateBody(TypeBoxSponsor, body)
-            if (invalid) return rejected(invalid)
+            const parsed = parseBody(TypeBoxSponsor, args?.sponsor)
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const body = parsed.value
             const category = (await listCategories(ctx)).find((item) => item.id === body.categoryId)
             const where = category ? `to ${category.name}` : `to the new category ${body.categoryName}`
-            return proposed('addSponsor', args, {
+            return proposed(args, {
                 summary: `Add sponsor ${body.name} ${where}`,
                 endpoint: endpointFor('sponsors.add', { eventId: ctx.eventId }, body),
                 target: { id: body.categoryId, label: body.name },
@@ -88,8 +86,8 @@ export const SPONSOR_TOOLS: ChatTool[] = [
                 listTool: 'listSponsors',
             })
             if (mismatch) return rejected(mismatch)
-            return proposed('deleteSponsor', args, {
-                summary: `Delete sponsor ${sponsor.name} from ${category.name}${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Delete sponsor ${sponsor.name} from ${category.name}`,
                 endpoint: endpointFor('sponsors.delete', { eventId: ctx.eventId, sponsorId }),
                 target: { id: sponsorId, label: sponsor.name },
                 diff: { before: { ...sponsor, category: category.name }, after: null },
@@ -126,10 +124,8 @@ export const SPONSOR_TOOLS: ChatTool[] = [
             })
             if (mismatch) return rejected(mismatch)
             const count = category.sponsors.length
-            return proposed('deleteSponsorCategory', args, {
-                summary: `Delete sponsor category ${category.name} and its ${count} sponsor${
-                    count === 1 ? '' : 's'
-                }${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Delete sponsor category ${category.name} and its ${count} sponsor${count === 1 ? '' : 's'}`,
                 endpoint: endpointFor('sponsors.deleteCategory', { eventId: ctx.eventId, categoryId }),
                 target: { id: categoryId, label: category.name },
                 diff: {

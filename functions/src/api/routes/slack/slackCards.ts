@@ -1,4 +1,8 @@
-import { proposalKindMeta } from '../../../../../src/events/page/chat/proposalKinds'
+import {
+    IRREVERSIBLE_WARNING,
+    isDestructive,
+    proposalKindMeta,
+} from '../../../../../src/events/page/chat/proposalKinds'
 import { Proposal } from '../chat/toolKit'
 import { SLACK_ACTION_IDS, SlackProposalStatus, escapeMrkdwn, truncate } from './slackFormat'
 import { encodeActionValue } from './slackRouting'
@@ -7,6 +11,8 @@ import { encodeActionValue } from './slackRouting'
 const HEADER_LIMIT = 150
 const FIELD_VALUE_LIMIT = 700
 const MAX_FIELD_ROWS = 8
+// Confirm dialog text is capped at 300 chars by Slack.
+const CONFIRM_SUMMARY_LIMIT = 200
 
 const STATUS_LABELS: Record<SlackProposalStatus, string> = {
     pending: '⏳ Pending review',
@@ -109,14 +115,15 @@ export const buildProposalBlocks = ({
         .map((part, index) => (index === 1 ? escapeMrkdwn(part) : part))
         .join(' · ')
     const blocks: object[] = [{ type: 'header', text: plainText(`${meta.emoji} ${proposal.summary}`) }, context(target)]
-    if (meta.destructive) blocks.push(context('⚠️ *Irreversible:* applying this deletes data for good.'))
+    const destructive = isDestructive(proposal)
+    if (destructive) blocks.push(context(`⚠️ ${escapeMrkdwn(IRREVERSIBLE_WARNING)}`))
     if (meta.effect) blocks.push(context(`ℹ️ ${escapeMrkdwn(meta.effect)}`))
     if (proposal.rationale) blocks.push(context(`💬 _${escapeMrkdwn(truncate(proposal.rationale, 500))}_`))
     blocks.push(...diffBlocks(proposal), { type: 'divider' })
 
     if (status === 'pending') {
         const value = encodeActionValue(eventId, proposalId)
-        const apply = meta.destructive
+        const apply = destructive
             ? button({
                   label: 'Delete',
                   actionId: SLACK_ACTION_IDS.applyProposal,
@@ -124,7 +131,7 @@ export const buildProposalBlocks = ({
                   style: 'danger',
                   confirm: {
                       title: 'Delete for real?',
-                      text: `*${escapeMrkdwn(proposal.summary)}* cannot be undone.`,
+                      text: `*${escapeMrkdwn(truncate(proposal.summary, CONFIRM_SUMMARY_LIMIT))}* cannot be undone.`,
                       confirm: 'Delete',
                   },
               })

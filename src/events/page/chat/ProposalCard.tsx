@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Alert, Box, Button, Chip, CircularProgress, Paper, Stack, Typography } from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
-import { proposalKindMeta } from './proposalKinds'
+import { IRREVERSIBLE_WARNING, isDestructive, proposalKindMeta } from './proposalKinds'
 import { ProposalEntry } from './types'
 
 export type ProposalCardProps = {
@@ -21,7 +21,7 @@ const renderValue = (value: unknown) => {
 export const ProposalCard = ({ entry, onApply, onReject }: ProposalCardProps) => {
     const { proposal, status, error } = entry
     const meta = proposalKindMeta(proposal.kind)
-    const isDelete = meta.destructive
+    const isDelete = isDestructive(proposal)
     const beforeKeys = Object.keys(proposal.diff.before ?? {})
     const afterKeys = Object.keys(proposal.diff.after ?? {})
     const allKeys = Array.from(new Set([...beforeKeys, ...afterKeys]))
@@ -41,7 +41,7 @@ export const ProposalCard = ({ entry, onApply, onReject }: ProposalCardProps) =>
             )}
             {isDelete && (
                 <Alert severity="error" sx={{ py: 0, mb: 1 }}>
-                    Irreversible: applying this deletes data for good.
+                    {IRREVERSIBLE_WARNING}
                 </Alert>
             )}
             {meta.effect && (

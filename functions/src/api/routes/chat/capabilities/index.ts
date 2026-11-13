@@ -12,6 +12,8 @@ export type CapabilityId = (typeof CAPABILITIES)[number]['id']
 // Registered routes that are not event-admin capabilities, with the reason.
 export const NON_CAPABILITY_ROUTES: Record<string, string> = {
     'OPTIONS /*': 'CORS preflight',
+    'GET /': 'API reference page',
+    'GET /openapi.json': 'OpenAPI document (`openplanner openapi`)',
     'GET /hello': 'health check',
     'GET /v1/admin/usage': 'super admin only',
     'POST /v1/:eventId/speakers/request-edit-link': 'speaker self-service',

@@ -80,10 +80,15 @@ export const CAPABILITY_MARKERS = {
     end: '<!-- capabilities:end -->',
 } as const
 
-// Gaps of the API itself: no REST route, so neither the CLI nor the assistant can do it.
+// Gaps of the API itself: no REST route, so no CLI command (the assistant may still read it with its tools).
 export const renderApiGaps = (): string =>
     ALL.filter((capability) => !capability.route)
-        .map((capability) => `- ${capability.summary} (${capability.domain}): web admin only.`)
+        .map((capability) => {
+            const tools = toolsForCapability(capability.id)
+            const where =
+                tools.length > 0 ? `the assistant (\`${tools.join('`, `')}\`) and the web admin` : 'web admin only'
+            return `- ${capability.summary} (${capability.domain}): no API route; ${where}.`
+        })
         .join('\n')
 
 // Block embedded in SKILL.md: both gap lists, the assistant one being the exact text of its system prompt.

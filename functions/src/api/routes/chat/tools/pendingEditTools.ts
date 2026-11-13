@@ -1,17 +1,20 @@
 import { SpeakerDao } from '../../../dao/speakerDao'
 import { SpeakerPendingEdit, SpeakerPendingEditDao } from '../../../dao/speakerPendingEditDao'
 import { dateToString } from '../../../other/dateConverter'
+import { TypeBoxRejectBody } from '../../speakers/rejectPendingEditPOST'
 import {
-    BuildProposalResult,
     ChatTool,
+    DraftResult,
     endpointFor,
     expectedParam,
     objectSchema,
+    parseBody,
     proposed,
     RATIONALE_PARAM,
     rejected,
     snapshot,
     stringArg,
+    toJsonSchema,
     ToolArgs,
     ToolContext,
 } from '../toolKit'
@@ -19,8 +22,6 @@ import { checkExpectedSpeakerName, loadSpeaker } from './speakerTools'
 
 const STATUSES = ['pending', 'approved', 'rejected'] as const
 type PendingStatus = (typeof STATUSES)[number]
-// Same cap as the reject route body.
-const MAX_REVIEW_NOTE_LENGTH = 2000
 
 // The token id and submitter IP stay server-side.
 const toToolPendingEdit = (edit: SpeakerPendingEdit, speakerName: string | undefined) => ({
@@ -56,13 +57,13 @@ const buildDecision = async (
     ctx: ToolContext,
     args: ToolArgs,
     decision: 'approve' | 'reject'
-): Promise<BuildProposalResult> => {
+): Promise<DraftResult> => {
     const resolved = await resolveRequest(ctx, args)
     if (resolved.error !== undefined) return rejected(resolved.error)
     const { edit, speaker, requestId } = resolved
     const target = { id: requestId, label: speaker.name }
     if (decision === 'approve') {
-        return proposed('approvePendingEdit', args, {
+        return proposed(args, {
             summary: `Approve the profile edit of ${speaker.name}`,
             endpoint: endpointFor('pendingEdits.approve', { eventId: ctx.eventId, requestId }, {}),
             target,
@@ -70,14 +71,18 @@ const buildDecision = async (
         })
     }
     const reviewNote = stringArg(args, 'reviewNote').trim()
-    if (reviewNote.length > MAX_REVIEW_NOTE_LENGTH)
-        return rejected(`reviewNote is longer than ${MAX_REVIEW_NOTE_LENGTH}`)
-    const body = reviewNote ? { reviewNote } : {}
-    return proposed('rejectPendingEdit', args, {
+    const parsed = parseBody(TypeBoxRejectBody, reviewNote ? { reviewNote } : {})
+    if (parsed.error !== undefined) return rejected(parsed.error)
+    const body = parsed.value
+    return proposed(args, {
         summary: `Reject the profile edit of ${speaker.name}`,
         endpoint: endpointFor('pendingEdits.reject', { eventId: ctx.eventId, requestId }, body),
         target,
-        diff: { before: { status: 'pending', patch: edit.patch }, after: { status: 'rejected', ...body } },
+        // Slack renders the keys of `after`: keep the rejected change visible as a row.
+        diff: {
+            before: { status: 'pending', requestedChange: edit.patch },
+            after: { status: 'rejected', requestedChange: null, ...body },
+        },
     })
 }
 
@@ -123,8 +128,7 @@ export const PENDING_EDIT_TOOLS: ChatTool[] = [
             {
                 ...requestParams,
                 reviewNote: {
-                    type: 'string',
-                    maxLength: MAX_REVIEW_NOTE_LENGTH,
+                    ...toJsonSchema(TypeBoxRejectBody).properties.reviewNote,
                     description: 'Optional note sent to the speaker.',
                 },
                 rationale: RATIONALE_PARAM,

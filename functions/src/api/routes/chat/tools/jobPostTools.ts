@@ -1,18 +1,23 @@
 import { JobPostDao, JobPostResponse } from '../../../dao/jobPostDao'
 import { dateToString } from '../../../other/dateConverter'
 import { JOB_STATUS_VALUES } from '../../../../../../src/constants/jobStatus'
+import { TypeBoxJobPostStatus } from '../../sponsors/approveJobPostPUT'
 import {
-    BuildProposalResult,
     ChatTool,
+    DraftResult,
     endpointFor,
     expectedMismatch,
     expectedParam,
-    IRREVERSIBLE,
+    fieldsParam,
+    listLimit,
     objectSchema,
+    parseBody,
+    projectFields,
     proposed,
     RATIONALE_PARAM,
     rejected,
     stringArg,
+    toJsonSchema,
     ToolArgs,
     ToolContext,
 } from '../toolKit'
@@ -29,13 +34,33 @@ const jobPostParams = {
     expectedJobPostTitle: expectedParam("job post's `title`", 'listJobPosts'),
 }
 
+const ALLOWED_JOB_POST_FIELDS = [
+    'id',
+    'title',
+    'sponsorId',
+    'status',
+    'category',
+    'location',
+    'createdAt',
+    'description',
+    'requirements',
+    'salary',
+    'externalLink',
+    'contactEmail',
+] as const
+const DEFAULT_JOB_POST_FIELDS = ['id', 'title', 'sponsorId', 'status', 'category', 'location', 'createdAt'] as const
+
 // Same lookups as GET /sponsors/jobPosts (by sponsor or for the whole event, optional status filter).
-const listJobPosts = async ({ firebaseApp, eventId }: ToolContext, args: ToolArgs): Promise<ToolJobPost[]> => {
+const listJobPosts = async ({ firebaseApp, eventId }: ToolContext, args: ToolArgs) => {
     const status = JOB_STATUS_VALUES.includes(args.status) ? args.status : undefined
     const posts = args.sponsorId
         ? await JobPostDao.getJobPostsBySponsor(firebaseApp, eventId, args.sponsorId, status)
         : await JobPostDao.getAllJobPosts(firebaseApp, eventId, status)
-    return posts.map(toToolJobPost)
+    return posts
+        .slice(0, listLimit(args.limit))
+        .map((post) =>
+            projectFields(toToolJobPost(post), args.fields, ALLOWED_JOB_POST_FIELDS, DEFAULT_JOB_POST_FIELDS)
+        )
 }
 
 const resolveJobPost = async (ctx: ToolContext, args: ToolArgs) => {
@@ -54,16 +79,15 @@ const resolveJobPost = async (ctx: ToolContext, args: ToolArgs) => {
     return mismatch ? { error: mismatch } : { post: toToolJobPost({ ...post, id: jobPostId }), jobPostId }
 }
 
-const buildSetStatus = async (ctx: ToolContext, args: ToolArgs): Promise<BuildProposalResult> => {
-    const status = stringArg(args, 'status')
-    if (!JOB_STATUS_VALUES.includes(status as never)) {
-        return rejected(`status must be one of ${JOB_STATUS_VALUES.join(', ')}`)
-    }
+const buildSetStatus = async (ctx: ToolContext, args: ToolArgs): Promise<DraftResult> => {
+    const parsed = parseBody(TypeBoxJobPostStatus, { status: args?.status })
+    if (parsed.error !== undefined) return rejected(parsed.error)
+    const { status } = parsed.value
     const resolved = await resolveJobPost(ctx, args)
     if (resolved.error !== undefined) return rejected(resolved.error)
     const { post, jobPostId } = resolved
     if (post.status === status) return rejected(`Job post ${jobPostId} is already ${status}`)
-    return proposed('setJobPostStatus', args, {
+    return proposed(args, {
         summary: `Set job post ${post.title} to ${status}`,
         endpoint: endpointFor('jobPosts.setStatus', { eventId: ctx.eventId, jobPostId }, { status }),
         target: { id: jobPostId, label: post.title },
@@ -76,11 +100,14 @@ export const JOB_POST_TOOLS: ChatTool[] = [
         type: 'read',
         name: 'listJobPosts',
         capabilities: ['jobPosts.list', 'jobPosts.get'],
-        description:
-            'List the sponsor job board posts, newest first, optionally filtered by status (pending, approved, rejected) and/or sponsorId.',
+        description: `List the sponsor job board posts, newest first, optionally filtered by status (pending, approved, rejected) and/or sponsorId. Returns ${DEFAULT_JOB_POST_FIELDS.join(
+            ', '
+        )} by default; pass fields[] for the description, requirements, salary, link or contact.`,
         parameters: objectSchema({
             status: { type: 'string', enum: [...JOB_STATUS_VALUES] },
             sponsorId: { type: 'string' },
+            limit: { type: 'integer', minimum: 1, maximum: 500 },
+            fields: fieldsParam(ALLOWED_JOB_POST_FIELDS),
         }),
         run: listJobPosts,
     },
@@ -94,7 +121,7 @@ export const JOB_POST_TOOLS: ChatTool[] = [
         parameters: objectSchema(
             {
                 ...jobPostParams,
-                status: { type: 'string', enum: [...JOB_STATUS_VALUES] },
+                status: toJsonSchema(TypeBoxJobPostStatus).properties.status,
                 rationale: RATIONALE_PARAM,
             },
             ['jobPostId', 'expectedJobPostTitle', 'status']
@@ -116,8 +143,8 @@ export const JOB_POST_TOOLS: ChatTool[] = [
             const resolved = await resolveJobPost(ctx, args)
             if (resolved.error !== undefined) return rejected(resolved.error)
             const { post, jobPostId } = resolved
-            return proposed('deleteJobPost', args, {
-                summary: `Delete job post ${post.title}${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Delete job post ${post.title}`,
                 endpoint: endpointFor('jobPosts.delete', { eventId: ctx.eventId, jobPostId }),
                 target: { id: jobPostId, label: post.title },
                 diff: { before: post, after: null },

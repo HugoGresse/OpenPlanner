@@ -46,6 +46,15 @@ export class TeamDao {
         }
     }
 
+    public static async getMember(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        memberId: string
+    ): Promise<TeamMember | null> {
+        const snapshot = await firebaseApp.firestore().collection(`events/${eventId}/team`).doc(memberId).get()
+        return snapshot.exists ? ({ ...snapshot.data(), id: snapshot.id } as TeamMember) : null
+    }
+
     // Fails with ALREADY_EXISTS when the member id is taken.
     public static async createMember(
         firebaseApp: firebase.app.App,

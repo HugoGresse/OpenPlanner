@@ -3,7 +3,6 @@ import { PROPOSAL_TOOLS, Proposal, READ_ONLY_TOOLS, buildProposal, executeTool, 
 import { ChatSurface, buildSystemPrompt } from './systemPrompt'
 
 export { buildSystemPrompt }
-export type { ChatSurface }
 
 export const MAX_MESSAGES = 50
 export const MAX_CONTENT_LENGTH = 50000
@@ -230,5 +229,5 @@ const runTool = async (
 
     result.proposals.push({ id: callId, proposal: built.proposal })
     onEvent({ type: 'proposal', id: callId, proposal: built.proposal })
-    return { status: 'pending_user_approval', note: PROPOSAL_QUEUED_NOTE }
+    return { status: 'pending_user_approval', note: PROPOSAL_QUEUED_NOTE, target: built.proposal.target }
 }

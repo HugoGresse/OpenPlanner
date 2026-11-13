@@ -1,28 +1,24 @@
 import { v4 as uuidv4 } from 'uuid'
-import { EventDao } from '../../../dao/eventDao'
 import { SessionDao } from '../../../dao/sessionDao'
-import { SpeakerDao } from '../../../dao/speakerDao'
 import { Session } from '../../../../../../src/types'
 import {
-    CreateSessionType,
+    findInvalidReferences,
     TypeBoxCreateSession,
     toNewSession,
     validateCreateSessionBody,
 } from '../../sessions/createSessionPOST'
 import { toApiSession } from '../../sessions/getSessionsGET'
-import { parseSessionDates } from '../../sessions/parseSessionDates'
-import { PatchSessionType, TypeBoxPatchSession } from '../../sessions/patchSessionPATCH'
-import { findInvalidSessionReference } from '../../sessions/validateSessionReferences'
+import { TypeBoxPatchSession } from '../../sessions/patchSessionPATCH'
 import {
     ChatTool,
+    checkDateBounds,
     endpointFor,
     expectedMismatch,
     expectedParam,
     fieldsParam,
-    IRREVERSIBLE,
     listLimit,
     objectSchema,
-    pickSchemaFields,
+    parseBody,
     projectFields,
     proposed,
     RATIONALE_PARAM,
@@ -31,7 +27,6 @@ import {
     stringArg,
     toJsonSchema,
     ToolContext,
-    validateBody,
 } from '../toolKit'
 
 const ALLOWED_SESSION_FIELDS = [
@@ -92,17 +87,6 @@ const checkExpectedTitle = (session: Record<string, any>, args: Record<string, a
         listTool: 'listSessions',
     })
 
-// The PATCH route does not check references; the assistant does, so a typo never reaches the review card.
-const checkPatchReferences = async ({ firebaseApp, eventId }: ToolContext, patch: PatchSessionType) => {
-    const dates = parseSessionDates(patch.dates)
-    if (dates.error) return dates.error
-    const event = await EventDao.getEvent(firebaseApp, eventId)
-    const referenceError = findInvalidSessionReference(event, patch)
-    if (referenceError) return referenceError
-    const missing = await SpeakerDao.findMissingSpeakerIds(firebaseApp, eventId, patch.speakers || [])
-    return missing.length > 0 ? `Unknown speaker id(s): ${missing.join(', ')}` : null
-}
-
 const sessionIdParams = {
     sessionId: { type: 'string' },
     expectedSessionTitle: expectedParam("session's `title`", 'listSessions'),
@@ -159,7 +143,7 @@ export const SESSION_TOOLS: ChatTool[] = [
         kind: 'patchSession',
         capabilities: ['sessions.update'],
         description:
-            'Propose a partial update to a session (same fields as PATCH /sessions/:id: title, abstract, dates {start,end} ISO 8601, speakers ids, trackId, format, category, tags, note…). Does NOT apply the change: emits a proposal for user review. trackId/format/category/speakers must exist (see getEvent / listSpeakers). You MUST also pass expectedSessionTitle matching the session title returned by listSessions; the server rejects the call if it does not match the document at sessionId.',
+            'Propose a partial update to a session (same fields as PATCH /sessions/:id: title, abstract, dates {start,end} ISO 8601 with the UTC offset of the event timezone, speakers ids, trackId, format, category, tags, note…). Does NOT apply the change: emits a proposal for user review. trackId/format/category/speakers must exist (see getEvent / listSpeakers). You MUST also pass expectedSessionTitle matching the session title returned by listSessions; the server rejects the call if it does not match the document at sessionId.',
         parameters: objectSchema(
             { ...sessionIdParams, patch: toJsonSchema(TypeBoxPatchSession), rationale: RATIONALE_PARAM },
             ['sessionId', 'expectedSessionTitle', 'patch']
@@ -167,17 +151,19 @@ export const SESSION_TOOLS: ChatTool[] = [
         build: async (ctx, args) => {
             const sessionId = stringArg(args, 'sessionId')
             if (!sessionId) return rejected('sessionId is required')
-            const patch = pickSchemaFields(args?.patch, TypeBoxPatchSession)
-            if (Object.keys(patch).length === 0) return rejected('patch must contain at least one allowed field')
-            const invalid = validateBody(TypeBoxPatchSession, patch)
-            if (invalid) return rejected(invalid)
+            const parsed = parseBody(TypeBoxPatchSession, args?.patch, { nonEmpty: true })
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const patch = parsed.value
+            const dateError = checkDateBounds(patch.dates)
+            if (dateError) return rejected(dateError)
             const session = await loadSession(ctx, sessionId)
             if (!session) return rejected(`Session not found: ${sessionId}`)
             const mismatch = checkExpectedTitle(session, args)
             if (mismatch) return rejected(mismatch)
-            const referenceError = await checkPatchReferences(ctx, patch)
+            // The PATCH route does not check references; the assistant does, so a typo never reaches the review.
+            const referenceError = await findInvalidReferences(ctx.firebaseApp, ctx.eventId, patch)
             if (referenceError) return rejected(referenceError)
-            return proposed('patchSession', args, {
+            return proposed(args, {
                 summary: `Update session ${session.title || sessionId}`,
                 endpoint: endpointFor('sessions.update', { eventId: ctx.eventId, sessionId }, patch),
                 target: { id: sessionId, label: session.title || sessionId },
@@ -191,24 +177,25 @@ export const SESSION_TOOLS: ChatTool[] = [
         kind: 'createSession',
         capabilities: ['sessions.create'],
         description:
-            'Propose creating one session (same fields as POST /sessions; the id is generated). title is required; trackId, format, category must be ids from getEvent and speakers ids from listSpeakers; dates need both start and end (ISO 8601) or neither. Does NOT apply: emits a proposal for user review.',
+            'Propose creating one session (same fields as POST /sessions; the id is generated). title is required; trackId, format, category must be ids from getEvent and speakers ids from listSpeakers; dates need both start and end (ISO 8601 with the UTC offset of the event timezone) or neither. Does NOT apply: emits a proposal for user review.',
         parameters: objectSchema({ session: toJsonSchema(TypeBoxCreateSession, ['id']), rationale: RATIONALE_PARAM }, [
             'session',
         ]),
         build: async (ctx, args) => {
-            const { id: _ignored, ...body } = pickSchemaFields(args?.session, TypeBoxCreateSession)
-            const invalid = validateBody(TypeBoxCreateSession, body)
-            if (invalid) return rejected(invalid)
+            const parsed = parseBody(TypeBoxCreateSession, args?.session, { omit: ['id'] })
+            if (parsed.error !== undefined) return rejected(parsed.error)
+            const body = parsed.value
+            const dateError = checkDateBounds(body.dates)
+            if (dateError) return rejected(dateError)
             const sessionId = uuidv4()
-            const typed = body as CreateSessionType
-            const inputError = await validateCreateSessionBody(ctx.firebaseApp, ctx.eventId, typed)
+            const inputError = await validateCreateSessionBody(ctx.firebaseApp, ctx.eventId, body)
             if (inputError) return rejected(inputError)
-            const built = toNewSession(typed, sessionId)
+            const built = toNewSession(body, sessionId)
             if (built.error !== undefined) return rejected(built.error)
-            return proposed('createSession', args, {
-                summary: `Create session ${typed.title}`,
+            return proposed(args, {
+                summary: `Create session ${body.title}`,
                 endpoint: endpointFor('sessions.create', { eventId: ctx.eventId }, { ...body, id: sessionId }),
-                target: { id: sessionId, label: typed.title },
+                target: { id: sessionId, label: body.title },
                 diff: { before: {}, after: body },
             })
         },
@@ -231,8 +218,8 @@ export const SESSION_TOOLS: ChatTool[] = [
             if (!session) return rejected(`Session not found: ${sessionId}`)
             const mismatch = checkExpectedTitle(session, args)
             if (mismatch) return rejected(mismatch)
-            return proposed('deleteSession', args, {
-                summary: `Delete session ${session.title || sessionId}${IRREVERSIBLE}`,
+            return proposed(args, {
+                summary: `Delete session ${session.title || sessionId}`,
                 endpoint: endpointFor('sessions.delete', { eventId: ctx.eventId, sessionId }),
                 target: { id: sessionId, label: session.title || sessionId },
                 diff: {

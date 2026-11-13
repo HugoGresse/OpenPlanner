@@ -56,19 +56,36 @@ const NEW_SESSION_DEFAULTS: Partial<Session & { tags: string[] }> = {
     teasingHidden: false,
 }
 
-// Returns the message of the first invalid input, or null. Pure apart from the event and speaker lookups.
+type SessionReferences = {
+    trackId?: string | null
+    format?: string | null
+    category?: string | null
+    speakers?: string[]
+}
+
+// Returns the message of the first reference (track, format, category, speaker) that does not exist, or null.
+// The event is only read when a track, format or category is set.
+export const findInvalidReferences = async (
+    firebaseApp: firebase.app.App,
+    eventId: string,
+    references: SessionReferences
+): Promise<string | null> => {
+    if (references.trackId || references.format || references.category) {
+        const referenceError = findInvalidSessionReference(await EventDao.getEvent(firebaseApp, eventId), references)
+        if (referenceError) return referenceError
+    }
+    const missing = await SpeakerDao.findMissingSpeakerIds(firebaseApp, eventId, references.speakers || [])
+    return missing.length > 0 ? `Unknown speaker id(s): ${missing.join(', ')}` : null
+}
+
+// Returns the message of the first invalid input, or null. Pure apart from the reference lookups.
 export const validateCreateSessionBody = async (
     firebaseApp: firebase.app.App,
     eventId: string,
     body: CreateSessionType
 ): Promise<string | null> => {
     if (!body.title.trim()) return 'title must not be blank'
-    const event = await EventDao.getEvent(firebaseApp, eventId)
-    const referenceError = findInvalidSessionReference(event, body)
-    if (referenceError) return referenceError
-    const missing = await SpeakerDao.findMissingSpeakerIds(firebaseApp, eventId, body.speakers || [])
-    if (missing.length > 0) return `Unknown speaker id(s): ${missing.join(', ')}`
-    return null
+    return findInvalidReferences(firebaseApp, eventId, body)
 }
 
 type NewSession = Partial<Session> & { id: string }

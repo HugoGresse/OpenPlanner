@@ -101,6 +101,7 @@ export const toEventDetails = (event: Event): EventDetailsReplyType => ({
         name: field.name,
         type: field.type ?? 'text',
         privacy: field.privacy ?? 'public',
+        ...(field.editableBySpeaker !== undefined ? { editableBySpeaker: field.editableBySpeaker } : {}),
     })),
     scheduleVisible: !!event.scheduleVisible,
     publicEnabled: !!event.publicEnabled,

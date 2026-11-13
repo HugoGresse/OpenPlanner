@@ -72,7 +72,9 @@ export class SlackProposalDao {
             .collection(collectionPath(eventId))
             .where('batchId', '==', batchId)
             .get()
-        return snapshot.docs.map((doc) => doc.data() as SlackProposalRecord)
+        // Ids end with the proposal's position in the turn (`<batch>-<n>`): apply in emission order, not 1, 10, 2.
+        const position = (record: SlackProposalRecord) => Number(record.id.split('-').pop())
+        return snapshot.docs.map((doc) => doc.data() as SlackProposalRecord).sort((a, b) => position(a) - position(b))
     }
 
     public static async updateStatus(

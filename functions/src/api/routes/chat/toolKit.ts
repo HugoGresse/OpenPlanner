@@ -1,9 +1,15 @@
 import firebase from 'firebase-admin'
-import { TSchema } from 'typebox'
+import { Static, TSchema } from 'typebox'
 import { FastifySchemaValidationError } from 'fastify/types/schema'
-import { ProposalKind, ProposalMethod } from '../../../../../src/events/page/chat/proposalKinds'
+import { DateTime } from 'luxon'
+import { Proposal, ProposalKind } from '../../../../../src/events/page/chat/proposalKinds'
+import { MAX_STRING_LENGTH } from '../../other/routeSchemas'
 import { strictBodyValidatorCompiler } from '../../other/strictValidator'
-import { CapabilityId, getCapability } from './capabilities'
+import { truncate } from '../../other/truncate'
+import { AI_ACTION_ID_MAX, AI_ACTION_LABEL_MAX, AI_ACTION_SUMMARY_MAX } from './aiActionsPOST'
+import { CapabilityId, getCapability, RouteRef } from './capabilities'
+
+export type { Proposal }
 
 export type ToolDefinition = {
     type: 'function'
@@ -13,33 +19,24 @@ export type ToolDefinition = {
 export type ToolContext = { firebaseApp: firebase.app.App; eventId: string }
 export type ToolArgs = Record<string, any>
 
-export type Proposal = {
-    kind: ProposalKind
-    // Built by the server from the resolved target, never sourced from the model.
-    summary: string
-    // Model-authored explanation (`rationale` argument), shown as "Reason (from assistant)".
-    rationale?: string
-    // Called (relative to the API base, with the event API key) when the user clicks Apply.
-    endpoint: { method: ProposalMethod; path: string; body?: Record<string, any> }
-    target: { id: string; label?: string }
-    // Field-level before/after. For deletes, `before` is the record snapshot and `after` is null.
-    diff: { before: Record<string, any>; after: Record<string, any> | null }
-}
-
+// What a proposal tool builds; the registry (tools.ts) stamps the tool's kind on it.
+export type ProposalDraft = Omit<Proposal, 'kind'>
+export type DraftResult = { ok: true; draft: ProposalDraft } | { ok: false; error: string }
 export type BuildProposalResult = { ok: true; proposal: Proposal } | { ok: false; error: string }
 
-type ToolBase = {
-    name: string
-    description: string
-    parameters: object
+type ToolBase = { name: string; description: string; parameters: object }
+export type ReadTool = ToolBase & {
+    type: 'read'
     // The capabilities (see capabilities/) this tool gives the assistant.
     capabilities: CapabilityId[]
+    run: (ctx: ToolContext, args: ToolArgs) => Promise<unknown>
 }
-export type ReadTool = ToolBase & { type: 'read'; run: (ctx: ToolContext, args: ToolArgs) => Promise<unknown> }
 export type ProposalTool = ToolBase & {
     type: 'proposal'
     kind: ProposalKind
-    build: (ctx: ToolContext, args: ToolArgs) => Promise<BuildProposalResult>
+    // The write capability whose route every proposal of this tool calls.
+    capabilities: [CapabilityId]
+    build: (ctx: ToolContext, args: ToolArgs) => Promise<DraftResult>
 }
 export type ChatTool = ReadTool | ProposalTool
 
@@ -55,10 +52,27 @@ export const objectSchema = (properties: Record<string, object>, required: strin
     properties,
 })
 
+// Route schemas carry noise for the model: the generic length cap, and nullable fields spelled as anyOf.
+const compactSchema = (node: unknown): unknown => {
+    if (Array.isArray(node)) return node.map(compactSchema)
+    if (!node || typeof node !== 'object') return node
+    const out: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(node)) {
+        if (key === 'maxLength' && typeof value === 'number' && value >= MAX_STRING_LENGTH) continue
+        out[key] = compactSchema(value)
+    }
+    const anyOf = out.anyOf as Array<Record<string, unknown>> | undefined
+    if (anyOf?.length === 2 && anyOf[1]?.type === 'null' && typeof anyOf[0]?.type === 'string') {
+        const { anyOf: _anyOf, ...rest } = out
+        return { ...rest, ...anyOf[0], type: [anyOf[0].type, 'null'] }
+    }
+    return out
+}
+
 // TypeBox schemas are JSON Schema plus symbol-keyed metadata; a JSON round trip keeps the plain schema the
 // model sees. `omit` drops properties the server fills itself (e.g. generated ids).
 export const toJsonSchema = (schema: TSchema, omit: string[] = []): Record<string, any> => {
-    const json = JSON.parse(JSON.stringify(schema))
+    const json = compactSchema(JSON.parse(JSON.stringify(schema))) as Record<string, any>
     for (const key of omit) delete json.properties?.[key]
     if (Array.isArray(json.required)) {
         json.required = json.required.filter((key: string) => !omit.includes(key))
@@ -67,60 +81,81 @@ export const toJsonSchema = (schema: TSchema, omit: string[] = []): Record<strin
     return json
 }
 
-export const schemaFields = (schema: TSchema): string[] =>
-    Object.keys((schema as { properties?: object }).properties ?? {})
-
-// Keeps only the fields the route body accepts: anything else the model sends is dropped before review.
-export const pickSchemaFields = (input: unknown, schema: TSchema): Record<string, any> => {
-    const out: Record<string, any> = {}
-    if (!input || typeof input !== 'object') return out
-    for (const key of schemaFields(schema)) {
-        if (Object.prototype.hasOwnProperty.call(input, key)) out[key] = (input as Record<string, any>)[key]
-    }
-    return out
-}
-
 type Validate = ((value: unknown) => boolean) & { errors?: FastifySchemaValidationError[] | null }
 const validators = new WeakMap<TSchema, Validate>()
 
-const formatValidationError = (error: FastifySchemaValidationError): string => {
-    const at = error.instancePath || 'body'
-    const extra = (error.params as { additionalProperty?: string })?.additionalProperty
-    return extra ? `${at} has unknown field "${extra}"` : `${at} ${error.message ?? 'is invalid'}`
-}
+const formatValidationError = (error: FastifySchemaValidationError): string =>
+    `${error.instancePath || 'body'} ${error.message ?? 'is invalid'}`
 
-// Same validator as the create routes (strict body compiler), so the model learns about an invalid field
-// when it proposes, not when the user clicks Apply.
-export const validateBody = (schema: TSchema, body: unknown): string | null => {
+const compile = (schema: TSchema): Validate => {
     let validate = validators.get(schema)
     if (!validate) {
         validate = strictBodyValidatorCompiler({ schema, httpPart: 'body', method: 'POST', url: '/' }) as Validate
         validators.set(schema, validate)
     }
-    if (validate(body)) return null
-    return `Invalid body: ${(validate.errors ?? []).map(formatValidationError).join('; ')}`
+    return validate
+}
+
+export type Parsed<T> = { value: T; error?: undefined } | { error: string }
+
+// Validates the model's object against a route body schema with the strict create-route compiler: an unknown
+// (e.g. misspelled) field is an error the model can fix, never silently dropped. `omit` removes server-owned
+// keys first; `nonEmpty` is for patches.
+export const parseBody = <T extends TSchema>(
+    schema: T,
+    input: unknown,
+    { omit = [], nonEmpty = false }: { omit?: string[]; nonEmpty?: boolean } = {}
+): Parsed<Static<T>> => {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return { error: 'Expected a JSON object' }
+    const body = Object.fromEntries(Object.entries(input).filter(([key]) => !omit.includes(key)))
+    const allowed = Object.keys((schema as { properties?: object }).properties ?? {}).filter((k) => !omit.includes(k))
+    const unknown = Object.keys(body).filter((key) => !allowed.includes(key))
+    if (unknown.length > 0) {
+        return { error: `Unknown field(s) ${unknown.map((k) => `"${k}"`).join(', ')}. Allowed: ${allowed.join(', ')}` }
+    }
+    if (nonEmpty && Object.keys(body).length === 0) return { error: 'patch must contain at least one field' }
+    const validate = compile(schema)
+    if (validate(body)) return { value: body as Static<T> }
+    return { error: `Invalid body: ${(validate.errors ?? []).map(formatValidationError).join('; ')}` }
+}
+
+const ISO_WITH_OFFSET = /(Z|[+-]\d{2}:?\d{2})$/
+
+// Date strings must parse and carry their UTC offset: a bare local time would be read in the server zone.
+export const checkDateBounds = (dates: unknown, field = 'dates'): string | null => {
+    if (!dates || typeof dates !== 'object') return null
+    for (const [bound, value] of Object.entries(dates)) {
+        if (typeof value !== 'string' || value === '') continue
+        if (!DateTime.fromISO(value, { setZone: true }).isValid || !ISO_WITH_OFFSET.test(value)) {
+            return `${field}.${bound} must be ISO 8601 with a UTC offset (e.g. 2026-06-12T14:00:00+02:00), got "${value}"`
+        }
+    }
+    return null
 }
 
 export const endpointFor = (
     id: CapabilityId,
     params: Record<string, string>,
-    body?: Record<string, any>
+    body?: Record<string, unknown>
 ): Proposal['endpoint'] => {
     const { route } = getCapability(id)
     if (!route || route.method === 'GET') throw new Error(`Capability ${id} has no write route`)
     const path = route.path.replace(/:(\w+)/g, (_, name: string) => {
         const value = params[name]
-        if (value === undefined) throw new Error(`Missing path parameter ${name} for ${id}`)
+        if (!value) throw new Error(`Missing path parameter ${name} for ${id}`)
         return encodeURIComponent(value)
     })
     return body === undefined ? { method: route.method, path } : { method: route.method, path, body }
 }
 
+export const matchesRoute = (route: RouteRef, endpoint: Proposal['endpoint']): boolean =>
+    route.method === endpoint.method && new RegExp(`^${route.path.replace(/:\w+/g, '[^/]+')}$`).test(endpoint.path)
+
 export const RATIONALE_PARAM = { type: 'string', description: 'One short sentence explaining why.' }
 
 export const expectedParam = (field: string, listTool: string) => ({
     type: 'string',
-    description: `The ${field} as returned by ${listTool}. Sanity check against the id: compared case- and whitespace-insensitively, the server rejects the call on a mismatch.`,
+    description: `The ${field} exactly as ${listTool} returned it (sanity check against the id).`,
 })
 
 const normalizeForCompare = (value: unknown): string =>
@@ -148,7 +183,7 @@ export const expectedMismatch = ({ arg, value, actual, entity, id, listTool }: E
 
 export const stringArg = (args: ToolArgs, name: string): string => (typeof args?.[name] === 'string' ? args[name] : '')
 
-export const rejected = (error: string): BuildProposalResult => ({ ok: false, error })
+export const rejected = (error: string): DraftResult => ({ ok: false, error })
 
 const sanitizeRationale = (value: unknown): string | undefined => {
     if (typeof value !== 'string') return undefined
@@ -156,13 +191,23 @@ const sanitizeRationale = (value: unknown): string | undefined => {
     return trimmed.length === 0 ? undefined : trimmed
 }
 
-export const IRREVERSIBLE = ' (cannot be undone)'
-
+// The JSON round trip drops undefined values (Firestore rejects them when Slack stores the proposal) and the
+// target / summary fit the audit log limits.
 export const proposed = (
-    kind: ProposalKind,
     args: ToolArgs,
-    fields: Omit<Proposal, 'kind' | 'rationale'>
-): BuildProposalResult => ({ ok: true, proposal: { kind, ...fields, rationale: sanitizeRationale(args?.rationale) } })
+    { summary, target, ...fields }: Omit<ProposalDraft, 'rationale'>
+): DraftResult => {
+    const draft: ProposalDraft = {
+        ...fields,
+        summary: truncate(summary, AI_ACTION_SUMMARY_MAX),
+        target: {
+            id: truncate(target.id, AI_ACTION_ID_MAX),
+            ...(target.label === undefined ? {} : { label: truncate(target.label, AI_ACTION_LABEL_MAX) }),
+        },
+        rationale: sanitizeRationale(args?.rationale),
+    }
+    return { ok: true, draft: JSON.parse(JSON.stringify(draft)) }
+}
 
 // Before-values of the patched fields, null when the document has none.
 export const snapshot = (doc: Record<string, any> | null | undefined, keys: string[]): Record<string, any> =>

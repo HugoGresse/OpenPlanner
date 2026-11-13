@@ -91,9 +91,15 @@ export const COMMUNITY_CAPABILITIES = [
     {
         id: 'faq.list',
         domain: 'faq',
-        summary: 'Read every FAQ category and question',
+        summary: 'List every FAQ category with its questions',
+    },
+    {
+        id: 'faq.getPrivate',
+        domain: 'faq',
+        summary: 'Read one private FAQ category by its private link id',
         route: r('GET', '/faq/:faqPrivateId'),
         cli: 'faq get',
+        assistantGap: 'The assistant never sees private FAQ links nor their answers; use the CLI or the web admin.',
     },
     {
         id: 'faq.add',
