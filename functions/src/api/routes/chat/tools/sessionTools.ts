@@ -1,14 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
 import { SessionDao } from '../../../dao/sessionDao'
 import { Session } from '../../../../../../src/types'
-import {
-    findInvalidReferences,
-    TypeBoxCreateSession,
-    toNewSession,
-    validateCreateSessionBody,
-} from '../../sessions/createSessionPOST'
+import { TypeBoxCreateSession, toNewSession, validateCreateSessionBody } from '../../sessions/createSessionPOST'
 import { toApiSession } from '../../sessions/getSessionsGET'
 import { TypeBoxPatchSession } from '../../sessions/patchSessionPATCH'
+import { findInvalidReferences } from '../../sessions/validateSessionReferences'
 import {
     ChatTool,
     checkDateBounds,
@@ -160,7 +156,7 @@ export const SESSION_TOOLS: ChatTool[] = [
             if (!session) return rejected(`Session not found: ${sessionId}`)
             const mismatch = checkExpectedTitle(session, args)
             if (mismatch) return rejected(mismatch)
-            // The PATCH route does not check references; the assistant does, so a typo never reaches the review.
+            // Same check as the PATCH route, run early so a wrong id never reaches the review.
             const referenceError = await findInvalidReferences(ctx.firebaseApp, ctx.eventId, patch)
             if (referenceError) return rejected(referenceError)
             return proposed(args, {

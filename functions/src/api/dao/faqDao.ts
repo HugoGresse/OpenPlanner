@@ -111,6 +111,32 @@ export class FaqDao {
         }))
     }
 
+    // One category with its questions, or null: two reads instead of the whole FAQ.
+    public static async getFaqCategory(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string
+    ): Promise<FaqCategory | null> {
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/faq`).doc(categoryId)
+        const [snapshot, items] = await Promise.all([ref.get(), FaqDao.getFaqItems(firebaseApp, eventId, categoryId)])
+        if (!snapshot.exists) return null
+        return { ...(snapshot.data() as FaqCategory), id: snapshot.id, items }
+    }
+
+    // The category that holds a question id, looked up without reading any other category's questions.
+    public static async findFaqQuestionCategoryId(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        questionId: string
+    ): Promise<string | null> {
+        const db = firebaseApp.firestore()
+        const categories = await db.collection(`events/${eventId}/faq`).select().get()
+        if (categories.empty) return null
+        const questions = await db.getAll(...categories.docs.map((doc) => doc.ref.collection('items').doc(questionId)))
+        const index = questions.findIndex((question) => question.exists)
+        return index === -1 ? null : categories.docs[index].id
+    }
+
     public static async deleteFaqQuestion(
         firebaseApp: firebase.app.App,
         eventId: string,

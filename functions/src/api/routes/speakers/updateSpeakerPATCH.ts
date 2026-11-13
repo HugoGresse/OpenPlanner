@@ -42,7 +42,7 @@ export const updateSpeakerPATCHSchema = {
     tags: ['speakers'],
     summary: 'Update speaker info (partial)',
     description:
-        'Update one or more fields on a speaker. Only the fields provided in the body are updated; missing fields are preserved. Supports custom fields defined at the event level.',
+        'Update one or more fields on a speaker. Only the fields provided in the body are updated; missing fields are preserved. Unknown fields are rejected (400), an explicit null clears a field. Supports custom fields defined at the event level.',
     params: {
         type: 'object',
         properties: {

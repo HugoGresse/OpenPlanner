@@ -63,7 +63,7 @@ Rename a session and fix its slot:
 ```bash
 openplanner sessions list -f id,title,dates.start,trackId
 openplanner sessions update <sessionId> -s title="New title" -s dates.start=2026-06-12T10:00:00+02:00 -s dates.end=2026-06-12T10:45:00+02:00
-openplanner sessions get <sessionId> -f title,dates      # verify: unknown fields are dropped silently, not rejected
+openplanner sessions get <sessionId> -f title,dates      # verify
 ```
 
 Add a talk with a new speaker:
@@ -140,5 +140,5 @@ Every capability per surface (REST route, CLI command, assistant tool): [capabil
 1. Read before writing: list or get the document, then send a minimal partial body.
 2. Every `delete` / `delete-question` / `delete-category` command is irreversible: confirm with the user first; the `--yes` flag is the confirmation. Deleting a session keeps its speakers; deleting a sponsor or FAQ category deletes everything inside it.
 3. After content changes meant for the public site, ask whether to run `event deploy`; it also calls the event webhooks unless `--no-webhooks`.
-4. Most PATCH endpoints **drop unknown fields silently** (200 with nothing changed); only the `create`, `team add` and `team update` commands reject them. After an update, re-read the document with `-f` to confirm, and check `openplanner openapi --operation …` when a field seems ignored.
+4. `sessions`/`speakers`/`event` `update`, every `create`, `team add` and `team update` **reject unknown fields** (the 400 names the field), keep an explicit `null` as null (it clears the field) and do not coerce types (`"45"` is not a number). `sessions update` also checks `trackId`/`format`/`category`/`speakers` like `create`. `sponsors add`, `faq add` and `import` still drop unknown fields silently: re-read the document with `-f` after those, and check `openplanner openapi --operation …` when a field seems ignored.
 5. Secrets never go on the command line: `bupher login` reads the password from `--password-stdin` or `OPENPLANNER_BUPHER_PASSWORD`; screen passwords can come from `OPENPLANNER_SCREEN_PASSWORD`.

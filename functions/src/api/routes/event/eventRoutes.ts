@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify'
+import { strictBodyValidatorCompiler } from '../../other/strictValidator'
 import { exportSchedulePdfRoute } from './exportSchedulePdf'
 import { getEventRoute } from './getEvent'
 import { getPdfMetadataRoute } from './getPdfMetadata'
@@ -18,7 +19,11 @@ export const eventRoutes = (fastify: FastifyInstance, options: any, done: () => 
 
     fastify.patch<PatchEventPATCHTypes>(
         '/v1/:eventId/event',
-        { schema: patchEventPATCHSchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        {
+            schema: patchEventPATCHSchema,
+            validatorCompiler: strictBodyValidatorCompiler,
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
         patchEventRouteHandler(fastify)
     )
 

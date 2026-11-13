@@ -96,6 +96,21 @@ describe('PATCH /v1/:eventId/speakers/:speakerId', () => {
         expect(JSON.parse(res.body)).toMatchObject({ error: 'FST_ERR_VALIDATION' })
     })
 
+    test('rejects an unknown field by name instead of dropping it', async () => {
+        const { firestore } = mockFirestore()
+        vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore)
+
+        const res = await fastify.inject({
+            method: 'PATCH',
+            url: `/v1/${eventId}/speakers/${speakerId}?apiKey=${apiKey}`,
+            payload: { name: 'Ada', compnay: 'typo' },
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(JSON.parse(res.body)).toMatchObject({ error: 'FST_ERR_VALIDATION' })
+        expect(res.body).toContain('compnay')
+    })
+
     test('returns 404 when speaker does not exist', async () => {
         const { firestore } = mockFirestore({ speakerExists: false })
         vi.spyOn(fastify.firebase, 'firestore').mockImplementation(firestore)

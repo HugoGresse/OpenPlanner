@@ -1,6 +1,13 @@
 import firebase from 'firebase-admin'
 import { PROPOSAL_TOOLS, Proposal, READ_ONLY_TOOLS, buildProposal, executeTool, isProposalTool } from './tools'
 import { ChatSurface, buildSystemPrompt } from './systemPrompt'
+import {
+    OpenRouterMessage,
+    OpenRouterToolCall,
+    PromptUsage,
+    buildOpenRouterBody,
+    toPromptUsage,
+} from './openRouterRequest'
 
 export { buildSystemPrompt }
 
@@ -39,21 +46,11 @@ export type RunChatAgentOptions = {
     onEvent: (event: ChatAgentEvent) => void
 }
 
-type OpenRouterToolCall = { id: string; type: 'function'; function: { name: string; arguments: string } }
-
-type OpenRouterMessage = {
-    role: string
-    content: string | null
-    tool_calls?: OpenRouterToolCall[]
-    tool_call_id?: string
-    name?: string
-}
-
 export const consumeOpenRouterStream = async (
     response: Response,
     onDelta: (delta: string) => void,
     isAborted: () => boolean = () => false
-): Promise<{ message: OpenRouterMessage; finishReason: string | null }> => {
+): Promise<{ message: OpenRouterMessage; finishReason: string | null; usage: PromptUsage | null }> => {
     if (!response.body) {
         throw new Error('OpenRouter response has no body')
     }
@@ -63,6 +60,7 @@ export const consumeOpenRouterStream = async (
     let assembledContent = ''
     const assembledToolCalls = new Map<number, OpenRouterToolCall>()
     let finishReason: string | null = null
+    let usage: PromptUsage | null = null
 
     while (true) {
         if (isAborted()) {
@@ -85,7 +83,9 @@ export const consumeOpenRouterStream = async (
                 continue
             }
             try {
-                const choice = JSON.parse(payload).choices?.[0]
+                const chunk = JSON.parse(payload)
+                usage = toPromptUsage(chunk.usage) ?? usage
+                const choice = chunk.choices?.[0]
                 if (!choice) continue
                 const delta = choice.delta ?? {}
                 if (typeof delta.content === 'string' && delta.content.length > 0) {
@@ -119,7 +119,7 @@ export const consumeOpenRouterStream = async (
         content: assembledContent.length > 0 ? assembledContent : null,
     }
     if (toolCalls.length > 0) message.tool_calls = toolCalls
-    return { message, finishReason }
+    return { message, finishReason, usage }
 }
 
 const parseToolArguments = (raw: string): Record<string, any> => {
@@ -130,6 +130,9 @@ const parseToolArguments = (raw: string): Record<string, any> => {
         return {}
     }
 }
+
+// One frozen array: a stable tool order keeps the cached prompt prefix valid from one request to the next.
+const AGENT_TOOLS = [...READ_ONLY_TOOLS, ...PROPOSAL_TOOLS]
 
 const PROPOSAL_CAP_ERROR = `Cap of ${MAX_PROPOSALS_PER_REQUEST} proposals per request reached. Stop emitting more write tools and ask the user to apply or reject the current batch first.`
 
@@ -158,12 +161,7 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
                 'HTTP-Referer': 'https://openplanner.fr',
                 'X-Title': 'OpenPlanner',
             },
-            body: JSON.stringify({
-                model,
-                stream: true,
-                messages: conversation,
-                tools: [...READ_ONLY_TOOLS, ...PROPOSAL_TOOLS],
-            }),
+            body: JSON.stringify(buildOpenRouterBody(model, conversation, AGENT_TOOLS)),
             signal,
         })
 
@@ -173,7 +171,7 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
             break
         }
 
-        const { message, finishReason } = await consumeOpenRouterStream(
+        const { message, finishReason, usage } = await consumeOpenRouterStream(
             orResponse,
             (delta) => {
                 if (separatorPending && result.text.length > 0) result.text += '\n\n'
@@ -184,6 +182,7 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
             isAborted
         )
         conversation.push(message)
+        if (usage) console.info('chat round', { eventId, model, round, ...usage })
 
         if (isAborted() || finishReason !== 'tool_calls' || !message.tool_calls?.length) break
         separatorPending = true

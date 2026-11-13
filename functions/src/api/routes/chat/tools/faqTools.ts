@@ -36,6 +36,12 @@ const toToolCategory = (category: FaqCategory) => ({
 const listFaq = async ({ firebaseApp, eventId }: ToolContext) =>
     (await FaqDao.getFullFaqs(firebaseApp, eventId)).map(toToolCategory)
 
+// Proposals resolve the one category they touch instead of loading the whole FAQ.
+const loadCategory = async ({ firebaseApp, eventId }: ToolContext, categoryId: string) => {
+    const category = await FaqDao.getFaqCategory(firebaseApp, eventId, categoryId)
+    return category ? toToolCategory(category) : null
+}
+
 const categoryParams = {
     categoryId: { type: 'string' },
     expectedCategoryName: expectedParam("category's `name`", 'getFaq'),
@@ -63,18 +69,19 @@ export const FAQ_TOOLS: ChatTool[] = [
             const parsed = parseBody(Faq, args?.question)
             if (parsed.error !== undefined) return rejected(parsed.error)
             const body = parsed.value
-            const categories = await listFaq(ctx)
-            const category = categories.find((item) => item.id === body.categoryId)
-            const owner = body.id ? categories.find((item) => item.items.some((q) => q.id === body.id)) : undefined
-            if (owner && owner.id !== body.categoryId) {
-                return rejected(
-                    `FAQ question ${body.id} belongs to category ${owner.id}: pass that categoryId (moving a question is not supported)`
-                )
+            const category = await loadCategory(ctx, body.categoryId)
+            const existing = body.id ? category?.items.find((item) => item.id === body.id) : undefined
+            if (body.id && !existing) {
+                const ownerId = await FaqDao.findFaqQuestionCategoryId(ctx.firebaseApp, ctx.eventId, body.id)
+                if (ownerId && ownerId !== body.categoryId) {
+                    return rejected(
+                        `FAQ question ${body.id} belongs to category ${ownerId}: pass that categoryId (moving a question is not supported)`
+                    )
+                }
             }
             if (!category && !body.categoryName) {
                 return rejected(`FAQ category ${body.categoryId} does not exist: pass categoryName to create it`)
             }
-            const existing = body.id ? category?.items.find((item) => item.id === body.id) : undefined
             const { categoryId: _c, categoryName: _n, categoryOrder: _o, ...fields } = body
             return proposed(args, {
                 summary: `${existing ? 'Update' : 'Add'} FAQ question "${body.question}" in ${
@@ -106,7 +113,7 @@ export const FAQ_TOOLS: ChatTool[] = [
             const categoryId = stringArg(args, 'categoryId')
             const questionId = stringArg(args, 'questionId')
             if (!categoryId || !questionId) return rejected('categoryId and questionId are required')
-            const category = (await listFaq(ctx)).find((item) => item.id === categoryId)
+            const category = await loadCategory(ctx, categoryId)
             const question = category?.items.find((item) => item.id === questionId)
             if (!category || !question) return rejected(`FAQ question not found: ${categoryId}/${questionId}`)
             const mismatch = expectedMismatch({
@@ -140,7 +147,7 @@ export const FAQ_TOOLS: ChatTool[] = [
         build: async (ctx, args) => {
             const categoryId = stringArg(args, 'categoryId')
             if (!categoryId) return rejected('categoryId is required')
-            const category = (await listFaq(ctx)).find((item) => item.id === categoryId)
+            const category = await loadCategory(ctx, categoryId)
             if (!category) return rejected(`FAQ category not found: ${categoryId}`)
             const mismatch = expectedMismatch({
                 arg: 'expectedCategoryName',

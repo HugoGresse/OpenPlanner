@@ -160,7 +160,11 @@ export const sessionsRoutes = (fastify: FastifyInstance, options: any, done: () 
 
     fastify.patch<PatchSessionPATCHTypes>(
         '/v1/:eventId/sessions/:sessionId',
-        { schema: patchSessionPATCHSchema, preHandler: fastify.auth([fastify.verifyApiKey]) },
+        {
+            schema: patchSessionPATCHSchema,
+            validatorCompiler: strictBodyValidatorCompiler,
+            preHandler: fastify.auth([fastify.verifyApiKey]),
+        },
         patchSessionRouteHandler(fastify)
     )
 
