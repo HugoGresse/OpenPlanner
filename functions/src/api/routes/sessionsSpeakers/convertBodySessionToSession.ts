@@ -1,6 +1,7 @@
 import { Session, Event } from '../../../types'
 import { StaticTypeOfSpeakerSessionsType } from './sessionsSpeakers'
 import { DateTime } from 'luxon'
+import { findByIdOrName } from './findByIdOrName'
 type ElementType<T> = T extends (infer U)[] ? U : never
 
 export const convertBodySessionToSession = (
@@ -57,29 +58,15 @@ export const convertBodySessionToSession = (
     }
 
     if (session.trackId || session.trackName) {
-        realSession.trackId = (event.tracks || []).find(
-            (track) => track.name === session.trackId || track.name === session.trackName
-        )?.id
+        realSession.trackId = resolveReference(event, 'tracks', session.trackId, session.trackName)
     }
 
     if (session.categoryId || session.categoryName) {
-        realSession.category = (event.categories || []).find(
-            (cat) => cat.name === session.categoryId || cat.name === session.categoryName
-        )?.id
-        if (!realSession.category) {
-            console.error('Category not found', session.categoryId, session.categoryName, event.categories)
-            realSession.category = null
-        }
+        realSession.category = resolveReference(event, 'categories', session.categoryId, session.categoryName)
     }
 
     if (session.formatId || session.formatName) {
-        realSession.format = (event.formats || []).find(
-            (format) => format.name === session.formatId || format.name === session.formatName
-        )?.id
-        if (!realSession.format) {
-            console.error('Format not found', session.formatId, session.formatName, event.formats)
-            realSession.format = null
-        }
+        realSession.format = resolveReference(event, 'formats', session.formatId, session.formatName)
     }
 
     if (session.speakerIds) {
@@ -87,4 +74,15 @@ export const convertBodySessionToSession = (
     }
 
     return realSession as Session
+}
+
+const resolveReference = (
+    event: Event,
+    type: 'tracks' | 'categories' | 'formats',
+    id: string | undefined,
+    name: string | undefined
+): string | null => {
+    const resolved = findByIdOrName(event[type], id, name)
+    if (resolved === null) console.error(`${type} not found`, id, name, event[type])
+    return resolved
 }

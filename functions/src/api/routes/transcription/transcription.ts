@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
+import { publicDataUrl } from '../../other/publicDataUrl'
 import { EventDao } from '../../dao/eventDao'
 import { getStorageBucketName } from '../../dao/firebasePlugin'
 
@@ -52,7 +53,7 @@ export const transcriptionRoutes = (fastify: FastifyInstance, options: any, done
             if (event.transcriptionPassword !== password) {
                 reply.status(401).send(
                     JSON.stringify({
-                        error: 'Passwords does not match',
+                        error: 'Password does not match',
                     })
                 )
                 return
@@ -69,7 +70,7 @@ export const transcriptionRoutes = (fastify: FastifyInstance, options: any, done
             reply.status(200).send({
                 eventName: event.name,
                 gladiaAPIKey: event.gladiaAPIKey,
-                dataUrl: `https://storage.googleapis.com/${bucket}/${event.files.public}`,
+                dataUrl: publicDataUrl(bucket, event),
             })
         }
     )

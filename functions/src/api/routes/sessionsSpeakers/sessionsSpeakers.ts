@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
-import { FormatRegistry, Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
+import Format from 'typebox/format'
 import { DateTime } from 'luxon'
 import { verifyOverwriteData } from './verifyOverwriteData'
 import { EventDao } from '../../dao/eventDao'
@@ -7,10 +8,11 @@ import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 import { convertBodySessionToSession } from './convertBodySessionToSession'
 import { Speaker } from '../../../types'
+import { withSocialIcons } from '../../other/socials'
 
 const MAX_STRING_LENGTH = 10000
 
-FormatRegistry.Set('dateIso8601', function (value: string) {
+Format.Set('dateIso8601', function (value: string) {
     // Doc : https://moment.github.io/luxon/#/parsing?id=iso-8601
     try {
         const result = DateTime.fromISO(value)
@@ -291,11 +293,7 @@ export const sessionsSpeakers = (fastify: FastifyInstance, options: any, done: (
                 try {
                     const speakerWithAllFields: Partial<Speaker> & { id: string } = {
                         ...speaker,
-                        socials: (speaker.socials || []).map((social) => ({
-                            name: social.name,
-                            icon: social.icon || social.name.toLowerCase().trim().replace(' ', '-'),
-                            link: social.link,
-                        })),
+                        socials: withSocialIcons(speaker.socials || []),
                     }
                     await SpeakerDao.updateOrCreateSpeaker(fastify.firebase, eventId, speakerWithAllFields)
                 } catch (error) {

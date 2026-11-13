@@ -1,9 +1,10 @@
 import { StaticTypeOfSpeakerSessionsType } from './sessionsSpeakers'
-import { Value } from '@sinclair/typebox/value'
-import { Type } from '@sinclair/typebox'
+import Type from 'typebox'
+import Value from 'typebox/value'
 import { FormatError } from '../../other/Errors'
 import { Category, Event, Format, Track } from '../../../types'
 import { randomColor } from '../../other/randomColor'
+import { findByIdOrName } from './findByIdOrName'
 
 /**
  * Verify the data correctness before writing it to the database
@@ -115,10 +116,9 @@ const ensureIdOrNameFit = (
         }
     }
 
-    const existWithName = (event[type] || []).find((t) => t.name === name)
-    const existWithId = (event[type] || []).find((t) => t.id === id)
+    const existingId = findByIdOrName(event[type], id, name)
 
-    if (!existWithName && !existWithId) {
+    if (existingId === null) {
         if (!id) {
             throw new FormatError(
                 400,
@@ -135,6 +135,6 @@ const ensureIdOrNameFit = (
 
     return {
         needToCreate: false,
-        id: existWithId ? existWithId.id : existWithName?.id,
+        id: existingId,
     }
 }

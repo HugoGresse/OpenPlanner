@@ -4,6 +4,7 @@ import { FaqCategoryType, FaqType } from '../routes/faq/faq'
 import { Faq, FaqCategory } from '../../../../src/types'
 import { NotFoundError } from '../other/Errors'
 import { dateToString } from '../other/dateConverter'
+import { deleteDocumentOr404 } from './documentHelpers'
 
 const { FieldValue } = firebase.firestore
 
@@ -108,6 +109,31 @@ export class FaqDao {
             ...category,
             items: faqItems[index] || [],
         }))
+    }
+
+    public static async deleteFaqQuestion(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string,
+        questionId: string
+    ): Promise<void> {
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/faq/${categoryId}/items`).doc(questionId)
+        await deleteDocumentOr404(ref, 'FAQ question not found')
+    }
+
+    // Deletes the category and its `items` subcollection (a plain document delete would leave the items behind).
+    public static async deleteFaqCategory(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+        const ref = db.collection(`events/${eventId}/faq`).doc(categoryId)
+        const snapshot = await ref.get()
+        if (!snapshot.exists) {
+            throw new NotFoundError('FAQ category not found')
+        }
+        await db.recursiveDelete(ref)
     }
 
     private static async getFaqItems(firebaseApp: firebase.app.App, eventId: string, faqId: string): Promise<Faq[]> {

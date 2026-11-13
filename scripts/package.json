@@ -5,14 +5,28 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "typecheck": "tsc --noEmit",
+        "generate:thumbnails": "tsx youtube-thumbnails/generateThumbnails.ts",
+        "youtube:batch-edit": "tsx youtube/youtubeBatchEdit.js",
+        "youtube:subtitle-edit": "tsx youtube/youtubeSubtitleEdit.js",
+        "youtube:subtitle-upload": "tsx youtube/youtubeSubtitleUpload.js"
     },
     "author": "",
     "license": "ISC",
+    "engines": {
+        "node": ">=24"
+    },
     "dependencies": {
         "@supercharge/promise-pool": "^3.2.0",
         "axios": "^1.7.2",
         "dotenv": "^17.0.0",
-        "googleapis": "^140.0.1"
+        "googleapis": "^140.0.1",
+        "sharp": "^0.35.3"
+    },
+    "devDependencies": {
+        "@types/node": "^24.13.2",
+        "tsx": "^4.23.0",
+        "typescript": "^6.0.3"
     }
 }

@@ -46,14 +46,19 @@ export const useFirestoreDocumentMutation = (ref: DocumentReference): UseMutatio
 
     const mutate = useCallback(
         async (data: any) => {
+            let mutationError = null
             try {
                 setLoading(true)
                 setError(null)
                 await setDoc(ref, data, { merge: true }) // We use setDoc to actually trigger the converter
             } catch (error: any) {
+                mutationError = error
                 setError(error)
             }
             setLoading(false)
+            // Returned (not thrown) so existing callers keep their no-throw contract
+            // while new callers can react to a failed write
+            return mutationError
         },
         [ref]
     )

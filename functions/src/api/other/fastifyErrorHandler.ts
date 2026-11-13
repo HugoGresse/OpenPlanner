@@ -1,6 +1,14 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { HttpError } from './Errors'
 
+type ValidationItem = { params?: { additionalProperty?: string } }
+
+// Names the offending key on schema errors ("Error: body must NOT have additional properties: compnay").
+const describeError = (error: Error & { validation?: ValidationItem[] }): string => {
+    const extra = error.validation?.[0]?.params?.additionalProperty
+    return `${error.toString()}${extra ? `: ${extra}` : ''}`
+}
+
 export const fastifyErrorHandler = (
     error:
         | (Error & {
@@ -22,7 +30,7 @@ export const fastifyErrorHandler = (
             reply.status(error.statusCode).send(
                 JSON.stringify({
                     error: error.code,
-                    reason: error.toString(),
+                    reason: describeError(error),
                     success: false,
                 })
             )

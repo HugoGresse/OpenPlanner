@@ -47,10 +47,14 @@ export const generateShortVid = async (
         }
     }
     if (!settings.colorBackground || !settings.logoUrl || !settings.locationName || !settings.eventStartDate) {
+        const missingFields: string[] = []
+        if (!settings.colorBackground) missingFields.push('colorBackground')
+        if (!settings.logoUrl) missingFields.push('logoUrl')
+        if (!settings.locationName) missingFields.push('locationName')
+        if (!settings.eventStartDate) missingFields.push('eventStartDate')
         return {
             success: false,
-            message:
-                'Missing settings, ensure those are set in the event settings: colorBackground, logoUrl, locationName, eventStartDate',
+            message: `Missing settings, ensure those are set in the event settings: ${missingFields.join(', ')}`,
             results: [],
         }
     }

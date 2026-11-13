@@ -10,7 +10,10 @@ import {
     mdiCogBox,
     mdiPresentation,
     mdiFrequentlyAskedQuestions,
+    mdiToyBrickOutline,
     mdiTwitter,
+    mdiTicket,
+    mdiEarth,
 } from '@mdi/js'
 import { useRoute } from 'wouter'
 import { LinkBehavior } from '../../components/CCLink'
@@ -49,6 +52,11 @@ export const Menu = [
         name: 'FAQ',
     },
     {
+        href: '/blocks',
+        icon: mdiToyBrickOutline,
+        name: 'Blocks',
+    },
+    {
         href: '/sessions',
         icon: mdiPresentation,
         name: 'Sessions',
@@ -64,6 +72,11 @@ export const Menu = [
         name: 'Schedule',
     },
     {
+        href: '/tickets',
+        icon: mdiTicket,
+        name: 'Tickets',
+    },
+    {
         href: '/social',
         icon: mdiTwitter,
         name: 'Social',
@@ -74,9 +87,14 @@ export const Menu = [
         name: 'Settings',
     },
     {
+        href: '/public',
+        icon: mdiEarth,
+        name: 'Public',
+    },
+    {
         href: '/api',
         icon: mdiApi,
-        name: 'API & Deploys',
+        name: 'Integration & API',
     },
 ]
 

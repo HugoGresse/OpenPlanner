@@ -4,23 +4,23 @@ import { useEffect, useState } from 'react'
 import { useFirestoreDocumentMutation } from '../../../services/hooks/firestoreMutationHooks'
 import { doc } from 'firebase/firestore'
 import { collections } from '../../../services/firebase'
-import { FormContainer, useForm, SwitchElement } from 'react-hook-form-mui'
-import { Card, Container, Grid, Typography, Box, Button } from '@mui/material'
+import { FormContainer, useForm } from 'react-hook-form-mui'
+import { Card, Container, Grid, Typography, Box, IconButton, Collapse, Button } from '@mui/material'
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material'
+import { Link } from 'wouter'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { mapEventDevSettingsFormToMutateObject } from '../settings/mapEventSettingsFormToMutateObject'
 import { WebhooksFields } from '../settings/components/WebhooksFields'
 import { RepoFields } from '../settings/components/RepoFields'
 import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFilePaths'
+import { EventUsageCard } from './components/EventUsageCard'
+import { useSelector } from 'react-redux'
+import { selectUserIdOpenPlanner } from '../../../auth/authReducer'
+import { useIsAdmin } from '../../../services/hooks/useIsAdmin'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { TextFieldElementWithGenerateApiKeyButton } from '../../../components/form/TextFieldElementWithGenerateApiKeyButton'
-import { getFaqBaseLinkLink } from '../faq/faqLink'
-import { useFaqs } from '../../../services/hooks/useFaqs'
-import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
-import { TypographyCopyable } from '../../../components/TypographyCopyable'
-import { Link } from 'wouter'
 import { TextFieldElementPrivate } from '../../../components/form/TextFieldElementPrivate'
-import { PdfScheduleSection } from '../../../components/PdfScheduleSection'
 
 const schema = yup
     .object({
@@ -56,27 +56,20 @@ export type APIProps = {
 }
 export const API = ({ event }: APIProps) => {
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
-    const faqQuery = useFaqs(event)
+    const [expandedAPI, setExpandedAPI] = useState(true)
+    const [expandedDeploy, setExpandedDeploy] = useState(true)
+    const userId = useSelector(selectUserIdOpenPlanner)
+    const isSuperAdmin = useIsAdmin(userId)
+    const slackConnected = Boolean(event.slackTeamId || (event.slackBotToken && event.slackSigningSecret))
 
     const formContext = useForm({
         defaultValues: convertInputEvent(event),
     })
-    const { control, formState, reset, watch } = formContext
-    const publicEnabled = watch('publicEnabled')
+    const { control, formState, reset } = formContext
 
     useEffect(() => {
         reset(convertInputEvent(event))
     }, [event])
-
-    const eventPublicUrl = `${window.location.protocol}//${window.location.host}/public/event/${event.id}`
-    const faqBaseUrl = getFaqBaseLinkLink(event)
-
-    if (faqQuery.isLoading) {
-        return <FirestoreQueryLoaderAndErrorDisplay hookResult={faqQuery} />
-    }
-
-    const faqCategories = faqQuery.data || []
-    const privateFaqCount = faqCategories.filter((f) => f.private).length || 0
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -87,97 +80,110 @@ export const API = ({ event }: APIProps) => {
                 onSuccess={async (data) => {
                     return mutation.mutate(mapEventDevSettingsFormToMutateObject(event, data))
                 }}>
-                <Card sx={{ padding: 2 }}>
-                    <Grid container spacing={4}>
-                        <Grid item xs={12} md={6}>
-                            <Typography component="h2" variant="h5">
-                                APIs
-                            </Typography>
-                            <EventStaticApiFilePaths event={event} />
+                <Typography component="h1" variant="h5">
+                    Integration & API
+                </Typography>
 
-                            <Typography fontWeight="600" mt={5}>
-                                Dynamic API (slow, not cached, read/write, work in progress)
-                            </Typography>
-                            <Typography fontWeight="600" mt={2} component="a" href="https://api.openplanner.fr/">
-                                Docs
-                            </Typography>
-                            <TextFieldElementPrivate
-                                margin="normal"
-                                fullWidth
-                                id="id"
-                                label="Event ID"
-                                name="id"
-                                disabled={true}
-                                showFullText={true}
-                                value={event.id}
-                            />
-                            <TextFieldElementWithGenerateApiKeyButton
-                                required={true}
-                                fullWidth={true}
-                                id="apiKey"
-                                label="API Key"
-                                name="apiKey"
-                                disabled={true}
-                                helperText="use as params ?apiKey=xxx"
-                                buttonText="Generate new API Key"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Typography component="h2" variant="h5" gutterBottom>
-                                Website
-                            </Typography>
-                            <Box mb={2}>
-                                <SwitchElement label="Enable public website" name="publicEnabled" />
-                                {publicEnabled && (
-                                    <Box mt={1}>
-                                        <TypographyCopyable>{eventPublicUrl}</TypographyCopyable>
-                                    </Box>
-                                )}
-                            </Box>
+                <Card sx={{ paddingX: 2, mt: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                        <Typography fontSize="large" sx={{ mt: 2 }}>
+                            APIs
+                        </Typography>
+                        <IconButton
+                            size="small"
+                            onClick={() => setExpandedAPI(!expandedAPI)}
+                            sx={{
+                                transform: expandedAPI ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                transition: '0.3s',
+                            }}>
+                            <ExpandMoreIcon />
+                        </IconButton>
+                    </Box>
+                    <Collapse in={expandedAPI}>
+                        <EventStaticApiFilePaths event={event} />
 
-                            <PdfScheduleSection event={event} />
+                        <Typography fontWeight="600" mt={5}>
+                            Dynamic API (slow, not cached, read/write, work in progress)
+                        </Typography>
+                        <Typography fontWeight="600" mt={2} component="a" href="https://api.openplanner.fr/">
+                            Docs
+                        </Typography>
+                        <TextFieldElementPrivate
+                            margin="normal"
+                            fullWidth
+                            id="id"
+                            label="Event ID"
+                            name="id"
+                            disabled={true}
+                            showFullText={true}
+                            value={event.id}
+                        />
+                        <TextFieldElementWithGenerateApiKeyButton
+                            required={true}
+                            fullWidth={true}
+                            id="apiKey"
+                            label="API Key"
+                            name="apiKey"
+                            disabled={true}
+                            helperText="use as params ?apiKey=xxx"
+                            buttonText="Generate new API Key"
+                        />
+                    </Collapse>
+                </Card>
 
-                            <Typography component="h2" variant="h5" gutterBottom>
-                                FAQ
+                {isSuperAdmin && <EventUsageCard event={event} />}
+
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
+                        <Box>
+                            <Typography fontSize="large">WhatsApp (track management)</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Set up GreenAPI and send track-management messages.
                             </Typography>
-                            <Box>
-                                <Typography variant="body1" gutterBottom>
-                                    Public FAQ:{' '}
-                                    <Button component={Link} to={`/faq`}>
-                                        Edit FAQ
-                                    </Button>
-                                </Typography>
-                                <TypographyCopyable>{faqBaseUrl}</TypographyCopyable>
+                        </Box>
+                        <Button component={Link} to="/whatsapp" variant="outlined">
+                            Open
+                        </Button>
+                    </Box>
+                </Card>
 
-                                <Typography variant="body1" mt={2} gutterBottom>
-                                    Private FAQ pages: {privateFaqCount}
-                                </Typography>
-
-                                {faqCategories.map(
-                                    (category) =>
-                                        category.private && (
-                                            <Box key={category.id}>
-                                                <Typography variant="subtitle1" gutterBottom>
-                                                    {category.name}
-                                                </Typography>
-                                                <TypographyCopyable singleLine={true}>
-                                                    {`${faqBaseUrl}${category.privateId}`}
-                                                </TypographyCopyable>
-                                            </Box>
-                                        )
-                                )}
-                            </Box>
-
-                            <Typography component="h2" variant="h5" mt={4}>
-                                Deployments
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
+                        <Box>
+                            <Typography fontSize="large">Slack chat assistant</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Ask about sessions and speakers and approve edits from Slack.
+                                {slackConnected ? ' Connected.' : ''}
                             </Typography>
-                            <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
+                        </Box>
+                        <Button component={Link} to="/slack" variant={slackConnected ? 'outlined' : 'contained'}>
+                            {slackConnected ? 'Manage Slack integration' : 'Add Slack integration'}
+                        </Button>
+                    </Box>
+                </Card>
 
-                            <Typography component="h2" variant="h5" mt={4}>
-                                Repository Settings
-                            </Typography>
-                            <RepoFields control={control} isSubmitting={formState.isSubmitting} event={event} />
-                        </Grid>
+                <Card sx={{ paddingX: 2, mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                        <Typography fontSize="large" sx={{ mt: 2 }}>
+                            Deployments & Repository
+                        </Typography>
+                        <IconButton
+                            size="small"
+                            onClick={() => setExpandedDeploy(!expandedDeploy)}
+                            sx={{
+                                transform: expandedDeploy ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                transition: '0.3s',
+                            }}>
+                            <ExpandMoreIcon />
+                        </IconButton>
+                    </Box>
+                    <Collapse in={expandedDeploy}>
+                        <WebhooksFields control={control} isSubmitting={formState.isSubmitting} event={event} />
+
+                        <Typography fontWeight="600" mt={4}>
+                            Repository Settings
+                        </Typography>
+                        <RepoFields control={control} isSubmitting={formState.isSubmitting} event={event} />
 
                         <Grid item xs={12}>
                             <LoadingButton
@@ -190,7 +196,7 @@ export const API = ({ event }: APIProps) => {
                                 Save
                             </LoadingButton>
                         </Grid>
-                    </Grid>
+                    </Collapse>
                 </Card>
                 <SaveShortcut />
             </FormContainer>

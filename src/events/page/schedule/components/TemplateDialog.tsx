@@ -117,6 +117,7 @@ export const TemplateDialog = ({ event, isOpen, onClose }: TemplateDialogProps) 
                 <DataGrid
                     rows={rows}
                     columns={columns}
+                    isCellEditable={(params) => params.id !== 'total'}
                     disableRowSelectionOnClick
                     hideFooter
                     disableColumnMenu

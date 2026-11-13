@@ -1,8 +1,8 @@
 import { makeBupherGraphQLRequest, makePublishRequest, publishBrowserHeaders } from './bupherUtils'
 
-interface S3UploadPreSignedURLResponse {
+interface S3PreSignedURLResponse {
     data: {
-        s3UploadPreSignedURL: {
+        s3PreSignedURL: {
             url: string
             key: string
             bucket: string
@@ -11,21 +11,57 @@ interface S3UploadPreSignedURLResponse {
     }
 }
 
-const getPreSignedUrl = async (
-    bupherSession: string,
-    file: File
-): Promise<{ success: boolean; result?: S3UploadPreSignedURLResponse; error?: string }> => {
-    const path = '?_o=s3Upload' + 'PreSignedURL'
+const extractAwsCookies = (setCookieHeader: string | null): string | null => {
+    if (!setCookieHeader) return null
+    const cookies: string[] = []
+    const awsalbtg = setCookieHeader.match(/AWSALBTG=([^;]+)/)
+    if (awsalbtg) cookies.push(awsalbtg[0])
+    const awsalbtgcors = setCookieHeader.match(/AWSALBTGCORS=([^;]+)/)
+    if (awsalbtgcors) cookies.push(awsalbtgcors[0])
+    return cookies.length > 0 ? cookies.join('; ') : null
+}
+
+const fetchAwsLoadBalancerCookies = async (bupherSession: string, organizationId: string): Promise<string | null> => {
+    const path = '?_o=Get' + 'Composer' + 'ChannelsList'
     const response = await makeBupherGraphQLRequest(
         path,
         bupherSession,
         'POST',
         JSON.stringify({
-            operationName: 's3UploadPreSignedURL',
+            operationName: 'GetComposerChannelsList',
             variables: {
-                input: { fileName: file.name, mimeType: file.type, uploadType: 'postAsset' },
+                input: { organizationId },
             },
-            query: 'query s3UploadPreSignedURL($input: S3UploadPreSignedURLInput!) {\n  s3UploadPreSignedURL(input: $input) {\n    url\n    key\n    bucket\n    __typename\n  }\n}\n',
+            query: 'query GetComposerChannelsList($input: ChannelsInput!) {\n  channels(input: $input) {\n    id\n    ...ComposerChannelFragment\n    __typename\n  }\n}\n\nfragment ComposerChannelFragment on Channel {\n  id\n  name\n  displayName\n  service\n  type\n  avatar\n  locationData {\n    location\n    __typename\n  }\n  isLocked\n  isDisconnected\n  __typename\n}\n',
+        })
+    )
+    return extractAwsCookies(response.headers.get('set-cookie'))
+}
+
+const getPreSignedUrl = async (
+    bupherSession: string,
+    organizationId: string,
+    file: File
+): Promise<{ success: boolean; result?: S3PreSignedURLResponse; error?: string }> => {
+    const awsCookies = await fetchAwsLoadBalancerCookies(bupherSession, organizationId)
+    const sessionWithAwsCookies = awsCookies ? `${bupherSession}; ${awsCookies}` : bupherSession
+
+    const path = '?_o=s3' + 'PreSignedURL'
+    const response = await makeBupherGraphQLRequest(
+        path,
+        sessionWithAwsCookies,
+        'POST',
+        JSON.stringify({
+            operationName: 's3PreSignedURL',
+            variables: {
+                input: {
+                    organizationId: organizationId,
+                    fileName: file.name,
+                    mimeType: file.type,
+                    uploadType: 'postAsset',
+                },
+            },
+            query: 'query s3PreSignedURL($input: S3PreSignedURLInput!) {\n s3PreSignedURL(input: $input) {\n url\n key\n bucket\n __typename\n }\n}',
         })
     )
     if (!response.ok) {
@@ -34,7 +70,7 @@ const getPreSignedUrl = async (
             error: response.statusText + ' ' + response.status,
         }
     }
-    const result = (await response.json()) as S3UploadPreSignedURLResponse
+    const result = (await response.json()) as S3PreSignedURLResponse
     return {
         success: true,
         result: result,
@@ -118,22 +154,22 @@ const getFileDetails = async (bupherSession: string, fileKey: string) => {
  * @returns
  */
 export const postBupherFile = async (bupherSession: string, organizationId: string, file: File) => {
-    const preSignedUrl = await getPreSignedUrl(bupherSession, file)
-    if (!preSignedUrl.success || !preSignedUrl.result || !preSignedUrl.result?.data?.s3UploadPreSignedURL) {
+    const preSignedUrl = await getPreSignedUrl(bupherSession, organizationId, file)
+    if (!preSignedUrl.success || !preSignedUrl.result || !preSignedUrl.result?.data?.s3PreSignedURL) {
         return {
             success: false,
             error: 'Failed to get pre-signed URL, ' + preSignedUrl.error,
         }
     }
 
-    const uploadResponse = await uploadFileToS3(preSignedUrl.result.data.s3UploadPreSignedURL.url, file)
+    const uploadResponse = await uploadFileToS3(preSignedUrl.result.data.s3PreSignedURL.url, file)
     if (!uploadResponse) {
         return {
             success: false,
-            error: 'Failed to upload file to S3, ' + preSignedUrl.result.data.s3UploadPreSignedURL.url,
+            error: 'Failed to upload file to S3, ' + preSignedUrl.result.data.s3PreSignedURL.url,
         }
     }
-    const fileKey = preSignedUrl.result.data.s3UploadPreSignedURL.key
+    const fileKey = preSignedUrl.result.data.s3PreSignedURL.key
     const fileDetails = await getFileDetails(bupherSession, fileKey)
     if (
         !fileDetails.success ||

@@ -85,12 +85,8 @@ export const loginToBupher = async (
         }
         const csrfToken = csrfMatch[1]
 
-        // Get cookies from the login page response and format them properly
         const rawCookies = loginPageResponse.headers.get('set-cookie')
-        const cookies = rawCookies
-            ?.split(',')
-            .map((cookie) => cookie.split(';')[0])
-            .join('; ')
+        const cookies = extractCookieForHeader(rawCookies || '')
 
         // Submit login form with CSRF token
         const loginResponse = await fetch(`${BASE_URL}/login`, {
@@ -152,13 +148,15 @@ export const makeAuthenticatedBupherRequest = async (
 
     return fetch(`${BASE_URL}${url}`, options)
 }
-const clientId = 'webapp' + '-' + 'publish'
+const clientId = 'webapp' + '-' + 'publish' + 'ing'
 const clientIdKey = ['x-', 'bu', 'f', 'f', 'er', '-', 'client', '-', 'id'].join('')
+const clientNameKey = ['x-', 'bu', 'f', 'f', 'er', '-', 'client', '-', 'name'].join('')
 
 export const makePublishRequest = async (path: string, session: string, method: string = 'GET', body?: any) => {
     const headers: Record<string, string> = {
         ...publishBrowserHeaders,
         [clientIdKey]: clientId,
+        [clientNameKey]: clientId,
         Cookie: session,
     }
 
@@ -174,6 +172,7 @@ export const makeBupherGraphQLRequest = async (path: string, session: string, me
         ...graphQLBrowserHeaders,
         Cookie: session,
         [clientIdKey]: clientId,
+        [clientNameKey]: clientId,
     }
 
     return fetch(`${BASE_URL}${path}`, { method, headers, body })

@@ -1,4 +1,15 @@
-import { Category, Track, Format, SponsorCategory, TeamMember, FaqCategory, Social } from '../../../../../../src/types'
+import {
+    Category,
+    Track,
+    Format,
+    SponsorCategory,
+    TeamMember,
+    FaqCategory,
+    Social,
+    SponsorCustomField,
+    SpeakerCustomField,
+    TicketCurrency,
+} from '../../../../../../src/types'
 
 export interface JsonSession {
     id: string
@@ -39,6 +50,23 @@ export interface JsonSpeaker {
     companyLogoUrl: string | null | undefined
     photoUrl: string | null | undefined
     socials: Social[]
+    customFields?: { [key: string]: string | boolean }
+}
+
+export interface JsonTicket {
+    id: string
+    name: string
+    price: number
+    currency: TicketCurrency
+    url: string
+    ticketsCount: number
+    available: boolean
+    soldOut: boolean
+    highlighted: boolean
+    displayNewsletterRegistration: boolean
+    startDate: string | null
+    endDate: string | null
+    message: string
 }
 
 export interface JsonEvent {
@@ -59,7 +87,18 @@ export interface JsonEvent {
     logoUrl: string | null | undefined
     logoUrl2: string | null | undefined
     backgroundUrl: string | null | undefined
+    intermissionMediaUrl: string | null | undefined
+    language: string | null | undefined
+    sponsorCustomFields: SponsorCustomField[]
+    speakerCustomFields: SpeakerCustomField[]
 }
+
+// blocks.{page}.{blockKey} or blocks.{page}.{group}.{blockKey}
+// Block value by variant: 'single' -> the item value; 'list' -> item values ordered by
+// item `order` (array order is significant); 'map' -> { itemKey: itemValue }.
+// Item value by block type: markdown -> string, image -> { url, alt },
+// link -> { label, href, icon, type }, json -> parsed JSON as-is.
+export type JsonBlocks = Record<string, Record<string, unknown>>
 
 export interface JsonPublicOutput {
     event: JsonEvent
@@ -69,6 +108,8 @@ export interface JsonPublicOutput {
     team: TeamMember[]
     teams: { id: string; members: TeamMember[]; order: number }[]
     faq: FaqCategory[]
+    tickets: JsonTicket[]
+    blocks: JsonBlocks
     timezone: string | null | undefined
     generatedAt: string
 }
@@ -82,4 +123,5 @@ export interface JsonOutput {
     outputPrivate: JsonPrivateOutput
     outputOpenFeedback: { sessions: { [p: string]: any }; speakers: { [p: string]: any } }
     outputVoxxrin: any | null
+    warnings: string[]
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Box, Button, Card, Container, Typography } from '@mui/material'
+import { Box, Button, Card, Container, IconButton, Tooltip, Typography } from '@mui/material'
+import { Settings } from '@mui/icons-material'
 import { Event, SponsorCategory } from '../../../types'
 import { FirestoreQueryLoaderAndErrorDisplay } from '../../../components/FirestoreQueryLoaderAndErrorDisplay'
 import { useSponsors } from '../../../services/hooks/useSponsors'
@@ -10,6 +11,7 @@ import { updateSponsors } from '../../actions/updateSponsors'
 import { JobPostSettings } from './components/jobs/JobPostSettings'
 import { JobPostUrlDisplay } from './components/jobs/JobPostUrlDisplay'
 import { useJobsPosts } from '../../../services/hooks/useJobsPosts'
+import { SponsorCustomFieldsDialog } from './components/SponsorCustomFieldsDialog'
 export type EventSponsorsProps = {
     event: Event
 }
@@ -17,6 +19,7 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
     const sponsors = useSponsors(event.id)
     const jobPosts = useJobsPosts(event.id)
     const [newCategoryDialog, setNewCategoryDialog] = useState(false)
+    const [customFieldsOpen, setCustomFieldsOpen] = useState(false)
 
     const sponsorsData = sponsors.data || []
 
@@ -74,7 +77,14 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
                 <Typography> {sponsorCount} sponsors</Typography>
-                <JobPostSettings event={event} />
+                <Box display="flex" alignItems="center" gap={1}>
+                    <Tooltip title="Custom fields settings">
+                        <IconButton aria-label="Custom fields settings" onClick={() => setCustomFieldsOpen(true)}>
+                            <Settings />
+                        </IconButton>
+                    </Tooltip>
+                    <JobPostSettings event={event} />
+                </Box>
             </Box>
 
             {event.addJobPostEnabled && (
@@ -117,6 +127,14 @@ export const EventSponsors = ({ event }: EventSponsorsProps) => {
                     setNewCategoryDialog(false)
                 }}
             />
+
+            {customFieldsOpen && (
+                <SponsorCustomFieldsDialog
+                    event={event}
+                    open={customFieldsOpen}
+                    onClose={() => setCustomFieldsOpen(false)}
+                />
+            )}
         </Container>
     )
 }

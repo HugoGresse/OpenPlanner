@@ -10,8 +10,9 @@ type ApiResponse<T> = {
 }
 
 type RequestOptions = {
-    method?: 'GET' | 'POST'
+    method?: 'GET' | 'POST' | 'DELETE'
     body?: any
+    query?: Record<string, string | number | boolean | undefined | null>
 }
 
 export async function fetchOpenPlannerApi<T>(
@@ -26,21 +27,33 @@ export async function fetchOpenPlannerApi<T>(
     const url = new URL(API_URL as string)
     url.pathname += `v1/${event.id}/${endpoint}`
     url.searchParams.append('apiKey', event.apiKey)
+    if (options.query) {
+        for (const [k, v] of Object.entries(options.query)) {
+            if (v === undefined || v === null) continue
+            url.searchParams.append(k, String(v))
+        }
+    }
 
     const fetchOptions: RequestInit = {
         method: options.method,
-        headers: {
-            'Content-Type': 'application/json',
-        },
     }
 
-    if (options.body && options.method === 'POST') {
+    if (options.body && options.method !== 'GET') {
+        // Content-Type only when a body is actually sent: a bodyless POST with an
+        // application/json header is rejected by Fastify's default JSON parser
+        fetchOptions.headers = { 'Content-Type': 'application/json' }
         fetchOptions.body = JSON.stringify(options.body)
     }
 
     const response = await fetch(url.href, fetchOptions)
     if (!response.ok) {
-        throw new Error(`Failed to fetch from ${endpoint}`)
+        // Surface the API's error message ({ error, details }) instead of a generic failure.
+        const detail = await response
+            .clone()
+            .json()
+            .then((body) => (body && typeof body.error === 'string' ? body.error : null))
+            .catch(() => null)
+        throw new Error(detail || `Failed to fetch from ${endpoint}`)
     }
     return await response.json()
 }

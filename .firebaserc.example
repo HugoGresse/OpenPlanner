@@ -1,9 +1,9 @@
 {
   "projects": {
-    "default": "openplanner"
+    "default": "your-firebase-project-id"
   },
   "targets": {
-    "openplanner": {
+    "your-firebase-project-id": {
       "hosting": {
         "conferencecenterr": [
           "conferencecenterrX"

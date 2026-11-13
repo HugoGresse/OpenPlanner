@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { Type } from '@sinclair/typebox'
+import Type from 'typebox'
 import { getBupherSession, makePublishRequest, sendErrorResponse } from './utils/bupherUtils'
 
 // Schema definitions

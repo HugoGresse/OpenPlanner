@@ -26,6 +26,11 @@ export class EventDao {
         return baseData as Event
     }
 
+    public static async getEventsBySlackTeamId(firebaseApp: firebase.app.App, teamId: string): Promise<Event[]> {
+        const snapshot = await firebaseApp.firestore().collection('events').where('slackTeamId', '==', teamId).get()
+        return snapshot.docs.map((doc) => ({ ...(doc.data() as Event), id: doc.id }))
+    }
+
     public static async createCategory(
         firebaseApp: firebase.app.App,
         eventId: string,
@@ -83,6 +88,24 @@ export class EventDao {
                 console.error('error creating format', error)
                 throw new Error('Error creating format ' + error)
             })
+    }
+
+    public static async patchEvent(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        patch: Record<string, unknown>
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+
+        const eventSnapshot = await db.collection('events').doc(eventId).get()
+        if (!eventSnapshot.exists) {
+            throw new Error('Event not found')
+        }
+
+        await db
+            .collection('events')
+            .doc(eventId)
+            .set({ ...patch, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
     }
 
     public static async saveBupherSession(

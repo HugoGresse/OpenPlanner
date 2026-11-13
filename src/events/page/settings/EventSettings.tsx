@@ -1,12 +1,15 @@
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Box, Button, Card, Container, DialogContentText, Grid, Typography } from '@mui/material'
+import { Box, Button, Card, Container, DialogContentText, Grid, Typography, IconButton, Collapse } from '@mui/material'
 import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { ModelAutocomplete } from '../../../components/form/ModelAutocomplete'
+import { useAiModelList } from '../../../services/openRouter'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { doc } from 'firebase/firestore'
 import { DateTime } from 'luxon'
 import { useState } from 'react'
 import { useLocation } from 'wouter'
 import * as yup from 'yup'
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { useNotification } from '../../../hooks/notificationHook'
 import { collections } from '../../../services/firebase'
@@ -25,11 +28,13 @@ import { SaveShortcut } from '../../../components/form/SaveShortcut'
 import { EventSettingsFormatCategoriesGrid } from './EventSettingsFormatCategoriesGrid'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 import { TextFieldElementPrivate } from '../../../components/form/TextFieldElementPrivate'
+import { Title } from '@mui/icons-material'
 
 const schema = yup
     .object({
         name: yup.string().required(),
         timezone: yup.string().required(),
+        language: yup.string().required(),
     })
     .required()
 
@@ -37,6 +42,7 @@ const convertInputEvent = (event: Event): EventForForm => {
     return {
         ...event,
         timezone: event.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: event.language || 'FR',
         dates: {
             start: event.dates.start ? DateTime.fromJSDate(event.dates.start).toFormat("kkkk-LL-dd'T'T") : null,
             end: event.dates.end ? DateTime.fromJSDate(event.dates.end).toFormat("kkkk-LL-dd'T'T") : null,
@@ -50,6 +56,9 @@ export type EventSettingsProps = {
 export const EventSettings = ({ event }: EventSettingsProps) => {
     const [_, setLocation] = useLocation()
     const [deleteOpen, setDeleteOpen] = useState(false)
+    const [expandedGeneralInfo, setExpandedGeneralInfo] = useState(true)
+    const [expandedMoreDetails, setExpandedMoreDetails] = useState(true)
+    const [expandedTracks, setExpandedTracks] = useState(true)
     const { createNotification } = useNotification()
     const documentDeletion = useFirestoreDocumentDeletion(doc(collections.events, event.id))
     const mutation = useFirestoreDocumentMutation(doc(collections.events, event.id))
@@ -58,6 +67,11 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
         defaultValues: convertInputEvent(event),
     })
     const { control, formState, watch } = formContext
+    // Drive the model list off the live form value so pasting a fresh API
+    // key into the field above immediately repopulates the picker, instead
+    // of staying empty until the user saves and reopens the page.
+    const openRouterAPIKey = watch('openRouterAPIKey') || ''
+    const modelList = useAiModelList(openRouterAPIKey)
 
     const days = diffDays(watch('dates.start'), watch('dates.end'))
 
@@ -75,208 +89,79 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                         Event settings
                     </Typography>
                     <Card sx={{ paddingX: 2 }}>
-                        <Grid container spacing={4}>
-                            <Grid item xs={12} md={6}>
-                                <TextFieldElement
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="name"
-                                    label="Event name"
-                                    name="name"
-                                    variant="filled"
-                                    disabled={formState.isSubmitting}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextFieldElement
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="dates.start"
-                                    label="Start date"
-                                    name="dates.start"
-                                    variant="filled"
-                                    type="datetime-local"
-                                    InputLabelProps={{ shrink: true }}
-                                    disabled={formState.isSubmitting}
-                                />
-                                <TextFieldElement
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="dates.end"
-                                    label="End date"
-                                    name="dates.end"
-                                    variant="filled"
-                                    type="datetime-local"
-                                    InputLabelProps={{ shrink: true }}
-                                    disabled={formState.isSubmitting}
-                                />
-                                <TextFieldElement
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="timezone"
-                                    label="Timezone"
-                                    name="timezone"
-                                    variant="filled"
-                                    disabled={formState.isSubmitting}
-                                    helperText="eg: Europe/Paris"
-                                />
-                                {days ? days + ' day(s)' : ''}
-                            </Grid>
-                        </Grid>
-
-                        <Grid container spacing={4}>
-                            <Grid item xs={12} md={6}>
-                                <Typography fontWeight="600" mt={2}>
-                                    Event details & theme
-                                </Typography>
-
-                                <TextFieldElement
-                                    margin="dense"
-                                    fullWidth
-                                    id="eventLocation"
-                                    label="Location name (.locationName)"
-                                    name="locationName"
-                                    variant="filled"
-                                    size="small"
-                                    disabled={formState.isSubmitting}
-                                />
-                                <TextFieldElement
-                                    margin="dense"
-                                    fullWidth
-                                    id="eventLocationUrl"
-                                    label="Location url (.locationUrl)"
-                                    name="locationUrl"
-                                    variant="filled"
-                                    size="small"
-                                    disabled={formState.isSubmitting}
-                                />
-
-                                <ImageTextFieldElement
-                                    event={event}
-                                    margin="dense"
-                                    fullWidth
-                                    label="Logo (.logoUrl)"
-                                    name="logoUrl"
-                                    variant="filled"
-                                    disabled={formState.isSubmitting}
-                                    size="small"
-                                />
-                                <ImageTextFieldElement
-                                    event={event}
-                                    margin="dense"
-                                    fullWidth
-                                    label="Logo 2 (.logoUrl2)"
-                                    name="logoUrl2"
-                                    variant="filled"
-                                    disabled={formState.isSubmitting}
-                                    size="small"
-                                />
-                                <ImageTextFieldElement
-                                    event={event}
-                                    margin="dense"
-                                    fullWidth
-                                    label="Background image (.backgroundUrl) used for ShortVid.io"
-                                    name="backgroundUrl"
-                                    variant="filled"
-                                    disabled={formState.isSubmitting}
-                                    size="small"
-                                />
-
-                                <TextFieldElement
-                                    label="Color"
-                                    name="color"
-                                    variant="filled"
-                                    size="small"
-                                    margin="dense"
-                                    type="color"
-                                    InputLabelProps={{ shrink: true }}
-                                    disabled={formState.isSubmitting}
-                                    sx={{ minWidth: 150, mr: 1 }}
-                                />
-                                <TextFieldElement
-                                    label="Color secondary"
-                                    name="colorSecondary"
-                                    variant="filled"
-                                    size="small"
-                                    margin="dense"
-                                    type="color"
-                                    InputLabelProps={{ shrink: true }}
-                                    disabled={formState.isSubmitting}
-                                    sx={{ minWidth: 150, mr: 1 }}
-                                />
-                                <TextFieldElement
-                                    label="Color background"
-                                    name="colorBackground"
-                                    variant="filled"
-                                    size="small"
-                                    margin="dense"
-                                    type="color"
-                                    InputLabelProps={{ shrink: true }}
-                                    disabled={formState.isSubmitting}
-                                    sx={{ minWidth: 150 }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <Typography fontWeight="600" mt={2}>
-                                    Other stuffs
-                                </Typography>
-
-                                <TextFieldElementPrivate
-                                    margin="normal"
-                                    fullWidth
-                                    id="openAPIKey"
-                                    label="OpenAI API key"
-                                    name="openAPIKey"
-                                    variant="filled"
-                                    disabled={formState.isSubmitting}
-                                />
-
-                                <TextFieldElementPrivate
-                                    margin="normal"
-                                    fullWidth
-                                    id="gladiaAPIKey"
-                                    label="Gladia.io API key or token"
-                                    name="gladiaAPIKey"
-                                    variant="filled"
-                                    helperText="Used for the transcription pages. Don't forget to set the password below or the Gladia.io API Key could be accessed freely"
-                                    disabled={formState.isSubmitting}
-                                />
-                                <TextFieldElement
-                                    margin="normal"
-                                    fullWidth
-                                    id="transcriptionPassword"
-                                    label="Password to access transcription"
-                                    name="transcriptionPassword"
-                                    variant="filled"
-                                    disabled={formState.isSubmitting}
-                                />
-                                {event.transcriptionPassword && event.transcriptionPassword.length > 0 ? (
-                                    <p>
-                                        <a
-                                            target="_blank"
-                                            href={`${
-                                                window.location.hostname === 'localhost'
-                                                    ? 'http://localhost:3000'
-                                                    : 'https://openplanner.fr'
-                                            }/public/event/${event.id}/transcription`}>
-                                            Transcription page url
-                                        </a>
-                                    </p>
-                                ) : null}
-                            </Grid>
-                        </Grid>
-                        <Grid container spacing={4}>
-                            <Grid item xs={12} md={6}>
-                                <TrackFields control={control} isSubmitting={formState.isSubmitting} />
-                                <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
-                            </Grid>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                            <Typography fontSize="large" sx={{ mt: 2 }}>
+                                {' '}
+                                General Information{' '}
+                            </Typography>
+                            <IconButton
+                                size="small"
+                                onClick={() => setExpandedGeneralInfo(!expandedGeneralInfo)}
+                                sx={{
+                                    transform: expandedGeneralInfo ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                    transition: '0.3s',
+                                }}>
+                                <ExpandMoreIcon />
+                            </IconButton>
+                        </Box>
+                        <Collapse in={expandedGeneralInfo}>
+                            <TextFieldElement
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="name"
+                                label="Event name"
+                                name="name"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                            />
+                            <TextFieldElement
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="dates.start"
+                                label="Start date"
+                                name="dates.start"
+                                variant="filled"
+                                type="datetime-local"
+                                InputLabelProps={{ shrink: true }}
+                                disabled={formState.isSubmitting}
+                            />
+                            <TextFieldElement
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="dates.end"
+                                label="End date"
+                                name="dates.end"
+                                variant="filled"
+                                type="datetime-local"
+                                InputLabelProps={{ shrink: true }}
+                                disabled={formState.isSubmitting}
+                            />
+                            <TextFieldElement
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="timezone"
+                                label="Timezone"
+                                name="timezone"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                                helperText="eg: Europe/Paris"
+                            />
+                            <TextFieldElement
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="language"
+                                label="Language"
+                                name="language"
+                                variant="filled"
+                                disabled={formState.isSubmitting}
+                                helperText="FR | en |  BCP-47 code like fr-FR"
+                            />
+                            {days ? days + ' day(s)' : ''}
 
                             <Grid item xs={12}>
                                 <LoadingButton
@@ -290,7 +175,206 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                                 </LoadingButton>
                                 {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}
                             </Grid>
-                        </Grid>
+                        </Collapse>
+                    </Card>
+
+                    <Card sx={{ paddingX: 2, mt: 4 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                            <Typography fontSize="large" sx={{ mt: 2 }}>
+                                {' '}
+                                More details{' '}
+                            </Typography>
+                            <IconButton
+                                size="small"
+                                onClick={() => setExpandedMoreDetails(!expandedMoreDetails)}
+                                sx={{
+                                    transform: expandedMoreDetails ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                    transition: '0.3s',
+                                }}>
+                                <ExpandMoreIcon />
+                            </IconButton>
+                        </Box>
+                        <Collapse in={expandedMoreDetails}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={6}>
+                                    <Typography fontWeight="600" mt={2}>
+                                        Event details & theme
+                                    </Typography>
+
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        id="eventLocation"
+                                        label="Location name (.locationName)"
+                                        name="locationName"
+                                        variant="filled"
+                                        size="small"
+                                        disabled={formState.isSubmitting}
+                                    />
+                                    <TextFieldElement
+                                        margin="dense"
+                                        fullWidth
+                                        id="eventLocationUrl"
+                                        label="Location url (.locationUrl)"
+                                        name="locationUrl"
+                                        variant="filled"
+                                        size="small"
+                                        disabled={formState.isSubmitting}
+                                    />
+
+                                    <ImageTextFieldElement
+                                        event={event}
+                                        margin="dense"
+                                        fullWidth
+                                        label="Logo (.logoUrl)"
+                                        name="logoUrl"
+                                        variant="filled"
+                                        disabled={formState.isSubmitting}
+                                        size="small"
+                                    />
+                                    <ImageTextFieldElement
+                                        event={event}
+                                        margin="dense"
+                                        fullWidth
+                                        label="Logo 2 (.logoUrl2)"
+                                        name="logoUrl2"
+                                        variant="filled"
+                                        disabled={formState.isSubmitting}
+                                        size="small"
+                                    />
+                                    <ImageTextFieldElement
+                                        event={event}
+                                        margin="dense"
+                                        fullWidth
+                                        label="Background image (.backgroundUrl) used for ShortVid.io"
+                                        name="backgroundUrl"
+                                        variant="filled"
+                                        disabled={formState.isSubmitting}
+                                        size="small"
+                                    />
+
+                                    <Grid container spacing={1}>
+                                        <Grid item xs={12} sm={6} md={4}>
+                                            <TextFieldElement
+                                                label="Color"
+                                                name="color"
+                                                variant="filled"
+                                                size="small"
+                                                margin="dense"
+                                                type="color"
+                                                InputLabelProps={{ shrink: true }}
+                                                disabled={formState.isSubmitting}
+                                                fullWidth
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6} md={4}>
+                                            <TextFieldElement
+                                                label="Color secondary"
+                                                name="colorSecondary"
+                                                variant="filled"
+                                                size="small"
+                                                margin="dense"
+                                                type="color"
+                                                InputLabelProps={{ shrink: true }}
+                                                disabled={formState.isSubmitting}
+                                                fullWidth
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6} md={4}>
+                                            <TextFieldElement
+                                                label="Color background"
+                                                name="colorBackground"
+                                                variant="filled"
+                                                size="small"
+                                                margin="dense"
+                                                type="color"
+                                                InputLabelProps={{ shrink: true }}
+                                                disabled={formState.isSubmitting}
+                                                fullWidth
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography fontWeight="600" mt={2}>
+                                        Other stuffs
+                                    </Typography>
+
+                                    <TextFieldElementPrivate
+                                        margin="normal"
+                                        fullWidth
+                                        id="openRouterAPIKey"
+                                        label="OpenRouter API key"
+                                        name="openRouterAPIKey"
+                                        variant="filled"
+                                        helperText="Used for the in-app chat assistant. Get one at https://openrouter.ai/keys."
+                                        disabled={formState.isSubmitting}
+                                    />
+                                    <ModelAutocomplete
+                                        name="openRouterModel"
+                                        label="OpenRouter model (optional)"
+                                        helperText="Defaults to anthropic/claude-sonnet-4 if empty."
+                                        disabled={formState.isSubmitting}
+                                        margin="normal"
+                                        models={modelList}
+                                    />
+                                </Grid>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <LoadingButton
+                                    type="submit"
+                                    disabled={formState.isSubmitting}
+                                    loading={formState.isSubmitting}
+                                    fullWidth
+                                    variant="contained"
+                                    sx={{ mt: 2, mb: 2 }}>
+                                    Save
+                                </LoadingButton>
+                                {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}
+                            </Grid>
+                        </Collapse>
+                    </Card>
+
+                    <Card sx={{ paddingX: 2, mt: 4 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+                            <Typography fontSize="large" sx={{ mt: 2 }}>
+                                {' '}
+                                Tracks, formats & categories{' '}
+                            </Typography>
+                            <IconButton
+                                size="small"
+                                onClick={() => setExpandedTracks(!expandedTracks)}
+                                sx={{
+                                    transform: expandedTracks ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                    transition: '0.3s',
+                                }}>
+                                <ExpandMoreIcon />
+                            </IconButton>
+                        </Box>
+                        <Collapse in={expandedTracks}>
+                            <Grid container spacing={4}>
+                                <Grid item xs={12} md={6}>
+                                    <TrackFields control={control} isSubmitting={formState.isSubmitting} />
+                                    <FormatsFields control={control} isSubmitting={formState.isSubmitting} />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <CategoriesFields control={control} isSubmitting={formState.isSubmitting} />
+                                </Grid>
+
+                                <Grid item xs={12}>
+                                    <LoadingButton
+                                        type="submit"
+                                        disabled={formState.isSubmitting}
+                                        loading={formState.isSubmitting}
+                                        fullWidth
+                                        variant="contained"
+                                        sx={{ mt: 2, mb: 2 }}>
+                                        Save
+                                    </LoadingButton>
+                                    {mutation.error && <Typography color="error">{mutation.error.message}</Typography>}
+                                </Grid>
+                            </Grid>
+                        </Collapse>
                     </Card>
                     {!deleteOpen && <SaveShortcut />}
                 </FormContainer>
@@ -322,8 +406,8 @@ export const EventSettings = ({ event }: EventSettingsProps) => {
                     </ConfirmDialog>
                 </Box>
             </Container>
-            <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-                <Card sx={{ paddingX: 2 }}>
+            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+                <Card sx={{ padding: 2 }}>
                     <Grid item xs={12}>
                         <EventSettingsFormatCategoriesGrid event={event} />
                     </Grid>

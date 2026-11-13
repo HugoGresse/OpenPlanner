@@ -14,7 +14,7 @@ export const getFaq = async (eventId: string): Promise<FaqCategory[]> => {
 
     return faqCategory.map((category, index) => ({
         ...category,
-        faqs: faqItems[index] || [],
+        items: faqItems[index] || [],
     }))
 }
 

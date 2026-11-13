@@ -71,15 +71,25 @@ export const PublicEventSchedule = ({ eventId, event }: PublicEventScheduleProps
             alignItems="center"
             sx={{ minHeight: 'calc(100vh - 124px)' }} // Subtract margin-top value to prevent overflow
         >
-            {!hideHeader && (
-                <ScheduleHeader
-                    eventName={event.event.name}
-                    logoUrl={event.event.logoUrl}
-                    colorBackground={event.event.colorBackground}
-                />
+            {hideHeader ? (
+                <Box display="flex" alignItems="center" justifyContent="center" gap={3} flexWrap="wrap">
+                    <ScheduleHeader
+                        eventName={event.event.name}
+                        logoUrl={event.event.logoUrl}
+                        colorBackground={event.event.colorBackground}
+                    />
+                    <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
+                </Box>
+            ) : (
+                <>
+                    <ScheduleHeader
+                        eventName={event.event.name}
+                        logoUrl={event.event.logoUrl}
+                        colorBackground={event.event.colorBackground}
+                    />
+                    <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
+                </>
             )}
-
-            <DayTabs days={sortedDays} selectedDay={selectedDay} onDayChange={handleDayChange} />
 
             <DaySchedule
                 day={selectedDay}

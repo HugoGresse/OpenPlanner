@@ -29,5 +29,18 @@
             ]
         }
     ],
-    "fieldOverrides": []
+    "fieldOverrides": [
+        {
+            "collectionGroup": "speakerEditTokens",
+            "fieldPath": "expiresAt",
+            "ttl": true,
+            "indexes": []
+        },
+        {
+            "collectionGroup": "speakerEditRateLimits",
+            "fieldPath": "expiresAt",
+            "ttl": true,
+            "indexes": []
+        }
+    ]
 }

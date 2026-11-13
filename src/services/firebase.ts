@@ -1,11 +1,12 @@
 import { initializeApp } from 'firebase/app'
-import { collection, Firestore, getFirestore } from '@firebase/firestore'
+import { collection, connectFirestoreEmulator, Firestore, getFirestore } from '@firebase/firestore'
 import { FirebaseApp } from '@firebase/app'
-import { getAuth } from 'firebase/auth'
-import { getStorage } from 'firebase/storage'
+import { connectAuthEmulator, getAuth } from 'firebase/auth'
+import { connectStorageEmulator, getStorage } from 'firebase/storage'
 import { Auth } from '@firebase/auth'
 import {
     adminUserConverter,
+    buildingBlockConverter,
     eventConverter,
     faqConverter,
     jobPostConverter,
@@ -13,6 +14,7 @@ import {
     speakerConverter,
     sponsorsConverter,
     teamConverter,
+    ticketConverter,
 } from './converters'
 
 const config = {
@@ -33,9 +35,33 @@ export const isStorageUrl = (url: string | null | undefined): boolean => {
     return url.startsWith(baseStorageUrl) || url.startsWith(alternativeStorageUrl)
 }
 
+// Strip a full public storage URL down to its bucket-relative path. Firebase's
+// ref(storage, ...) only understands gs:// or firebasestorage URLs, so a public
+// googleapis.com URL must be reduced to a plain path first.
+export const storageUrlToPath = (urlOrPath: string): string => {
+    if (urlOrPath.startsWith(alternativeStorageUrl)) {
+        return urlOrPath.slice(alternativeStorageUrl.length)
+    }
+    if (urlOrPath.startsWith(`${baseStorageUrl}/`)) {
+        return urlOrPath.slice(baseStorageUrl.length + 1)
+    }
+    return urlOrPath
+}
+
+// Build the public URL for a bucket-relative storage path.
+export const pathToStorageUrl = (path: string): string => `${alternativeStorageUrl}${path}`
+
 let instanceApp: FirebaseApp = initializeApp(config)
 export const instanceFirestore: Firestore = getFirestore(instanceApp)
 export const storage = getStorage()
+
+// Emulator mode (`bun run dev:emulator`): every Firebase service targets the local
+// Emulator Suite instead of the live project, so nothing can touch production data
+if (import.meta.env.VITE_USE_EMULATOR === 'true') {
+    connectFirestoreEmulator(instanceFirestore, '127.0.0.1', 8080)
+    connectAuthEmulator(getAuth(instanceApp), 'http://127.0.0.1:9099', { disableWarnings: true })
+    connectStorageEmulator(storage, '127.0.0.1', 9199)
+}
 
 export const collections = {
     events: collection(instanceFirestore, 'events').withConverter(eventConverter),
@@ -48,7 +74,11 @@ export const collections = {
     speakers: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'speakers').withConverter(speakerConverter),
     team: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'team').withConverter(teamConverter),
+    tickets: (eventId: string) =>
+        collection(instanceFirestore, 'events', eventId, 'tickets').withConverter(ticketConverter),
     faq: (eventId: string) => collection(instanceFirestore, 'events', eventId, 'faq').withConverter(faqConverter),
+    buildingBlocks: (eventId: string) =>
+        collection(instanceFirestore, 'events', eventId, 'blocks').withConverter(buildingBlockConverter),
     jobPosts: (eventId: string) =>
         collection(instanceFirestore, 'events', eventId, 'jobPosts').withConverter(jobPostConverter),
 

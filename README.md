@@ -1,6 +1,8 @@
 # OpenPlanner
 
-A website to
+An all-in-one platform to plan a conference and run the live show: talks, speakers, sponsors, schedule, and day-of tooling.
+
+### Talks, speakers & schedule
 
 -   schedule accepted talks from [ConferenceHall](https://conference-hall.io/): pick date & time
 -   talks and speakers:
@@ -12,11 +14,29 @@ A website to
     -   categories and formats for sessions
     -   private notes for speaker, email, phone
     -   tracks / rooms
+-   speaker self-edit via a magic link, with admin approval
+
+### Sponsors, team & content
+
 -   manage sponsors & categories
 -   manage team members
 -   FAQ with admin and public or hidden pages
+-   AI-assisted content generation for sessions and social posts
+-   schedule social media posts
+-   public job board: collect and manage job offers from sponsors
+
+### Day-of / live show
+
+-   WhatsApp track management ([GreenAPI](https://green-api.com/)): poll each track "ready?", broadcast the GO, and auto-schedule timing reminders
+-   live transcription & on-screen subtitles for talks (powered by [Gladia](https://www.gladia.io/) live v2)
+-   intermission / between-talks screen
+
+### Public & integrations
+
 -   public schedule website builtin (and optin)
 -   [API](https://api.openplanner.fr/) & webhooks
+-   `openplanner` CLI ([cli/](cli/)) for scripts and coding agents (Claude Code, Codex), with a ready-made agent skill
+-   AI chat assistant (OpenRouter, bring your own key) to query and edit sessions/speakers with reviewed proposals, in the app or from Slack ("Add to Slack" on the Integration & API page)
 
 ## Dev guidelines
 
@@ -24,8 +44,10 @@ Project use:
 
 -   TypeScript everywhere
 -   Google Firestore (native) database
--   React
+-   React (frontend) + Material UI
 -   Firebase Hosting & functions
+-   API: [Fastify](https://fastify.dev/) + [TypeBox](https://github.com/sinclairzx81/typebox) (runtime + compile-time schemas)
+-   Integrations: ConferenceHall, [Gladia](https://www.gladia.io/) (live transcription), [GreenAPI](https://green-api.com/) (WhatsApp), Bupher (social posts)
 
 Core concepts:
 
@@ -44,49 +66,46 @@ React guidelines:
 
 ### Requirements
 
--   One Firebase project for **`OpenPlanner`** on the Blaze plan.
+-   One Firebase project for **`OpenPlanner`** on the Blaze plan (Cloud Functions need it).
 -   Node.js **20+**
 -   [Bun.js](https://bun.js.org/) as a build tool
+-   The [Firebase CLI](https://firebase.google.com/docs/cli) (`npm i -g firebase-tools`)
 
 ### Installation
 
-1. Create a `.env` from `.env.example`. Do the same for the `.env` files in `functions` .
-2. In your Firebase project, create a **Web App** named `openplanner` associated with the default hosting to obtain the Firebase config. Copy the generated config and populate `.env`.
-3. In your Firebase project, create the following **Web App** (replace `X` with your suffix):
-    - API: Hosting site `apiopenplannerX`
-    - ConferenceCenter: Hosting site `conferencecenterrX`
-    - ServiceApi: Hosting site `serviceapiX`
-4. Copy `.firebaserc.example` to `.firebaserc` and set your Firebase project values. Targets are resolved via `firebase target:apply`, no need to hardcode Hosting target name ids in `firebase.json`.
-5. Install dependencies with Bun: `bun install`.
+1. Create a `.env` from `.env.example`, and a `functions/.env` from `functions/.env.example`.
+2. In your Firebase project, create a **Web App** (Project settings > Your apps) to obtain the Firebase config, and copy it into `.env`.
+3. In the Firebase console, under **Hosting**, create the three Hosting sites the project deploys to (replace `X` with your suffix, site ids are global):
+    - `conferencecenterrX`: the admin and public website (`dist`)
+    - `apiopenplannerX`: the API and its reference page (`api-swagger`)
+    - `serviceapiX`: the service API (`serviceapi-swagger`)
+4. Install dependencies with Bun: `bun install`.
 
 Inside OpenPlanner's firebase project:
 
 1. Enable Authentication with email/password (Authentication > Sign-in method > Email/Password > Enable).
-2. In Authentication settings, under User actions, disable “Protection against email enumeration (recommended)”.
+2. In Authentication settings, under User actions, disable “Protection against email enumeration (recommended)”. The sign-in page relies on the `auth/user-not-found` error to offer “Sign up now”, and Firebase only returns it with this protection off.
 3. Create Storage (use test or prod rules as needed).
-4. Create a Firestore database (default mode).
-5. Log in and select the Firebase project in your terminal:
+4. Create a Firestore database in **Native mode**, in the region of the functions (`europe-west1`) or close to it.
+5. Log in and select the Firebase project in your terminal (the alias you pick is only a local name):
 
-```
+```bash
 firebase login
-firebase use openplanner
+firebase use --add
 ```
 
-6. Configure hosting targets with the Firebase CLI (replace X with your actual target suffix):
+6. Map the hosting targets of `firebase.json` to your sites. This writes them into `.firebaserc` (gitignored; `.firebaserc.example` shows the expected result):
 
-```
+```bash
 firebase target:apply hosting conferencecenterr conferencecenterrX
 firebase target:apply hosting apiopenplanner apiopenplannerX
 firebase target:apply hosting serviceapi serviceapiX
 ```
 
-7. Deploy: `firebase deploy`.
-
-8. Copy the URL of the created API function into the .env file.
-
-9. Run frontend app: `npm run start`. Your app is available on `http://localhost:3000/`.
-
-10. To sign in to the app, create a user in Firebase under Authentication > Users.
+7. Build and deploy: `bun run deploy`.
+8. In `.env`, set `VITE_FIREBASE_OPEN_PLANNER_API_URL` to the API site (`https://apiopenplannerX.web.app/`) and `VITE_FIREBASE_OPEN_PLANNER_FUNCTION_URL` to the `api` function URL (`https://europe-west1-<project-id>.cloudfunctions.net/api/`), then deploy again so the website picks them up.
+9. Run the frontend locally with `bun start`: it is served on `http://localhost:3000/` and talks to the live project (see the emulator mode below for a fully local setup).
+10. Sign in with any email and password, then accept “Sign up now” to create your account (or add a user under Authentication > Users).
 
 ### Development
 
@@ -104,13 +123,41 @@ Then, some features on the frontend use OpenPlanner API, which can be started wi
 3. `npm run build:watch` to start the compiler in watch mode for auto rebuild
 4. `npm run serve` to start the API itself which will use Firestore on GCP.
 
+### Local development with the Firebase Emulator Suite (recommended)
+
+⚠️ `bun start` / `bun run dev` talks to the **live Firebase project** configured in your env file. For day-to-day development and testing, use the emulator mode instead — nothing touches real data:
+
+```bash
+bun run emulators                          # 1. auth + firestore + storage emulators (needs a JDK 21+)
+cd functions && npm i && npm run dev:emulator  # 2. OpenPlanner API on http://localhost:3010, wired to the emulators
+bun run dev:emulator                       # 3. frontend on http://localhost:3008, wired to both
+```
+
+#### Default login
+
+The emulators start **empty** and their data is wiped when they stop. There is no seeded account: on first use, enter any throwaway credentials on the sign-in page — for example `hugo@example.com` / `azerty` — and click **"Sign up now"** when prompted. The account exists only inside the local auth emulator, so these are not real credentials. Then create an event and use the app normally, including the "Update website" export (files land in the storage emulator).
+
 **Enjoy 🚀**
+
+### Slack app (optional)
+
+Users can chat with the assistant from Slack. Two modes:
+
+-   **Official app (one click for users)**: create one Slack app from [functions/slack-app-manifest.json](functions/slack-app-manifest.json) (replace `FUNCTIONS_URL` with your deployed Cloud Functions URL, not the Hosting one), then set `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` and `SLACK_SIGNING_SECRET` in `functions/.env`. The Integration & API page then shows an **Add to Slack** button; installs are stored in `slackInstallations/{teamId}` and messages are routed to the event linked to the workspace (and channel, when several events share one).
+-   **Self-managed app** (no env needed): each event pastes its own bot token + signing secret; the page shows a per-event manifest and request URLs.
+
+Slack must be acknowledged within 3 seconds, so the chat reply / Apply work runs in a second request the `api` function sends to itself (`POST /v1/slack/work`, signed with `SERVICE_API_KEY`). Set `API_SELF_URL` only if the function is not reachable at the default `https://europe-west1-<project>.cloudfunctions.net/api`.
+
+### CLI
+
+[cli/](cli/) holds `@openplanner/cli`, a JSON-first command-line client of the API (`openplanner sessions list -f id,title`, `openplanner event deploy`, `openplanner api PATCH /v1/{eventId}/event -d '{…}'`…). It ships the agent skill in [cli/skills/openplanner/SKILL.md](cli/skills/openplanner/SKILL.md), linked from `.claude/skills/` (Claude Code) and `.agents/skills/` (Codex), and installable anywhere with `openplanner skill install`. See [cli/README.md](cli/README.md).
 
 ### Scripts
 
 The repo contain few scripts useful for:
 
 -   updating the YouTube metadata (title, desc, thumbnails, etc) of uploaded video: [scripts/youtubeBatchEdit.js](scripts/youtubeBatchEdit.js)
+-   deleting orphan images (in the storage bucket but referenced by no Firestore document): `cd functions && npx tsx src/scripts/cleanOrphanImages.ts` — dry run by default, `--delete` to act, `--event <id>` to scope
 
 ### Deploy
 

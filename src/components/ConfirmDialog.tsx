@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, DialogProps } from '@mui/material'
 import * as React from 'react'
 import { LoadingButton } from '@mui/lab'
 
@@ -13,6 +13,8 @@ export type ConfirmDialogProps = {
     loading?: boolean
     children: React.ReactNode
     autoFocus?: boolean
+    fullWidth?: boolean
+    maxWidth?: DialogProps['maxWidth']
 }
 export const ConfirmDialog = ({
     open,
@@ -24,11 +26,15 @@ export const ConfirmDialog = ({
     handleAccept,
     disabled,
     loading,
+    fullWidth,
+    maxWidth,
 }: ConfirmDialogProps) => {
     return (
         <Dialog
             open={open}
             onClose={handleClose}
+            fullWidth={fullWidth}
+            maxWidth={maxWidth}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description">
             <DialogTitle id="alert-dialog-title">{title}</DialogTitle>

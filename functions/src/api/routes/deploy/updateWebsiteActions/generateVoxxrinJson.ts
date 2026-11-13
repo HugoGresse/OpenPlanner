@@ -8,24 +8,30 @@ export const generateVoxxrinJson = (
     speaker: Speaker[],
     sponsors: SponsorCategory[]
 ) => {
+    const warnings: string[] = []
+    const addWarning = (message: string) => {
+        console.warn(message)
+        warnings.push(message)
+    }
+
     const days = getIndividualDays(event.dates.start, event.dates.end)
 
     if (!days || days.length === 0) {
-        console.warn('Voxxrin: no days found')
-        return null
+        addWarning('Voxxrin: no days found')
+        return { outputVoxxrin: null, warnings }
     }
     if (!event.dates.start || !event.dates.end) {
-        console.warn('Voxxrin: no start or end date found')
-        return null
+        addWarning('Voxxrin: no start or end date found')
+        return { outputVoxxrin: null, warnings }
     }
 
     if (!event.logoUrl) {
-        alert('Voxxrin: no logoUrl set in the event settings')
-        return null
+        addWarning('Voxxrin: no logoUrl set in the event settings')
+        return { outputVoxxrin: null, warnings }
     }
     if (!event.backgroundUrl) {
-        alert('Voxxrin: no backgroundUrl set in the event settings')
-        return null
+        addWarning('Voxxrin: no backgroundUrl set in the event settings')
+        return { outputVoxxrin: null, warnings }
     }
 
     // TODO : supportedTalkLanguages
@@ -204,5 +210,5 @@ export const generateVoxxrinJson = (
         }
     })
 
-    return voxxrinJson
+    return { outputVoxxrin: voxxrinJson, warnings }
 }

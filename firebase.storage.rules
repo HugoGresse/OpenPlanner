@@ -2,6 +2,12 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    // Public read; writes require an authenticated event member. Speaker
+    // self-edit photo uploads go through the Cloud Functions API (admin SDK
+    // bypasses these rules), so unauthenticated speakers cannot write here
+    // directly — the API alone gates the upload behind a valid magic-link
+    // token. Pending-edit files use the `pending-edit-...` filename prefix
+    // for housekeeping.
     match /events/{eventId}/{file} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid in

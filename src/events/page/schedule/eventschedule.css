@@ -1,3 +1,8 @@
+/* Don't tint the current day differently — keep its column the same as the other days. */
+.fc {
+    --fc-today-bg-color: transparent;
+}
+
 .fc table {
     font-size: 6px;
 }

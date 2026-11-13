@@ -10,6 +10,7 @@ import { EventLayoutAuthUser } from '../list/EventLayoutAuthUser'
 import { collections } from '../../services/firebase'
 import { useFirestoreCollection } from '../../services/hooks/firestoreQueryHook'
 import { useMemo } from 'react'
+import { AdminUsageSection } from './AdminUsageSection'
 
 export const AdminScreen = ({}) => {
     const userId = useSelector(selectUserIdOpenPlanner)
@@ -64,6 +65,12 @@ export const AdminScreen = ({}) => {
             </Button>
 
             <FirestoreQueryLoaderAndErrorDisplay hookResult={events} />
+
+            {isAdmin && events.data && (
+                <AdminUsageSection
+                    eventNames={new Map((events.data as any[]).map((event: any) => [event.id, event.name]))}
+                />
+            )}
 
             <Box sx={{ height: '80vh', width: '100%' }}>
                 <DataGrid

@@ -1,5 +1,5 @@
 import { EventAISettings, Session } from '../../../../types'
-import { BASE_OPENAI_SETTINGS, openAI, OpenAICompletionSettings } from '../../../../services/openai'
+import { BASE_OPENROUTER_SETTINGS, openRouter, OpenRouterCompletionSettings } from '../../../../services/openRouter'
 import { isNumber } from '@mui/x-data-grid/internals'
 
 export enum TeasingPostSocials {
@@ -36,8 +36,8 @@ Format: XFORMATX`,
 }
 
 export const BaseAiSettings: EventAISettings = {
-    model: BASE_OPENAI_SETTINGS.model,
-    temperature: `${BASE_OPENAI_SETTINGS.temperature}`,
+    model: BASE_OPENROUTER_SETTINGS.model,
+    temperature: `${BASE_OPENROUTER_SETTINGS.temperature}`,
     sessions: {
         teasingPromptSystem: GenerateSessionsTeasingContentPrompts.fr.system,
         teasingPromptUser: GenerateSessionsTeasingContentPrompts.fr.user,
@@ -50,7 +50,7 @@ export const generateSessionTeasingContent = async (
     session: Session,
     promptSystem: string,
     promptUser: string,
-    generationSettings: OpenAICompletionSettings = BASE_OPENAI_SETTINGS
+    generationSettings: OpenRouterCompletionSettings = BASE_OPENROUTER_SETTINGS
 ) => {
     const systemPromptHydrated = promptSystem.replace('XSOCIALX', social)
     const userPromptHydrated = promptUser
@@ -62,8 +62,8 @@ export const generateSessionTeasingContent = async (
         .replace('XTAGSX', (session.tags || []).join(', '))
         .replace('XFORMATX', session.format || '')
 
-    openAI.apiKey = apiKey
-    return openAI.chat.completions
+    openRouter.apiKey = apiKey
+    return openRouter.chat.completions
         .create({
             messages: [
                 {

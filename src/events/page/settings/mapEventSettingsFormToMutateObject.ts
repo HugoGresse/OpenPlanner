@@ -31,10 +31,11 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         start: data.dates.start ? (DateTime.fromISO(data.dates.start).toJSDate() as Date) : null,
         end: data.dates.end ? (DateTime.fromISO(data.dates.end).toJSDate() as Date) : null,
     }
-    const openAPIKey = data.openAPIKey || ''
-    const gladiaAPIKey = data.gladiaAPIKey || ''
-    const transcriptionPassword = data.transcriptionPassword || ''
+    const openRouterAPIKey = data.openRouterAPIKey || ''
+    const openRouterModel = data.openRouterModel || ''
     const timezone = data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const rawLanguage = (data.language || 'FR').trim()
+    const language = rawLanguage.length === 2 ? rawLanguage.toUpperCase() : rawLanguage
 
     return {
         ...event,
@@ -53,10 +54,11 @@ export const mapEventSettingsFormToMutateObject = (event: Event, data: EventForF
         tracks,
         formats,
         categories,
-        openAPIKey,
-        gladiaAPIKey,
-        transcriptionPassword,
+        openRouterAPIKey,
+        openRouterModel,
         timezone,
+        language,
+        // gladiaAPIKey & transcriptionPassword are owned by the Public page now (kept via ...event spread)
     }
 }
 
@@ -86,5 +88,33 @@ export const mapEventDevSettingsFormToMutateObject = (event: Event, data: EventS
         publicEnabled: data.publicEnabled || false,
         repoUrl,
         repoToken,
+        // Only forms that expose the field (Public page) should change it; otherwise keep the saved value
+        intermissionMediaUrl:
+            data.intermissionMediaUrl !== undefined
+                ? data.intermissionMediaUrl || null
+                : event.intermissionMediaUrl ?? null,
+        intermissionPassword:
+            data.intermissionPassword !== undefined
+                ? data.intermissionPassword || null
+                : event.intermissionPassword ?? null,
+        gladiaAPIKey: data.gladiaAPIKey !== undefined ? data.gladiaAPIKey || '' : event.gladiaAPIKey ?? '',
+        transcriptionPassword:
+            data.transcriptionPassword !== undefined
+                ? data.transcriptionPassword || ''
+                : event.transcriptionPassword ?? '',
+        greenApiInstanceId:
+            data.greenApiInstanceId !== undefined ? data.greenApiInstanceId || null : event.greenApiInstanceId ?? null,
+        greenApiToken: data.greenApiToken !== undefined ? data.greenApiToken || null : event.greenApiToken ?? null,
+        whatsappSharedChatId:
+            data.whatsappSharedChatId !== undefined
+                ? data.whatsappSharedChatId || null
+                : event.whatsappSharedChatId ?? null,
+        slackBotToken: data.slackBotToken !== undefined ? data.slackBotToken || null : event.slackBotToken ?? null,
+        slackSigningSecret:
+            data.slackSigningSecret !== undefined ? data.slackSigningSecret || null : event.slackSigningSecret ?? null,
+        slackAnswerAnyQuestion:
+            data.slackAnswerAnyQuestion !== undefined
+                ? data.slackAnswerAnyQuestion === true
+                : event.slackAnswerAnyQuestion ?? false,
     }
 }

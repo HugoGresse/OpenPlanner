@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
 import { Box, createTheme, CssBaseline, Typography, ThemeProvider, useMediaQuery } from '@mui/material'
 import { Link, Redirect, Route, Router, Switch } from 'wouter'
 import { RequireLogin } from './auth/RequireLogin'
@@ -10,12 +10,17 @@ import { LinkProps } from '@mui/material/Link'
 import { EventRouter } from './events/page/EventRouter'
 import { NotificationProvider } from './context/SnackBarProvider'
 import { SuspenseLoader } from './components/SuspenseLoader'
-import { PublicApp } from './public/PublicApp'
 import { ForgotPasswordScreen } from './auth/ForgotPasswordScreen'
 import { AdminScreen } from './events/admin/AdminScreen'
 import { EventApp } from './events/page/EventApp'
+import { lazyWithRetry } from './components/lazyWithRetry'
 
-const EventsScreen = lazy(() =>
+const PublicApp = lazyWithRetry(() => import('./public/PublicApp').then((module) => ({ default: module.PublicApp })))
+const FeaturesPage = lazyWithRetry(() =>
+    import('./public/features/FeaturesPage').then((module) => ({ default: module.FeaturesPage }))
+)
+
+const EventsScreen = lazyWithRetry(() =>
     import('./events/list/EventsScreen').then((module) => ({ default: module.EventsScreen }))
 )
 
@@ -64,10 +69,17 @@ export const App = ({}) => {
                 <NotificationProvider>
                     <Switch>
                         <Route path="/public/event/:eventId/*?">
-                            <PublicApp />
+                            <Suspense fallback={<SuspenseLoader />}>
+                                <PublicApp />
+                            </Suspense>
                         </Route>
                         <Route path="/auth/reset">
                             <ForgotPasswordScreen />
+                        </Route>
+                        <Route path="/features">
+                            <Suspense fallback={<SuspenseLoader />}>
+                                <FeaturesPage />
+                            </Suspense>
                         </Route>
                         <RequireLogin>
                             <Switch>

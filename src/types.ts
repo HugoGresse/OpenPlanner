@@ -43,6 +43,32 @@ export interface Social {
     link: string
 }
 
+// Known social networks supported by the public speaker self-edit form.
+// Backend validates against this same list when accepting submissions so
+// the speaker cannot smuggle arbitrary `name` strings through the API.
+// `icon` matches the Material Design Icon name used by the public site
+// to render the link badge.
+export interface KnownSocial {
+    name: string
+    icon: string
+}
+
+export const KNOWN_SOCIALS: readonly KnownSocial[] = [
+    { name: 'Twitter', icon: 'twitter' },
+    { name: 'X', icon: 'x' },
+    { name: 'LinkedIn', icon: 'linkedin' },
+    { name: 'GitHub', icon: 'github' },
+    { name: 'Bluesky', icon: 'bluesky' },
+    { name: 'Mastodon', icon: 'mastodon' },
+    { name: 'Instagram', icon: 'instagram' },
+    { name: 'Facebook', icon: 'facebook' },
+    { name: 'YouTube', icon: 'youtube' },
+    { name: 'Twitch', icon: 'twitch' },
+    { name: 'Website', icon: 'web' },
+]
+
+export const KNOWN_SOCIAL_NAMES: readonly string[] = KNOWN_SOCIALS.map((s) => s.name)
+
 export interface Speaker {
     id: string
     email: string | null
@@ -58,6 +84,7 @@ export interface Speaker {
     photoUrl: string | null
     socials: Social[]
     note: string | null
+    customFields?: { [key: string]: string | boolean }
 }
 
 export interface TeasingPosts {
@@ -117,6 +144,63 @@ export interface EventFiles {
     pdf: string | null
 }
 
+export interface SponsorCustomField {
+    id: string
+    name: string
+    type: 'boolean' | 'text'
+}
+
+export interface SpeakerCustomField {
+    id: string
+    name: string
+    type: 'boolean' | 'text'
+    privacy: 'public' | 'private'
+    editableBySpeaker?: boolean
+}
+
+export interface SpeakerSelfEditSettings {
+    enabled: boolean
+    editableFields?: string[]
+}
+
+export type SpeakerSelfEditableField =
+    | 'name'
+    | 'pronouns'
+    | 'jobTitle'
+    | 'bio'
+    | 'company'
+    | 'companyLogoUrl'
+    | 'geolocation'
+    | 'photoUrl'
+    | 'socials'
+
+export const SPEAKER_SELF_EDITABLE_FIELDS: SpeakerSelfEditableField[] = [
+    'name',
+    'pronouns',
+    'jobTitle',
+    'bio',
+    'company',
+    'companyLogoUrl',
+    'geolocation',
+    'photoUrl',
+    'socials',
+]
+
+export interface SpeakerPendingEdit {
+    id: string
+    speakerId: string
+    eventId: string
+    submittedAt: Timestamp
+    tokenId: string
+    ip?: string | null
+    status: 'pending' | 'approved' | 'rejected'
+    reviewedBy?: string | null
+    reviewedAt?: Timestamp | null
+    reviewNote?: string | null
+    patch: Partial<Speaker>
+    baseSnapshot: Partial<Speaker>
+}
+
 export interface EventShortVidSettings {
     template: string | null
     server: string | null
@@ -151,8 +235,9 @@ export interface Event {
     files: EventFiles | null
     statusBadgeImage: string | null
     statusBadgeLink: string | null
-    openAPIKey: string | null
     gladiaAPIKey: string | null
+    openRouterAPIKey: string | null
+    openRouterModel: string | null
     transcriptionPassword: string | null
     enableVoxxrin: boolean
     aiSettings: EventAISettings | null
@@ -165,11 +250,32 @@ export interface Event {
     color: string | null
     colorSecondary: string | null
     colorBackground: string | null
+    sponsorCustomFields: SponsorCustomField[]
+    speakerCustomFields: SpeakerCustomField[]
+    speakerSelfEdit?: SpeakerSelfEditSettings | null
     bupherSession?: string | null
     bupherOrganizationId?: string | null
     timezone: string | null
+    language?: string | null
     repoUrl?: string | null
     repoToken?: string | null
+    intermissionMediaUrl?: string | null
+    intermissionPassword?: string | null
+    // GreenAPI (WhatsApp) credentials, used for track-management messaging
+    greenApiInstanceId?: string | null
+    greenApiToken?: string | null
+    // Shared chat (phone or @g.us group) that receives the track-management buttons
+    whatsappSharedChatId?: string | null
+    // Slack chat assistant. Official app install (OAuth) links a workspace + optional channel;
+    // self-hosters can instead paste their own app credentials.
+    slackTeamId?: string | null
+    slackTeamName?: string | null
+    slackChannelId?: string | null
+    slackChannelName?: string | null
+    slackBotToken?: string | null
+    slackSigningSecret?: string | null
+    // When true, the Slack assistant also answers questions unrelated to OpenPlanner / the event
+    slackAnswerAnyQuestion?: boolean | null
 }
 
 export type EventForForm = Omit<Event, 'dates'> & {
@@ -185,6 +291,16 @@ export type EventSettingForForm = {
     publicEnabled?: boolean
     repoUrl?: string | null
     repoToken?: string | null
+    intermissionMediaUrl?: string | null
+    intermissionPassword?: string | null
+    gladiaAPIKey?: string | null
+    transcriptionPassword?: string | null
+    greenApiInstanceId?: string | null
+    greenApiToken?: string | null
+    whatsappSharedChatId?: string | null
+    slackBotToken?: string | null
+    slackSigningSecret?: string | null
+    slackAnswerAnyQuestion?: boolean | null
 }
 
 export type NewEvent = Omit<Omit<Omit<Event, 'id'>, 'createdAt'>, 'updatedAt'> & {
@@ -198,6 +314,7 @@ export interface Sponsor {
     logoUrl: string
     website: string | null
     jobPostToken?: string | null // Unique token for sponsor's job management page
+    customFields?: { [key: string]: string | boolean }
 }
 
 export interface SponsorCategory {
@@ -261,7 +378,9 @@ export interface FaqCategory {
     privateId: string | null
     unifiedPage?: boolean
     collectionList: string[]
-    faqs: Faq[]
+    // Hydrated questions, only present on hydrated/exported categories (getFaq, FaqDao.getFullFaqs,
+    // public/private static JSON), never persisted on the Firestore category doc
+    items?: Faq[]
 }
 
 export interface Faq {
@@ -271,6 +390,49 @@ export interface Faq {
     order: number
     updatedAt: string
     createdAt: string
+}
+
+export type BuildingBlockVariant = 'single' | 'list' | 'map'
+export type BuildingBlockItemType = 'markdown' | 'image' | 'link' | 'json'
+
+export interface BuildingBlockImageValue {
+    url: string
+    alt: string | null
+}
+
+export interface BuildingBlockLinkValue {
+    label: string
+    href: string
+    icon: string | null
+    type: string | null
+}
+
+// Shape depends on the parent block's `type`:
+//   markdown -> string (raw markdown)
+//   image    -> BuildingBlockImageValue
+//   link     -> BuildingBlockLinkValue
+//   json     -> string (raw JSON text: Firestore rejects nested arrays, so it is
+//               stored unparsed and parsed at export time)
+export type BuildingBlockItemValue = string | BuildingBlockImageValue | BuildingBlockLinkValue
+
+export interface BuildingBlockItem {
+    id: string
+    key: string | null // 'map' variant only: slug, unique within the block
+    order: number
+    value: BuildingBlockItemValue
+}
+
+export interface BuildingBlock {
+    id: string // Firestore doc id, not the export key
+    page: string // slug, first level in the exported blocks object
+    group: string | null // optional slug, extra nesting level
+    key: string // slug, unique within (page, group)
+    name: string // admin display name, not exported
+    type: BuildingBlockItemType
+    variant: BuildingBlockVariant
+    enabled: boolean
+    order: number // position within its (page, group) segment
+    items: BuildingBlockItem[]
 }
 
 export interface ConferenceHallEvent {
@@ -321,6 +483,24 @@ export enum ConferenceHallProposalState {
     confirmed = 'confirmed',
     backup = 'backup',
     rejected = 'rejected',
+}
+
+export type TicketCurrency = 'EUR' | 'USD' | 'GBP' | 'CHF'
+
+export interface Ticket {
+    id: string
+    name: string
+    price: number
+    currency: TicketCurrency
+    url: string
+    ticketsCount: number
+    available: boolean
+    soldOut: boolean
+    highlighted: boolean
+    displayNewsletterRegistration: boolean
+    startDate: DateTime | null
+    endDate: DateTime | null
+    message: string
 }
 
 export interface ConferenceHallSpeaker {

@@ -1,12 +1,11 @@
-import { Type } from '@sinclair/typebox'
+import Type from 'typebox'
 import { FastifyInstance } from 'fastify'
 import { EventDao } from '../../dao/eventDao'
-import { isDev } from '../../setupFastify'
-import { getFirebaseProjectId } from '../../../utils/getFirebaseProjectId'
+import { functionBaseUrl } from '../../../utils/functionUrls'
 import { getServiceAPIKey } from '../../../serviceApi/serviceApiKeyPreHandler'
 import { getIndividualDays } from '../../../../../src/utils/dates/diffDays'
 import { uploadBufferToStorage } from '../file/utils/uploadBufferToStorage'
-import { addPdfFileToEvent, getFilesNames, getUploadFilePath } from '../deploy/updateWebsiteActions/getFilesNames'
+import { addPdfFileToEvent } from '../deploy/updateWebsiteActions/getFilesNames'
 import { getFileName } from '../../other/getFileName'
 
 const ExportPdfReply = Type.Object({
@@ -69,13 +68,11 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
             })
 
             const timezone = event.timezone
+            const language = event.language || 'FR'
 
             try {
-                const firebaseProjectId = getFirebaseProjectId()
                 const serviceApiKey = getServiceAPIKey()
-                const pdfServiceUrl = isDev()
-                    ? `http://localhost:5001/${firebaseProjectId}/europe-west1/serviceApi`
-                    : `https://serviceapi.openplanner.fr`
+                const pdfServiceUrl = functionBaseUrl('serviceApi')
                 const response = await fetch(`${pdfServiceUrl}/v1/pdf/convert?apiKey=${serviceApiKey}`, {
                     method: 'POST',
                     headers: {
@@ -101,6 +98,7 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
                                 },
                             },
                             timezone: timezone,
+                            language: language,
                         },
                     }),
                 })
@@ -128,17 +126,8 @@ export const exportSchedulePdfRoute = (fastify: FastifyInstance, options: any, d
                     return reply.status(400).send(publicFileUrlOrError)
                 }
 
-                if (!event.files?.pdf) {
-                    const updatedEvent = await EventDao.getEvent(fastify.firebase, eventId)
-                    const eventFiles = await getFilesNames(fastify.firebase, updatedEvent)
-                    const uploadFilePath = getUploadFilePath(eventFiles)
-                    return reply.status(200).send({
-                        pdf: uploadFilePath.pdf,
-                    })
-                }
-
                 reply.status(200).send({
-                    pdf: getUploadFilePath(event.files).pdf,
+                    pdf: publicFileUrlOrError,
                 })
             } catch (err) {
                 const error = err as Error

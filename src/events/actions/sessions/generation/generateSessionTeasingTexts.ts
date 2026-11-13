@@ -11,7 +11,7 @@ const limitRunner = pLimit(PARALLEL_REQUEST)
 
 export type GenerateSessionTeasingTextsSettings = {
     aiSettings: EventAISettings
-    openApiKey: string | null
+    openRouterApiKey: string | null
 } & GenerateBaseSettings
 
 export type GeneratedSessionTeasingTextAnswer = {
@@ -30,27 +30,33 @@ export const generateSessionTeasingTexts = async (
 ): Promise<GeneratedSessionTeasingTextAnswer> => {
     const promptSystem = settings.aiSettings.sessions.teasingPromptSystem
     const promptUser = settings.aiSettings.sessions.teasingPromptUser
+    const generationSettings = {
+        model: settings.aiSettings.model,
+        temperature: settings.aiSettings.temperature,
+    }
 
-    const sessionsCount = sessions.length
+    const filteredSessions = sessions.filter((session) => !session.teasingHidden)
+    const sessionsCount = filteredSessions.length
 
-    if (!settings.openApiKey || !sessionsCount) {
+    if (!settings.openRouterApiKey || !sessionsCount) {
         return {
             success: false,
-            message: 'No sessions to generate or no openAPIKey',
+            message: 'No sessions to generate or no OpenRouter API key',
             results: [],
         }
     }
 
-    const input = sessions.flatMap((session) => {
+    const input = filteredSessions.flatMap((session) => {
         return (Object.keys(TeasingPostSocials) as Array<TeasingPostSocialsKeyOf>).map((socialKey) => {
             return limitRunner(
                 async () =>
                     await generateSessionTeasingContent(
-                        settings.openApiKey!!,
+                        settings.openRouterApiKey!!,
                         TeasingPostSocials[socialKey],
                         session,
                         promptSystem,
-                        promptUser
+                        promptUser,
+                        generationSettings
                     )
             ).then((result) => ({
                 social: TeasingPostSocials[socialKey],
@@ -73,7 +79,7 @@ export const generateSessionTeasingTexts = async (
 
     return {
         success: true,
-        results: sessions
+        results: filteredSessions
             .map((session) => ({
                 baseSession: session,
                 updatedSession: {

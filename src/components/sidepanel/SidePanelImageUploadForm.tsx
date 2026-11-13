@@ -1,14 +1,15 @@
-import { Box, Button, Typography, useTheme } from '@mui/material'
+import { Box, Button, TextField, Typography, useTheme } from '@mui/material'
 import * as React from 'react'
 import { LoadingButton } from '@mui/lab'
-import { TextFieldElement, useWatch } from 'react-hook-form-mui'
 import { Download, Crop } from '@mui/icons-material'
 import { triggerFileDownload } from '../../utils/triggerFileDownload'
 import { ImageCropDialog, CroppedImageFile } from './ImageCropDialog'
 import { getImageInfo, ImageInfo } from '../../utils/images/getImageInfo'
+import { formatBytes } from '../../utils/formatBytes'
 
 export type SidePanelImageUploadFormProps = {
-    fieldName: string
+    urlValue: string
+    onUrlChange: (url: string) => void
     helpText: string
 
     isDragActive: boolean
@@ -21,7 +22,8 @@ export type SidePanelImageUploadFormProps = {
     disabled?: boolean
 }
 export const SidePanelImageUploadForm = ({
-    fieldName,
+    urlValue,
+    onUrlChange,
     file,
     helpText,
     isDragActive,
@@ -33,16 +35,19 @@ export const SidePanelImageUploadForm = ({
     disabled = false,
 }: SidePanelImageUploadFormProps) => {
     const theme = useTheme()
-    const fieldValue = useWatch({ name: fieldName })
-    const [previewImage, setPreviewImage] = React.useState<string>((file && file.preview) || fieldValue)
+    const [previewImage, setPreviewImage] = React.useState<string>((file && file.preview) || urlValue)
     const [cropDialogOpen, setCropDialogOpen] = React.useState(false)
     const [imageInfo, setImageInfo] = React.useState<ImageInfo | null>(null)
 
-    // Update previewImage when file or fieldValue changes
+    // Weight of the image: the picked file's size when one is staged (object URLs
+    // can't be HEAD-fetched), otherwise the content-length probed by getImageInfo
+    const imageWeight = file?.file.size ?? imageInfo?.fileSize ?? null
+
+    // Update previewImage when file or urlValue changes
     React.useEffect(() => {
-        setPreviewImage((file && file.preview) || fieldValue)
+        setPreviewImage((file && file.preview) || urlValue)
         setImageInfo(null) // Reset image info when image changes
-    }, [file, fieldValue])
+    }, [file, urlValue])
 
     const handleOpenCropDialog = () => {
         setCropDialogOpen(true)
@@ -114,11 +119,12 @@ export const SidePanelImageUploadForm = ({
                 <span>OR</span>
             </Box>
 
-            <TextFieldElement
+            <TextField
                 margin="dense"
                 fullWidth
                 label="Image URL"
-                name={fieldName}
+                value={urlValue}
+                onChange={(e) => onUrlChange(e.target.value)}
                 variant="filled"
                 size="small"
                 disabled={disabled}
@@ -147,6 +153,7 @@ export const SidePanelImageUploadForm = ({
                                     {' '}
                                     ({imageInfo.width}px × {imageInfo.height}px)
                                     {imageInfo.fileType && <span> • {imageInfo.fileType}</span>}
+                                    {imageWeight !== null && <span> • {formatBytes(imageWeight)}</span>}
                                 </span>
                             )}
                         </Typography>

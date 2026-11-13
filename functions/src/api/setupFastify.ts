@@ -2,21 +2,32 @@ import { app as firebaseApp } from 'firebase-admin'
 import { fastifyAuth, FastifyAuthFunction } from '@fastify/auth'
 import Fastify from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-import { addContentTypeParserForServerless } from './other/addContentTypeParserForServerless'
+import { addContentTypeParserForServerless, addMultipartPassthrough } from './other/addContentTypeParserForServerless'
 import { firebasePlugin } from './dao/firebasePlugin'
 import { apiKeyPlugin } from './apiKeyPlugin'
+import { superAdminPlugin } from './superAdminPlugin'
+import { speakerEditTokenPlugin } from './speakerEditTokenPlugin'
 import cors from '@fastify/cors'
-import { registerSwagger } from './swagger'
+import { registerApiDocs } from './other/registerApiDocs'
+import { isDev } from '../utils/functionUrls'
 import { sponsorsRoutes } from './routes/sponsors/sponsors'
 import { sessionsRoutes } from './routes/sessions/sessions'
 import { faqRoutes } from './routes/faq/faq'
+import { teamRoutes } from './routes/team/team'
 import { transcriptionRoutes } from './routes/transcription/transcription'
+import { intermissionRoutes } from './routes/intermission/intermission'
+import { whatsappRoutes } from './routes/whatsapp/whatsapp'
 import { filesRoutes } from './routes/file/files'
 import { sessionsSpeakers } from './routes/sessionsSpeakers/sessionsSpeakers'
+import { speakersRoutes } from './routes/speakers/speakers'
 import { helloRoute } from './routes/hello/hello'
 import { fastifyErrorHandler } from './other/fastifyErrorHandler'
 import { eventRoutes } from './routes/event/eventRoutes'
+import { usageRoutes } from './routes/event/usage'
+import { adminUsageRoutes } from './routes/admin/adminUsage'
 import { bupherRoutes } from './routes/bupher/bupher'
+import { chatRoutes } from './routes/chat/chat'
+import { slackRoutes } from './routes/slack/slack'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
 import { deployRoutes } from './routes/deploy/deploy'
 import { noCacheHook } from '../utils/noCacheHook'
@@ -26,12 +37,11 @@ declare module 'fastify' {
     interface FastifyInstance {
         firebase: Firebase
         verifyApiKey: FastifyAuthFunction
+        verifySpeakerEditToken: FastifyAuthFunction
     }
 }
 
-export const isDev = () => {
-    return !!(process.env.FUNCTIONS_EMULATOR && process.env.FUNCTIONS_EMULATOR === 'true')
-}
+export { isDev }
 
 export const setupFastify = () => {
     const isNodeEnvDev = process.env.NODE_ENV === 'development'
@@ -41,6 +51,7 @@ export const setupFastify = () => {
         logger: isDev() || isNodeEnvDev || isNodeEnvTest,
     }).withTypeProvider<TypeBoxTypeProvider>()
 
+    addMultipartPassthrough(fastify)
     if (!isNodeEnvDev && !isNodeEnvTest) {
         addContentTypeParserForServerless(fastify)
     }
@@ -48,23 +59,40 @@ export const setupFastify = () => {
     fastify.register(fastifyAuth)
     fastify.register(firebasePlugin)
     fastify.register(apiKeyPlugin)
+    fastify.register(superAdminPlugin)
+    fastify.register(speakerEditTokenPlugin)
     fastify.register(cors, {
         origin: '*',
     })
     fastify.addHook('onSend', noCacheHook)
-    registerSwagger(fastify)
+    registerApiDocs(fastify, {
+        title: 'OpenPlanner API',
+        functionName: 'api',
+        securitySchemes: {
+            bearerAuth: { type: 'http', scheme: 'bearer', description: 'Firebase ID token of a super admin' },
+            password: { type: 'apiKey', name: 'password', in: 'header', description: 'Event transcription password' },
+        },
+    })
 
     fastify.register(eventRoutes)
+    fastify.register(usageRoutes)
+    fastify.register(adminUsageRoutes)
     fastify.register(sponsorsRoutes)
     fastify.register(sessionsRoutes)
     fastify.register(sessionsSpeakers)
+    fastify.register(speakersRoutes)
     fastify.register(faqRoutes)
+    fastify.register(teamRoutes)
     fastify.register(transcriptionRoutes)
+    fastify.register(intermissionRoutes)
+    fastify.register(whatsappRoutes)
     fastify.register(filesRoutes)
     fastify.register(deployRoutes)
     fastify.register(deployFilesRoutes)
     fastify.register(helloRoute)
     fastify.register(bupherRoutes)
+    fastify.register(chatRoutes)
+    fastify.register(slackRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
 

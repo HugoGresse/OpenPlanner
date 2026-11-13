@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { SponsorDao } from '../../dao/sponsorDao'
 
 export const TypeBoxGenerateSponsorToken = Type.Object({

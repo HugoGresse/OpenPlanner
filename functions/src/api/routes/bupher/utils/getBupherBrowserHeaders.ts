@@ -24,7 +24,7 @@ export const getBupherGraphQLHeaders = (referer: string, alt: string) => {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0',
         Accept: '*/*',
         'Accept-Language': 'fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3',
-        Referer: `https://${referer}`,
+        Referer: `https://${referer}/`,
         'content-type': 'application/json',
         Origin: `https://${referer}`,
         'X-Target-Domain': alt,

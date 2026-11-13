@@ -17,6 +17,9 @@ export const updateStaticJson = async (
 
     const metadata = {
         contentType: 'application/json',
+        // The consumer URL is versioned with ?v=updatedAt, so caches can hold on
+        // to a given version; the next deploy changes the URL and busts them
+        cacheControl: 'public, max-age=86400',
     }
 
     const promiseArray = [

@@ -1,31 +1,62 @@
 import firebase from 'firebase-admin'
-import { Event } from '../../../../../../src/types'
+import { Event, TicketCurrency } from '../../../../../../src/types'
 import { generateOpenFeedbackJson } from './generateOpenFeedbackJson'
 import { generateVoxxrinJson } from './generateVoxxrinJson'
-import { JsonOutput, JsonSession, JsonSessionPrivate, JsonPublicOutput, JsonPrivateOutput } from './jsonTypes'
+import {
+    JsonOutput,
+    JsonSession,
+    JsonSessionPrivate,
+    JsonPublicOutput,
+    JsonPrivateOutput,
+    JsonTicket,
+} from './jsonTypes'
+import { serializeBlocks } from './serializeBlocks'
 import { SessionDao } from '../../../dao/sessionDao'
 import { SpeakerDao } from '../../../dao/speakerDao'
 import { SponsorDao } from '../../../dao/sponsorDao'
 import { TeamDao } from '../../../dao/teamDao'
 import { FaqDao } from '../../../dao/faqDao'
 import { JobPostDao } from '../../../dao/jobPostDao'
+import { TicketDao } from '../../../dao/ticketDao'
+import { BlockDao } from '../../../dao/blockDao'
 import { JobStatus } from '../../../../../../src/constants/jobStatus'
-import { dateToString } from '../../../other/dateConverter'
+import { dateToString, unknownToDateTime } from '../../../other/dateConverter'
 
 export const generateStaticJson = async (firebaseApp: firebase.app.App, event: Event): Promise<JsonOutput> => {
-    const [sessions, speakers, sponsors, { team, teams }, faq, jobPosts] = await Promise.all([
+    const [sessions, speakers, sponsors, { team, teams }, faq, jobPosts, tickets, blockDocs] = await Promise.all([
         SessionDao.getSessions(firebaseApp, event.id),
         SpeakerDao.getSpeakers(firebaseApp, event.id),
         SponsorDao.getSponsors(firebaseApp, event.id),
         TeamDao.getTeams(firebaseApp, event.id),
         FaqDao.getFullFaqs(firebaseApp, event.id),
         JobPostDao.getAllJobPosts(firebaseApp, event.id, JobStatus.APPROVED),
+        TicketDao.getTickets(firebaseApp, event.id),
+        BlockDao.getBlocks(firebaseApp, event.id),
     ])
 
     const faqPublic = faq.filter((f) => !f.private)
+    const blocks = serializeBlocks(blockDocs)
+
+    const outputTickets: JsonTicket[] = tickets.map((t) => ({
+        id: t.id,
+        name: t.name,
+        price: t.price,
+        currency: t.currency as TicketCurrency,
+        url: t.url,
+        ticketsCount: t.ticketsCount,
+        available: t.available,
+        soldOut: t.soldOut,
+        highlighted: t.highlighted,
+        displayNewsletterRegistration: t.displayNewsletterRegistration,
+        startDate: t.startDate ? unknownToDateTime(t.startDate as any).toISO() : null,
+        endDate: t.endDate ? unknownToDateTime(t.endDate as any).toISO() : null,
+        message: t.message,
+    }))
 
     const openFeedbackOutput = generateOpenFeedbackJson(event, sessions, speakers)
-    const voxxrinJson = event.enableVoxxrin ? generateVoxxrinJson(event, sessions, speakers, sponsors) : null
+    const { outputVoxxrin, warnings } = event.enableVoxxrin
+        ? generateVoxxrinJson(event, sessions, speakers, sponsors)
+        : { outputVoxxrin: null, warnings: [] as string[] }
 
     const outputSessions: JsonSession[] = sessions.map((s) => ({
         id: s.id,
@@ -138,26 +169,45 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         logoUrl: event.logoUrl,
         logoUrl2: event.logoUrl2,
         backgroundUrl: event.backgroundUrl,
+        intermissionMediaUrl: event.intermissionMediaUrl ?? null,
+        language: event.language ?? null,
+        sponsorCustomFields: event.sponsorCustomFields || [],
+        speakerCustomFields: event.speakerCustomFields || [],
     }
+
+    const publicSpeakerCustomFieldIds = (event.speakerCustomFields || [])
+        .filter((f) => f.privacy !== 'private')
+        .map((f) => f.id)
 
     const outputPublic: JsonPublicOutput = {
         event: outputEvent,
-        speakers: speakers.map((s) => ({
-            id: s.id,
-            name: s.name,
-            pronouns: s.pronouns,
-            jobTitle: s.jobTitle,
-            bio: s.bio,
-            company: s.company,
-            companyLogoUrl: s.companyLogoUrl,
-            photoUrl: s.photoUrl,
-            socials: s.socials,
-        })),
+        speakers: speakers.map((s) => {
+            const publicCustomFields: { [key: string]: string | boolean } = {}
+            for (const id of publicSpeakerCustomFieldIds) {
+                if (s.customFields && id in s.customFields) {
+                    publicCustomFields[id] = s.customFields[id]
+                }
+            }
+            return {
+                id: s.id,
+                name: s.name,
+                pronouns: s.pronouns,
+                jobTitle: s.jobTitle,
+                bio: s.bio,
+                company: s.company,
+                companyLogoUrl: s.companyLogoUrl,
+                photoUrl: s.photoUrl,
+                socials: s.socials,
+                customFields: publicCustomFields,
+            }
+        }),
         sessions: outputSessions,
         sponsors: outputSponsor,
         team,
         teams,
         faq: faqPublic,
+        tickets: outputTickets,
+        blocks,
         timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
@@ -169,6 +219,8 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         team,
         teams,
         faq,
+        tickets: outputTickets,
+        blocks,
         timezone: event.timezone,
         generatedAt: dateToString(new Date()),
     }
@@ -177,6 +229,7 @@ export const generateStaticJson = async (firebaseApp: firebase.app.App, event: E
         outputPublic,
         outputPrivate,
         outputOpenFeedback: openFeedbackOutput,
-        outputVoxxrin: voxxrinJson,
+        outputVoxxrin,
+        warnings,
     }
 }

@@ -1,11 +1,18 @@
 import * as React from 'react'
 import { Event, Speaker } from '../../../types'
-import { FormContainer, TextFieldElement, useForm } from 'react-hook-form-mui'
-import { Grid } from '@mui/material'
+import { FormContainer, SwitchElement, TextFieldElement, useForm } from 'react-hook-form-mui'
+import { Grid, IconButton, InputAdornment, Tooltip, Typography } from '@mui/material'
+import { Phone } from '@mui/icons-material'
 import LoadingButton from '@mui/lab/LoadingButton'
 import { SpeakerSocialFields } from './SpeakerSocials'
 import { ImageTextFieldElement } from '../../../components/form/ImageTextFieldElement'
 import { SaveShortcut } from '../../../components/form/SaveShortcut'
+import { isMobileOrTablet } from '../../../hooks/sizesHooks'
+
+// Strip visual separators (spaces, parens, dots, dashes) so the resulting
+// `tel:` URI is dial-clean across user agents. Keeps a leading `+`, digits,
+// and `*`/`#` for IVR / extension chars.
+const normalizeTelHref = (value: string) => value.replace(/[^\d+*#]/g, '')
 
 export type EventSpeakerFormProps = {
     event: Event
@@ -14,16 +21,29 @@ export type EventSpeakerFormProps = {
     rightColumns?: React.ReactNode
 }
 export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: EventSpeakerFormProps) => {
+    const customFields = event.speakerCustomFields || []
+
+    const defaultCustomFields = customFields.reduce((acc, field) => {
+        acc[field.id] = field.type === 'boolean' ? false : ''
+        return acc
+    }, {} as { [key: string]: string | boolean })
+
     const formContext = useForm({
         defaultValues: speaker
             ? ({
                   ...speaker,
+                  customFields: { ...defaultCustomFields, ...(speaker.customFields || {}) },
               } as Speaker)
-            : {},
+            : { customFields: defaultCustomFields },
     })
-    const { formState, control } = formContext
+    const { formState, control, watch } = formContext
 
     const isSubmitting = formState.isSubmitting
+    const isMobile = isMobileOrTablet()
+    const phoneValue = watch('phone')
+
+    const publicCustomFields = customFields.filter((f) => f.privacy !== 'private')
+    const privateCustomFields = customFields.filter((f) => f.privacy === 'private')
 
     return (
         <FormContainer
@@ -31,6 +51,11 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
             onSuccess={async (data) => {
                 if (!data.id && speaker?.id) {
                     data.id = speaker.id
+                }
+                const customFieldValues: { [key: string]: string | boolean } = {}
+                for (const field of customFields) {
+                    const value = data.customFields?.[field.id]
+                    customFieldValues[field.id] = field.type === 'boolean' ? !!value : value || ''
                 }
                 return onSubmit({
                     ...data,
@@ -43,6 +68,7 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
                     photoUrl: data.photoUrl || speaker?.photoUrl || null,
                     note: data.note || speaker?.note || null,
                     pronouns: data.pronouns || speaker?.pronouns || null,
+                    customFields: customFieldValues,
                 })
             }}>
             <Grid container spacing={4}>
@@ -144,6 +170,33 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
                         size="small"
                     />
                     <SpeakerSocialFields control={control} isSubmitting={isSubmitting} />
+                    {publicCustomFields.length > 0 && (
+                        <>
+                            <Typography fontWeight="600" mt={2} mb={1}>
+                                Custom fields (public)
+                            </Typography>
+                            {publicCustomFields.map((field) =>
+                                field.type === 'boolean' ? (
+                                    <SwitchElement
+                                        key={field.id}
+                                        label={field.name}
+                                        name={`customFields.${field.id}`}
+                                    />
+                                ) : (
+                                    <TextFieldElement
+                                        key={field.id}
+                                        margin="dense"
+                                        fullWidth
+                                        label={field.name}
+                                        name={`customFields.${field.id}`}
+                                        variant="filled"
+                                        disabled={isSubmitting}
+                                        size="small"
+                                    />
+                                )
+                            )}
+                        </>
+                    )}
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <TextFieldElement
@@ -164,7 +217,25 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
                         variant="filled"
                         disabled={isSubmitting}
                         size="small"
-                        type="phone"
+                        type="tel"
+                        InputProps={
+                            isMobile && phoneValue
+                                ? {
+                                      endAdornment: (
+                                          <InputAdornment position="end">
+                                              <Tooltip title="Call">
+                                                  <IconButton
+                                                      aria-label="Call phone number"
+                                                      href={`tel:${normalizeTelHref(phoneValue)}`}
+                                                      edge="end">
+                                                      <Phone />
+                                                  </IconButton>
+                                              </Tooltip>
+                                          </InputAdornment>
+                                      ),
+                                  }
+                                : undefined
+                        }
                     />
                     <TextFieldElement
                         margin="dense"
@@ -178,6 +249,33 @@ export const EventSpeakerForm = ({ speaker, onSubmit, event, rightColumns }: Eve
                         disabled={isSubmitting}
                         size="small"
                     />
+                    {privateCustomFields.length > 0 && (
+                        <>
+                            <Typography fontWeight="600" mt={2} mb={1}>
+                                Custom fields (private)
+                            </Typography>
+                            {privateCustomFields.map((field) =>
+                                field.type === 'boolean' ? (
+                                    <SwitchElement
+                                        key={field.id}
+                                        label={field.name}
+                                        name={`customFields.${field.id}`}
+                                    />
+                                ) : (
+                                    <TextFieldElement
+                                        key={field.id}
+                                        margin="dense"
+                                        fullWidth
+                                        label={field.name}
+                                        name={`customFields.${field.id}`}
+                                        variant="filled"
+                                        disabled={isSubmitting}
+                                        size="small"
+                                    />
+                                )
+                            )}
+                        </>
+                    )}
                     {rightColumns}
                 </Grid>
 

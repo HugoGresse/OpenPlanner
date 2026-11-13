@@ -1,5 +1,6 @@
 import firebase from 'firebase-admin'
 import { TeamMember } from '../../../../src/types'
+import { deleteDocumentOr404 } from './documentHelpers'
 
 export class TeamDao {
     public static async getTeams(
@@ -43,5 +44,21 @@ export class TeamDao {
             team: members,
             teams: teamOrdered,
         }
+    }
+
+    // Fails with ALREADY_EXISTS when the member id is taken.
+    public static async createMember(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        member: TeamMember
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+        const { id, ...data } = member
+        await db.collection(`events/${eventId}/team`).doc(id).create(data)
+    }
+
+    public static async deleteMember(firebaseApp: firebase.app.App, eventId: string, memberId: string): Promise<void> {
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/team`).doc(memberId)
+        await deleteDocumentOr404(ref, 'Team member not found')
     }
 }

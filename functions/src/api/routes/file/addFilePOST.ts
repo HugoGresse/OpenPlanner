@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { Static, Type } from '@sinclair/typebox'
+import Type, { Static } from 'typebox'
 import { uploadBufferToStorage } from './utils/uploadBufferToStorage'
 import { extractMultipartFormData } from './utils/parseMultipartFiles'
 
@@ -7,19 +7,15 @@ export const NewFile = Type.Any()
 
 export type NewFileType = Static<typeof NewFile>
 
-const FilesOutputs = Type.Union(
-    Type.Rest(
-        Type.Tuple([
-            Type.Array(
-                Type.Object({
-                    originalName: Type.String(),
-                    publicFileUrl: Type.String(),
-                })
-            ),
-            Type.String(),
-        ])
-    )
-)
+const FilesOutputs = Type.Union([
+    Type.Array(
+        Type.Object({
+            originalName: Type.String(),
+            publicFileUrl: Type.String(),
+        })
+    ),
+    Type.String(),
+])
 
 export type FilesOutputsType = Static<typeof FilesOutputs>
 

@@ -2,6 +2,7 @@ import firebase from 'firebase-admin'
 import { Session } from '../../types'
 import { Session as SessionConverted } from '../../../../src/types'
 import { unknownToDateTime } from '../other/dateConverter'
+import { deleteDocumentOr404 } from './documentHelpers'
 const { FieldValue } = firebase.firestore
 
 export class SessionDao {
@@ -52,7 +53,7 @@ export class SessionDao {
         await db
             .collection(`events/${eventId}/sessions`)
             .doc(session.id)
-            .set({
+            .create({
                 ...session,
                 updatedAt: FieldValue.serverTimestamp(),
             })
@@ -83,6 +84,34 @@ export class SessionDao {
         // 3. Return the updated session
         const snapshot2 = await db.collection(`events/${eventId}/sessions`).doc(partialSession.id).get()
         return snapshot2.data() as Session
+    }
+
+    public static async patchSession(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        session: Partial<Session> & { id: string }
+    ): Promise<void> {
+        const db = firebaseApp.firestore()
+
+        const existingSessionData = await SessionDao.doesSessionExist(firebaseApp, eventId, session.id)
+        if (!existingSessionData) {
+            throw new Error('Session not found')
+        }
+
+        const { id, ...rest } = session
+        await db
+            .collection(`events/${eventId}/sessions`)
+            .doc(id)
+            .set({ ...rest, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+    }
+
+    public static async deleteSession(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        sessionId: string
+    ): Promise<void> {
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/sessions`).doc(sessionId)
+        await deleteDocumentOr404(ref, 'Session not found')
     }
 
     public static async updateOrCreateSession(
