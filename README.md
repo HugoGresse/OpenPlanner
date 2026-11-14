@@ -66,23 +66,46 @@ React guidelines:
 
 ### Requirements
 
--   One firebase project for **`open planner`**.
+-   One Firebase project for **`OpenPlanner`** on the Blaze plan (Cloud Functions need it).
 -   Node.js **20+**
 -   [Bun.js](https://bun.js.org/) as a build tool
+-   The [Firebase CLI](https://firebase.google.com/docs/cli) (`npm i -g firebase-tools`)
 
 ### Installation
 
-1. Create a **`.env`** with **`.env.example`** as a template.
-2. Create a web app in your firebase project for **`conference hall`** and **`open planner`**. then copy the config and fill **`.env`** with it.
-3. Use [bun.sh](https://bun.sh/) to install dependencies and build the project: `bun install`
+1. Create a `.env` from `.env.example`, and a `functions/.env` from `functions/.env.example`.
+2. In your Firebase project, create a **Web App** (Project settings > Your apps) to obtain the Firebase config, and copy it into `.env`.
+3. In the Firebase console, under **Hosting**, create the three Hosting sites the project deploys to (replace `X` with your suffix, site ids are global):
+    - `conferencecenterrX`: the admin and public website (`dist`)
+    - `apiopenplannerX`: the API and its reference page (`api-swagger`)
+    - `serviceapiX`: the service API (`serviceapi-swagger`)
+4. Install dependencies with Bun: `bun install`.
 
 Inside OpenPlanner's firebase project:
 
-1. Enable Authentication with email/pwd in console.firebase.google.com
-2. In the Authentication parameters, "User actions", disable the "Protection against enumeration of e-mail addresses (recommended)" option
-3. Enable Storage, with rules in test or prod (whatever)
-4. Set the hosting config for the website using the firebase CLI: `firebase target:apply hosting conferencecenterr dist`
-5. Set the hosting config for the API (API reference at /) `firebase target:apply hosting apiopenplanner api-swagger`
+1. Enable Authentication with email/password (Authentication > Sign-in method > Email/Password > Enable).
+2. In Authentication settings, under User actions, disable “Protection against email enumeration (recommended)”. The sign-in page relies on the `auth/user-not-found` error to offer “Sign up now”, and Firebase only returns it with this protection off.
+3. Create Storage (use test or prod rules as needed).
+4. Create a Firestore database in **Native mode**, in the region of the functions (`europe-west1`) or close to it.
+5. Log in and select the Firebase project in your terminal (the alias you pick is only a local name):
+
+```bash
+firebase login
+firebase use --add
+```
+
+6. Map the hosting targets of `firebase.json` to your sites. This writes them into `.firebaserc` (gitignored; `.firebaserc.example` shows the expected result):
+
+```bash
+firebase target:apply hosting conferencecenterr conferencecenterrX
+firebase target:apply hosting apiopenplanner apiopenplannerX
+firebase target:apply hosting serviceapi serviceapiX
+```
+
+7. Build and deploy: `bun run deploy`.
+8. In `.env`, set `VITE_FIREBASE_OPEN_PLANNER_API_URL` to the API site (`https://apiopenplannerX.web.app/`) and `VITE_FIREBASE_OPEN_PLANNER_FUNCTION_URL` to the `api` function URL (`https://europe-west1-<project-id>.cloudfunctions.net/api/`), then deploy again so the website picks them up.
+9. Run the frontend locally with `bun start`: it is served on `http://localhost:3000/` and talks to the live project (see the emulator mode below for a fully local setup).
+10. Sign in with any email and password, then accept “Sign up now” to create your account (or add a user under Authentication > Users).
 
 ### Development
 

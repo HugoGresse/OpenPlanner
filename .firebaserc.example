@@ -1,18 +1,18 @@
 {
   "projects": {
-    "default": "conferencecenterr"
+    "default": "your-firebase-project-id"
   },
   "targets": {
-    "conferencecenterr": {
+    "your-firebase-project-id": {
       "hosting": {
         "conferencecenterr": [
-          "conferencecenterr"
+          "conferencecenterrX"
         ],
         "apiopenplanner": [
-          "apiopenplanner"
+          "apiopenplannerX"
         ],
         "serviceapi": [
-            "serviceapi"
+          "serviceapiX"
         ]
       }
     }

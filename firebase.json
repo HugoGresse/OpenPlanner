@@ -45,7 +45,7 @@
         },
         {
             "target": "serviceapi",
-            "public": "api-swagger",
+            "public": "serviceapi-swagger",
             "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
             "rewrites": [
                 {
