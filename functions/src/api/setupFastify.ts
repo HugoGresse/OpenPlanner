@@ -30,6 +30,7 @@ import { chatRoutes } from './routes/chat/chat'
 import { slackRoutes } from './routes/slack/slack'
 import { deployFilesRoutes } from './routes/deploy/getDeployFiles'
 import { deployRoutes } from './routes/deploy/deploy'
+import { mcpRoutes } from './routes/mcp/mcp'
 import { noCacheHook } from '../utils/noCacheHook'
 
 type Firebase = firebaseApp.App
@@ -95,6 +96,7 @@ export const setupFastify = ({ onRoute }: { onRoute?: onRouteHookHandler } = {})
     fastify.register(bupherRoutes)
     fastify.register(chatRoutes)
     fastify.register(slackRoutes)
+    fastify.register(mcpRoutes)
 
     fastify.setErrorHandler(fastifyErrorHandler)
 

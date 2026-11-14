@@ -21,6 +21,8 @@ The event id is in the admin URL (`/events/<eventId>/…`), the key on the event
 
 Check what is configured with `openplanner config show` (key masked). Never print or paste the API key in your answers; error output already masks it.
 
+The same key opens the event's remote MCP server (`<api-url>/v1/<eventId>/mcp`, header `Authorization: Bearer <key>`), which serves the assistant's tools to AI clients that have no shell. In a terminal, prefer this CLI: it covers more.
+
 ## Saving tokens
 
 -   `-f id,title,dates.start` keeps only those fields (dotted paths; applied to every item of a list; `sessions.length` gives a count, `sessions.0` the first item). Always use it on `sessions list` / `speakers list` / `event public`.

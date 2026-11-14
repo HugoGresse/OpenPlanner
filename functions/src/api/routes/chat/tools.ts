@@ -4,6 +4,7 @@ import {
     BuildProposalResult,
     ChatTool,
     matchesRoute,
+    Proposal,
     ProposalTool,
     ReadTool,
     ToolArgs,
@@ -39,6 +40,13 @@ const WRITE_TOOLS = CHAT_TOOLS.filter((tool): tool is ProposalTool => tool.type 
 
 export const READ_ONLY_TOOLS: ToolDefinition[] = READ_TOOLS.map(toDefinition)
 export const PROPOSAL_TOOLS: ToolDefinition[] = WRITE_TOOLS.map(toDefinition)
+
+// The write tool whose capability route an endpoint targets, if any: what a proposal is allowed to call.
+export const proposalToolForEndpoint = (endpoint: Proposal['endpoint']): ProposalTool | undefined =>
+    WRITE_TOOLS.find((tool) => {
+        const { route } = getCapability(tool.capabilities[0])
+        return route !== undefined && matchesRoute(route, endpoint)
+    })
 
 export const isProposalTool = (name: string): boolean => WRITE_TOOLS.some((tool) => tool.name === name)
 
