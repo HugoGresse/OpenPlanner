@@ -125,9 +125,16 @@ export const patchSessionRouteHandler = (fastify: FastifyInstance) => {
                 patch.dates = parsed.dates as Session['dates']
             }
 
-            const referenceError = await findInvalidReferences(fastify.firebase, eventId, rest)
+            const referenceError = await findInvalidReferences(
+                fastify.firebase,
+                eventId,
+                rest,
+                request.authenticatedEvent
+            )
             if (referenceError) {
-                reply.status(400).send(referenceError)
+                // A missing session outranks a bad reference; the existence read only happens on this error path.
+                const exists = await SessionDao.doesSessionExist(fastify.firebase, eventId, sessionId)
+                reply.status(exists ? 400 : 404).send(exists ? referenceError : `Session not found: ${sessionId}`)
                 return
             }
 

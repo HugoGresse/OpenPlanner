@@ -91,7 +91,7 @@ describe('sponsor and job post tools', () => {
         expect(category.diff).toEqual({ before: { name: 'Gold', sponsors: ['ACME', 'Globex'] }, after: null })
     })
 
-    test('sponsor proposals read one category, never the whole collection', async () => {
+    test('sponsor add and category delete read one category, never the whole collection', async () => {
         const fullRead = vi.mocked(SponsorDao.getSponsors)
         expectProposal(
             await propose('proposeAddSponsor', {
@@ -101,15 +101,8 @@ describe('sponsor and job post tools', () => {
         expectProposal(
             await propose('proposeDeleteSponsorCategory', { categoryId: 'gold', expectedCategoryName: 'Gold' })
         )
-        expectProposal(
-            await propose('proposeDeleteSponsor', {
-                sponsorId: 'acme',
-                categoryId: 'gold',
-                expectedSponsorName: 'ACME',
-            })
-        )
         expect(fullRead).not.toHaveBeenCalled()
-        expect(SponsorDao.findCategoryOfSponsor).toHaveBeenCalledWith(expect.anything(), 'evt', 'acme', 'gold')
+        expect(SponsorDao.getCategory).toHaveBeenCalledWith(expect.anything(), 'evt', 'gold')
     })
 
     test('job post moderation is a PUT on the approval route', async () => {
@@ -153,8 +146,16 @@ describe('sponsor and job post tools', () => {
 describe('FAQ tools', () => {
     beforeEach(() => {
         vi.spyOn(FaqDao, 'getFullFaqs').mockResolvedValue(faq as never)
-        vi.spyOn(FaqDao, 'getFaqCategory').mockImplementation(
-            async (_app, _eventId, id) => (faq.find((category) => category.id === id) ?? null) as never
+        vi.spyOn(FaqDao, 'getFaqCategory').mockImplementation(async (_app, _eventId, id, options) => {
+            const category = faq.find((item) => item.id === id)
+            if (!category) return null
+            const { items, ...rest } = category
+            return (options?.withItems ? category : rest) as never
+        })
+        vi.spyOn(FaqDao, 'getFaqQuestion').mockImplementation(
+            async (_app, _eventId, categoryId, questionId) =>
+                (faq.find((item) => item.id === categoryId)?.items.find((item) => item.id === questionId) ??
+                    null) as never
         )
         vi.spyOn(FaqDao, 'findFaqQuestionCategoryId').mockImplementation(
             async (_app, _eventId, questionId) =>
@@ -215,7 +216,7 @@ describe('FAQ tools', () => {
         )
     })
 
-    test('FAQ proposals read one category, never the whole FAQ', async () => {
+    test('FAQ proposals read one category, and its questions only to delete it', async () => {
         const fullRead = vi.mocked(FaqDao.getFullFaqs)
         expectProposal(
             await propose('proposeAddFaqQuestion', {
@@ -227,7 +228,11 @@ describe('FAQ tools', () => {
         )
         expect(fullRead).not.toHaveBeenCalled()
         expect(FaqDao.findFaqQuestionCategoryId).not.toHaveBeenCalled()
-        expect(FaqDao.getFaqCategory).toHaveBeenCalledWith(expect.anything(), 'evt', 'venue')
+        expect(FaqDao.getFaqQuestion).not.toHaveBeenCalled()
+        expect(vi.mocked(FaqDao.getFaqCategory).mock.calls.map((call) => call[3])).toEqual([
+            { withItems: false },
+            { withItems: true },
+        ])
     })
 
     test('FAQ deletes target the category routes, guarded by the text', async () => {

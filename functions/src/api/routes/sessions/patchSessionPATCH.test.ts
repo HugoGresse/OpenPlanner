@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { setupFastify } from '../../setupFastify'
 import { getMockedFirestore } from '../../testUtils/mockedFirestore'
+import { EventDao } from '../../dao/eventDao'
 import { SessionDao } from '../../dao/sessionDao'
 import { SpeakerDao } from '../../dao/speakerDao'
 
@@ -67,12 +68,21 @@ describe('PATCH /v1/:eventId/sessions/:sessionId', () => {
         const event = { id: eventId, apiKey, tracks: [{ id: 'main', name: 'Main' }], formats: [], categories: [] }
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore(event))
         const patchSpy = vi.spyOn(SessionDao, 'patchSession').mockResolvedValue(undefined)
+        const existsSpy = vi.spyOn(SessionDao, 'doesSessionExist').mockResolvedValue(true)
+        const eventReads = vi.spyOn(EventDao, 'getEvent')
         const missingSpy = vi.spyOn(SpeakerDao, 'findMissingSpeakerIds').mockResolvedValue(['ghost'])
         const url = `/v1/${eventId}/sessions/${sessionId}?apiKey=${apiKey}`
 
         const track = await fastify.inject({ method: 'PATCH', url, payload: { trackId: 'room9' } })
         expect(track.statusCode).toBe(400)
         expect(track.body).toBe('Unknown trackId "room9". Valid ids: main')
+        // The check reuses the event the API key hook loaded.
+        expect(eventReads).toHaveBeenCalledTimes(1)
+
+        existsSpy.mockResolvedValueOnce(false)
+        const gone = await fastify.inject({ method: 'PATCH', url, payload: { trackId: 'room9' } })
+        expect(gone.statusCode).toBe(404)
+        expect(gone.body).toBe(`Session not found: ${sessionId}`)
 
         const speakers = await fastify.inject({ method: 'PATCH', url, payload: { speakers: ['ghost'] } })
         expect(speakers.statusCode).toBe(400)
@@ -85,10 +95,12 @@ describe('PATCH /v1/:eventId/sessions/:sessionId', () => {
         expect(patchSpy).toHaveBeenCalledTimes(1)
     })
 
-    test('a patch without references reads neither the event lists nor the speakers', async () => {
+    test('a patch without references reads neither the speakers nor the session before patching', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
         vi.spyOn(SessionDao, 'patchSession').mockResolvedValue(undefined)
         const missingSpy = vi.spyOn(SpeakerDao, 'findMissingSpeakerIds')
+        const existsSpy = vi.spyOn(SessionDao, 'doesSessionExist')
+        const eventReads = vi.spyOn(EventDao, 'getEvent')
 
         const res = await fastify.inject({
             method: 'PATCH',
@@ -97,6 +109,8 @@ describe('PATCH /v1/:eventId/sessions/:sessionId', () => {
         })
         expect(res.statusCode).toBe(200)
         expect(missingSpy).not.toHaveBeenCalled()
+        expect(existsSpy).not.toHaveBeenCalled()
+        expect(eventReads).toHaveBeenCalledTimes(1)
     })
 
     test('returns 404 when session does not exist', async () => {

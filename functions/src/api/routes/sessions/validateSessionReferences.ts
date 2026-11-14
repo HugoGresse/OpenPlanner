@@ -27,15 +27,17 @@ export const findInvalidSessionReference = (event: Event, references: References
 export type SessionReferences = References & { speakers?: string[] }
 
 // Returns the message of the first reference (track, format, category, speaker) that does not exist, or null.
-// Shared by POST and PATCH /sessions and by the assistant's proposals. The event is only read when a track,
-// format or category is set, the speakers only when some are given.
+// Shared by POST and PATCH /sessions and by the assistant's proposals. The event is only needed when a track,
+// format or category is set (pass the one the request already loaded), the speakers only when some are given.
 export const findInvalidReferences = async (
     firebaseApp: firebase.app.App,
     eventId: string,
-    references: SessionReferences
+    references: SessionReferences,
+    loadedEvent?: Event | null
 ): Promise<string | null> => {
     if (references.trackId || references.format || references.category) {
-        const referenceError = findInvalidSessionReference(await EventDao.getEvent(firebaseApp, eventId), references)
+        const event = loadedEvent ?? (await EventDao.getEvent(firebaseApp, eventId))
+        const referenceError = findInvalidSessionReference(event, references)
         if (referenceError) return referenceError
     }
     if (!references.speakers?.length) return null

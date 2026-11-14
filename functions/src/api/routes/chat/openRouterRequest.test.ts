@@ -22,8 +22,21 @@ describe('buildOpenRouterBody', () => {
 
     test('leaves the request untouched for providers that cache on their own', () => {
         const body = buildOpenRouterBody('openai/gpt-5', conversation, tools)
-        expect(body).toEqual({ model: 'openai/gpt-5', stream: true, messages: conversation, tools })
+        expect(body).toEqual({
+            model: 'openai/gpt-5',
+            stream: true,
+            usage: { include: true },
+            messages: conversation,
+            tools,
+        })
         expect(JSON.stringify(body)).not.toContain('cache_control')
+    })
+
+    test('cache markers can be switched off for an Anthropic model (after a provider rejection)', () => {
+        const body = buildOpenRouterBody('anthropic/claude-sonnet-4', conversation, tools, false)
+        expect(body.messages).toBe(conversation)
+        expect(JSON.stringify(body)).not.toContain('cache_control')
+        expect(body.usage).toEqual({ include: true })
     })
 
     test('serialises the same prefix on every round so the cache keeps hitting', () => {

@@ -45,6 +45,28 @@ describe('PATCH /v1/:eventId/event', () => {
         expect(res.body).toContain('owner')
     })
 
+    test('rejects an unknown key inside a track, format or category item', async () => {
+        vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
+        const patchSpy = vi.spyOn(EventDao, 'patchEvent').mockResolvedValue(undefined)
+        const url = `/v1/${eventId}/event?apiKey=${apiKey}`
+
+        const typo = await fastify.inject({
+            method: 'PATCH',
+            url,
+            payload: { categories: [{ id: 'web', name: 'Web', colour: '#f00' }] },
+        })
+        expect(typo.statusCode).toBe(400)
+        expect(typo.body).toContain('colour')
+        expect(patchSpy).not.toHaveBeenCalled()
+
+        const valid = await fastify.inject({
+            method: 'PATCH',
+            url,
+            payload: { categories: [{ id: 'web', name: 'Web', color: '#f00' }], tracks: [{ id: 'a', name: 'A' }] },
+        })
+        expect(valid.statusCode).toBe(200)
+    })
+
     test('returns 404 when event does not exist', async () => {
         vi.spyOn(fastify.firebase, 'firestore').mockReturnValue(getMockedFirestore({ id: eventId, apiKey }))
         vi.spyOn(EventDao, 'patchEvent').mockRejectedValue(new Error('Event not found'))

@@ -3,7 +3,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import Type, { Static } from 'typebox'
 import { v4 as uuidv4 } from 'uuid'
 import { SessionDao } from '../../dao/sessionDao'
-import { Session } from '../../../types'
+import { Event, Session } from '../../../types'
 import { replyDaoError } from '../../other/daoErrors'
 import { apiKeyQuerystring, apiKeySecurity, eventIdParams, MAX_STRING_LENGTH } from '../../other/routeSchemas'
 import { TypeBoxPatchSession } from './patchSessionPATCH'
@@ -58,10 +58,11 @@ const NEW_SESSION_DEFAULTS: Partial<Session & { tags: string[] }> = {
 export const validateCreateSessionBody = async (
     firebaseApp: firebase.app.App,
     eventId: string,
-    body: CreateSessionType
+    body: CreateSessionType,
+    loadedEvent?: Event | null
 ): Promise<string | null> => {
     if (!body.title.trim()) return 'title must not be blank'
-    return findInvalidReferences(firebaseApp, eventId, body)
+    return findInvalidReferences(firebaseApp, eventId, body, loadedEvent)
 }
 
 type NewSession = Partial<Session> & { id: string }
@@ -92,7 +93,12 @@ export const createSessionRouteHandler = (fastify: FastifyInstance) => {
         const sessionId = request.body.id || uuidv4()
 
         try {
-            const inputError = await validateCreateSessionBody(fastify.firebase, eventId, request.body)
+            const inputError = await validateCreateSessionBody(
+                fastify.firebase,
+                eventId,
+                request.body,
+                request.authenticatedEvent
+            )
             if (inputError) {
                 reply.status(400).send(inputError)
                 return

@@ -6,6 +6,7 @@ import {
     OpenRouterToolCall,
     PromptUsage,
     buildOpenRouterBody,
+    supportsCacheBreakpoints,
     toPromptUsage,
 } from './openRouterRequest'
 
@@ -140,8 +141,7 @@ const PROPOSAL_QUEUED_NOTE =
     'Proposal queued. All proposals from this turn are batched and the user will approve/reject them together. Continue if more related changes are needed for this user request, but do NOT claim any change has been applied yet.'
 
 export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAgentResult> => {
-    const { eventId, eventName, openRouterApiKey, model, messages, surface, answerAnyQuestion, signal, onEvent } =
-        options
+    const { eventId, eventName, model, messages, surface, answerAnyQuestion, signal, onEvent } = options
     const isAborted = () => signal?.aborted === true
 
     const conversation: OpenRouterMessage[] = [
@@ -150,20 +150,21 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
     ]
     const result: ChatAgentResult = { text: '', proposals: [] }
     let separatorPending = false
+    let cache = supportsCacheBreakpoints(model)
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
         if (isAborted()) break
-        const orResponse = await fetch(OPENROUTER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${openRouterApiKey}`,
-                'HTTP-Referer': 'https://openplanner.fr',
-                'X-Title': 'OpenPlanner',
-            },
-            body: JSON.stringify(buildOpenRouterBody(model, conversation, AGENT_TOOLS)),
-            signal,
-        })
+        let orResponse = await postToOpenRouter(options, buildOpenRouterBody(model, conversation, AGENT_TOOLS, cache))
+        if (orResponse.status === 400 && cache) {
+            // A provider that refuses the cache markers must not take the assistant down: go on without them.
+            console.warn('OpenRouter rejected the cached request, retrying without cache markers', {
+                eventId,
+                model,
+                error: await orResponse.text().catch(() => ''),
+            })
+            cache = false
+            orResponse = await postToOpenRouter(options, buildOpenRouterBody(model, conversation, AGENT_TOOLS, cache))
+        }
 
         if (!orResponse.ok) {
             const text = await orResponse.text().catch(() => '')
@@ -205,6 +206,19 @@ export const runChatAgent = async (options: RunChatAgentOptions): Promise<ChatAg
 
     return result
 }
+
+const postToOpenRouter = ({ openRouterApiKey, signal }: RunChatAgentOptions, body: object): Promise<Response> =>
+    fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openRouterApiKey}`,
+            'HTTP-Referer': 'https://openplanner.fr',
+            'X-Title': 'OpenPlanner',
+        },
+        body: JSON.stringify(body),
+        signal,
+    })
 
 const runTool = async (
     { firebaseApp, eventId, onEvent }: RunChatAgentOptions,
