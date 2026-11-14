@@ -12,11 +12,17 @@ declare module 'fastify' {
     }
 }
 
+// The key is accepted as `?apiKey=` or as `Authorization: Bearer <key>`, which keeps it out of URLs and logs.
+const bearerToken = (request: FastifyRequest): string | undefined => {
+    const authorization = request.headers.authorization
+    return authorization?.startsWith('Bearer ') ? authorization.slice('Bearer '.length).trim() : undefined
+}
+
 const verifyRequest = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     // @ts-ignore
     const eventId = request.params?.eventId
     // @ts-ignore
-    const apiKey = request.query?.apiKey
+    const apiKey = request.query?.apiKey || bearerToken(request)
 
     if (!eventId || eventId.length === 0) {
         reply.code(400).send({ error: "Bad Request! Missing eventId, hophop let's get to work !", success: false })

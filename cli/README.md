@@ -30,6 +30,10 @@ openplanner skill print
 
 In this repository the skill is already linked from `.claude/skills/openplanner` and `.agents/skills/openplanner` (git symlinks; on Windows enable `git config core.symlinks true` before cloning, or run `openplanner skill install --project`).
 
+## MCP server
+
+Clients that cannot run a shell (Claude desktop or web, ChatGPT…) can use the event's remote MCP server instead: `https://api.openplanner.fr/v1/<eventId>/mcp` with `Authorization: Bearer <API key>`. It serves the assistant's tools (a subset of this CLI: no file upload, import, exports, WhatsApp or Bupher). Setup snippets are on the event's Integration & API page.
+
 ## Commands
 
 Run `openplanner --help` or `openplanner <group> --help`. Groups: `event`, `sessions`, `speakers`, `sponsors`, `team`, `faq`, `files`, `import`, `live`, `whatsapp`, `bupher`, `slack`, `chat`, `api` (any endpoint), `openapi` (discovery), `config`, `skill`.

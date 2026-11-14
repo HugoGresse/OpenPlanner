@@ -14,6 +14,7 @@ import { WebhooksFields } from '../settings/components/WebhooksFields'
 import { RepoFields } from '../settings/components/RepoFields'
 import { EventStaticApiFilePaths } from '../settings/components/EventStaticApiFilePaths'
 import { EventUsageCard } from './components/EventUsageCard'
+import { AiAgentsCard } from './components/AiAgentsCard'
 import { useSelector } from 'react-redux'
 import { selectUserIdOpenPlanner } from '../../../auth/authReducer'
 import { useIsAdmin } from '../../../services/hooks/useIsAdmin'
@@ -125,11 +126,13 @@ export const API = ({ event }: APIProps) => {
                             label="API Key"
                             name="apiKey"
                             disabled={true}
-                            helperText="use as params ?apiKey=xxx"
+                            helperText="Send it as the header Authorization: Bearer xxx, or as the query parameter ?apiKey=xxx"
                             buttonText="Generate new API Key"
                         />
                     </Collapse>
                 </Card>
+
+                <AiAgentsCard event={event} />
 
                 {isSuperAdmin && <EventUsageCard event={event} />}
 

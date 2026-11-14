@@ -36,6 +36,7 @@ An all-in-one platform to plan a conference and run the live show: talks, speake
 -   public schedule website builtin (and optin)
 -   [API](https://api.openplanner.fr/) & webhooks
 -   `openplanner` CLI ([cli/](cli/)) for scripts and coding agents (Claude Code, Codex), with a ready-made agent skill
+-   remote MCP server per event (`https://api.openplanner.fr/v1/<eventId>/mcp`) so Claude, Codex, ChatGPT and other AI clients can read and edit an event with the assistant's tools; setup snippets are on the event's Integration & API page
 -   AI chat assistant (OpenRouter, bring your own key) to query and edit sessions/speakers with reviewed proposals, in the app or from Slack ("Add to Slack" on the Integration & API page)
 
 ## Dev guidelines
@@ -128,6 +129,14 @@ Slack must be acknowledged within 3 seconds, so the chat reply / Apply work runs
 ### CLI
 
 [cli/](cli/) holds `@openplanner/cli`, a JSON-first command-line client of the API (`openplanner sessions list -f id,title`, `openplanner event deploy`, `openplanner api PATCH /v1/{eventId}/event -d '{…}'`…). It ships the agent skill in [cli/skills/openplanner/SKILL.md](cli/skills/openplanner/SKILL.md), linked from `.claude/skills/` (Claude Code) and `.agents/skills/` (Codex), and installable anywhere with `openplanner skill install`. See [cli/README.md](cli/README.md).
+
+### MCP server
+
+`POST /v1/{eventId}/mcp` ([functions/src/api/routes/mcp/](functions/src/api/routes/mcp/)) is a stateless Streamable HTTP MCP endpoint. It answers the 2026-07-28 protocol and the earlier `initialize`-based revisions, and serves the assistant's tool registry as is (`functions/src/api/routes/chat/tools/`): read tools, `propose*` tools that only return a proposal, plus `applyProposal`, which replays a proposal's REST call the way the Slack "Apply" button does. Authenticate with `Authorization: Bearer <event API key>`; `?readOnly=true` serves the read tools only.
+
+```bash
+claude mcp add --transport http openplanner "https://api.openplanner.fr/v1/<eventId>/mcp" --header "Authorization: Bearer $OPENPLANNER_API_KEY"
+```
 
 ### Scripts
 

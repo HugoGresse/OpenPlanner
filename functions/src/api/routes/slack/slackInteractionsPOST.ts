@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { Event } from '../../../types'
 import { AiActionDao } from '../../dao/aiActionDao'
+import { applyProposalEndpoint } from '../chat/applyProposal'
 import { EventDao } from '../../dao/eventDao'
 import { SlackInstallationDao } from '../../dao/slackInstallationDao'
 import { SlackProposalDao, SlackProposalDecision, SlackProposalRecord } from '../../dao/slackProposalDao'
@@ -57,14 +58,8 @@ const applyProposal = async (
     record: SlackProposalRecord
 ): Promise<SlackProposalDecision> => {
     if (!event.apiKey) return { status: 'failed', error: 'Event API key is not set. Generate one in the API page.' }
-    const { method, path, body } = record.proposal.endpoint
-    const response = await fastify.inject({
-        method,
-        url: `${path}?apiKey=${encodeURIComponent(event.apiKey)}`,
-        payload: method === 'DELETE' ? undefined : body,
-    })
-    if (response.statusCode >= 200 && response.statusCode < 300) return { status: 'applied' }
-    return { status: 'failed', error: `API responded ${response.statusCode}: ${response.body.slice(0, 300)}` }
+    const outcome = await applyProposalEndpoint(fastify, event.apiKey, record.proposal.endpoint)
+    return outcome.applied ? { status: 'applied' } : { status: 'failed', error: outcome.error }
 }
 
 // Same args shape as the web UI (useChatStream.recordAuditLog) so the audit trail is uniform.
