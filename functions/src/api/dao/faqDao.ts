@@ -111,16 +111,28 @@ export class FaqDao {
         }))
     }
 
-    // One category with its questions, or null: two reads instead of the whole FAQ.
+    // One category, or null. Its questions are only read when asked for, and never for a missing category.
     public static async getFaqCategory(
         firebaseApp: firebase.app.App,
         eventId: string,
-        categoryId: string
+        categoryId: string,
+        { withItems = false }: { withItems?: boolean } = {}
     ): Promise<FaqCategory | null> {
-        const ref = firebaseApp.firestore().collection(`events/${eventId}/faq`).doc(categoryId)
-        const [snapshot, items] = await Promise.all([ref.get(), FaqDao.getFaqItems(firebaseApp, eventId, categoryId)])
+        const snapshot = await firebaseApp.firestore().collection(`events/${eventId}/faq`).doc(categoryId).get()
         if (!snapshot.exists) return null
-        return { ...(snapshot.data() as FaqCategory), id: snapshot.id, items }
+        const category = { ...(snapshot.data() as FaqCategory), id: snapshot.id }
+        return withItems ? { ...category, items: await FaqDao.getFaqItems(firebaseApp, eventId, categoryId) } : category
+    }
+
+    public static async getFaqQuestion(
+        firebaseApp: firebase.app.App,
+        eventId: string,
+        categoryId: string,
+        questionId: string
+    ): Promise<Faq | null> {
+        const ref = firebaseApp.firestore().collection(`events/${eventId}/faq/${categoryId}/items`).doc(questionId)
+        const snapshot = await ref.get()
+        return snapshot.exists ? { ...(snapshot.data() as Faq), id: snapshot.id } : null
     }
 
     // The category that holds a question id, looked up without reading any other category's questions.

@@ -1,5 +1,5 @@
 import { FaqDao } from '../../../dao/faqDao'
-import { FaqCategory } from '../../../../../../src/types'
+import { Faq as FaqQuestion, FaqCategory } from '../../../../../../src/types'
 import { Faq } from '../../faq/faq'
 import {
     ChatTool,
@@ -22,24 +22,28 @@ const isPublic = (category: FaqCategory) => category.share === true && category.
 // privateId is the secret part of a private FAQ link, and the answers of private or unpublished categories
 // stay out of the model's reach (the Slack bot answers anyone in the workspace): ids and questions are enough
 // to manage them.
+const toToolQuestion = (category: FaqCategory, { id, question, answer, order }: FaqQuestion) =>
+    isPublic(category) ? { id, question, answer, order } : { id, question, order }
+
 const toToolCategory = (category: FaqCategory) => ({
     id: category.id,
     name: category.name,
     order: category.order,
     share: category.share ?? false,
     private: category.private ?? false,
-    items: (category.items ?? []).map(({ id, question, answer, order }) =>
-        isPublic(category) ? { id, question, answer, order } : { id, question, order }
-    ),
+    items: (category.items ?? []).map((item) => toToolQuestion(category, item)),
 })
 
 const listFaq = async ({ firebaseApp, eventId }: ToolContext) =>
     (await FaqDao.getFullFaqs(firebaseApp, eventId)).map(toToolCategory)
 
-// Proposals resolve the one category they touch instead of loading the whole FAQ.
-const loadCategory = async ({ firebaseApp, eventId }: ToolContext, categoryId: string) => {
-    const category = await FaqDao.getFaqCategory(firebaseApp, eventId, categoryId)
-    return category ? toToolCategory(category) : null
+// Proposals resolve the one category (and question) they touch instead of loading the whole FAQ.
+const loadCategory = ({ firebaseApp, eventId }: ToolContext, categoryId: string, withItems = false) =>
+    FaqDao.getFaqCategory(firebaseApp, eventId, categoryId, { withItems })
+
+const loadQuestion = async ({ firebaseApp, eventId }: ToolContext, category: FaqCategory, questionId: string) => {
+    const question = await FaqDao.getFaqQuestion(firebaseApp, eventId, category.id, questionId)
+    return question ? toToolQuestion(category, question) : null
 }
 
 const categoryParams = {
@@ -70,7 +74,7 @@ export const FAQ_TOOLS: ChatTool[] = [
             if (parsed.error !== undefined) return rejected(parsed.error)
             const body = parsed.value
             const category = await loadCategory(ctx, body.categoryId)
-            const existing = body.id ? category?.items.find((item) => item.id === body.id) : undefined
+            const existing = body.id && category ? await loadQuestion(ctx, category, body.id) : null
             if (body.id && !existing) {
                 const ownerId = await FaqDao.findFaqQuestionCategoryId(ctx.firebaseApp, ctx.eventId, body.id)
                 if (ownerId && ownerId !== body.categoryId) {
@@ -114,7 +118,7 @@ export const FAQ_TOOLS: ChatTool[] = [
             const questionId = stringArg(args, 'questionId')
             if (!categoryId || !questionId) return rejected('categoryId and questionId are required')
             const category = await loadCategory(ctx, categoryId)
-            const question = category?.items.find((item) => item.id === questionId)
+            const question = category ? await loadQuestion(ctx, category, questionId) : null
             if (!category || !question) return rejected(`FAQ question not found: ${categoryId}/${questionId}`)
             const mismatch = expectedMismatch({
                 arg: 'expectedQuestion',
@@ -147,8 +151,9 @@ export const FAQ_TOOLS: ChatTool[] = [
         build: async (ctx, args) => {
             const categoryId = stringArg(args, 'categoryId')
             if (!categoryId) return rejected('categoryId is required')
-            const category = await loadCategory(ctx, categoryId)
-            if (!category) return rejected(`FAQ category not found: ${categoryId}`)
+            const loaded = await loadCategory(ctx, categoryId, true)
+            if (!loaded) return rejected(`FAQ category not found: ${categoryId}`)
+            const category = toToolCategory(loaded)
             const mismatch = expectedMismatch({
                 arg: 'expectedCategoryName',
                 value: args?.expectedCategoryName,

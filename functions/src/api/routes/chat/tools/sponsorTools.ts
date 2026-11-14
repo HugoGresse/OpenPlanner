@@ -70,11 +70,10 @@ export const SPONSOR_TOOLS: ChatTool[] = [
         kind: 'deleteSponsor',
         capabilities: ['sponsors.delete'],
         description:
-            'Propose removing a sponsor from its category (irreversible; the category is kept). Does NOT apply: the user confirms. Pass expectedSponsorName = the sponsor name from listSponsors, and categoryId = the id of its category when you have it.',
+            'Propose removing a sponsor from its category (irreversible; the category is kept). Does NOT apply: the user confirms. Pass expectedSponsorName = the sponsor name from listSponsors.',
         parameters: objectSchema(
             {
                 sponsorId: { type: 'string' },
-                categoryId: { type: 'string', description: 'Id of the category listing the sponsor (optional).' },
                 expectedSponsorName: expectedParam("sponsor's `name`", 'listSponsors'),
                 rationale: RATIONALE_PARAM,
             },
@@ -83,12 +82,7 @@ export const SPONSOR_TOOLS: ChatTool[] = [
         build: async (ctx, args) => {
             const sponsorId = stringArg(args, 'sponsorId')
             if (!sponsorId) return rejected('sponsorId is required')
-            const found = await SponsorDao.findCategoryOfSponsor(
-                ctx.firebaseApp,
-                ctx.eventId,
-                sponsorId,
-                stringArg(args, 'categoryId') || undefined
-            )
+            const found = await SponsorDao.findCategoryOfSponsor(ctx.firebaseApp, ctx.eventId, sponsorId)
             const category = found ? toToolCategory(found) : null
             const sponsor = category?.sponsors.find((item) => item.id === sponsorId)
             if (!category || !sponsor) return rejected(`Sponsor not found: ${sponsorId}`)

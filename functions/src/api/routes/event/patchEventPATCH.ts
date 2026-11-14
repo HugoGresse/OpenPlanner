@@ -5,42 +5,60 @@ import { EventDao } from '../../dao/eventDao'
 export const NullableString = Type.Union([Type.String(), Type.Null()])
 export const NullableUri = Type.Union([Type.String({ format: 'uri' }), Type.Null()])
 
-export const PatchDates = Type.Object({
-    start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-})
+export const PatchDates = Type.Object(
+    {
+        start: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+        end: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    },
+    { additionalProperties: false }
+)
 
-export const TrackSchema = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-})
+export const TrackSchema = Type.Object(
+    {
+        id: Type.String(),
+        name: Type.String(),
+    },
+    { additionalProperties: false }
+)
 
-export const FormatSchema = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    durationMinutes: Type.Number(),
-})
+export const FormatSchema = Type.Object(
+    {
+        id: Type.String(),
+        name: Type.String(),
+        durationMinutes: Type.Number(),
+    },
+    { additionalProperties: false }
+)
 
-export const CategorySchema = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    color: Type.Optional(Type.String()),
-    colorSecondary: Type.Optional(Type.String()),
-})
+export const CategorySchema = Type.Object(
+    {
+        id: Type.String(),
+        name: Type.String(),
+        color: Type.Optional(Type.String()),
+        colorSecondary: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false }
+)
 
-export const SponsorCustomFieldSchema = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    type: Type.Union([Type.Literal('boolean'), Type.Literal('text')]),
-})
+export const SponsorCustomFieldSchema = Type.Object(
+    {
+        id: Type.String(),
+        name: Type.String(),
+        type: Type.Union([Type.Literal('boolean'), Type.Literal('text')]),
+    },
+    { additionalProperties: false }
+)
 
-export const SpeakerCustomFieldSchema = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    type: Type.Union([Type.Literal('boolean'), Type.Literal('text')]),
-    privacy: Type.Union([Type.Literal('public'), Type.Literal('private')]),
-    editableBySpeaker: Type.Optional(Type.Boolean()),
-})
+export const SpeakerCustomFieldSchema = Type.Object(
+    {
+        id: Type.String(),
+        name: Type.String(),
+        type: Type.Union([Type.Literal('boolean'), Type.Literal('text')]),
+        privacy: Type.Union([Type.Literal('public'), Type.Literal('private')]),
+        editableBySpeaker: Type.Optional(Type.Boolean()),
+    },
+    { additionalProperties: false }
+)
 
 export const TypeBoxPatchEvent = Type.Object(
     {

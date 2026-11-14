@@ -19,6 +19,8 @@ export const supportsCacheBreakpoints = (model: string): boolean => /^~?anthropi
 type OpenRouterBody = {
     model: string
     stream: true
+    // Asks for token counts in the stream: the only way to see whether the cache is hit.
+    usage: { include: true }
     messages: unknown[]
     tools: ToolDefinition[]
     cache_control?: typeof EPHEMERAL
@@ -28,18 +30,23 @@ type OpenRouterBody = {
 // Anthropic renders them first (tools, system, messages). A breakpoint on the system message caches that whole
 // prefix; the top-level cache_control lets the provider also cache the conversation as it grows, so each tool
 // round only pays full price for what the previous round appended.
+// `cache` is false for providers without breakpoints, and after the provider rejected a marked request.
 export const buildOpenRouterBody = (
     model: string,
     conversation: OpenRouterMessage[],
-    tools: ToolDefinition[]
+    tools: ToolDefinition[],
+    cache: boolean = supportsCacheBreakpoints(model)
 ): OpenRouterBody => {
-    if (!supportsCacheBreakpoints(model)) return { model, stream: true, messages: conversation, tools }
+    const base = { model, stream: true as const, usage: { include: true as const } }
     const [system, ...rest] = conversation
-    const cachedSystem =
-        system?.role === 'system' && typeof system.content === 'string'
-            ? { role: 'system', content: [{ type: 'text', text: system.content, cache_control: EPHEMERAL }] }
-            : system
-    return { model, stream: true, messages: [cachedSystem, ...rest], tools, cache_control: EPHEMERAL }
+    if (!cache || system?.role !== 'system' || typeof system.content !== 'string') {
+        return { ...base, messages: conversation, tools }
+    }
+    const cachedSystem = {
+        role: 'system',
+        content: [{ type: 'text', text: system.content, cache_control: EPHEMERAL }],
+    }
+    return { ...base, messages: [cachedSystem, ...rest], tools, cache_control: EPHEMERAL }
 }
 
 export type PromptUsage = { promptTokens: number; cachedTokens: number; cacheWriteTokens: number }

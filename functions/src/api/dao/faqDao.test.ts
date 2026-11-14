@@ -18,6 +18,12 @@ const fakeApp = () => {
             const itemsOf = path.match(/faq\/([^/]+)\/items$/)?.[1]
             if (itemsOf) {
                 return {
+                    doc: (id: string) => ({
+                        get: async () => {
+                            const data = categories[itemsOf]?.items[id]
+                            return { id, exists: data !== undefined, data: () => data }
+                        },
+                    }),
                     get: async () => {
                         itemsRead(itemsOf)
                         const items = categories[itemsOf]?.items ?? {}
@@ -45,13 +51,23 @@ const fakeApp = () => {
 }
 
 describe('FaqDao single-category lookups', () => {
-    test('getFaqCategory returns the category with its own questions only', async () => {
+    test('getFaqCategory reads the questions only on request and never for a missing category', async () => {
         const { app, itemsRead, fullCategoriesRead } = fakeApp()
-        const category = await FaqDao.getFaqCategory(app, 'evt', 'venue')
-        expect(category).toMatchObject({ id: 'venue', name: 'Venue', items: [{ id: 'q1', question: 'Where?' }] })
+        expect(await FaqDao.getFaqCategory(app, 'evt', 'venue')).toEqual({ id: 'venue', name: 'Venue' })
+        expect(await FaqDao.getFaqCategory(app, 'evt', 'nope', { withItems: true })).toBeNull()
+        expect(itemsRead).not.toHaveBeenCalled()
+
+        const category = await FaqDao.getFaqCategory(app, 'evt', 'venue', { withItems: true })
+        expect(category).toMatchObject({ id: 'venue', items: [{ id: 'q1', question: 'Where?' }] })
         expect(itemsRead.mock.calls).toEqual([['venue']])
         expect(fullCategoriesRead).not.toHaveBeenCalled()
-        expect(await FaqDao.getFaqCategory(app, 'evt', 'nope')).toBeNull()
+    })
+
+    test('getFaqQuestion reads one question document', async () => {
+        const { app, itemsRead } = fakeApp()
+        expect(await FaqDao.getFaqQuestion(app, 'evt', 'venue', 'q1')).toMatchObject({ id: 'q1', answer: 'Paris' })
+        expect(await FaqDao.getFaqQuestion(app, 'evt', 'venue', 'q2')).toBeNull()
+        expect(itemsRead).not.toHaveBeenCalled()
     })
 
     test('findFaqQuestionCategoryId locates a question without reading any question list', async () => {

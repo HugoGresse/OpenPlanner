@@ -36,19 +36,10 @@ describe('SponsorDao single-category lookups', () => {
         expect(collectionGet).not.toHaveBeenCalled()
     })
 
-    test('findCategoryOfSponsor trusts a correct hint and scans only without one or when it is wrong', async () => {
-        const hinted = fakeApp()
-        expect(await SponsorDao.findCategoryOfSponsor(hinted.app, 'evt', 'acme', 'gold')).toMatchObject({ id: 'gold' })
-        expect(hinted.collectionGet).not.toHaveBeenCalled()
-
-        const wrongHint = fakeApp()
-        expect(await SponsorDao.findCategoryOfSponsor(wrongHint.app, 'evt', 'globex', 'gold')).toMatchObject({
-            id: 'silver',
-        })
-        expect(wrongHint.collectionGet).toHaveBeenCalledTimes(1)
-
-        const noHint = fakeApp()
-        expect(await SponsorDao.findCategoryOfSponsor(noHint.app, 'evt', 'ghost')).toBeNull()
-        expect(noHint.docGet).not.toHaveBeenCalled()
+    test('findCategoryOfSponsor scans the categories for the sponsor id', async () => {
+        const { app, collectionGet } = fakeApp()
+        expect(await SponsorDao.findCategoryOfSponsor(app, 'evt', 'globex')).toMatchObject({ id: 'silver' })
+        expect(await SponsorDao.findCategoryOfSponsor(app, 'evt', 'ghost')).toBeNull()
+        expect(collectionGet).toHaveBeenCalledTimes(2)
     })
 })

@@ -3,6 +3,15 @@ import { EventDao } from './dao/eventDao'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyAuthFunction } from '@fastify/auth'
 import Type, { Static } from 'typebox'
+import { Event } from '../types'
+
+declare module 'fastify' {
+    interface FastifyRequest {
+        // The event verifyApiKey loaded for this request, so handlers do not read it a second time.
+        authenticatedEvent: Event | null
+    }
+}
+
 const verifyRequest = async (fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply) => {
     // @ts-ignore
     const eventId = request.params?.eventId
@@ -25,6 +34,7 @@ const verifyRequest = async (fastify: FastifyInstance, request: FastifyRequest, 
         reply.code(401).send({ error: 'Unauthorized! Du balai !', success: false })
         return
     }
+    request.authenticatedEvent = event
 }
 
 export const Error400_401_VerifyRequest = Type.Object({
@@ -35,6 +45,7 @@ export type Error400_401_VerifyRequestType = Static<typeof Error400_401_VerifyRe
 
 export const apiKeyPlugin = fastifyPlugin(
     (fastify: FastifyInstance, options: any, next: () => void) => {
+        fastify.decorateRequest('authenticatedEvent', null)
         fastify.decorate<FastifyAuthFunction>('verifyApiKey', async (request: FastifyRequest, reply: FastifyReply) => {
             await verifyRequest(fastify, request, reply)
         })
